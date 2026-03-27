@@ -1,6 +1,8 @@
-// DI registration fully implemented in Story 1.3
-// get_it dependency added in Story 1.2
+import 'package:get_it/get_it.dart';
+import 'package:injectable/injectable.dart';
+import 'injection.config.dart';
 
-Future<void> configureDependencies() async {
-  // Stub — DI registration implemented in Story 1.3
-}
+final getIt = GetIt.instance;
+
+@InjectableInit()
+Future<void> configureDependencies() async => getIt.init();
