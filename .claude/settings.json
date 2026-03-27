@@ -17,6 +17,7 @@
       "Bash(ls:*)",
       "Bash(mkdir -p **/*:*)",
       "Bash(cat:*)",
+      "Bash(curl -s https://pub.dev/*)",
       "Bash(curl:*)",
       "Bash(python3:*)",
       "Bash(find:*)",
