@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Write",
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(flutter:*)",
+      "Bash(dart:*)",
+      "Bash(git:*)",
+      "Bash(melos:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir -p **/*:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(tr:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(chmod:*)",
+      "Bash(touch:*)",
+      "Bash(echo:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(diff:*)",
+      "Bash(which:*)",
+      "Bash(open:*)",
+      "Bash(zip:*)",
+      "Bash(unzip:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(xattr:*)",
+      "Bash(pod:*)",
+      "WebSearch",
+      "WebFetch"
+    ],
+    "deny": [
+      "Edit(.gitignore)",
+      "Write(.gitignore)",
+      "Edit(**/.gitignore)",
+      "Write(**/.gitignore)"
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code — developer-local settings, not shared
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Xcode build server config (machine-specific paths)
+buildServer.json
+
+# Generated code policy: *.g.dart files ARE committed to avoid requiring
+# build_runner in CI. If you change a table, DAO, or provider source file,
+# regenerate with: dart run build_runner build --delete-conflicting-outputs
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Environment & secrets
+.env
+.env.*
+*.key
+google-services.json
+GoogleService-Info.plist
+
+# BMAD output (opzionale: committare o no i documenti generati)
+# _bmad-output/   ← decommentalo se non vuoi committare i doc generati
+
+# macOS
+**/.DS_Store
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# Test coverage
+coverage/
+lcov.info
+
+# WearOS
+/wear/build/
