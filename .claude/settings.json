@@ -9,6 +9,8 @@
       "Bash(flutter:*)",
       "Bash(dart:*)",
       "Bash(git:*)",
+      "Bash(git diff*)",
+      "Bash(git ls-files*)",
       "Bash(melos:*)",
       "Bash(npx:*)",
       "Bash(node:*)",
