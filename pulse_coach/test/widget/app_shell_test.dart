@@ -71,5 +71,26 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Sessions — Story 6.x'), findsOneWidget);
     });
+
+    // [P1] 1.7-UNIT-004: _currentIndex edge cases not covered above
+    testWidgets('Sessions tab index is 1 at initial location /sessions',
+        (tester) async {
+      await tester.pumpWidget(buildTestShell(initialLocation: '/sessions'));
+      await tester.pumpAndSettle();
+      final bnb = tester.widget<BottomNavigationBar>(
+        find.byType(BottomNavigationBar),
+      );
+      expect(bnb.currentIndex, 1);
+    });
+
+    testWidgets('Progress tab index is 2 at initial location /progress',
+        (tester) async {
+      await tester.pumpWidget(buildTestShell(initialLocation: '/progress'));
+      await tester.pumpAndSettle();
+      final bnb = tester.widget<BottomNavigationBar>(
+        find.byType(BottomNavigationBar),
+      );
+      expect(bnb.currentIndex, 2);
+    });
   });
 }
