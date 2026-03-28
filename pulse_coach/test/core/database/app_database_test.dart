@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
+import 'package:sqlite3/sqlite3.dart';
 
 void main() {
   late AppDatabase db;
@@ -51,6 +52,19 @@ void main() {
       );
       final profile = await db.userProfileDao.getProfile();
       expect(profile, isNotNull);
+    });
+
+    test('user_profile: disclaimerAccepted defaults to false on insert',
+        () async {
+      await db.userProfileDao.insertProfile(
+        UserProfileCompanion.insert(
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      final profile = await db.userProfileDao.getProfile();
+      expect(profile, isNotNull);
+      expect(profile!.disclaimerAccepted, false);
     });
 
     test('rpe_feedback table: insert and retrieve', () async {
@@ -140,8 +154,50 @@ void main() {
       expect(db.migration.onUpgrade, isNotNull);
     });
 
-    test('schemaVersion is 1', () {
-      expect(db.schemaVersion, 1);
+    test('schemaVersion is 2', () {
+      expect(db.schemaVersion, 2);
+    });
+  });
+
+  group('AppDatabase - real migration v1 → v2', () {
+    test('disclaimerAccepted column added with default false', () async {
+      // Build an in-memory SQLite database with the v1 schema
+      // (user_profile without disclaimer_accepted) and user_version = 1.
+      final v1Raw = sqlite3.openInMemory();
+      v1Raw.execute('''
+        CREATE TABLE IF NOT EXISTS user_profile (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          fitness_goal TEXT,
+          weekly_session_target INTEGER NOT NULL DEFAULT 3,
+          intensity_preference TEXT,
+          environment_preference TEXT,
+          onboarding_completed INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      ''');
+      final now = DateTime.now().millisecondsSinceEpoch;
+      v1Raw.execute(
+        'INSERT INTO user_profile (onboarding_completed, created_at, updated_at) VALUES (0, ?, ?)',
+        [now, now],
+      );
+      v1Raw.execute('PRAGMA user_version = 1');
+
+      // Open as AppDatabase — drift detects user_version=1 < schemaVersion=2
+      // and calls onUpgrade(m, 1, 2), which adds disclaimer_accepted column.
+      final migratedDb =
+          AppDatabase.forTesting(NativeDatabase.opened(v1Raw));
+
+      final profile = await migratedDb.userProfileDao.getProfile();
+
+      expect(profile, isNotNull);
+      expect(
+        profile!.disclaimerAccepted,
+        false,
+        reason: 'migration must add disclaimer_accepted with DEFAULT 0',
+      );
+
+      await migratedDb.close();
     });
   });
 }

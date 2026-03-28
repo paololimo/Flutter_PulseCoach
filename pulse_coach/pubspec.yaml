@@ -74,6 +74,7 @@ dev_dependencies:
   # Testing
   bloc_test: ^10.0.0
   mockito: ^5.4.4
+  sqlite3: any
 
 flutter:
   uses-material-design: true

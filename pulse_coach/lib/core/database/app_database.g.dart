@@ -909,6 +909,20 @@ class $UserProfileTable extends UserProfile
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _disclaimerAcceptedMeta =
+      const VerificationMeta('disclaimerAccepted');
+  @override
+  late final GeneratedColumn<bool> disclaimerAccepted = GeneratedColumn<bool>(
+    'disclaimer_accepted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("disclaimer_accepted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -939,6 +953,7 @@ class $UserProfileTable extends UserProfile
     intensityPreference,
     environmentPreference,
     onboardingCompleted,
+    disclaimerAccepted,
     createdAt,
     updatedAt,
   ];
@@ -1002,6 +1017,15 @@ class $UserProfileTable extends UserProfile
         ),
       );
     }
+    if (data.containsKey('disclaimer_accepted')) {
+      context.handle(
+        _disclaimerAcceptedMeta,
+        disclaimerAccepted.isAcceptableOrUnknown(
+          data['disclaimer_accepted']!,
+          _disclaimerAcceptedMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1051,6 +1075,10 @@ class $UserProfileTable extends UserProfile
         DriftSqlType.bool,
         data['${effectivePrefix}onboarding_completed'],
       )!,
+      disclaimerAccepted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}disclaimer_accepted'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1075,6 +1103,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
   final String? intensityPreference;
   final String? environmentPreference;
   final bool onboardingCompleted;
+  final bool disclaimerAccepted;
   final DateTime createdAt;
   final DateTime updatedAt;
   const UserProfileData({
@@ -1084,6 +1113,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     this.intensityPreference,
     this.environmentPreference,
     required this.onboardingCompleted,
+    required this.disclaimerAccepted,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1102,6 +1132,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       map['environment_preference'] = Variable<String>(environmentPreference);
     }
     map['onboarding_completed'] = Variable<bool>(onboardingCompleted);
+    map['disclaimer_accepted'] = Variable<bool>(disclaimerAccepted);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -1121,6 +1152,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
           ? const Value.absent()
           : Value(environmentPreference),
       onboardingCompleted: Value(onboardingCompleted),
+      disclaimerAccepted: Value(disclaimerAccepted),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1146,6 +1178,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       onboardingCompleted: serializer.fromJson<bool>(
         json['onboardingCompleted'],
       ),
+      disclaimerAccepted: serializer.fromJson<bool>(json['disclaimerAccepted']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1162,6 +1195,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
         environmentPreference,
       ),
       'onboardingCompleted': serializer.toJson<bool>(onboardingCompleted),
+      'disclaimerAccepted': serializer.toJson<bool>(disclaimerAccepted),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1174,6 +1208,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     Value<String?> intensityPreference = const Value.absent(),
     Value<String?> environmentPreference = const Value.absent(),
     bool? onboardingCompleted,
+    bool? disclaimerAccepted,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => UserProfileData(
@@ -1187,6 +1222,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
         ? environmentPreference.value
         : this.environmentPreference,
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+    disclaimerAccepted: disclaimerAccepted ?? this.disclaimerAccepted,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -1208,6 +1244,9 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       onboardingCompleted: data.onboardingCompleted.present
           ? data.onboardingCompleted.value
           : this.onboardingCompleted,
+      disclaimerAccepted: data.disclaimerAccepted.present
+          ? data.disclaimerAccepted.value
+          : this.disclaimerAccepted,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1222,6 +1261,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
           ..write('intensityPreference: $intensityPreference, ')
           ..write('environmentPreference: $environmentPreference, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
+          ..write('disclaimerAccepted: $disclaimerAccepted, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1236,6 +1276,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     intensityPreference,
     environmentPreference,
     onboardingCompleted,
+    disclaimerAccepted,
     createdAt,
     updatedAt,
   );
@@ -1249,6 +1290,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
           other.intensityPreference == this.intensityPreference &&
           other.environmentPreference == this.environmentPreference &&
           other.onboardingCompleted == this.onboardingCompleted &&
+          other.disclaimerAccepted == this.disclaimerAccepted &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1260,6 +1302,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
   final Value<String?> intensityPreference;
   final Value<String?> environmentPreference;
   final Value<bool> onboardingCompleted;
+  final Value<bool> disclaimerAccepted;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const UserProfileCompanion({
@@ -1269,6 +1312,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     this.intensityPreference = const Value.absent(),
     this.environmentPreference = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
+    this.disclaimerAccepted = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -1279,6 +1323,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     this.intensityPreference = const Value.absent(),
     this.environmentPreference = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
+    this.disclaimerAccepted = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : createdAt = Value(createdAt),
@@ -1290,6 +1335,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     Expression<String>? intensityPreference,
     Expression<String>? environmentPreference,
     Expression<bool>? onboardingCompleted,
+    Expression<bool>? disclaimerAccepted,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -1304,6 +1350,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
         'environment_preference': environmentPreference,
       if (onboardingCompleted != null)
         'onboarding_completed': onboardingCompleted,
+      if (disclaimerAccepted != null) 'disclaimer_accepted': disclaimerAccepted,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -1316,6 +1363,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     Value<String?>? intensityPreference,
     Value<String?>? environmentPreference,
     Value<bool>? onboardingCompleted,
+    Value<bool>? disclaimerAccepted,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -1327,6 +1375,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
       environmentPreference:
           environmentPreference ?? this.environmentPreference,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      disclaimerAccepted: disclaimerAccepted ?? this.disclaimerAccepted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -1355,6 +1404,9 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     if (onboardingCompleted.present) {
       map['onboarding_completed'] = Variable<bool>(onboardingCompleted.value);
     }
+    if (disclaimerAccepted.present) {
+      map['disclaimer_accepted'] = Variable<bool>(disclaimerAccepted.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1373,6 +1425,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
           ..write('intensityPreference: $intensityPreference, ')
           ..write('environmentPreference: $environmentPreference, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
+          ..write('disclaimerAccepted: $disclaimerAccepted, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -4089,6 +4142,7 @@ typedef $$UserProfileTableCreateCompanionBuilder =
       Value<String?> intensityPreference,
       Value<String?> environmentPreference,
       Value<bool> onboardingCompleted,
+      Value<bool> disclaimerAccepted,
       required DateTime createdAt,
       required DateTime updatedAt,
     });
@@ -4100,6 +4154,7 @@ typedef $$UserProfileTableUpdateCompanionBuilder =
       Value<String?> intensityPreference,
       Value<String?> environmentPreference,
       Value<bool> onboardingCompleted,
+      Value<bool> disclaimerAccepted,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -4140,6 +4195,11 @@ class $$UserProfileTableFilterComposer
 
   ColumnFilters<bool> get onboardingCompleted => $composableBuilder(
     column: $table.onboardingCompleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get disclaimerAccepted => $composableBuilder(
+    column: $table.disclaimerAccepted,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4193,6 +4253,11 @@ class $$UserProfileTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get disclaimerAccepted => $composableBuilder(
+    column: $table.disclaimerAccepted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -4241,6 +4306,11 @@ class $$UserProfileTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get disclaimerAccepted => $composableBuilder(
+    column: $table.disclaimerAccepted,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -4285,6 +4355,7 @@ class $$UserProfileTableTableManager
                 Value<String?> intensityPreference = const Value.absent(),
                 Value<String?> environmentPreference = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
+                Value<bool> disclaimerAccepted = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => UserProfileCompanion(
@@ -4294,6 +4365,7 @@ class $$UserProfileTableTableManager
                 intensityPreference: intensityPreference,
                 environmentPreference: environmentPreference,
                 onboardingCompleted: onboardingCompleted,
+                disclaimerAccepted: disclaimerAccepted,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -4305,6 +4377,7 @@ class $$UserProfileTableTableManager
                 Value<String?> intensityPreference = const Value.absent(),
                 Value<String?> environmentPreference = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
+                Value<bool> disclaimerAccepted = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
               }) => UserProfileCompanion.insert(
@@ -4314,6 +4387,7 @@ class $$UserProfileTableTableManager
                 intensityPreference: intensityPreference,
                 environmentPreference: environmentPreference,
                 onboardingCompleted: onboardingCompleted,
+                disclaimerAccepted: disclaimerAccepted,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),

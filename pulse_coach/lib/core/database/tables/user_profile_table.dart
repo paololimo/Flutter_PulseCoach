@@ -12,6 +12,8 @@ class UserProfile extends Table {
       text().nullable()(); // 'indoor' | 'outdoor' | 'any'
   BoolColumn get onboardingCompleted =>
       boolean().withDefault(const Constant(false))();
+  BoolColumn get disclaimerAccepted =>
+      boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 }

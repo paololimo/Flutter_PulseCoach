@@ -54,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -62,8 +62,9 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (Migrator m, int from, int to) async {
-      // Stepwise migrations — add here as schemaVersion increments:
-      // if (from < 2) { await m.addColumn(sessions, sessions.newColumn); }
+      if (from < 2) {
+        await m.addColumn(userProfile, userProfile.disclaimerAccepted);
+      }
     },
   );
 }
