@@ -4,6 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/app.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart';
+import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaimer.dart';
+import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer_status.dart';
+import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 
 void main() {
@@ -11,6 +16,21 @@ void main() {
     getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
     getIt.registerSingleton<AppDatabase>(
       AppDatabase.forTesting(NativeDatabase.memory()),
+    );
+    getIt.registerLazySingleton<OnboardingRepository>(
+      () => OnboardingRepositoryImpl(getIt<AppDatabase>()),
+    );
+    getIt.registerFactory<AcceptDisclaimer>(
+      () => AcceptDisclaimer(getIt<OnboardingRepository>()),
+    );
+    getIt.registerFactory<CheckDisclaimerStatus>(
+      () => CheckDisclaimerStatus(getIt<OnboardingRepository>()),
+    );
+    getIt.registerFactory<OnboardingCubit>(
+      () => OnboardingCubit(
+        getIt<AcceptDisclaimer>(),
+        getIt<CheckDisclaimerStatus>(),
+      ),
     );
   });
 

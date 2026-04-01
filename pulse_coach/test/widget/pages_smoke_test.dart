@@ -2,10 +2,19 @@
 // without crashing and displays the expected scaffold structure.
 // All pages are placeholder UIs (Story X.x stubs); tests form a regression
 // baseline for when real implementations replace them.
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pulse_coach/core/database/app_database.dart';
+import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart';
+import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaimer.dart';
+import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer_status.dart';
+import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
@@ -52,16 +61,45 @@ void main() {
   });
 
   group('Onboarding pages — smoke tests', () {
+    setUp(() {
+      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+      getIt.registerSingleton<AppDatabase>(
+        AppDatabase.forTesting(NativeDatabase.memory()),
+      );
+      getIt.registerLazySingleton<OnboardingRepository>(
+        () => OnboardingRepositoryImpl(getIt<AppDatabase>()),
+      );
+      getIt.registerFactory<AcceptDisclaimer>(
+        () => AcceptDisclaimer(getIt<OnboardingRepository>()),
+      );
+      getIt.registerFactory<CheckDisclaimerStatus>(
+        () => CheckDisclaimerStatus(getIt<OnboardingRepository>()),
+      );
+      getIt.registerFactory<OnboardingCubit>(
+        () => OnboardingCubit(
+          getIt<AcceptDisclaimer>(),
+          getIt<CheckDisclaimerStatus>(),
+        ),
+      );
+    });
+
+    tearDown(() async {
+      if (getIt.isRegistered<AppDatabase>()) {
+        await getIt<AppDatabase>().close();
+      }
+      await getIt.reset();
+    });
+
     testWidgets(
-      '[P1] 1.7-WIDGET-004: OnboardingPage renders with correct AppBar title',
+      '[P1] 1.7-WIDGET-004: OnboardingPage renders disclaimer screen',
       (tester) async {
         await tester.pumpWidget(MaterialApp(
           theme: AppTheme.darkTheme,
           home: const OnboardingPage(),
         ));
-        await tester.pump();
-        expect(find.text('Onboarding'), findsOneWidget);
-        expect(find.text('Onboarding — Story 2.x'), findsOneWidget);
+        await tester.pumpAndSettle();
+        // DisclaimerScreen is now the OnboardingPage content (Story 2.1)
+        expect(find.text('Your data stays yours.'), findsOneWidget);
       },
     );
 

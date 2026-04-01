@@ -2,12 +2,38 @@
 // Tests the onboarding gate: no profile → /onboarding, profile → /today
 // Strategy: pump PulseCoachApp with controlled database state,
 // let GoRouter redirect settle, then assert the correct page renders.
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/app.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart';
+import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaimer.dart';
+import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer_status.dart';
+import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
+
+/// Registers the onboarding DI chain needed for OnboardingPage.
+/// Must be called AFTER AppDatabase is registered in getIt.
+void _registerOnboardingDeps() {
+  getIt.registerLazySingleton<OnboardingRepository>(
+    () => OnboardingRepositoryImpl(getIt<AppDatabase>()),
+  );
+  getIt.registerFactory<AcceptDisclaimer>(
+    () => AcceptDisclaimer(getIt<OnboardingRepository>()),
+  );
+  getIt.registerFactory<CheckDisclaimerStatus>(
+    () => CheckDisclaimerStatus(getIt<OnboardingRepository>()),
+  );
+  getIt.registerFactory<OnboardingCubit>(
+    () => OnboardingCubit(
+      getIt<AcceptDisclaimer>(),
+      getIt<CheckDisclaimerStatus>(),
+    ),
+  );
+}
 
 void main() {
   tearDown(() async {
@@ -23,33 +49,35 @@ void main() {
       getIt.registerSingleton<AppDatabase>(
         AppDatabase.forTesting(NativeDatabase.memory()),
       );
+      _registerOnboardingDeps();
     });
 
     testWidgets(
-      '[P0] 1.7-UNIT-001: redirects to /onboarding when no profile exists',
+      '[P0] 1.7-UNIT-001: redirects to /onboarding (disclaimer screen) when no profile exists',
       (tester) async {
         await tester.pumpWidget(const PulseCoachApp());
         await tester.pumpAndSettle();
-        // OnboardingPage body text confirms the redirect fired correctly
-        expect(find.text('Onboarding — Story 2.x'), findsOneWidget);
+        // DisclaimerScreen headline confirms the redirect fired correctly
+        expect(find.text('Your data stays yours.'), findsOneWidget);
       },
     );
 
     testWidgets(
-      '[P0] 1.7-UNIT-002: /onboarding page is reachable without profile',
+      '[P0] 1.7-UNIT-002: /onboarding disclaimer screen is reachable without profile',
       (tester) async {
         await tester.pumpWidget(const PulseCoachApp());
         await tester.pumpAndSettle();
-        // The OnboardingPage AppBar title is rendered
-        expect(find.text('Onboarding'), findsOneWidget);
+        // Medical disclaimer text confirms DisclaimerScreen rendered
+        expect(find.textContaining('not a medical device'), findsWidgets);
       },
     );
   });
 
-  group('AppRouter redirect — user profile present', () {
+  group('AppRouter redirect — disclaimer not accepted', () {
     setUp(() async {
       getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
       final db = AppDatabase.forTesting(NativeDatabase.memory());
+      // Profile exists but disclaimerAccepted = false (default)
       await db.userProfileDao.insertProfile(
         UserProfileCompanion.insert(
           createdAt: DateTime.now(),
@@ -57,10 +85,63 @@ void main() {
         ),
       );
       getIt.registerSingleton<AppDatabase>(db);
+      _registerOnboardingDeps();
     });
 
     testWidgets(
-      '[P0] 1.7-UNIT-003: redirects to /today when profile exists',
+      '[P1] 2.1-UNIT-005: redirects to /onboarding when disclaimerAccepted is false',
+      (tester) async {
+        await tester.pumpWidget(const PulseCoachApp());
+        await tester.pumpAndSettle();
+        expect(find.text('Your data stays yours.'), findsOneWidget);
+      },
+    );
+  });
+
+  group('AppRouter redirect — disclaimer accepted, onboarding not complete', () {
+    setUp(() async {
+      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      await db.userProfileDao.insertProfile(
+        UserProfileCompanion.insert(
+          disclaimerAccepted: const Value(true),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      getIt.registerSingleton<AppDatabase>(db);
+      _registerOnboardingDeps();
+    });
+
+    testWidgets(
+      '[P1] 2.1-UNIT-006: onboarding continues internally when disclaimerAccepted=true, onboardingCompleted=false',
+      (tester) async {
+        await tester.pumpWidget(const PulseCoachApp());
+        await tester.pumpAndSettle();
+        // Onboarding continues — past disclaimer, into next step placeholder
+        expect(find.text('Onboarding continues — Story 2.2/2.3'), findsOneWidget);
+      },
+    );
+  });
+
+  group('AppRouter redirect — onboarding complete', () {
+    setUp(() async {
+      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      await db.userProfileDao.insertProfile(
+        UserProfileCompanion.insert(
+          disclaimerAccepted: const Value(true),
+          onboardingCompleted: const Value(true),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      getIt.registerSingleton<AppDatabase>(db);
+      _registerOnboardingDeps();
+    });
+
+    testWidgets(
+      '[P0] 1.7-UNIT-003: redirects to /today when onboardingCompleted is true',
       (tester) async {
         await tester.pumpWidget(const PulseCoachApp());
         await tester.pumpAndSettle();
@@ -70,7 +151,7 @@ void main() {
     );
 
     testWidgets(
-      '[P0] 1.7-UNIT-004: shell navigation bar is visible when profile exists',
+      '[P0] 1.7-UNIT-004: shell navigation bar is visible when onboarding complete',
       (tester) async {
         await tester.pumpWidget(const PulseCoachApp());
         await tester.pumpAndSettle();

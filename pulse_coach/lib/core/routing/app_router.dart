@@ -89,12 +89,16 @@ class AppRouter {
   ) async {
     final userProfile =
         await getIt<AppDatabase>().userProfileDao.getProfile();
-    final onboardingComplete = userProfile != null;
+    final disclaimerAccepted = userProfile?.disclaimerAccepted ?? false;
+    final onboardingComplete = userProfile?.onboardingCompleted ?? false;
     final location = state.matchedLocation;
     final goingToOnboarding = location == onboarding;
     final atRoot = location == '/';
 
-    if (!onboardingComplete && !goingToOnboarding) return onboarding;
+    if (!disclaimerAccepted && !goingToOnboarding) return onboarding;
+    if (disclaimerAccepted && !onboardingComplete && !goingToOnboarding) {
+      return onboarding;
+    }
     if (onboardingComplete && (goingToOnboarding || atRoot)) return today;
     return null; // no redirect
   }
