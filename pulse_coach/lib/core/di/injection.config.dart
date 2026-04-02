@@ -20,6 +20,8 @@ import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaime
     as _i944;
 import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer_status.dart'
     as _i145;
+import 'package:pulse_coach/features/onboarding/domain/usecases/save_profile.dart'
+    as _i280;
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart'
     as _i472;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
@@ -43,10 +45,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i145.CheckDisclaimerStatus>(
       () => _i145.CheckDisclaimerStatus(gh<_i338.OnboardingRepository>()),
     );
+    gh.factory<_i280.SaveProfile>(
+      () => _i280.SaveProfile(gh<_i338.OnboardingRepository>()),
+    );
     gh.factory<_i472.OnboardingCubit>(
       () => _i472.OnboardingCubit(
         gh<_i944.AcceptDisclaimer>(),
         gh<_i145.CheckDisclaimerStatus>(),
+        gh<_i280.SaveProfile>(),
       ),
     );
     return this;

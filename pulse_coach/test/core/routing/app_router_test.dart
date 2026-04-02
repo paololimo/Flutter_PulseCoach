@@ -12,6 +12,7 @@ import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_rep
 import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaimer.dart';
 import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer_status.dart';
+import 'package:pulse_coach/features/onboarding/domain/usecases/save_profile.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 
@@ -27,10 +28,14 @@ void _registerOnboardingDeps() {
   getIt.registerFactory<CheckDisclaimerStatus>(
     () => CheckDisclaimerStatus(getIt<OnboardingRepository>()),
   );
+  getIt.registerFactory<SaveProfile>(
+    () => SaveProfile(getIt<OnboardingRepository>()),
+  );
   getIt.registerFactory<OnboardingCubit>(
     () => OnboardingCubit(
       getIt<AcceptDisclaimer>(),
       getIt<CheckDisclaimerStatus>(),
+      getIt<SaveProfile>(),
     ),
   );
 }
@@ -117,9 +122,13 @@ void main() {
       '[P1] 2.1-UNIT-006: onboarding continues internally when disclaimerAccepted=true, onboardingCompleted=false',
       (tester) async {
         await tester.pumpWidget(const PulseCoachApp());
-        await tester.pumpAndSettle();
-        // Onboarding continues — past disclaimer, into next step placeholder
-        expect(find.text('Onboarding continues — Story 2.2/2.3'), findsOneWidget);
+        // Use pump with explicit durations instead of pumpAndSettle because
+        // Lottie creates a looping AnimationController that never settles.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500)); // DB read + cubit
+        await tester.pump(const Duration(milliseconds: 100)); // router redirect
+        // OnboardingCarousel Screen 1 headline confirms carousel rendered
+        expect(find.text('Move more. Decide less.'), findsOneWidget);
       },
     );
   });

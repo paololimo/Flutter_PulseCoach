@@ -895,6 +895,28 @@ class $UserProfileTable extends UserProfile
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _availableTimeMeta = const VerificationMeta(
+    'availableTime',
+  );
+  @override
+  late final GeneratedColumn<String> availableTime = GeneratedColumn<String>(
+    'available_time',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _physicalConstraintsMeta =
+      const VerificationMeta('physicalConstraints');
+  @override
+  late final GeneratedColumn<String> physicalConstraints =
+      GeneratedColumn<String>(
+        'physical_constraints',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _onboardingCompletedMeta =
       const VerificationMeta('onboardingCompleted');
   @override
@@ -952,6 +974,8 @@ class $UserProfileTable extends UserProfile
     weeklySessionTarget,
     intensityPreference,
     environmentPreference,
+    availableTime,
+    physicalConstraints,
     onboardingCompleted,
     disclaimerAccepted,
     createdAt,
@@ -1005,6 +1029,24 @@ class $UserProfileTable extends UserProfile
         environmentPreference.isAcceptableOrUnknown(
           data['environment_preference']!,
           _environmentPreferenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('available_time')) {
+      context.handle(
+        _availableTimeMeta,
+        availableTime.isAcceptableOrUnknown(
+          data['available_time']!,
+          _availableTimeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('physical_constraints')) {
+      context.handle(
+        _physicalConstraintsMeta,
+        physicalConstraints.isAcceptableOrUnknown(
+          data['physical_constraints']!,
+          _physicalConstraintsMeta,
         ),
       );
     }
@@ -1071,6 +1113,14 @@ class $UserProfileTable extends UserProfile
         DriftSqlType.string,
         data['${effectivePrefix}environment_preference'],
       ),
+      availableTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}available_time'],
+      ),
+      physicalConstraints: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}physical_constraints'],
+      ),
       onboardingCompleted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}onboarding_completed'],
@@ -1102,6 +1152,8 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
   final int weeklySessionTarget;
   final String? intensityPreference;
   final String? environmentPreference;
+  final String? availableTime;
+  final String? physicalConstraints;
   final bool onboardingCompleted;
   final bool disclaimerAccepted;
   final DateTime createdAt;
@@ -1112,6 +1164,8 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     required this.weeklySessionTarget,
     this.intensityPreference,
     this.environmentPreference,
+    this.availableTime,
+    this.physicalConstraints,
     required this.onboardingCompleted,
     required this.disclaimerAccepted,
     required this.createdAt,
@@ -1130,6 +1184,12 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     }
     if (!nullToAbsent || environmentPreference != null) {
       map['environment_preference'] = Variable<String>(environmentPreference);
+    }
+    if (!nullToAbsent || availableTime != null) {
+      map['available_time'] = Variable<String>(availableTime);
+    }
+    if (!nullToAbsent || physicalConstraints != null) {
+      map['physical_constraints'] = Variable<String>(physicalConstraints);
     }
     map['onboarding_completed'] = Variable<bool>(onboardingCompleted);
     map['disclaimer_accepted'] = Variable<bool>(disclaimerAccepted);
@@ -1151,6 +1211,12 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       environmentPreference: environmentPreference == null && nullToAbsent
           ? const Value.absent()
           : Value(environmentPreference),
+      availableTime: availableTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(availableTime),
+      physicalConstraints: physicalConstraints == null && nullToAbsent
+          ? const Value.absent()
+          : Value(physicalConstraints),
       onboardingCompleted: Value(onboardingCompleted),
       disclaimerAccepted: Value(disclaimerAccepted),
       createdAt: Value(createdAt),
@@ -1175,6 +1241,10 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       environmentPreference: serializer.fromJson<String?>(
         json['environmentPreference'],
       ),
+      availableTime: serializer.fromJson<String?>(json['availableTime']),
+      physicalConstraints: serializer.fromJson<String?>(
+        json['physicalConstraints'],
+      ),
       onboardingCompleted: serializer.fromJson<bool>(
         json['onboardingCompleted'],
       ),
@@ -1194,6 +1264,8 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       'environmentPreference': serializer.toJson<String?>(
         environmentPreference,
       ),
+      'availableTime': serializer.toJson<String?>(availableTime),
+      'physicalConstraints': serializer.toJson<String?>(physicalConstraints),
       'onboardingCompleted': serializer.toJson<bool>(onboardingCompleted),
       'disclaimerAccepted': serializer.toJson<bool>(disclaimerAccepted),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1207,6 +1279,8 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     int? weeklySessionTarget,
     Value<String?> intensityPreference = const Value.absent(),
     Value<String?> environmentPreference = const Value.absent(),
+    Value<String?> availableTime = const Value.absent(),
+    Value<String?> physicalConstraints = const Value.absent(),
     bool? onboardingCompleted,
     bool? disclaimerAccepted,
     DateTime? createdAt,
@@ -1221,6 +1295,12 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     environmentPreference: environmentPreference.present
         ? environmentPreference.value
         : this.environmentPreference,
+    availableTime: availableTime.present
+        ? availableTime.value
+        : this.availableTime,
+    physicalConstraints: physicalConstraints.present
+        ? physicalConstraints.value
+        : this.physicalConstraints,
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
     disclaimerAccepted: disclaimerAccepted ?? this.disclaimerAccepted,
     createdAt: createdAt ?? this.createdAt,
@@ -1241,6 +1321,12 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       environmentPreference: data.environmentPreference.present
           ? data.environmentPreference.value
           : this.environmentPreference,
+      availableTime: data.availableTime.present
+          ? data.availableTime.value
+          : this.availableTime,
+      physicalConstraints: data.physicalConstraints.present
+          ? data.physicalConstraints.value
+          : this.physicalConstraints,
       onboardingCompleted: data.onboardingCompleted.present
           ? data.onboardingCompleted.value
           : this.onboardingCompleted,
@@ -1260,6 +1346,8 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
           ..write('weeklySessionTarget: $weeklySessionTarget, ')
           ..write('intensityPreference: $intensityPreference, ')
           ..write('environmentPreference: $environmentPreference, ')
+          ..write('availableTime: $availableTime, ')
+          ..write('physicalConstraints: $physicalConstraints, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('disclaimerAccepted: $disclaimerAccepted, ')
           ..write('createdAt: $createdAt, ')
@@ -1275,6 +1363,8 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     weeklySessionTarget,
     intensityPreference,
     environmentPreference,
+    availableTime,
+    physicalConstraints,
     onboardingCompleted,
     disclaimerAccepted,
     createdAt,
@@ -1289,6 +1379,8 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
           other.weeklySessionTarget == this.weeklySessionTarget &&
           other.intensityPreference == this.intensityPreference &&
           other.environmentPreference == this.environmentPreference &&
+          other.availableTime == this.availableTime &&
+          other.physicalConstraints == this.physicalConstraints &&
           other.onboardingCompleted == this.onboardingCompleted &&
           other.disclaimerAccepted == this.disclaimerAccepted &&
           other.createdAt == this.createdAt &&
@@ -1301,6 +1393,8 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
   final Value<int> weeklySessionTarget;
   final Value<String?> intensityPreference;
   final Value<String?> environmentPreference;
+  final Value<String?> availableTime;
+  final Value<String?> physicalConstraints;
   final Value<bool> onboardingCompleted;
   final Value<bool> disclaimerAccepted;
   final Value<DateTime> createdAt;
@@ -1311,6 +1405,8 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     this.weeklySessionTarget = const Value.absent(),
     this.intensityPreference = const Value.absent(),
     this.environmentPreference = const Value.absent(),
+    this.availableTime = const Value.absent(),
+    this.physicalConstraints = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
     this.disclaimerAccepted = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1322,6 +1418,8 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     this.weeklySessionTarget = const Value.absent(),
     this.intensityPreference = const Value.absent(),
     this.environmentPreference = const Value.absent(),
+    this.availableTime = const Value.absent(),
+    this.physicalConstraints = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
     this.disclaimerAccepted = const Value.absent(),
     required DateTime createdAt,
@@ -1334,6 +1432,8 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     Expression<int>? weeklySessionTarget,
     Expression<String>? intensityPreference,
     Expression<String>? environmentPreference,
+    Expression<String>? availableTime,
+    Expression<String>? physicalConstraints,
     Expression<bool>? onboardingCompleted,
     Expression<bool>? disclaimerAccepted,
     Expression<DateTime>? createdAt,
@@ -1348,6 +1448,9 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
         'intensity_preference': intensityPreference,
       if (environmentPreference != null)
         'environment_preference': environmentPreference,
+      if (availableTime != null) 'available_time': availableTime,
+      if (physicalConstraints != null)
+        'physical_constraints': physicalConstraints,
       if (onboardingCompleted != null)
         'onboarding_completed': onboardingCompleted,
       if (disclaimerAccepted != null) 'disclaimer_accepted': disclaimerAccepted,
@@ -1362,6 +1465,8 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     Value<int>? weeklySessionTarget,
     Value<String?>? intensityPreference,
     Value<String?>? environmentPreference,
+    Value<String?>? availableTime,
+    Value<String?>? physicalConstraints,
     Value<bool>? onboardingCompleted,
     Value<bool>? disclaimerAccepted,
     Value<DateTime>? createdAt,
@@ -1374,6 +1479,8 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
       intensityPreference: intensityPreference ?? this.intensityPreference,
       environmentPreference:
           environmentPreference ?? this.environmentPreference,
+      availableTime: availableTime ?? this.availableTime,
+      physicalConstraints: physicalConstraints ?? this.physicalConstraints,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       disclaimerAccepted: disclaimerAccepted ?? this.disclaimerAccepted,
       createdAt: createdAt ?? this.createdAt,
@@ -1401,6 +1508,12 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
         environmentPreference.value,
       );
     }
+    if (availableTime.present) {
+      map['available_time'] = Variable<String>(availableTime.value);
+    }
+    if (physicalConstraints.present) {
+      map['physical_constraints'] = Variable<String>(physicalConstraints.value);
+    }
     if (onboardingCompleted.present) {
       map['onboarding_completed'] = Variable<bool>(onboardingCompleted.value);
     }
@@ -1424,6 +1537,8 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
           ..write('weeklySessionTarget: $weeklySessionTarget, ')
           ..write('intensityPreference: $intensityPreference, ')
           ..write('environmentPreference: $environmentPreference, ')
+          ..write('availableTime: $availableTime, ')
+          ..write('physicalConstraints: $physicalConstraints, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('disclaimerAccepted: $disclaimerAccepted, ')
           ..write('createdAt: $createdAt, ')
@@ -4141,6 +4256,8 @@ typedef $$UserProfileTableCreateCompanionBuilder =
       Value<int> weeklySessionTarget,
       Value<String?> intensityPreference,
       Value<String?> environmentPreference,
+      Value<String?> availableTime,
+      Value<String?> physicalConstraints,
       Value<bool> onboardingCompleted,
       Value<bool> disclaimerAccepted,
       required DateTime createdAt,
@@ -4153,6 +4270,8 @@ typedef $$UserProfileTableUpdateCompanionBuilder =
       Value<int> weeklySessionTarget,
       Value<String?> intensityPreference,
       Value<String?> environmentPreference,
+      Value<String?> availableTime,
+      Value<String?> physicalConstraints,
       Value<bool> onboardingCompleted,
       Value<bool> disclaimerAccepted,
       Value<DateTime> createdAt,
@@ -4190,6 +4309,16 @@ class $$UserProfileTableFilterComposer
 
   ColumnFilters<String> get environmentPreference => $composableBuilder(
     column: $table.environmentPreference,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get availableTime => $composableBuilder(
+    column: $table.availableTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get physicalConstraints => $composableBuilder(
+    column: $table.physicalConstraints,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4248,6 +4377,16 @@ class $$UserProfileTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get availableTime => $composableBuilder(
+    column: $table.availableTime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get physicalConstraints => $composableBuilder(
+    column: $table.physicalConstraints,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get onboardingCompleted => $composableBuilder(
     column: $table.onboardingCompleted,
     builder: (column) => ColumnOrderings(column),
@@ -4298,6 +4437,16 @@ class $$UserProfileTableAnnotationComposer
 
   GeneratedColumn<String> get environmentPreference => $composableBuilder(
     column: $table.environmentPreference,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get availableTime => $composableBuilder(
+    column: $table.availableTime,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get physicalConstraints => $composableBuilder(
+    column: $table.physicalConstraints,
     builder: (column) => column,
   );
 
@@ -4354,6 +4503,8 @@ class $$UserProfileTableTableManager
                 Value<int> weeklySessionTarget = const Value.absent(),
                 Value<String?> intensityPreference = const Value.absent(),
                 Value<String?> environmentPreference = const Value.absent(),
+                Value<String?> availableTime = const Value.absent(),
+                Value<String?> physicalConstraints = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<bool> disclaimerAccepted = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -4364,6 +4515,8 @@ class $$UserProfileTableTableManager
                 weeklySessionTarget: weeklySessionTarget,
                 intensityPreference: intensityPreference,
                 environmentPreference: environmentPreference,
+                availableTime: availableTime,
+                physicalConstraints: physicalConstraints,
                 onboardingCompleted: onboardingCompleted,
                 disclaimerAccepted: disclaimerAccepted,
                 createdAt: createdAt,
@@ -4376,6 +4529,8 @@ class $$UserProfileTableTableManager
                 Value<int> weeklySessionTarget = const Value.absent(),
                 Value<String?> intensityPreference = const Value.absent(),
                 Value<String?> environmentPreference = const Value.absent(),
+                Value<String?> availableTime = const Value.absent(),
+                Value<String?> physicalConstraints = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<bool> disclaimerAccepted = const Value.absent(),
                 required DateTime createdAt,
@@ -4386,6 +4541,8 @@ class $$UserProfileTableTableManager
                 weeklySessionTarget: weeklySessionTarget,
                 intensityPreference: intensityPreference,
                 environmentPreference: environmentPreference,
+                availableTime: availableTime,
+                physicalConstraints: physicalConstraints,
                 onboardingCompleted: onboardingCompleted,
                 disclaimerAccepted: disclaimerAccepted,
                 createdAt: createdAt,

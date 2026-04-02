@@ -8,10 +8,14 @@ import 'dart:async' as _i4;
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:pulse_coach/core/error/failures.dart' as _i5;
+import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart'
+    as _i8;
 import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaimer.dart'
     as _i3;
 import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer_status.dart'
     as _i6;
+import 'package:pulse_coach/features/onboarding/domain/usecases/save_profile.dart'
+    as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -76,4 +80,26 @@ class MockCheckDisclaimerStatus extends _i1.Mock
             ),
           )
           as _i4.Future<_i2.Either<_i5.Failure, bool>>);
+}
+
+/// A class which mocks [SaveProfile].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSaveProfile extends _i1.Mock implements _i7.SaveProfile {
+  MockSaveProfile() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, void>> call(_i8.UserProfile? profile) =>
+      (super.noSuchMethod(
+            Invocation.method(#call, [profile]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+              _FakeEither_0<_i5.Failure, void>(
+                this,
+                Invocation.method(#call, [profile]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, void>>);
 }

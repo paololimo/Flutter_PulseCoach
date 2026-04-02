@@ -10,6 +10,8 @@ class UserProfile extends Table {
       text().nullable()(); // 'low' | 'medium' | 'high'
   TextColumn get environmentPreference =>
       text().nullable()(); // 'indoor' | 'outdoor' | 'any'
+  TextColumn get availableTime => text().nullable()();
+  TextColumn get physicalConstraints => text().nullable()();
   BoolColumn get onboardingCompleted =>
       boolean().withDefault(const Constant(false))();
   BoolColumn get disclaimerAccepted =>

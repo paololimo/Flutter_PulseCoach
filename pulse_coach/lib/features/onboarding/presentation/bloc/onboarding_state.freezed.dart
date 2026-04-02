@@ -55,13 +55,15 @@ extension OnboardingStatePatterns on OnboardingState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( OnboardingLoading value)?  loading,TResult Function( OnboardingDisclaimerPending value)?  disclaimerPending,TResult Function( OnboardingDisclaimerAccepted value)?  disclaimerAccepted,TResult Function( OnboardingError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( OnboardingLoading value)?  loading,TResult Function( OnboardingDisclaimerPending value)?  disclaimerPending,TResult Function( OnboardingDisclaimerAccepted value)?  disclaimerAccepted,TResult Function( OnboardingProfileSetupReady value)?  profileSetupReady,TResult Function( OnboardingOnboardingComplete value)?  onboardingComplete,TResult Function( OnboardingError value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case OnboardingLoading() when loading != null:
 return loading(_that);case OnboardingDisclaimerPending() when disclaimerPending != null:
 return disclaimerPending(_that);case OnboardingDisclaimerAccepted() when disclaimerAccepted != null:
-return disclaimerAccepted(_that);case OnboardingError() when error != null:
+return disclaimerAccepted(_that);case OnboardingProfileSetupReady() when profileSetupReady != null:
+return profileSetupReady(_that);case OnboardingOnboardingComplete() when onboardingComplete != null:
+return onboardingComplete(_that);case OnboardingError() when error != null:
 return error(_that);case _:
   return orElse();
 
@@ -80,13 +82,15 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( OnboardingLoading value)  loading,required TResult Function( OnboardingDisclaimerPending value)  disclaimerPending,required TResult Function( OnboardingDisclaimerAccepted value)  disclaimerAccepted,required TResult Function( OnboardingError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( OnboardingLoading value)  loading,required TResult Function( OnboardingDisclaimerPending value)  disclaimerPending,required TResult Function( OnboardingDisclaimerAccepted value)  disclaimerAccepted,required TResult Function( OnboardingProfileSetupReady value)  profileSetupReady,required TResult Function( OnboardingOnboardingComplete value)  onboardingComplete,required TResult Function( OnboardingError value)  error,}){
 final _that = this;
 switch (_that) {
 case OnboardingLoading():
 return loading(_that);case OnboardingDisclaimerPending():
 return disclaimerPending(_that);case OnboardingDisclaimerAccepted():
-return disclaimerAccepted(_that);case OnboardingError():
+return disclaimerAccepted(_that);case OnboardingProfileSetupReady():
+return profileSetupReady(_that);case OnboardingOnboardingComplete():
+return onboardingComplete(_that);case OnboardingError():
 return error(_that);case _:
   throw StateError('Unexpected subclass');
 
@@ -104,13 +108,15 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( OnboardingLoading value)?  loading,TResult? Function( OnboardingDisclaimerPending value)?  disclaimerPending,TResult? Function( OnboardingDisclaimerAccepted value)?  disclaimerAccepted,TResult? Function( OnboardingError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( OnboardingLoading value)?  loading,TResult? Function( OnboardingDisclaimerPending value)?  disclaimerPending,TResult? Function( OnboardingDisclaimerAccepted value)?  disclaimerAccepted,TResult? Function( OnboardingProfileSetupReady value)?  profileSetupReady,TResult? Function( OnboardingOnboardingComplete value)?  onboardingComplete,TResult? Function( OnboardingError value)?  error,}){
 final _that = this;
 switch (_that) {
 case OnboardingLoading() when loading != null:
 return loading(_that);case OnboardingDisclaimerPending() when disclaimerPending != null:
 return disclaimerPending(_that);case OnboardingDisclaimerAccepted() when disclaimerAccepted != null:
-return disclaimerAccepted(_that);case OnboardingError() when error != null:
+return disclaimerAccepted(_that);case OnboardingProfileSetupReady() when profileSetupReady != null:
+return profileSetupReady(_that);case OnboardingOnboardingComplete() when onboardingComplete != null:
+return onboardingComplete(_that);case OnboardingError() when error != null:
 return error(_that);case _:
   return null;
 
@@ -128,12 +134,14 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function()?  disclaimerPending,TResult Function()?  disclaimerAccepted,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function()?  disclaimerPending,TResult Function()?  disclaimerAccepted,TResult Function()?  profileSetupReady,TResult Function()?  onboardingComplete,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case OnboardingLoading() when loading != null:
 return loading();case OnboardingDisclaimerPending() when disclaimerPending != null:
 return disclaimerPending();case OnboardingDisclaimerAccepted() when disclaimerAccepted != null:
-return disclaimerAccepted();case OnboardingError() when error != null:
+return disclaimerAccepted();case OnboardingProfileSetupReady() when profileSetupReady != null:
+return profileSetupReady();case OnboardingOnboardingComplete() when onboardingComplete != null:
+return onboardingComplete();case OnboardingError() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -152,12 +160,14 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function()  disclaimerPending,required TResult Function()  disclaimerAccepted,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function()  disclaimerPending,required TResult Function()  disclaimerAccepted,required TResult Function()  profileSetupReady,required TResult Function()  onboardingComplete,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case OnboardingLoading():
 return loading();case OnboardingDisclaimerPending():
 return disclaimerPending();case OnboardingDisclaimerAccepted():
-return disclaimerAccepted();case OnboardingError():
+return disclaimerAccepted();case OnboardingProfileSetupReady():
+return profileSetupReady();case OnboardingOnboardingComplete():
+return onboardingComplete();case OnboardingError():
 return error(_that.message);case _:
   throw StateError('Unexpected subclass');
 
@@ -175,12 +185,14 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function()?  disclaimerPending,TResult? Function()?  disclaimerAccepted,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function()?  disclaimerPending,TResult? Function()?  disclaimerAccepted,TResult? Function()?  profileSetupReady,TResult? Function()?  onboardingComplete,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case OnboardingLoading() when loading != null:
 return loading();case OnboardingDisclaimerPending() when disclaimerPending != null:
 return disclaimerPending();case OnboardingDisclaimerAccepted() when disclaimerAccepted != null:
-return disclaimerAccepted();case OnboardingError() when error != null:
+return disclaimerAccepted();case OnboardingProfileSetupReady() when profileSetupReady != null:
+return profileSetupReady();case OnboardingOnboardingComplete() when onboardingComplete != null:
+return onboardingComplete();case OnboardingError() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -277,6 +289,70 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'OnboardingState.disclaimerAccepted()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class OnboardingProfileSetupReady implements OnboardingState {
+  const OnboardingProfileSetupReady();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OnboardingProfileSetupReady);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'OnboardingState.profileSetupReady()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class OnboardingOnboardingComplete implements OnboardingState {
+  const OnboardingOnboardingComplete();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OnboardingOnboardingComplete);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'OnboardingState.onboardingComplete()';
 }
 
 
