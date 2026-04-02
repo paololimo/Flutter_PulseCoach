@@ -48,6 +48,49 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   }
 
   @override
+  Future<Either<Failure, UserProfile>> getProfile() async {
+    try {
+      final data = await _db.userProfileDao.getProfile();
+      if (data == null) {
+        return Left(CacheFailure('Profile not found'));
+      }
+      return Right(UserProfile(
+        fitnessLevel: data.intensityPreference ?? 'low',
+        goal: data.fitnessGoal ?? 'cardio',
+        availableTime: data.availableTime ?? 'short',
+        physicalConstraints: data.physicalConstraints ?? 'none',
+      ));
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateProfile(UserProfile profile) async {
+    try {
+      final existing = await _db.userProfileDao.getProfile();
+      if (existing == null) {
+        return Left(CacheFailure('Profile not found'));
+      }
+      final updated = await _db.userProfileDao.updateProfile(
+        existing.copyWith(
+          intensityPreference: Value(profile.fitnessLevel),
+          fitnessGoal: Value(profile.goal),
+          availableTime: Value(profile.availableTime),
+          physicalConstraints: Value(profile.physicalConstraints),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      if (!updated) {
+        return Left(CacheFailure('Profile update failed'));
+      }
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> saveProfile(UserProfile profile) async {
     try {
       final existing = await _db.userProfileDao.getProfile();

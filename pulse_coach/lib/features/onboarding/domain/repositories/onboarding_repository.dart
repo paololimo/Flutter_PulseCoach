@@ -6,4 +6,6 @@ abstract class OnboardingRepository {
   Future<Either<Failure, void>> acceptDisclaimer();
   Future<Either<Failure, bool>> isDisclaimerAccepted();
   Future<Either<Failure, void>> saveProfile(UserProfile profile);
+  Future<Either<Failure, UserProfile>> getProfile();
+  Future<Either<Failure, void>> updateProfile(UserProfile profile);
 }

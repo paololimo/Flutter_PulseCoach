@@ -12,8 +12,11 @@ import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_rep
 import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaimer.dart';
 import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer_status.dart';
+import 'package:pulse_coach/features/onboarding/domain/usecases/get_profile.dart';
 import 'package:pulse_coach/features/onboarding/domain/usecases/save_profile.dart';
+import 'package:pulse_coach/features/onboarding/domain/usecases/update_profile.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
+import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 
 /// Registers the onboarding DI chain needed for OnboardingPage.
@@ -37,6 +40,15 @@ void _registerOnboardingDeps() {
       getIt<CheckDisclaimerStatus>(),
       getIt<SaveProfile>(),
     ),
+  );
+  getIt.registerFactory<GetProfile>(
+    () => GetProfile(getIt<OnboardingRepository>()),
+  );
+  getIt.registerFactory<UpdateProfile>(
+    () => UpdateProfile(getIt<OnboardingRepository>()),
+  );
+  getIt.registerFactory<ProfileCubit>(
+    () => ProfileCubit(getIt<GetProfile>(), getIt<UpdateProfile>()),
   );
 }
 
