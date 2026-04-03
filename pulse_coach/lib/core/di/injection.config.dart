@@ -34,14 +34,24 @@ import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cub
     as _i472;
 import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.dart'
     as _i901;
+import 'package:pulse_coach/features/session/data/datasources/accelerometer_data_source.dart'
+    as _i253;
 import 'package:pulse_coach/features/session/data/datasources/health_data_source.dart'
     as _i311;
 import 'package:pulse_coach/features/session/data/repositories/health_repository_impl.dart'
     as _i1067;
+import 'package:pulse_coach/features/session/data/repositories/sensor_repository_impl.dart'
+    as _i700;
 import 'package:pulse_coach/features/session/domain/repositories/health_repository.dart'
     as _i1070;
+import 'package:pulse_coach/features/session/domain/repositories/sensor_repository.dart'
+    as _i628;
+import 'package:pulse_coach/features/session/domain/usecases/get_activity_level.dart'
+    as _i1;
 import 'package:pulse_coach/features/session/domain/usecases/get_health_data.dart'
     as _i746;
+import 'package:pulse_coach/features/session/domain/usecases/get_sensor_context.dart'
+    as _i984;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
 
@@ -53,6 +63,9 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final healthModule = _$HealthModule();
+    gh.factory<_i253.AccelerometerDataSource>(
+      () => _i253.AccelerometerDataSource(),
+    );
     gh.singleton<_i79.AppDatabase>(() => _i79.AppDatabase());
     gh.singleton<_i237.Health>(() => healthModule.health);
     gh.lazySingleton<_i291.ThemeCubit>(() => _i291.ThemeCubit());
@@ -62,8 +75,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i311.HealthDataSource>(
       () => _i311.HealthDataSource(gh<_i237.Health>()),
     );
+    gh.factory<_i628.SensorRepository>(
+      () => _i700.SensorRepositoryImpl(gh<_i253.AccelerometerDataSource>()),
+    );
     gh.singleton<_i227.BehavioralStateDao>(
       () => healthModule.behavioralStateDao(gh<_i79.AppDatabase>()),
+    );
+    gh.factory<_i1.GetActivityLevel>(
+      () => _i1.GetActivityLevel(gh<_i628.SensorRepository>()),
     );
     gh.factory<_i1070.HealthRepository>(
       () => _i1067.HealthRepositoryImpl(
@@ -98,6 +117,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i944.AcceptDisclaimer>(),
         gh<_i145.CheckDisclaimerStatus>(),
         gh<_i280.SaveProfile>(),
+      ),
+    );
+    gh.factory<_i984.GetSensorContext>(
+      () => _i984.GetSensorContext(
+        gh<_i746.GetHealthData>(),
+        gh<_i1.GetActivityLevel>(),
       ),
     );
     return this;
