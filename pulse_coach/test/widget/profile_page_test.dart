@@ -115,6 +115,14 @@ void main() {
         expect(updated.goal, 'cardio');
         expect(updated.availableTime, 'short');
         expect(updated.physicalConstraints, 'none');
+
+        // R3: verify the SegmentedButton UI reflects the new selection (optimistic setState)
+        final buttons = tester
+            .widgetList<SegmentedButton<String>>(
+              find.byType(SegmentedButton<String>),
+            )
+            .toList();
+        expect(buttons.first.selected, {'medium'});
       },
     );
 
@@ -126,7 +134,13 @@ void main() {
         );
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
-        expect(find.text('Profile not found'), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(SnackBar),
+            matching: find.text('Profile not found'),
+          ),
+          findsOneWidget,
+        );
       },
     );
   });

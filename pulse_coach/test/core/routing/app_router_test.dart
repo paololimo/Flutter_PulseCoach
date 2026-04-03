@@ -4,7 +4,11 @@
 // let GoRouter redirect settle, then assert the correct page renders.
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:pulse_coach/app.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/di/injection.dart';
@@ -141,6 +145,94 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100)); // router redirect
         // OnboardingCarousel Screen 1 headline confirms carousel rendered
         expect(find.text('Move more. Decide less.'), findsOneWidget);
+      },
+    );
+  });
+
+  group('AppRouter — full profile setup flow navigates to /today (AC-2.3-4)', () {
+    setUp(() async {
+      // No ThemeCubit — we do not use PulseCoachApp here.
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      // Disclaimer accepted, onboarding not yet complete → carousel shown after init.
+      await db.userProfileDao.insertProfile(
+        UserProfileCompanion.insert(
+          disclaimerAccepted: const Value(true),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      getIt.registerSingleton<AppDatabase>(db);
+      _registerOnboardingDeps();
+    });
+
+    testWidgets(
+      '[P0] AC-2.3-4: OnboardingPage BlocListener navigates to /today after saveProfile succeeds',
+      (tester) async {
+        // Use a fresh GoRouter (avoids static-singleton state pollution from other
+        // tests). Inject disableAnimations:true via the MaterialApp builder so the
+        // carousel uses jumpToPage (instant) instead of animateToPage (250ms), which
+        // would otherwise require exact-duration pumping.
+        final testRouter = GoRouter(
+          initialLocation: '/onboarding',
+          routes: [
+            GoRoute(
+              path: '/onboarding',
+              builder: (_, __) => const OnboardingPage(),
+            ),
+            GoRoute(
+              path: '/today',
+              builder: (_, __) => const Scaffold(
+                body: Center(child: Text('Today — Story 7.x')),
+              ),
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          MaterialApp.router(
+            theme: AppTheme.darkTheme,
+            routerConfig: testRouter,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(disableAnimations: true),
+              child: child!,
+            ),
+          ),
+        );
+        // checkInitialStatus → DB read → disclaimerAccepted state → carousel renders
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(find.text('Move more. Decide less.'), findsOneWidget);
+
+        // Navigate carousel (jumpToPage = instant due to disableAnimations)
+        await tester.tap(find.text('Next'));
+        await tester.pump();
+        await tester.tap(find.text('Next'));
+        await tester.pump();
+        await tester.tap(find.text('Get Started'));
+        await tester.pump();
+
+        // ProfileSetupForm is now visible
+        expect(find.text('Fitness Level'), findsOneWidget);
+
+        // Select all 4 required fields
+        await tester.tap(find.text('Beginner'));
+        await tester.pump();
+        await tester.tap(find.text('Cardio'));
+        await tester.pump();
+        await tester.tap(find.text('2–5 min'));
+        await tester.pump();
+        await tester.tap(find.text('None'));
+        await tester.pump();
+
+        // "Start My Plan" → saveProfile → DB write → emits onboardingComplete
+        await tester.tap(find.byType(FilledButton));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500)); // DB write
+        await tester.pump(const Duration(milliseconds: 100)); // BlocListener + router
+
+        // OnboardingPage.BlocListener received onboardingComplete → context.go('/today')
+        expect(find.text('Today — Story 7.x'), findsOneWidget);
       },
     );
   });
