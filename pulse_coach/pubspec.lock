@@ -253,10 +253,10 @@ packages:
     dependency: transitive
     description:
       name: device_info_plus
-      sha256: "98f28b42168cc509abc92f88518882fd58061ea372d7999aecc424345c7bff6a"
+      sha256: b4fed1b2835da9d670d7bed7db79ae2a94b0f5ad6312268158a9b5479abbacdd
       url: "https://pub.dev"
     source: hosted
-    version: "11.5.0"
+    version: "12.4.0"
   device_info_plus_platform_interface:
     dependency: transitive
     description:
@@ -524,10 +524,10 @@ packages:
     dependency: "direct main"
     description:
       name: health
-      sha256: "0432c4e5c5348164adff57e78ca3191c88f0cdf7c2b0d72b6785a6af965177ac"
+      sha256: "2d9e119f3a1d281139f93149b41032b9f80b759960875bc784c5a25dd3c17524"
       url: "https://pub.dev"
     source: hosted
-    version: "12.2.1"
+    version: "13.3.1"
   hooks:
     dependency: transitive
     description:
@@ -1105,18 +1105,18 @@ packages:
     dependency: "direct main"
     description:
       name: vibration
-      sha256: "3b08a0579c2f9c18d5d78cb5c74f1005f731e02eeca6d72561a2e8059bf98ec3"
+      sha256: "9bb06614c69260f8bd11c80fe01ed7988905cf00e3417d656c2647e41f261d87"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.0"
+    version: "3.1.8"
   vibration_platform_interface:
     dependency: transitive
     description:
       name: vibration_platform_interface
-      sha256: "6ffeee63547562a6fef53c05a41d4fdcae2c0595b83ef59a4813b0612cd2bc36"
+      sha256: "4134fbfcd427b59a7a91f8733292e4e9b29a7f1e8224ff0d80f5745fbf0743c6"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.3"
+    version: "0.1.1"
   vm_service:
     dependency: transitive
     description:
