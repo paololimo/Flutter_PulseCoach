@@ -45,10 +45,10 @@ dependencies:
   shimmer: ^3.0.0
 
   # Haptic Feedback
-  vibration: ^2.0.0
+  vibration: ^3.1.8
 
   # Sensors & Location
-  health: ^12.2.0
+  health: ^13.3.1
   sensors_plus: ^6.1.0
   geolocator: ^13.0.2
 
