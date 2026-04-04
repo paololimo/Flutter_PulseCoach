@@ -68,5 +68,25 @@ void main() {
         verifyNever(mockRepository.saveHealthData(any));
       },
     );
+
+    test(
+      '3.1-UNIT-012: returns Right(HealthData) even when saveHealthData fails (save failure silently dropped)',
+      () async {
+        when(mockRepository.fetchHealthData())
+            .thenAnswer((_) async => const Right(tHealthData));
+        when(mockRepository.saveHealthData(tHealthData))
+            .thenAnswer((_) async => const Left(CacheFailure('DB full')));
+
+        final result = await sut();
+
+        // Save failure is intentionally swallowed — caller still gets Right(data)
+        // See: review finding F1 deferred — Epic 5 will define persistence error strategy
+        expect(result.isRight(), isTrue);
+        result.fold(
+          (_) => fail('Expected Right'),
+          (data) => expect(data.restingHr, equals(58)),
+        );
+      },
+    );
   });
 }

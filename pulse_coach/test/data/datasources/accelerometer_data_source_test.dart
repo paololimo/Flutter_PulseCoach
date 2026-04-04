@@ -116,5 +116,24 @@ void main() {
         throwsA(isA<SensorException>()),
       );
     }, timeout: const Timeout(Duration(seconds: 10)));
+
+    // ── 3.2-UNIT-013 ─────────────────────────────────────────────────────────
+    test(
+        '3.2-UNIT-013: skips NaN magnitude events and classifies with valid samples',
+        () async {
+      // 15 NaN events (sqrt(NaN²) = NaN → skipped by isNaN guard)
+      // followed by 30 uniform valid events → sedentary
+      final events = [
+        ...List.generate(15, (_) => _event(double.nan, 0.0, 0.0)),
+        ...List.generate(30, (_) => _event(9.8, 0.0, 0.0)),
+      ];
+      final sut = AccelerometerDataSource.withOverride(
+        () => Stream.fromIterable(events),
+      );
+
+      final result = await sut.fetchActivityLevel();
+
+      expect(result, ActivityLevel.sedentary);
+    });
   });
 }

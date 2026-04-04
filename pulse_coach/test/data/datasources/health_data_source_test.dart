@@ -136,5 +136,44 @@ void main() {
         );
       },
     );
+
+    test(
+      '3.1-UNIT-011: sums multiple step data points correctly',
+      () async {
+        final stepPoint1 = makePoint(
+          type: HealthDataType.STEPS,
+          unit: HealthDataUnit.COUNT,
+          value: 2000.0,
+        );
+        final stepPoint2 = makePoint(
+          type: HealthDataType.STEPS,
+          unit: HealthDataUnit.COUNT,
+          value: 3500.0,
+        );
+
+        when(
+          mockHealth.requestAuthorization(any, permissions: anyNamed('permissions')),
+        ).thenAnswer((_) async => true);
+        when(
+          mockHealth.getHealthDataFromTypes(
+            startTime: anyNamed('startTime'),
+            endTime: anyNamed('endTime'),
+            types: [HealthDataType.RESTING_HEART_RATE],
+          ),
+        ).thenAnswer((_) async => []);
+        when(
+          mockHealth.getHealthDataFromTypes(
+            startTime: anyNamed('startTime'),
+            endTime: anyNamed('endTime'),
+            types: [HealthDataType.STEPS],
+          ),
+        ).thenAnswer((_) async => [stepPoint1, stepPoint2]);
+
+        final result = await sut.fetchHealthData();
+
+        expect(result.restingHr, isNull);
+        expect(result.stepCount, equals(5500)); // 2000 + 3500
+      },
+    );
   });
 }
