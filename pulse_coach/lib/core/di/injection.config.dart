@@ -9,13 +9,17 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:dio/dio.dart' as _i361;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:health/health.dart' as _i237;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:pulse_coach/core/database/app_database.dart' as _i79;
 import 'package:pulse_coach/core/database/daos/behavioral_state_dao.dart'
     as _i227;
+import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart' as _i194;
 import 'package:pulse_coach/core/di/health_module.dart' as _i294;
+import 'package:pulse_coach/core/di/network_module.dart' as _i731;
+import 'package:pulse_coach/core/utils/location_service.dart' as _i160;
 import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart'
     as _i462;
 import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart'
@@ -54,6 +58,16 @@ import 'package:pulse_coach/features/session/domain/usecases/get_sensor_context.
     as _i984;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
+import 'package:pulse_coach/features/weather/data/datasources/weather_local_data_source.dart'
+    as _i206;
+import 'package:pulse_coach/features/weather/data/datasources/weather_remote_data_source.dart'
+    as _i209;
+import 'package:pulse_coach/features/weather/data/repositories/weather_repository_impl.dart'
+    as _i61;
+import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart'
+    as _i748;
+import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart'
+    as _i664;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -63,11 +77,14 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final healthModule = _$HealthModule();
+    final networkModule = _$NetworkModule();
+    gh.factory<_i160.LocationService>(() => _i160.LocationService());
     gh.factory<_i253.AccelerometerDataSource>(
       () => _i253.AccelerometerDataSource(),
     );
     gh.singleton<_i79.AppDatabase>(() => _i79.AppDatabase());
     gh.singleton<_i237.Health>(() => healthModule.health);
+    gh.singleton<_i361.Dio>(() => networkModule.dio);
     gh.lazySingleton<_i291.ThemeCubit>(() => _i291.ThemeCubit());
     gh.lazySingleton<_i338.OnboardingRepository>(
       () => _i462.OnboardingRepositoryImpl(gh<_i79.AppDatabase>()),
@@ -80,6 +97,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i227.BehavioralStateDao>(
       () => healthModule.behavioralStateDao(gh<_i79.AppDatabase>()),
+    );
+    gh.singleton<_i194.WeatherCacheDao>(
+      () => healthModule.weatherCacheDao(gh<_i79.AppDatabase>()),
+    );
+    gh.factory<_i209.WeatherRemoteDataSource>(
+      () => _i209.WeatherRemoteDataSource(gh<_i361.Dio>()),
     );
     gh.factory<_i1.GetActivityLevel>(
       () => _i1.GetActivityLevel(gh<_i628.SensorRepository>()),
@@ -119,14 +142,29 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i280.SaveProfile>(),
       ),
     );
+    gh.factory<_i206.WeatherLocalDataSource>(
+      () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
+    );
     gh.factory<_i984.GetSensorContext>(
       () => _i984.GetSensorContext(
         gh<_i746.GetHealthData>(),
         gh<_i1.GetActivityLevel>(),
       ),
     );
+    gh.factory<_i748.WeatherRepository>(
+      () => _i61.WeatherRepositoryImpl(
+        gh<_i209.WeatherRemoteDataSource>(),
+        gh<_i206.WeatherLocalDataSource>(),
+        gh<_i160.LocationService>(),
+      ),
+    );
+    gh.factory<_i664.GetWeatherContext>(
+      () => _i664.GetWeatherContext(gh<_i748.WeatherRepository>()),
+    );
     return this;
   }
 }
 
 class _$HealthModule extends _i294.HealthModule {}
+
+class _$NetworkModule extends _i731.NetworkModule {}

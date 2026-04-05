@@ -2,6 +2,7 @@ import 'package:health/health.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/database/daos/behavioral_state_dao.dart';
+import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart';
 
 @module
 abstract class HealthModule {
@@ -10,4 +11,7 @@ abstract class HealthModule {
 
   @singleton
   BehavioralStateDao behavioralStateDao(AppDatabase db) => db.behavioralStateDao;
+
+  @singleton
+  WeatherCacheDao weatherCacheDao(AppDatabase db) => db.weatherCacheDao;
 }
