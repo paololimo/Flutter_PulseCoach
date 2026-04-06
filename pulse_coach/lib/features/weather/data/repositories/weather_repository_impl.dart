@@ -28,36 +28,58 @@ class WeatherRepositoryImpl implements WeatherRepository {
     }
     final (lat, lon) = locationResult.getOrElse(() => throw StateError('unreachable'));
 
+    // Step 2: Check cache TTL — return immediately if valid (< 1 hour)
+    WeatherContext? cached;
     try {
-      // Step 2: Fetch from both Open-Meteo APIs in parallel
+      cached = await _local.getCachedWeather();
+    } on CacheException {
+      cached = null; // DB read failure is non-fatal — fall through to network
+    }
+
+    if (cached != null && _isCacheValid(cached.cachedAt)) {
+      return Right(cached); // AC1: valid cache hit — no network call
+    }
+
+    // Step 3: Cache is stale or missing — fetch from network
+    WeatherContext fresh;
+    try {
       final (weather, aqi) = await _remote.fetchWeatherAndAqi(
         latitude: lat,
         longitude: lon,
       );
 
-      final now = DateTime.now().toUtc();
+      fresh = WeatherContext(
+        temperature: weather.temperature,
+        precipitationProbability: weather.precipitationProbability,
+        aqiValue: aqi.europeanAqi,
+        cachedAt: DateTime.now().toUtc(),
+      );
+    } on ServerException catch (e) {
+      // AC3: API unreachable — return stale cache if available
+      if (cached != null) {
+        return Right(cached); // stale data returned; Story 5.1 checks cachedAt age
+      }
+      return Left(ServerFailure(e.message));
+    }
 
-      // Step 3: Persist to drift cache (TTL check added in Story 4.2)
+    // Step 4: Persist to cache — failure is non-fatal, fresh data still returned
+    try {
       await _local.cacheWeather(
         latitude: lat,
         longitude: lon,
-        temperature: weather.temperature,
-        precipitationProbability: weather.precipitationProbability,
-        aqiValue: aqi.europeanAqi,
-        cachedAt: now,
+        temperature: fresh.temperature,
+        precipitationProbability: fresh.precipitationProbability,
+        aqiValue: fresh.aqiValue,
+        cachedAt: fresh.cachedAt,
       );
-
-      // Step 4: Return domain entity
-      return Right(WeatherContext(
-        temperature: weather.temperature,
-        precipitationProbability: weather.precipitationProbability,
-        aqiValue: aqi.europeanAqi,
-        cachedAt: now,
-      ));
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on CacheException catch (e) {
-      return Left(ServerFailure('Cache write failed: ${e.message}'));
+    } on CacheException {
+      // Cache write failed — non-fatal, return fresh data anyway
     }
+
+    return Right(fresh); // AC2: fresh data fetched and cached
   }
+
+  /// Cache is valid when fetched less than 1 hour ago.
+  bool _isCacheValid(DateTime cachedAt) =>
+      DateTime.now().toUtc().difference(cachedAt) < const Duration(hours: 1);
 }

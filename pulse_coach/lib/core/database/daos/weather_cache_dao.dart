@@ -19,4 +19,12 @@ class WeatherCacheDao extends DatabaseAccessor<AppDatabase>
       into(weatherCache).insertOnConflictUpdate(entry);
 
   Future<int> deleteAll() => delete(weatherCache).go();
+
+  /// Replaces all cached rows with a single new entry inside a transaction.
+  /// Readers on the same connection see either the old or new state, never partial.
+  Future<void> replaceCache(WeatherCacheCompanion entry) =>
+      transaction(() async {
+        await delete(weatherCache).go();
+        await into(weatherCache).insert(entry);
+      });
 }

@@ -38,7 +38,7 @@ class WeatherLocalDataSource {
     required DateTime cachedAt,
   }) async {
     try {
-      await _dao.insertOrReplace(
+      await _dao.replaceCache(
         WeatherCacheCompanion.insert(
           latitude: latitude,
           longitude: longitude,
