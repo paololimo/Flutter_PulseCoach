@@ -103,6 +103,25 @@ void main() {
       );
     });
 
+    // ── 4.1-UNIT-010 ─────────────────────────────────────────────────────────
+    test(
+        '4.1-UNIT-010: non-DioException (unexpected error) → ServerException via catch(e)',
+        () async {
+      // Simulate a non-network error (e.g. unexpected type from server)
+      // thenThrow causes synchronous throw before Future.wait — caught by catch(e)
+      when(
+        mockDio.get(
+          ApiConstants.openMeteoBaseUrl,
+          queryParameters: anyNamed('queryParameters'),
+        ),
+      ).thenThrow(Exception('unexpected server response'));
+
+      expect(
+        () => sut.fetchWeatherAndAqi(latitude: lat, longitude: lon),
+        throwsA(isA<ServerException>()),
+      );
+    });
+
     // ── 4.1-UNIT-003 ─────────────────────────────────────────────────────────
     test('4.1-UNIT-003: AQI above threshold (europeanAqi=120) parsed correctly',
         () async {

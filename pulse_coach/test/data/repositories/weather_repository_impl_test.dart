@@ -354,6 +354,47 @@ void main() {
       )).called(1);
     });
 
+    // ── 4.2-UNIT-008 ─────────────────────────────────────────────────────────
+    test(
+        '4.2-UNIT-008: cache exactly 1h old is stale → triggers network fetch (TTL boundary)',
+        () async {
+      // difference == 1h is NOT < 1h → stale; documents the exact boundary
+      final exactlyAtBoundary =
+          DateTime.now().toUtc().subtract(const Duration(hours: 1));
+      final staleContext = WeatherContext(
+        temperature: 15.0,
+        precipitationProbability: 50.0,
+        aqiValue: 30,
+        cachedAt: exactlyAtBoundary,
+      );
+      when(mockLocation.getCityLevelCoordinates())
+          .thenAnswer((_) async => const Right((48.8, 2.3)));
+      when(mockLocal.getCachedWeather()).thenAnswer((_) async => staleContext);
+      when(mockRemote.fetchWeatherAndAqi(latitude: 48.8, longitude: 2.3))
+          .thenAnswer((_) async => (weatherModel, aqiModel));
+      when(
+        mockLocal.cacheWeather(
+          latitude: anyNamed('latitude'),
+          longitude: anyNamed('longitude'),
+          temperature: anyNamed('temperature'),
+          precipitationProbability: anyNamed('precipitationProbability'),
+          aqiValue: anyNamed('aqiValue'),
+          cachedAt: anyNamed('cachedAt'),
+        ),
+      ).thenAnswer((_) async {});
+
+      final result = await sut.getWeatherContext();
+
+      expect(result.isRight(), isTrue);
+      result.fold((_) => fail('Expected Right'), (context) {
+        expect(context.temperature, 20.0); // fresh data fetched, not stale 15.0
+      });
+      verify(mockRemote.fetchWeatherAndAqi(
+        latitude: 48.8,
+        longitude: 2.3,
+      )).called(1);
+    });
+
     // ── 4.1-UNIT-007 ─────────────────────────────────────────────────────────
     test(
         '4.1-UNIT-007: AQI = 110 (high threshold) → WeatherContext.isAqiHigh == true',

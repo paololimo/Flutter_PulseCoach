@@ -41,6 +41,20 @@ void main() {
       verify(mockRepository.getWeatherContext()).called(1);
     });
 
+    // ── 4.1-UNIT-011 ─────────────────────────────────────────────────────────
+    test(
+        '4.1-UNIT-011: WeatherContext.isAqiHigh = false at AQI=99 (boundary below threshold)',
+        () async {
+      // AQI=99 is one below the ≥100 threshold — must return false (FR8 boundary)
+      final lowBoundaryContext = WeatherContext(
+        temperature: 20.0,
+        precipitationProbability: 30.0,
+        aqiValue: 99,
+        cachedAt: DateTime.utc(2026, 4, 7, 12),
+      );
+      expect(lowBoundaryContext.isAqiHigh, isFalse);
+    });
+
     // ── 4.1-UNIT-009 ─────────────────────────────────────────────────────────
     test(
         '4.1-UNIT-009: repo returns Left(ServerFailure) → use case returns Left (pass-through verified)',
