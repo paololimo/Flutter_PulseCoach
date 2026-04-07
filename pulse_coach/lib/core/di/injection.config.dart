@@ -19,6 +19,7 @@ import 'package:pulse_coach/core/database/daos/behavioral_state_dao.dart'
 import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart' as _i194;
 import 'package:pulse_coach/core/di/health_module.dart' as _i294;
 import 'package:pulse_coach/core/di/network_module.dart' as _i731;
+import 'package:pulse_coach/core/utils/geolocator_wrapper.dart' as _i973;
 import 'package:pulse_coach/core/utils/location_service.dart' as _i160;
 import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart'
     as _i462;
@@ -78,7 +79,6 @@ extension GetItInjectableX on _i174.GetIt {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final healthModule = _$HealthModule();
     final networkModule = _$NetworkModule();
-    gh.factory<_i160.LocationService>(() => _i160.LocationService());
     gh.factory<_i253.AccelerometerDataSource>(
       () => _i253.AccelerometerDataSource(),
     );
@@ -92,6 +92,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i311.HealthDataSource>(
       () => _i311.HealthDataSource(gh<_i237.Health>()),
     );
+    gh.factory<_i973.GeolocatorWrapper>(() => _i973.GeolocatorWrapperImpl());
     gh.factory<_i628.SensorRepository>(
       () => _i700.SensorRepositoryImpl(gh<_i253.AccelerometerDataSource>()),
     );
@@ -112,6 +113,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i311.HealthDataSource>(),
         gh<_i227.BehavioralStateDao>(),
       ),
+    );
+    gh.factory<_i160.LocationService>(
+      () => _i160.LocationService(gh<_i973.GeolocatorWrapper>()),
     );
     gh.factory<_i944.AcceptDisclaimer>(
       () => _i944.AcceptDisclaimer(gh<_i338.OnboardingRepository>()),

@@ -2,22 +2,27 @@ import 'package:dartz/dartz.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/utils/geolocator_wrapper.dart';
 
 /// Returns city-level coordinates (rounded to 1 decimal place, ~11km precision).
 /// Returns [LocationFailure] if permission is denied or location unavailable.
 /// Never returns precise GPS coordinates — privacy constraint NFR8.
 @injectable
 class LocationService {
+  LocationService(this._geolocator);
+
+  final GeolocatorWrapper _geolocator;
+
   Future<Either<Failure, (double lat, double lon)>> getCityLevelCoordinates() async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await _geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         return Left(LocationFailure('Location services are disabled'));
       }
 
-      LocationPermission permission = await Geolocator.checkPermission();
+      LocationPermission permission = await _geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+        permission = await _geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           return Left(LocationFailure('Location permission denied'));
         }
@@ -26,7 +31,7 @@ class LocationService {
         return Left(LocationFailure('Location permission permanently denied'));
       }
 
-      final position = await Geolocator.getCurrentPosition(
+      final position = await _geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.low, // city-level sufficient
           timeLimit: Duration(seconds: 10),
