@@ -13,14 +13,29 @@ import 'package:dio/dio.dart' as _i361;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:health/health.dart' as _i237;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:pulse_coach/ai/engine/ai_engine.dart' as _i122;
+import 'package:pulse_coach/ai/engine/ai_engine_isolate.dart' as _i157;
 import 'package:pulse_coach/core/database/app_database.dart' as _i79;
+import 'package:pulse_coach/core/database/daos/bandit_state_dao.dart' as _i10;
 import 'package:pulse_coach/core/database/daos/behavioral_state_dao.dart'
     as _i227;
+import 'package:pulse_coach/core/database/daos/daily_plans_dao.dart' as _i562;
+import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart' as _i224;
 import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart' as _i194;
 import 'package:pulse_coach/core/di/health_module.dart' as _i294;
 import 'package:pulse_coach/core/di/network_module.dart' as _i731;
 import 'package:pulse_coach/core/utils/geolocator_wrapper.dart' as _i973;
 import 'package:pulse_coach/core/utils/location_service.dart' as _i160;
+import 'package:pulse_coach/features/daily_plan/data/repositories/daily_plan_repository_impl.dart'
+    as _i432;
+import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart'
+    as _i78;
+import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart'
+    as _i992;
+import 'package:pulse_coach/features/daily_plan/domain/usecases/regenerate_daily_plan.dart'
+    as _i183;
+import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart'
+    as _i372;
 import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart'
     as _i462;
 import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart'
@@ -96,11 +111,24 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i628.SensorRepository>(
       () => _i700.SensorRepositoryImpl(gh<_i253.AccelerometerDataSource>()),
     );
+    gh.factory<_i78.DailyPlanRepository>(
+      () => _i432.DailyPlanRepositoryImpl(gh<_i79.AppDatabase>()),
+    );
+    gh.factory<_i122.AiEngine>(() => _i157.AiEngineIsolate());
     gh.singleton<_i227.BehavioralStateDao>(
       () => healthModule.behavioralStateDao(gh<_i79.AppDatabase>()),
     );
     gh.singleton<_i194.WeatherCacheDao>(
       () => healthModule.weatherCacheDao(gh<_i79.AppDatabase>()),
+    );
+    gh.singleton<_i10.BanditStateDao>(
+      () => healthModule.banditStateDao(gh<_i79.AppDatabase>()),
+    );
+    gh.singleton<_i562.DailyPlansDao>(
+      () => healthModule.dailyPlansDao(gh<_i79.AppDatabase>()),
+    );
+    gh.singleton<_i224.RpeFeedbackDao>(
+      () => healthModule.rpeFeedbackDao(gh<_i79.AppDatabase>()),
     );
     gh.factory<_i209.WeatherRemoteDataSource>(
       () => _i209.WeatherRemoteDataSource(gh<_i361.Dio>()),
@@ -162,8 +190,31 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i160.LocationService>(),
       ),
     );
+    gh.factory<_i992.GenerateDailyPlan>(
+      () => _i992.GenerateDailyPlan(
+        gh<_i78.DailyPlanRepository>(),
+        gh<_i122.AiEngine>(),
+        gh<_i1070.HealthRepository>(),
+        gh<_i628.SensorRepository>(),
+        gh<_i748.WeatherRepository>(),
+        gh<_i338.OnboardingRepository>(),
+        gh<_i79.AppDatabase>(),
+      ),
+    );
     gh.factory<_i664.GetWeatherContext>(
       () => _i664.GetWeatherContext(gh<_i748.WeatherRepository>()),
+    );
+    gh.factory<_i183.RegenerateDailyPlan>(
+      () => _i183.RegenerateDailyPlan(
+        gh<_i78.DailyPlanRepository>(),
+        gh<_i992.GenerateDailyPlan>(),
+      ),
+    );
+    gh.factory<_i372.DailyPlanBloc>(
+      () => _i372.DailyPlanBloc(
+        gh<_i992.GenerateDailyPlan>(),
+        gh<_i183.RegenerateDailyPlan>(),
+      ),
     );
     return this;
   }
