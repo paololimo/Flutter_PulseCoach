@@ -29,3 +29,17 @@ const banditArmKeys = [
   'cardio_low',   'cardio_medium',   'cardio_high',
   'breathing_low','breathing_medium','breathing_high',
 ];
+
+/// Cold-start factory — all 9 arms at 1.0 (uniform exploration, FR10).
+/// Enforces 9-arm invariant via [banditArmKeys]; can't drift out of sync.
+///
+/// [updatedAt] is set to UTC epoch (1970-01-01T00:00:00Z) as a sentinel
+/// meaning "never updated". Consumers MUST treat this value specially:
+///   - Do NOT render it as a real "last updated" date in the UI.
+///   - Use `state.updatedAt.isAtSameMomentAs(DateTime.utc(1970))` to detect
+///     cold-start, or check `state.updatedAt.year == 1970`.
+/// All real updates use UTC timestamps (see `RewardCalculator.updateWeight`).
+BanditState initialBanditState() => BanditState(
+  armWeights: {for (final key in banditArmKeys) key: 1.0},
+  updatedAt: DateTime.utc(1970),
+);
