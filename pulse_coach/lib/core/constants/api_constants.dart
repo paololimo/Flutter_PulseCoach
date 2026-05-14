@@ -3,8 +3,14 @@
 
 class ApiConstants {
   // Open-Meteo Weather Forecast API (Story 4.1)
-  static const String openMeteoBaseUrl = 'https://api.open-meteo.com/v1/forecast';
+  static const String openMeteoBaseUrl =
+      'https://api.open-meteo.com/v1/forecast';
   // Open-Meteo Air Quality API (Story 4.1)
-  static const String openMeteoAqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality';
+  static const String openMeteoAqiUrl =
+      'https://air-quality-api.open-meteo.com/v1/air-quality';
   // ExerciseDB API (Story 6.1)
+  static const String exerciseDbBaseUrl = 'https://oss.exercisedb.dev';
+  static const String exerciseDbExercisesPath = '/api/v1/exercises';
+  static const String exerciseDbExercisesUrl =
+      '$exerciseDbBaseUrl$exerciseDbExercisesPath';
 }

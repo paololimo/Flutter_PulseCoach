@@ -13,10 +13,13 @@ import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
     as domain;
+import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart';
 import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:pulse_coach/features/session/domain/repositories/health_repository.dart';
 import 'package:pulse_coach/features/session/domain/repositories/sensor_repository.dart';
+import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
+import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart';
 import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart';
 
 @injectable
@@ -27,6 +30,7 @@ class GenerateDailyPlan {
   final SensorRepository _sensorRepo;
   final WeatherRepository _weatherRepo;
   final OnboardingRepository _onboardingRepo;
+  final ExerciseRepository _exerciseRepository;
   final AppDatabase _db;
 
   GenerateDailyPlan(
@@ -36,6 +40,7 @@ class GenerateDailyPlan {
     this._sensorRepo,
     this._weatherRepo,
     this._onboardingRepo,
+    this._exerciseRepository,
     this._db,
   );
 
@@ -61,18 +66,18 @@ class GenerateDailyPlan {
       final output = await _aiEngine.call(
         AiEngineInput(stateVector: sv, banditState: banditState),
       );
+      final plan = await _enrichPlanWithCatalog(output.plan);
 
       // AC3: persist plan FIRST so a state-row insert can never end up orphaned
       // by a savePlan failure.
-      final saveResult = await _planRepo.savePlan(output.plan);
+      final saveResult = await _planRepo.savePlan(plan);
       return await saveResult.fold(
         (failure) async => Left<Failure, domain.DailyPlan>(failure),
         (_) async {
           // AC6: persist new BehavioralState when it changed OR when no row exists.
           // The "(or no state exists)" clause is critical for cold-start (AC8) —
           // a brand-new user landing on `active` would otherwise never persist a row.
-          final currentStateRow =
-              await _db.behavioralStateDao.getLatestState();
+          final currentStateRow = await _db.behavioralStateDao.getLatestState();
           final currentState = _parseState(currentStateRow?.currentState);
           if (currentStateRow == null ||
               output.newBehavioralState != currentState) {
@@ -85,11 +90,15 @@ class GenerateDailyPlan {
               ),
             );
           }
-          return Right<Failure, domain.DailyPlan>(output.plan);
+          return Right<Failure, domain.DailyPlan>(plan);
         },
       );
     } on TimeoutException catch (e) {
-      developer.log('AI pipeline timed out', name: 'GenerateDailyPlan', error: e);
+      developer.log(
+        'AI pipeline timed out',
+        name: 'GenerateDailyPlan',
+        error: e,
+      );
       return Left(CacheFailure('AI pipeline timed out: ${e.message ?? ''}'));
     } catch (e, st) {
       developer.log(
@@ -100,6 +109,93 @@ class GenerateDailyPlan {
       );
       return Left(CacheFailure(e.toString()));
     }
+  }
+
+  Future<domain.DailyPlan> _enrichPlanWithCatalog(domain.DailyPlan plan) async {
+    final enrichedSessions = <PlannedSession>[];
+
+    for (final session in plan.sessions) {
+      final result = await _exerciseRepository.getExercisesByType(
+        session.sessionType,
+      );
+      final enriched = result.fold(
+        (failure) {
+          developer.log(
+            'Catalog enrichment skipped for ${session.sessionType}',
+            name: 'GenerateDailyPlan',
+            error: failure,
+          );
+          return session;
+        },
+        (exercises) {
+          if (exercises.isEmpty) {
+            return session;
+          }
+
+          final preferred = _selectExerciseForSession(session, exercises);
+          // Fill-only contract: AI engine commits `durationMinutes` from
+          // profile.availableTime (Story 5.5). Catalog only refines `isIndoor`
+          // when the selected exercise is incompatible with the AI's choice.
+          final isIndoor = _resolveIsIndoor(session.isIndoor, preferred);
+          return session.copyWith(isIndoor: isIndoor);
+        },
+      );
+      enrichedSessions.add(enriched);
+    }
+
+    return plan.copyWith(sessions: enrichedSessions);
+  }
+
+  Exercise _selectExerciseForSession(
+    PlannedSession session,
+    List<Exercise> exercises,
+  ) {
+    final desiredDifficulty = _difficultyForIntensity(session.intensity);
+    final environmentFiltered = exercises
+        .where((exercise) {
+          if (session.isIndoor) {
+            return exercise.indoorCompatible;
+          }
+          return exercise.outdoorCompatible;
+        })
+        .toList(growable: false);
+    final candidates = environmentFiltered.isNotEmpty
+        ? environmentFiltered
+        : exercises;
+
+    for (final exercise in candidates) {
+      if (exercise.difficulty == desiredDifficulty) {
+        return exercise;
+      }
+    }
+    return candidates.first;
+  }
+
+  bool _resolveIsIndoor(bool aiIsIndoor, Exercise preferred) {
+    if (aiIsIndoor) {
+      // Flip to outdoor only when the chosen exercise cannot be done indoors
+      // but can be done outdoors. Otherwise keep the AI's decision.
+      if (!preferred.indoorCompatible && preferred.outdoorCompatible) {
+        return false;
+      }
+      return true;
+    }
+    // AI chose outdoor; flip to indoor only when the chosen exercise cannot
+    // be done outdoors but can be done indoors.
+    if (!preferred.outdoorCompatible && preferred.indoorCompatible) {
+      return true;
+    }
+    return false;
+  }
+
+  String _difficultyForIntensity(int intensity) {
+    if (intensity >= 8) {
+      return 'high';
+    }
+    if (intensity >= 4) {
+      return 'medium';
+    }
+    return 'low';
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
@@ -132,7 +228,10 @@ class GenerateDailyPlan {
       (_) => AqiLevel.low, // indoor default on failure
       (w) => w.isAqiHigh ? AqiLevel.high : AqiLevel.low,
     );
-    final temperature = weatherResult.fold<double?>((_) => null, (w) => w.temperature);
+    final temperature = weatherResult.fold<double?>(
+      (_) => null,
+      (w) => w.temperature,
+    );
     final precipitation = weatherResult.fold<bool?>(
       (_) => null,
       (w) => w.precipitationProbability > 50.0,
@@ -191,12 +290,18 @@ class GenerateDailyPlan {
         updatedAt: row.updatedAt,
       );
     } on FormatException catch (e) {
-      developer.log('Corrupt BanditState JSON — cold start',
-          name: 'GenerateDailyPlan', error: e);
+      developer.log(
+        'Corrupt BanditState JSON — cold start',
+        name: 'GenerateDailyPlan',
+        error: e,
+      );
       return ai_bandit.initialBanditState();
     } on TypeError catch (e) {
-      developer.log('Malformed BanditState payload — cold start',
-          name: 'GenerateDailyPlan', error: e);
+      developer.log(
+        'Malformed BanditState payload — cold start',
+        name: 'GenerateDailyPlan',
+        error: e,
+      );
       return ai_bandit.initialBanditState();
     }
   }
@@ -209,7 +314,8 @@ class GenerateDailyPlan {
       'recovering' => ai_state.BehavioralState.recovering,
       'atrisk' => ai_state.BehavioralState.atRisk,
       'fatigued' => ai_state.BehavioralState.fatigued,
-      _ => ai_state.BehavioralState.active, // null or 'active' or unknown → active
+      _ =>
+        ai_state.BehavioralState.active, // null or 'active' or unknown → active
     };
   }
 

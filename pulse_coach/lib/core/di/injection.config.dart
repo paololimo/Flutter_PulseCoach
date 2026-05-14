@@ -20,6 +20,8 @@ import 'package:pulse_coach/core/database/daos/bandit_state_dao.dart' as _i10;
 import 'package:pulse_coach/core/database/daos/behavioral_state_dao.dart'
     as _i227;
 import 'package:pulse_coach/core/database/daos/daily_plans_dao.dart' as _i562;
+import 'package:pulse_coach/core/database/daos/exercise_cache_dao.dart'
+    as _i224;
 import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart' as _i224;
 import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart' as _i194;
 import 'package:pulse_coach/core/di/health_module.dart' as _i294;
@@ -72,6 +74,18 @@ import 'package:pulse_coach/features/session/domain/usecases/get_health_data.dar
     as _i746;
 import 'package:pulse_coach/features/session/domain/usecases/get_sensor_context.dart'
     as _i984;
+import 'package:pulse_coach/features/sessions_catalog/data/datasources/exercise_local_data_source.dart'
+    as _i91;
+import 'package:pulse_coach/features/sessions_catalog/data/datasources/exercise_remote_data_source.dart'
+    as _i635;
+import 'package:pulse_coach/features/sessions_catalog/data/repositories/exercise_repository_impl.dart'
+    as _i396;
+import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart'
+    as _i207;
+import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exercises_by_type.dart'
+    as _i342;
+import 'package:pulse_coach/features/sessions_catalog/domain/usecases/sync_exercise_catalog.dart'
+    as _i574;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
 import 'package:pulse_coach/features/weather/data/datasources/weather_local_data_source.dart'
@@ -127,8 +141,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i562.DailyPlansDao>(
       () => healthModule.dailyPlansDao(gh<_i79.AppDatabase>()),
     );
+    gh.singleton<_i224.ExerciseCacheDao>(
+      () => healthModule.exerciseCacheDao(gh<_i79.AppDatabase>()),
+    );
     gh.singleton<_i224.RpeFeedbackDao>(
       () => healthModule.rpeFeedbackDao(gh<_i79.AppDatabase>()),
+    );
+    gh.factory<_i635.ExerciseRemoteDataSource>(
+      () => _i635.ExerciseRemoteDataSource(gh<_i361.Dio>()),
     );
     gh.factory<_i209.WeatherRemoteDataSource>(
       () => _i209.WeatherRemoteDataSource(gh<_i361.Dio>()),
@@ -163,9 +183,18 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i746.GetHealthData>(
       () => _i746.GetHealthData(gh<_i1070.HealthRepository>()),
     );
+    gh.factory<_i91.ExerciseLocalDataSource>(
+      () => _i91.ExerciseLocalDataSource(gh<_i224.ExerciseCacheDao>()),
+    );
     gh.factory<_i901.ProfileCubit>(
       () =>
           _i901.ProfileCubit(gh<_i529.GetProfile>(), gh<_i926.UpdateProfile>()),
+    );
+    gh.factory<_i207.ExerciseRepository>(
+      () => _i396.ExerciseRepositoryImpl(
+        gh<_i635.ExerciseRemoteDataSource>(),
+        gh<_i91.ExerciseLocalDataSource>(),
+      ),
     );
     gh.factory<_i472.OnboardingCubit>(
       () => _i472.OnboardingCubit(
@@ -176,6 +205,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i206.WeatherLocalDataSource>(
       () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
+    );
+    gh.factory<_i342.GetExercisesByType>(
+      () => _i342.GetExercisesByType(gh<_i207.ExerciseRepository>()),
+    );
+    gh.factory<_i574.SyncExerciseCatalog>(
+      () => _i574.SyncExerciseCatalog(gh<_i207.ExerciseRepository>()),
     );
     gh.factory<_i984.GetSensorContext>(
       () => _i984.GetSensorContext(
@@ -198,6 +233,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i628.SensorRepository>(),
         gh<_i748.WeatherRepository>(),
         gh<_i338.OnboardingRepository>(),
+        gh<_i207.ExerciseRepository>(),
         gh<_i79.AppDatabase>(),
       ),
     );

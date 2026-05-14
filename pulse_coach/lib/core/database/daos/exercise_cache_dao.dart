@@ -9,12 +9,17 @@ class ExerciseCacheDao extends DatabaseAccessor<AppDatabase>
     with _$ExerciseCacheDaoMixin {
   ExerciseCacheDao(super.db);
 
-  Future<ExerciseCacheData?> getByExerciseId(String id) =>
-      (select(exerciseCache)..where((t) => t.exerciseId.equals(id)))
-          .getSingleOrNull();
+  Future<ExerciseCacheData?> getByExerciseId(String id) => (select(
+    exerciseCache,
+  )..where((t) => t.exerciseId.equals(id))).getSingleOrNull();
 
   Future<int> insertOrReplace(ExerciseCacheCompanion entry) =>
       into(exerciseCache).insertOnConflictUpdate(entry);
+
+  Future<List<ExerciseCacheData>> getAll() => select(exerciseCache).get();
+
+  Future<void> insertOrReplaceBatch(List<ExerciseCacheCompanion> entries) =>
+      batch((batch) => batch.insertAllOnConflictUpdate(exerciseCache, entries));
 
   Future<int> deleteAll() => delete(exerciseCache).go();
 }

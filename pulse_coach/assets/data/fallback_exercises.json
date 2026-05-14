@@ -1,0 +1,47 @@
+[
+  {
+    "id": "fallback_mobility_neck_rolls",
+    "name": "Neck Rolls",
+    "description": "Gentle mobility work for neck and upper back.",
+    "sessionType": "mobility",
+    "steps": [
+      "Sit or stand tall with shoulders relaxed.",
+      "Slowly roll your head in a small circle.",
+      "Reverse direction and keep the movement controlled."
+    ],
+    "durationMinutes": 4,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_march",
+    "name": "Brisk March In Place",
+    "description": "Low-impact cardio for quick energy and circulation.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand tall with feet hip-width apart.",
+      "March in place while driving knees upward.",
+      "Swing your arms naturally and keep a steady pace."
+    ],
+    "durationMinutes": 7,
+    "difficulty": "medium",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_box",
+    "name": "Box Breathing",
+    "description": "Breathing drill to reduce stress and support recovery.",
+    "sessionType": "breathing",
+    "steps": [
+      "Inhale through the nose for four counts.",
+      "Hold the breath for four counts.",
+      "Exhale slowly for four counts, then hold for four counts."
+    ],
+    "durationMinutes": 4,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  }
+]

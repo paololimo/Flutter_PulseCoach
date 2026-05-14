@@ -25,6 +25,10 @@ import 'package:pulse_coach/features/session/domain/repositories/health_reposito
     as _i8;
 import 'package:pulse_coach/features/session/domain/repositories/sensor_repository.dart'
     as _i10;
+import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart'
+    as _i17;
+import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart'
+    as _i16;
 import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart'
     as _i13;
 import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart'
@@ -293,4 +297,43 @@ class MockOnboardingRepository extends _i1.Mock
             ),
           )
           as _i5.Future<_i2.Either<_i6.Failure, void>>);
+}
+
+/// A class which mocks [ExerciseRepository].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockExerciseRepository extends _i1.Mock
+    implements _i16.ExerciseRepository {
+  MockExerciseRepository() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i5.Future<_i2.Either<_i6.Failure, List<_i17.Exercise>>> getExercisesByType(
+    String? sessionType,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getExercisesByType, [sessionType]),
+            returnValue:
+                _i5.Future<_i2.Either<_i6.Failure, List<_i17.Exercise>>>.value(
+                  _FakeEither_0<_i6.Failure, List<_i17.Exercise>>(
+                    this,
+                    Invocation.method(#getExercisesByType, [sessionType]),
+                  ),
+                ),
+          )
+          as _i5.Future<_i2.Either<_i6.Failure, List<_i17.Exercise>>>);
+
+  @override
+  _i5.Future<_i2.Either<_i6.Failure, _i2.Unit>> syncCatalog() =>
+      (super.noSuchMethod(
+            Invocation.method(#syncCatalog, []),
+            returnValue: _i5.Future<_i2.Either<_i6.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i6.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#syncCatalog, []),
+              ),
+            ),
+          )
+          as _i5.Future<_i2.Either<_i6.Failure, _i2.Unit>>);
 }
