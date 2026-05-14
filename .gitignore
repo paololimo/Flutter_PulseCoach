@@ -1,9 +1,13 @@
-# Miscellaneous
+# OS / temporary files
+.DS_Store
+**/.DS_Store
 *.class
 *.log
 *.pyc
 *.swp
-.DS_Store
+*.tmp
+*.temp
+*~
 .atom/
 .build/
 .buildlog/
@@ -12,64 +16,84 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# Local AI / agent tooling
+.agents/
+.claude/
+.codex/
+.cursor/
+.qwen/
+.windsurf/
+_bmad/
+
+# IDE / editor settings
 *.iml
 *.ipr
 *.iws
 .idea/
-
-# VS Code — developer-local settings, not shared
 .vscode/
 
-# Flutter/Dart/Pub related
+# Dart / Flutter / Pub generated files
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+**/.pub/
+**/build/
+**/coverage/
 **/doc/api/
 **/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
+coverage/
+lcov.info
+
+# Generated code policy: *.g.dart, *.freezed.dart, and injection.config.dart
+# are committed so CI does not require code generation before analysis/tests.
+# After table/model/DI changes, regenerate with:
+# dart run build_runner build --delete-conflicting-outputs
+
+# Flutter obfuscation / symbolication output
+app.*.symbols
+app.*.map.json
+
+# Android generated/local files
+**/android/.gradle/
+**/android/.kotlin/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/android/captures/
+**/android/local.properties
+**/android/key.properties
+**/*.jks
+**/*.keystore
+
+# iOS / Xcode generated/local files
+**/DerivedData/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Pods/
+**/ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/ios/Runner.xcodeproj/xcuserdata/
+**/ios/Runner.xcworkspace/xcuserdata/
+*.xcuserstate
+xcuserdata/
 
 # Xcode build server config (machine-specific paths)
 buildServer.json
 
-# Generated code policy: *.g.dart files ARE committed to avoid requiring
-# build_runner in CI. If you change a table, DAO, or provider source file,
-# regenerate with: dart run build_runner build --delete-conflicting-outputs
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Environment & secrets
+# Environment, local config, and secrets
 .env
 .env.*
 *.key
 google-services.json
 GoogleService-Info.plist
 
-# BMAD output (opzionale: committare o no i documenti generati)
-# _bmad-output/   ← decommentalo se non vuoi committare i doc generati
-
-# macOS
-**/.DS_Store
-
-# Firebase
+# Firebase local output
 .firebase/
 firebase-debug.log
 
-# Test coverage
-coverage/
-lcov.info
-
-# WearOS
-/wear/build/
+# BMAD output is currently committed as project documentation.
+# Uncomment the next line only if generated BMAD documents should stay local.
+# _bmad-output/
