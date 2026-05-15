@@ -1,4 +1,3 @@
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -61,6 +60,21 @@ void main() {
     difficulty: 'low',
     indoorCompatible: true,
     outdoorCompatible: true,
+  );
+
+  List<Exercise> fallbackExercisesFor(String sessionType) => List.generate(
+    10,
+    (index) => Exercise(
+      id: 'fallback_${sessionType}_$index',
+      name: '$sessionType fallback $index',
+      description: 'Fallback exercise.',
+      sessionType: sessionType,
+      steps: const ['Prepare', 'Move with control', 'Finish calmly'],
+      durationMinutes: 4,
+      difficulty: 'low',
+      indoorCompatible: true,
+      outdoorCompatible: true,
+    ),
   );
 
   setUp(() {
@@ -148,6 +162,46 @@ void main() {
       result.fold((_) => fail('Expected Right'), (exercises) {
         expect(exercises.single.id, 'fallback-breathing-1');
       });
+    },
+  );
+
+  test(
+    '6.2-UNIT-002: remote failure plus empty cache returns category-sized fallback lists',
+    () async {
+      for (final sessionType in ['mobility', 'cardio', 'breathing']) {
+        final fallback = fallbackExercisesFor(sessionType);
+        when(
+          mockLocal.getCachedExercisesByType(sessionType),
+        ).thenAnswer((_) async => const []);
+        when(
+          mockRemote.fetchExercisesByType(sessionType),
+        ).thenThrow(const ServerException('timeout'));
+        when(
+          mockLocal.loadFallbackExercisesByType(sessionType),
+        ).thenAnswer((_) async => fallback);
+
+        final result = await sut.getExercisesByType(sessionType);
+
+        expect(result.isRight(), isTrue, reason: sessionType);
+        result.fold((_) => fail('Expected Right for $sessionType'), (
+          exercises,
+        ) {
+          expect(exercises, hasLength(10), reason: sessionType);
+          expect(
+            exercises.every((exercise) => exercise.sessionType == sessionType),
+            isTrue,
+            reason: sessionType,
+          );
+          expect(
+            exercises.every((exercise) => exercise.indoorCompatible),
+            isTrue,
+            reason: sessionType,
+          );
+        });
+
+        verify(mockLocal.loadFallbackExercisesByType(sessionType)).called(1);
+        verifyNever(mockLocal.cacheExercises(any, any));
+      }
     },
   );
 

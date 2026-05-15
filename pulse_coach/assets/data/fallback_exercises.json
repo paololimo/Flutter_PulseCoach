@@ -2,11 +2,11 @@
   {
     "id": "fallback_mobility_neck_rolls",
     "name": "Neck Rolls",
-    "description": "Gentle mobility work for neck and upper back.",
+    "description": "Gentle neck mobility for a short movement break.",
     "sessionType": "mobility",
     "steps": [
       "Sit or stand tall with shoulders relaxed.",
-      "Slowly roll your head in a small circle.",
+      "Draw a small slow circle with your head.",
       "Reverse direction and keep the movement controlled."
     ],
     "durationMinutes": 4,
@@ -15,13 +15,148 @@
     "outdoorCompatible": true
   },
   {
-    "id": "fallback_cardio_march",
+    "id": "fallback_mobility_shoulder_circles",
+    "name": "Shoulder Circles",
+    "description": "Simple shoulder mobility for desk or standing breaks.",
+    "sessionType": "mobility",
+    "steps": [
+      "Stand or sit tall with arms relaxed at your sides.",
+      "Roll both shoulders forward in smooth circles.",
+      "Switch direction and keep your breathing easy."
+    ],
+    "durationMinutes": 3,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_mobility_thoracic_rotations",
+    "name": "Standing Thoracic Rotations",
+    "description": "Upper-body rotation drill for quick mobility sessions.",
+    "sessionType": "mobility",
+    "steps": [
+      "Stand with feet hip-width apart and arms crossed lightly.",
+      "Rotate your chest to one side without forcing range.",
+      "Return to center and alternate sides at a steady pace."
+    ],
+    "durationMinutes": 5,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_mobility_cat_cow_standing",
+    "name": "Standing Cat-Cow",
+    "description": "Equipment-free spine mobility without floor contact.",
+    "sessionType": "mobility",
+    "steps": [
+      "Place hands on thighs with knees softly bent.",
+      "Round your back gently and tuck your chin.",
+      "Lift your chest and lengthen through the spine."
+    ],
+    "durationMinutes": 4,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_mobility_hip_circles",
+    "name": "Hip Circles",
+    "description": "Controlled hip mobility for small indoor spaces.",
+    "sessionType": "mobility",
+    "steps": [
+      "Stand tall with feet hip-width apart.",
+      "Place hands on hips and draw slow circles.",
+      "Reverse direction while keeping the movement smooth."
+    ],
+    "durationMinutes": 4,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_mobility_ankle_rocks",
+    "name": "Ankle Rocks",
+    "description": "Short ankle mobility sequence for standing breaks.",
+    "sessionType": "mobility",
+    "steps": [
+      "Stand near a wall or chair if you want balance support.",
+      "Rock gently from heels to toes.",
+      "Circle each ankle slowly before switching sides."
+    ],
+    "durationMinutes": 3,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_mobility_wrist_mobility",
+    "name": "Wrist Mobility",
+    "description": "Quick wrist and hand mobility for screen breaks.",
+    "sessionType": "mobility",
+    "steps": [
+      "Extend both arms forward with relaxed shoulders.",
+      "Make slow wrist circles in one direction.",
+      "Reverse direction and gently open and close your hands."
+    ],
+    "durationMinutes": 2,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_mobility_standing_side_bends",
+    "name": "Standing Side Bends",
+    "description": "Side-body mobility that fits in a compact room.",
+    "sessionType": "mobility",
+    "steps": [
+      "Stand tall with feet grounded.",
+      "Reach one arm overhead and lean gently to the opposite side.",
+      "Return to center and alternate sides with control."
+    ],
+    "durationMinutes": 5,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_mobility_hamstring_sweeps",
+    "name": "Hamstring Sweeps",
+    "description": "Low-impact posterior-chain mobility for micro-sessions.",
+    "sessionType": "mobility",
+    "steps": [
+      "Step one heel slightly forward with toes lifted.",
+      "Hinge at the hips and sweep both hands toward the toes.",
+      "Stand back up and alternate legs at an easy pace."
+    ],
+    "durationMinutes": 6,
+    "difficulty": "medium",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_mobility_seated_spinal_twist",
+    "name": "Seated Spinal Twist",
+    "description": "Chair-friendly rotation drill for short mobility breaks.",
+    "sessionType": "mobility",
+    "steps": [
+      "Sit tall with feet flat on the floor.",
+      "Turn your chest gently toward one side.",
+      "Return to center and repeat on the other side."
+    ],
+    "durationMinutes": 4,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_march_in_place",
     "name": "Brisk March In Place",
-    "description": "Low-impact cardio for quick energy and circulation.",
+    "description": "Low-impact cardio for a quick indoor energy lift.",
     "sessionType": "cardio",
     "steps": [
       "Stand tall with feet hip-width apart.",
-      "March in place while driving knees upward.",
+      "March in place while lifting knees comfortably.",
       "Swing your arms naturally and keep a steady pace."
     ],
     "durationMinutes": 7,
@@ -30,16 +165,286 @@
     "outdoorCompatible": true
   },
   {
-    "id": "fallback_breathing_box",
+    "id": "fallback_cardio_step_jacks",
+    "name": "Step Jacks",
+    "description": "No-jump cardio variation for small spaces.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand with feet together and arms by your sides.",
+      "Step one foot out while raising both arms overhead.",
+      "Step back in and alternate sides at a lively pace."
+    ],
+    "durationMinutes": 6,
+    "difficulty": "medium",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_low_impact_skaters",
+    "name": "Low-Impact Skaters",
+    "description": "Side-to-side cardio without jumping.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand with knees softly bent.",
+      "Step diagonally behind with one foot while reaching across.",
+      "Alternate sides and keep the movement light."
+    ],
+    "durationMinutes": 7,
+    "difficulty": "medium",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_toe_taps",
+    "name": "Forward Toe Taps",
+    "description": "Compact cardio drill with a steady rhythm.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand tall with arms relaxed.",
+      "Tap one toe forward and return it under your hips.",
+      "Alternate feet and add arm swings as the pace increases."
+    ],
+    "durationMinutes": 5,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_side_steps",
+    "name": "Quick Side Steps",
+    "description": "Room-friendly cardio using short lateral steps.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand with feet under hips and knees soft.",
+      "Step two counts to one side.",
+      "Step back the other way and keep your torso tall."
+    ],
+    "durationMinutes": 6,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_shadow_boxing",
+    "name": "Shadow Boxing",
+    "description": "Equipment-free cardio with controlled punches.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand with feet staggered and hands near your chest.",
+      "Punch forward lightly, alternating arms.",
+      "Keep elbows soft and move your feet gently."
+    ],
+    "durationMinutes": 8,
+    "difficulty": "medium",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_standing_knee_lifts",
+    "name": "Standing Knee Lifts",
+    "description": "Simple cardio sequence using controlled knee drives.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand tall with hands relaxed or lightly in front.",
+      "Lift one knee toward waist height as comfortable.",
+      "Lower it and alternate sides with a steady rhythm."
+    ],
+    "durationMinutes": 6,
+    "difficulty": "medium",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_standing_mountain_climbers",
+    "name": "Standing Mountain Climbers",
+    "description": "Upright cardio option without floor contact.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand tall and extend both arms forward.",
+      "Drive one knee up while pulling the opposite elbow back.",
+      "Alternate sides and keep the pace controlled."
+    ],
+    "durationMinutes": 7,
+    "difficulty": "high",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_squat_to_reach",
+    "name": "Squat to Reach",
+    "description": "Short full-body cardio using shallow squats.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand with feet slightly wider than hips.",
+      "Sit into a comfortable shallow squat.",
+      "Stand and reach both arms overhead before repeating."
+    ],
+    "durationMinutes": 8,
+    "difficulty": "medium",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_cardio_fast_feet",
+    "name": "Fast Feet",
+    "description": "Higher-tempo cardio drill for short indoor bursts.",
+    "sessionType": "cardio",
+    "steps": [
+      "Stand with knees bent and feet under hips.",
+      "Take quick light steps in place.",
+      "Keep your chest lifted and slow down whenever needed."
+    ],
+    "durationMinutes": 4,
+    "difficulty": "high",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_box_breathing",
     "name": "Box Breathing",
-    "description": "Breathing drill to reduce stress and support recovery.",
+    "description": "Structured breathing drill with equal phases.",
     "sessionType": "breathing",
     "steps": [
       "Inhale through the nose for four counts.",
-      "Hold the breath for four counts.",
-      "Exhale slowly for four counts, then hold for four counts."
+      "Pause gently for four counts.",
+      "Exhale for four counts and pause again for four counts."
     ],
     "durationMinutes": 4,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_four_six_breathing",
+    "name": "4-6 Breathing",
+    "description": "Paced breathing with a longer exhale.",
+    "sessionType": "breathing",
+    "steps": [
+      "Sit or stand comfortably with relaxed shoulders.",
+      "Inhale through the nose for four counts.",
+      "Exhale slowly for six counts and repeat."
+    ],
+    "durationMinutes": 5,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_paced_nasal_breathing",
+    "name": "Paced Nasal Breathing",
+    "description": "Quiet nasal breathing practice for a short reset.",
+    "sessionType": "breathing",
+    "steps": [
+      "Close your mouth gently and breathe through the nose.",
+      "Match each inhale and exhale to a comfortable count.",
+      "Keep the pace smooth without straining."
+    ],
+    "durationMinutes": 4,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_physiological_sigh",
+    "name": "Physiological Sigh",
+    "description": "Short breathing pattern using two inhales and one exhale.",
+    "sessionType": "breathing",
+    "steps": [
+      "Take a comfortable inhale through the nose.",
+      "Add a small second inhale at the top.",
+      "Exhale slowly through the mouth and repeat calmly."
+    ],
+    "durationMinutes": 3,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_equal_breathing",
+    "name": "Equal Breathing",
+    "description": "Simple inhale and exhale rhythm for micro-sessions.",
+    "sessionType": "breathing",
+    "steps": [
+      "Choose a comfortable count such as four.",
+      "Inhale for that count without lifting the shoulders.",
+      "Exhale for the same count and continue evenly."
+    ],
+    "durationMinutes": 4,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_extended_exhale",
+    "name": "Extended Exhale",
+    "description": "Low-effort breathing drill with a longer release.",
+    "sessionType": "breathing",
+    "steps": [
+      "Inhale naturally through the nose.",
+      "Exhale slightly longer than the inhale.",
+      "Let each breath stay quiet and unforced."
+    ],
+    "durationMinutes": 5,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_belly_breathing",
+    "name": "Belly Breathing",
+    "description": "Foundational breathing practice with relaxed posture.",
+    "sessionType": "breathing",
+    "steps": [
+      "Place one hand on your belly if comfortable.",
+      "Inhale and let the belly expand gently.",
+      "Exhale and let the belly settle back naturally."
+    ],
+    "durationMinutes": 6,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_shoulder_drop_breathing",
+    "name": "Shoulder-Drop Breathing",
+    "description": "Breathing drill paired with gentle shoulder release.",
+    "sessionType": "breathing",
+    "steps": [
+      "Inhale and let the shoulders rise slightly.",
+      "Exhale and let the shoulders drop with control.",
+      "Repeat at an easy pace without forcing range."
+    ],
+    "durationMinutes": 3,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_triangle_breathing",
+    "name": "Triangle Breathing",
+    "description": "Three-part breathing rhythm for short guided sessions.",
+    "sessionType": "breathing",
+    "steps": [
+      "Inhale for three or four counts.",
+      "Pause gently for the same count.",
+      "Exhale for the same count and repeat."
+    ],
+    "durationMinutes": 4,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_breathing_reset_breath_scan",
+    "name": "Reset Breath Scan",
+    "description": "Short breathing sequence with attention to posture.",
+    "sessionType": "breathing",
+    "steps": [
+      "Stand or sit comfortably and notice your posture.",
+      "Take three slow breaths at a natural pace.",
+      "Relax the jaw, hands, and shoulders as you continue."
+    ],
+    "durationMinutes": 5,
     "difficulty": "low",
     "indoorCompatible": true,
     "outdoorCompatible": true

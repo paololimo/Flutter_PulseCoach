@@ -74,4 +74,90 @@ void main() {
       expect(exercises.first.steps, isNotEmpty);
     },
   );
+
+  test(
+    '6.2-UNIT-001: bundled fallback catalog satisfies data integrity contract',
+    () async {
+      final exercises = [
+        ...await sut.loadFallbackExercisesByType('mobility'),
+        ...await sut.loadFallbackExercisesByType('cardio'),
+        ...await sut.loadFallbackExercisesByType('breathing'),
+      ];
+      final countsByType = <String, int>{};
+      final ids = <String>{};
+      const supportedTypes = {'mobility', 'cardio', 'breathing'};
+      const supportedDifficulties = {'low', 'medium', 'high'};
+
+      for (final exercise in exercises) {
+        countsByType.update(
+          exercise.sessionType,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+
+        expect(
+          exercise.id,
+          startsWith('fallback_'),
+          reason: '${exercise.id} must use the fallback_ prefix',
+        );
+        expect(
+          exercise.id.trim(),
+          isNotEmpty,
+          reason: '${exercise.id} id must be non-empty after trim',
+        );
+        expect(
+          exercise.name.trim(),
+          isNotEmpty,
+          reason: '${exercise.id} name must be non-empty after trim',
+        );
+        expect(
+          exercise.description.trim(),
+          isNotEmpty,
+          reason: '${exercise.id} description must be non-empty after trim',
+        );
+        expect(
+          ids.add(exercise.id),
+          isTrue,
+          reason: '${exercise.id} must be unique',
+        );
+        expect(
+          supportedTypes,
+          contains(exercise.sessionType),
+          reason: '${exercise.id} has unsupported sessionType',
+        );
+        expect(
+          supportedDifficulties,
+          contains(exercise.difficulty),
+          reason: '${exercise.id} has unsupported difficulty',
+        );
+        expect(
+          exercise.steps.where((step) => step.trim().isNotEmpty),
+          hasLength(greaterThanOrEqualTo(3)),
+          reason: '${exercise.id} must have at least 3 non-empty steps',
+        );
+        expect(
+          exercise.durationMinutes,
+          inInclusiveRange(2, 10),
+          reason: '${exercise.id} duration must stay in the product range',
+        );
+        expect(
+          exercise.indoorCompatible,
+          isTrue,
+          reason: '${exercise.id} must always be indoor compatible',
+        );
+        expect(
+          exercise.outdoorCompatible,
+          isTrue,
+          reason:
+              '${exercise.id} bundled fallback must work anywhere offline; '
+              'set outdoorCompatible: true or relax this assertion intentionally',
+        );
+      }
+
+      expect(exercises, hasLength(greaterThanOrEqualTo(30)));
+      expect(countsByType['mobility'], greaterThanOrEqualTo(10));
+      expect(countsByType['cardio'], greaterThanOrEqualTo(10));
+      expect(countsByType['breathing'], greaterThanOrEqualTo(10));
+    },
+  );
 }
