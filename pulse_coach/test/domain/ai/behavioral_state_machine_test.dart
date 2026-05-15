@@ -157,19 +157,26 @@ void main() {
   // ── Transition: atRisk/fatigued → recovering ─────────────────────────────
 
   group('atRisk/fatigued → recovering', () {
-    test('5.2-UNIT-011: fires from atRisk when last 2 RPE both ≤ 7', () {
-      final sv = _sv(state: BehavioralState.atRisk, rpe: [5, 9, 6, 7]);
+    test('5.2-UNIT-011: fires from atRisk with 3 RPE avg ≤ 7 and missed=0', () {
+      final sv = _sv(state: BehavioralState.atRisk, rpe: [5, 6, 5], missed: 0);
       final result = machine.evaluate(sv);
       expect(result.newState, equals(BehavioralState.recovering));
       expect(result.stateChanged, isTrue);
     });
 
-    test('5.2-UNIT-012: fires from fatigued when last 2 RPE both ≤ 7', () {
-      // missedSessions=0 to avoid fatigued→atRisk rule firing first
-      final sv = _sv(state: BehavioralState.fatigued, rpe: [6, 7], missed: 0);
-      final result = machine.evaluate(sv);
-      expect(result.newState, equals(BehavioralState.recovering));
-    });
+    test(
+      '5.2-UNIT-012: fires from fatigued with 3 RPE avg ≤ 7 and missed=0',
+      () {
+        // missedSessions=0 to avoid fatigued→atRisk rule firing first
+        final sv = _sv(
+          state: BehavioralState.fatigued,
+          rpe: [5, 6, 5],
+          missed: 0,
+        );
+        final result = machine.evaluate(sv);
+        expect(result.newState, equals(BehavioralState.recovering));
+      },
+    );
 
     test('5.2-UNIT-013: does NOT fire when last RPE = 8 (> 7)', () {
       final sv = _sv(state: BehavioralState.atRisk, rpe: [6, 8]);
@@ -190,6 +197,43 @@ void main() {
         expect(result.newState, equals(BehavioralState.atRisk));
       },
     );
+  });
+
+  group('atRisk/fatigued → recovering — Q3 tightened rule', () {
+    test('7.1-UNIT-Q3-001: atRisk + 3 RPE avg ≤ 7 + missed=0 → recovering', () {
+      final sv = _sv(state: BehavioralState.atRisk, rpe: [5, 6, 6], missed: 0);
+      final result = machine.evaluate(sv);
+      expect(result.newState, equals(BehavioralState.recovering));
+      expect(result.stateChanged, isTrue);
+    });
+
+    test(
+      '7.1-UNIT-Q3-002: only 2 RPE values → no transition even with avg ≤ 7',
+      () {
+        final sv = _sv(state: BehavioralState.atRisk, rpe: [5, 6], missed: 0);
+        final result = machine.evaluate(sv);
+        expect(result.newState, equals(BehavioralState.atRisk));
+        expect(result.stateChanged, isFalse);
+      },
+    );
+
+    test('7.1-UNIT-Q3-003: avg ≤ 7 but missed ≥ 1 → no transition', () {
+      final sv = _sv(
+        state: BehavioralState.fatigued,
+        rpe: [5, 6, 5],
+        missed: 1,
+      );
+      final result = machine.evaluate(sv);
+      expect(result.newState, equals(BehavioralState.fatigued));
+      expect(result.stateChanged, isFalse);
+    });
+
+    test('7.1-UNIT-Q3-004: avg > 7 (e.g. [8, 7, 7]) → no transition', () {
+      final sv = _sv(state: BehavioralState.atRisk, rpe: [8, 7, 7], missed: 0);
+      final result = machine.evaluate(sv);
+      expect(result.newState, equals(BehavioralState.atRisk));
+      expect(result.stateChanged, isFalse);
+    });
   });
 
   // ── Transition: recovering → active ─────────────────────────────────────
@@ -246,6 +290,57 @@ void main() {
       final sv = _sv(state: BehavioralState.recovering, rpe: [6, 6], streak: 3);
       expect(machine.evaluate(sv).newState, equals(BehavioralState.recovering));
     });
+  });
+
+  group('recovering → fatigued — Q2 new rule', () {
+    test('7.1-UNIT-Q2-001: recovering + last RPE = 9 → fatigued', () {
+      final sv = _sv(
+        state: BehavioralState.recovering,
+        rpe: [5, 6, 9],
+        missed: 0,
+      );
+      final result = machine.evaluate(sv);
+      expect(result.newState, equals(BehavioralState.fatigued));
+      expect(result.stateChanged, isTrue);
+      expect(result.transitionMessage, isNotNull);
+    });
+
+    test('7.1-UNIT-Q2-002: recovering + last RPE = 10 → fatigued', () {
+      final sv = _sv(
+        state: BehavioralState.recovering,
+        rpe: [5, 6, 10],
+        missed: 0,
+      );
+      final result = machine.evaluate(sv);
+      expect(result.newState, equals(BehavioralState.fatigued));
+      expect(result.stateChanged, isTrue);
+    });
+
+    test('7.1-UNIT-Q2-003: recovering + last RPE = 8 → no transition', () {
+      final sv = _sv(
+        state: BehavioralState.recovering,
+        rpe: [5, 6, 8],
+        missed: 0,
+        streak: 1,
+      );
+      final result = machine.evaluate(sv);
+      expect(result.newState, equals(BehavioralState.recovering));
+      expect(result.stateChanged, isFalse);
+    });
+
+    test(
+      '7.1-UNIT-Q2-004: priority guard — recovering→active fires first when both conditions match',
+      () {
+        final sv = _sv(
+          state: BehavioralState.recovering,
+          rpe: [4, 5, 9],
+          missed: 0,
+          streak: 3,
+        );
+        final result = machine.evaluate(sv);
+        expect(result.newState, equals(BehavioralState.active));
+      },
+    );
   });
 
   // ── constraintsForState ──────────────────────────────────────────────────

@@ -12,6 +12,7 @@ import 'package:pulse_coach/ai/safety/safety_constraints.dart';
 ///   3. active → fatigued   (exertion signal)
 ///   4. atRisk/fatigued → recovering  (recovery signal)
 ///   5. recovering → active (full recovery)
+///   6. recovering → fatigued (overload signal while recovering)
 ///   (If no rule fires, current state is returned unchanged.)
 ///
 /// Stateless: every call computes from scratch given the StateVector snapshot.
@@ -41,7 +42,7 @@ class BehavioralStateMachine {
       return const BehavioralTransition(
         newState: BehavioralState.atRisk,
         transitionMessage:
-            'You\'ve been missing sessions. Scaling back to keep you safe.',
+            'Il corpo chiede una pausa più lunga. Riprendiamo dolcemente.',
       );
     }
 
@@ -49,20 +50,22 @@ class BehavioralStateMachine {
     if (current == BehavioralState.active && _lastNAvg(rpe, 2) > 8.0) {
       return const BehavioralTransition(
         newState: BehavioralState.fatigued,
-        transitionMessage: 'You\'ve been pushing hard. Taking it easier today.',
+        transitionMessage:
+            'Hai spinto forte. Oggi alleggeriamo: sessione corta.',
       );
     }
 
-    // Rule 4: atRisk/fatigued → recovering (last 2 sessions RPE ≤ 7)
+    // Rule 4: atRisk/fatigued → recovering (3 RPE avg ≤ 7, missed == 0)
+    // Q3 from state-graph decision 2026-05-15: raised bar from 2 RPE to
+    // 3-session avg and added missedSessions guard.
     if ((current == BehavioralState.atRisk ||
             current == BehavioralState.fatigued) &&
-        rpe.length >= 2 &&
-        rpe[rpe.length - 1] <= 7 &&
-        rpe[rpe.length - 2] <= 7) {
+        rpe.length >= 3 &&
+        _lastNAvg(rpe, 3) <= 7.0 &&
+        missed == 0) {
       return const BehavioralTransition(
         newState: BehavioralState.recovering,
-        transitionMessage:
-            'Great work staying consistent. Gradually increasing intensity.',
+        transitionMessage: 'Stai tornando in ritmo. Continuiamo con calma.',
       );
     }
 
@@ -76,7 +79,21 @@ class BehavioralStateMachine {
       return const BehavioralTransition(
         newState: BehavioralState.active,
         transitionMessage:
-            'You\'re back on track! Ready for your regular routine.',
+            'Sei di nuovo in forma! Riprendiamoci il piano completo.',
+      );
+    }
+
+    // Rule 6: recovering → fatigued (overload signal while recovering)
+    // Q2 from state-graph decision 2026-05-15: a single RPE >= 9 in recovery
+    // is a real signal, while Rule 5 still wins for sustained recovery.
+    if (current == BehavioralState.recovering &&
+        rpe.isNotEmpty &&
+        rpe.last >= 9) {
+      return const BehavioralTransition(
+        newState: BehavioralState.fatigued,
+        transitionMessage:
+            'Stiamo rientrando, ma l\'ultimo sforzo è stato intenso. '
+            'Torniamo a una sessione facile.',
       );
     }
 
