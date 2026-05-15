@@ -5,11 +5,15 @@
 import 'package:drift/native.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/error/failures.dart';
-import 'package:pulse_coach/core/database/app_database.dart';
+import 'package:pulse_coach/core/database/app_database.dart' hide DailyPlan;
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
+import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
+import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaimer.dart';
@@ -33,6 +37,7 @@ import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/privacy_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
+import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 
 Widget _wrap(Widget page) => MaterialApp(
@@ -45,9 +50,9 @@ void main() {
     testWidgets('[P1] 1.7-WIDGET-001: TodayPage renders without crashing', (
       tester,
     ) async {
-      await tester.pumpWidget(_wrap(const TodayPage()));
+      await tester.pumpWidget(_wrap(_todayPageWithProviders()));
       await tester.pump();
-      expect(find.text('Today — Story 7.x'), findsOneWidget);
+      expect(find.text('Inizia sessione'), findsOneWidget);
     });
 
     testWidgets('[P1] 1.7-WIDGET-002: SessionsPage renders without crashing', (
@@ -202,6 +207,38 @@ void main() {
     );
   });
 }
+
+Widget _todayPageWithProviders() {
+  return MultiBlocProvider(
+    providers: [
+      BlocProvider<DailyPlanBloc>(create: (_) => _StubDailyPlanBloc()),
+      BlocProvider(create: (_) => TodaySessionCubit()..planLoaded(1)),
+    ],
+    child: const TodayPage(),
+  );
+}
+
+class _StubDailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState>
+    implements DailyPlanBloc {
+  _StubDailyPlanBloc() : super(DailyPlanState.loaded(plan: _todayPlan())) {
+    on<DailyPlanGenerateRequested>((event, emit) {});
+    on<DailyPlanRegenerateRequested>((event, emit) {});
+  }
+}
+
+DailyPlan _todayPlan() => DailyPlan(
+  planDate: '2026-05-15',
+  sessions: const [
+    PlannedSession(
+      sessionType: 'mobility',
+      intensity: 3,
+      durationMinutes: 5,
+      isIndoor: true,
+      explanation: 'Sciogli le spalle.',
+    ),
+  ],
+  generatedAt: DateTime.utc(2026, 5, 15, 8),
+);
 
 SessionsCatalogCubit _catalogCubit() {
   return SessionsCatalogCubit(GetExercisesByType(_ExerciseRepositoryStub()));

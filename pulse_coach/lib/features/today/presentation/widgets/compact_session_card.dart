@@ -7,8 +7,14 @@ import 'package:pulse_coach/features/today/presentation/widgets/session_card_hel
 class CompactSessionCard extends StatelessWidget {
   final PlannedSession session;
   final VoidCallback? onTap;
+  final String? heroTag;
 
-  const CompactSessionCard({super.key, required this.session, this.onTap});
+  const CompactSessionCard({
+    super.key,
+    required this.session,
+    this.onTap,
+    this.heroTag,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +49,20 @@ class CompactSessionCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  Icon(
-                    sessionIcon(session.sessionType),
-                    size: 24,
-                    color: accentColor,
-                  ),
+                  heroTag != null
+                      ? Hero(
+                          tag: heroTag!,
+                          child: Icon(
+                            sessionIcon(session.sessionType),
+                            size: 24,
+                            color: accentColor,
+                          ),
+                        )
+                      : Icon(
+                          sessionIcon(session.sessionType),
+                          size: 24,
+                          color: accentColor,
+                        ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(

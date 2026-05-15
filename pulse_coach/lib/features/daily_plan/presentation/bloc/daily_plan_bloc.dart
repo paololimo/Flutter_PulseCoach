@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
+import 'package:pulse_coach/core/database/app_database.dart' show AppDatabase;
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart';
@@ -15,7 +18,10 @@ part 'daily_plan_event.dart';
 sealed class DailyPlanState with _$DailyPlanState {
   const factory DailyPlanState.initial() = DailyPlanInitial;
   const factory DailyPlanState.loading() = DailyPlanLoading;
-  const factory DailyPlanState.loaded({required DailyPlan plan}) = DailyPlanLoaded;
+  const factory DailyPlanState.loaded({
+    required DailyPlan plan,
+    @Default(BehavioralState.active) BehavioralState behavioralState,
+  }) = DailyPlanLoaded;
   const factory DailyPlanState.error({
     required Failure failure,
     @Default(0) int retryAttempts,
@@ -28,9 +34,10 @@ sealed class DailyPlanState with _$DailyPlanState {
 class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
   final GenerateDailyPlan _generateDailyPlan;
   final RegenerateDailyPlan _regenerateDailyPlan;
+  final AppDatabase _db;
 
-  DailyPlanBloc(this._generateDailyPlan, this._regenerateDailyPlan)
-      : super(const DailyPlanState.initial()) {
+  DailyPlanBloc(this._generateDailyPlan, this._regenerateDailyPlan, this._db)
+    : super(const DailyPlanState.initial()) {
     on<DailyPlanGenerateRequested>(_onGenerateRequested);
     on<DailyPlanRegenerateRequested>(_onRegenerateRequested);
   }
@@ -50,14 +57,20 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
     emit(const DailyPlanState.loading());
     try {
       final result = await _generateDailyPlan.call();
-      result.fold(
-        (failure) => emit(
-          DailyPlanState.error(
-            failure: failure,
-            retryAttempts: retryAttempts,
-          ),
+      await result.fold(
+        (failure) async => emit(
+          DailyPlanState.error(failure: failure, retryAttempts: retryAttempts),
         ),
-        (plan) => emit(DailyPlanState.loaded(plan: plan)),
+        (plan) async {
+          final stateRow = await _db.behavioralStateDao.getLatestState();
+          if (isClosed) return;
+          emit(
+            DailyPlanState.loaded(
+              plan: plan,
+              behavioralState: _parseState(stateRow?.currentState),
+            ),
+          );
+        },
       );
     } catch (e) {
       emit(
@@ -79,14 +92,20 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
     emit(const DailyPlanState.loading());
     try {
       final result = await _regenerateDailyPlan.call();
-      result.fold(
-        (failure) => emit(
-          DailyPlanState.error(
-            failure: failure,
-            retryAttempts: retryAttempts,
-          ),
+      await result.fold(
+        (failure) async => emit(
+          DailyPlanState.error(failure: failure, retryAttempts: retryAttempts),
         ),
-        (plan) => emit(DailyPlanState.loaded(plan: plan)),
+        (plan) async {
+          final stateRow = await _db.behavioralStateDao.getLatestState();
+          if (isClosed) return;
+          emit(
+            DailyPlanState.loaded(
+              plan: plan,
+              behavioralState: _parseState(stateRow?.currentState),
+            ),
+          );
+        },
       );
     } catch (e) {
       emit(
@@ -96,5 +115,21 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
         ),
       );
     }
+  }
+
+  BehavioralState _parseState(String? stateStr) {
+    final parsed = switch (stateStr?.toLowerCase()) {
+      'recovering' => BehavioralState.recovering,
+      'atrisk' => BehavioralState.atRisk,
+      'fatigued' => BehavioralState.fatigued,
+      'active' || null => BehavioralState.active,
+      _ => null,
+    };
+    if (parsed != null) return parsed;
+    debugPrint(
+      'DailyPlanBloc: unknown BehavioralState string "$stateStr" — '
+      'falling back to active.',
+    );
+    return BehavioralState.active;
   }
 }

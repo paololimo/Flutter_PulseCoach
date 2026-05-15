@@ -255,6 +255,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i372.DailyPlanBloc(
         gh<_i992.GenerateDailyPlan>(),
         gh<_i183.RegenerateDailyPlan>(),
+        gh<_i79.AppDatabase>(),
       ),
     );
     return this;

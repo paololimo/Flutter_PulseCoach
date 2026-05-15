@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
@@ -11,6 +13,7 @@ import 'package:pulse_coach/features/session/presentation/pages/session_summary_
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/privacy_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
+import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 import 'package:pulse_coach/shared/widgets/app_shell.dart';
 
@@ -31,10 +34,7 @@ class AppRouter {
     initialLocation: '/',
     redirect: _redirect,
     routes: [
-      GoRoute(
-        path: '/',
-        redirect: (context, state) => null,
-      ),
+      GoRoute(path: '/', redirect: (context, state) => null),
       GoRoute(
         path: onboarding,
         builder: (context, state) => const OnboardingPage(),
@@ -44,7 +44,16 @@ class AppRouter {
         routes: [
           GoRoute(
             path: today,
-            builder: (context, state) => const TodayPage(),
+            builder: (context, state) => MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (_) =>
+                      getIt<DailyPlanBloc>()..add(DailyPlanGenerateRequested()),
+                ),
+                BlocProvider(create: (_) => TodaySessionCubit()),
+              ],
+              child: const TodayPage(),
+            ),
           ),
           GoRoute(
             path: sessions,
@@ -60,10 +69,7 @@ class AppRouter {
         path: sessionActive,
         builder: (context, state) => const InSessionPage(),
       ),
-      GoRoute(
-        path: sessionRpe,
-        builder: (context, state) => const RpePage(),
-      ),
+      GoRoute(path: sessionRpe, builder: (context, state) => const RpePage()),
       GoRoute(
         path: sessionSummary,
         builder: (context, state) => const SessionSummaryPage(),
@@ -72,14 +78,8 @@ class AppRouter {
         path: settings,
         builder: (context, state) => const SettingsPage(),
       ),
-      GoRoute(
-        path: profile,
-        builder: (context, state) => const ProfilePage(),
-      ),
-      GoRoute(
-        path: privacy,
-        builder: (context, state) => const PrivacyPage(),
-      ),
+      GoRoute(path: profile, builder: (context, state) => const ProfilePage()),
+      GoRoute(path: privacy, builder: (context, state) => const PrivacyPage()),
     ],
   );
 
@@ -87,8 +87,7 @@ class AppRouter {
     BuildContext context,
     GoRouterState state,
   ) async {
-    final userProfile =
-        await getIt<AppDatabase>().userProfileDao.getProfile();
+    final userProfile = await getIt<AppDatabase>().userProfileDao.getProfile();
     final disclaimerAccepted = userProfile?.disclaimerAccepted ?? false;
     final onboardingComplete = userProfile?.onboardingCompleted ?? false;
     final location = state.matchedLocation;

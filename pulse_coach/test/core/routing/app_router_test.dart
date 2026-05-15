@@ -5,12 +5,16 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
+import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
+import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:pulse_coach/app.dart';
-import 'package:pulse_coach/core/database/app_database.dart';
+import 'package:pulse_coach/core/database/app_database.dart' hide DailyPlan;
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
@@ -54,6 +58,10 @@ void _registerOnboardingDeps() {
   getIt.registerFactory<ProfileCubit>(
     () => ProfileCubit(getIt<GetProfile>(), getIt<UpdateProfile>()),
   );
+}
+
+void _registerTodayDeps() {
+  getIt.registerFactory<DailyPlanBloc>(() => _StubDailyPlanBloc());
 }
 
 void main() {
@@ -107,6 +115,7 @@ void main() {
       );
       getIt.registerSingleton<AppDatabase>(db);
       _registerOnboardingDeps();
+      _registerTodayDeps();
     });
 
     testWidgets(
@@ -132,6 +141,7 @@ void main() {
       );
       getIt.registerSingleton<AppDatabase>(db);
       _registerOnboardingDeps();
+      _registerTodayDeps();
     });
 
     testWidgets(
@@ -163,6 +173,7 @@ void main() {
       );
       getIt.registerSingleton<AppDatabase>(db);
       _registerOnboardingDeps();
+      _registerTodayDeps();
     });
 
     testWidgets(
@@ -253,6 +264,7 @@ void main() {
       );
       getIt.registerSingleton<AppDatabase>(db);
       _registerOnboardingDeps();
+      _registerTodayDeps();
     });
 
     testWidgets(
@@ -261,7 +273,7 @@ void main() {
         await tester.pumpWidget(const PulseCoachApp());
         await tester.pumpAndSettle();
         // TodayPage content confirms redirect to /today fired correctly
-        expect(find.text('Today — Story 7.x'), findsOneWidget);
+        expect(find.text('Inizia sessione'), findsOneWidget);
       },
     );
 
@@ -278,3 +290,25 @@ void main() {
     );
   });
 }
+
+class _StubDailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState>
+    implements DailyPlanBloc {
+  _StubDailyPlanBloc() : super(DailyPlanState.loaded(plan: _todayPlan())) {
+    on<DailyPlanGenerateRequested>((event, emit) {});
+    on<DailyPlanRegenerateRequested>((event, emit) {});
+  }
+}
+
+DailyPlan _todayPlan() => DailyPlan(
+  planDate: '2026-05-15',
+  sessions: const [
+    PlannedSession(
+      sessionType: 'mobility',
+      intensity: 3,
+      durationMinutes: 5,
+      isIndoor: true,
+      explanation: 'Sciogli le spalle.',
+    ),
+  ],
+  generatedAt: DateTime.utc(2026, 5, 15, 8),
+);

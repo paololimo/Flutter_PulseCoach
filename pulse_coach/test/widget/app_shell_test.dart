@@ -1,15 +1,20 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
+import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
+import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exercises_by_type.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
+import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 import 'package:pulse_coach/shared/widgets/app_shell.dart';
 
@@ -22,7 +27,15 @@ Widget buildTestShell({String initialLocation = '/today'}) {
         routes: [
           GoRoute(
             path: '/today',
-            builder: (context, state) => const TodayPage(),
+            builder: (context, state) => MultiBlocProvider(
+              providers: [
+                BlocProvider<DailyPlanBloc>(
+                  create: (_) => _StubDailyPlanBloc(),
+                ),
+                BlocProvider(create: (_) => TodaySessionCubit()..planLoaded(1)),
+              ],
+              child: const TodayPage(),
+            ),
           ),
           GoRoute(
             path: '/sessions',
@@ -103,6 +116,28 @@ void main() {
     });
   });
 }
+
+class _StubDailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState>
+    implements DailyPlanBloc {
+  _StubDailyPlanBloc() : super(DailyPlanState.loaded(plan: _todayPlan())) {
+    on<DailyPlanGenerateRequested>((event, emit) {});
+    on<DailyPlanRegenerateRequested>((event, emit) {});
+  }
+}
+
+DailyPlan _todayPlan() => DailyPlan(
+  planDate: '2026-05-15',
+  sessions: const [
+    PlannedSession(
+      sessionType: 'mobility',
+      intensity: 3,
+      durationMinutes: 5,
+      isIndoor: true,
+      explanation: 'Sciogli le spalle.',
+    ),
+  ],
+  generatedAt: DateTime.utc(2026, 5, 15, 8),
+);
 
 SessionsCatalogCubit _catalogCubit() {
   return SessionsCatalogCubit(GetExercisesByType(_ExerciseRepositoryStub()));

@@ -1,8 +1,11 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
+import 'package:pulse_coach/core/database/app_database.dart' as db_models;
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
@@ -16,6 +19,7 @@ import 'daily_plan_bloc_test.mocks.dart';
 void main() {
   late MockGenerateDailyPlan mockGenerate;
   late MockRegenerateDailyPlan mockRegenerate;
+  late db_models.AppDatabase db;
 
   final tPlan = DailyPlan(
     planDate: '2026-04-29',
@@ -34,13 +38,24 @@ void main() {
   setUp(() {
     mockGenerate = MockGenerateDailyPlan();
     mockRegenerate = MockRegenerateDailyPlan();
+    db = db_models.AppDatabase.forTesting(NativeDatabase.memory());
   });
 
-  DailyPlanBloc bloc() => DailyPlanBloc(mockGenerate, mockRegenerate);
+  tearDown(() async {
+    await db.close();
+  });
+
+  DailyPlanBloc bloc() => DailyPlanBloc(mockGenerate, mockRegenerate, db);
 
   group('DailyPlanBloc', () {
     test('5.5-UNIT-027: initial state is DailyPlanInitial', () {
       expect(bloc().state, const DailyPlanState.initial());
+    });
+
+    test('7.3-UNIT-001: loaded state defaults behavioralState to active', () {
+      final loaded = DailyPlanState.loaded(plan: tPlan) as DailyPlanLoaded;
+
+      expect(loaded.behavioralState, BehavioralState.active);
     });
 
     blocTest<DailyPlanBloc, DailyPlanState>(
@@ -53,6 +68,56 @@ void main() {
       expect: () => [
         const DailyPlanState.loading(),
         DailyPlanState.loaded(plan: tPlan),
+      ],
+    );
+
+    blocTest<DailyPlanBloc, DailyPlanState>(
+      '7.3-UNIT-002: DailyPlanGenerateRequested emits latest behavioral state',
+      setUp: () async {
+        await db.behavioralStateDao.insertState(
+          db_models.BehavioralStateCompanion.insert(
+            currentState: 'Fatigued',
+            recordedAt: DateTime.utc(2026, 4, 29, 7, 0),
+            updatedAt: DateTime.utc(2026, 4, 29, 7, 0),
+          ),
+        );
+      },
+      build: () {
+        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
+        return bloc();
+      },
+      act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
+      expect: () => [
+        const DailyPlanState.loading(),
+        DailyPlanState.loaded(
+          plan: tPlan,
+          behavioralState: BehavioralState.fatigued,
+        ),
+      ],
+    );
+
+    blocTest<DailyPlanBloc, DailyPlanState>(
+      '7.3-UNIT-003: DailyPlanGenerateRequested parses AtRisk behavioral state',
+      setUp: () async {
+        await db.behavioralStateDao.insertState(
+          db_models.BehavioralStateCompanion.insert(
+            currentState: 'AtRisk',
+            recordedAt: DateTime.utc(2026, 4, 29, 7, 0),
+            updatedAt: DateTime.utc(2026, 4, 29, 7, 0),
+          ),
+        );
+      },
+      build: () {
+        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
+        return bloc();
+      },
+      act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
+      expect: () => [
+        const DailyPlanState.loading(),
+        DailyPlanState.loaded(
+          plan: tPlan,
+          behavioralState: BehavioralState.atRisk,
+        ),
       ],
     );
 
