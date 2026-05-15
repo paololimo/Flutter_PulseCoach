@@ -49,7 +49,7 @@ dependencies:
 
   # Sensors & Location
   health: ^13.3.1
-  sensors_plus: ^6.1.0
+  sensors_plus: ^7.0.0
   geolocator: ^14.0.0
 
   # WearOS
