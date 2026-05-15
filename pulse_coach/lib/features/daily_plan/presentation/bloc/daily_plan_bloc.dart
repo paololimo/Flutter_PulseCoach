@@ -16,7 +16,10 @@ sealed class DailyPlanState with _$DailyPlanState {
   const factory DailyPlanState.initial() = DailyPlanInitial;
   const factory DailyPlanState.loading() = DailyPlanLoading;
   const factory DailyPlanState.loaded({required DailyPlan plan}) = DailyPlanLoaded;
-  const factory DailyPlanState.error({required Failure failure}) = DailyPlanError;
+  const factory DailyPlanState.error({
+    required Failure failure,
+    @Default(0) int retryAttempts,
+  }) = DailyPlanError;
 }
 
 // ─── Bloc ─────────────────────────────────────────────────────────────────────
@@ -32,19 +35,37 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
     on<DailyPlanRegenerateRequested>(_onRegenerateRequested);
   }
 
+  // Bloc-emitted `retryAttempts` counts attempts (first error = 1), and is
+  // shared across Generate and Regenerate — a `RegenerateRequested` after a
+  // failed `GenerateRequested` increments the same counter. Pending Story 7.1
+  // (StateIndicator), where UX semantics will fix whether the field should
+  // split per-handler.
   Future<void> _onGenerateRequested(
     DailyPlanGenerateRequested event,
     Emitter<DailyPlanState> emit,
   ) async {
+    final retryAttempts = state is DailyPlanError
+        ? (state as DailyPlanError).retryAttempts + 1
+        : 1;
     emit(const DailyPlanState.loading());
     try {
       final result = await _generateDailyPlan.call();
       result.fold(
-        (failure) => emit(DailyPlanState.error(failure: failure)),
+        (failure) => emit(
+          DailyPlanState.error(
+            failure: failure,
+            retryAttempts: retryAttempts,
+          ),
+        ),
         (plan) => emit(DailyPlanState.loaded(plan: plan)),
       );
     } catch (e) {
-      emit(DailyPlanState.error(failure: CacheFailure(e.toString())));
+      emit(
+        DailyPlanState.error(
+          failure: CacheFailure(e.toString()),
+          retryAttempts: retryAttempts,
+        ),
+      );
     }
   }
 
@@ -52,15 +73,28 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
     DailyPlanRegenerateRequested event,
     Emitter<DailyPlanState> emit,
   ) async {
+    final retryAttempts = state is DailyPlanError
+        ? (state as DailyPlanError).retryAttempts + 1
+        : 1;
     emit(const DailyPlanState.loading());
     try {
       final result = await _regenerateDailyPlan.call();
       result.fold(
-        (failure) => emit(DailyPlanState.error(failure: failure)),
+        (failure) => emit(
+          DailyPlanState.error(
+            failure: failure,
+            retryAttempts: retryAttempts,
+          ),
+        ),
         (plan) => emit(DailyPlanState.loaded(plan: plan)),
       );
     } catch (e) {
-      emit(DailyPlanState.error(failure: CacheFailure(e.toString())));
+      emit(
+        DailyPlanState.error(
+          failure: CacheFailure(e.toString()),
+          retryAttempts: retryAttempts,
+        ),
+      );
     }
   }
 }

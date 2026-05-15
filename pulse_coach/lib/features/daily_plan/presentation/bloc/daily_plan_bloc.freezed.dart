@@ -125,13 +125,13 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( DailyPlan plan)?  loaded,TResult Function( Failure failure)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( DailyPlan plan)?  loaded,TResult Function( Failure failure,  int retryAttempts)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DailyPlanInitial() when initial != null:
 return initial();case DailyPlanLoading() when loading != null:
 return loading();case DailyPlanLoaded() when loaded != null:
 return loaded(_that.plan);case DailyPlanError() when error != null:
-return error(_that.failure);case _:
+return error(_that.failure,_that.retryAttempts);case _:
   return orElse();
 
 }
@@ -149,13 +149,13 @@ return error(_that.failure);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( DailyPlan plan)  loaded,required TResult Function( Failure failure)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( DailyPlan plan)  loaded,required TResult Function( Failure failure,  int retryAttempts)  error,}) {final _that = this;
 switch (_that) {
 case DailyPlanInitial():
 return initial();case DailyPlanLoading():
 return loading();case DailyPlanLoaded():
 return loaded(_that.plan);case DailyPlanError():
-return error(_that.failure);}
+return error(_that.failure,_that.retryAttempts);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -169,13 +169,13 @@ return error(_that.failure);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( DailyPlan plan)?  loaded,TResult? Function( Failure failure)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( DailyPlan plan)?  loaded,TResult? Function( Failure failure,  int retryAttempts)?  error,}) {final _that = this;
 switch (_that) {
 case DailyPlanInitial() when initial != null:
 return initial();case DailyPlanLoading() when loading != null:
 return loading();case DailyPlanLoaded() when loaded != null:
 return loaded(_that.plan);case DailyPlanError() when error != null:
-return error(_that.failure);case _:
+return error(_that.failure,_that.retryAttempts);case _:
   return null;
 
 }
@@ -326,10 +326,11 @@ $DailyPlanCopyWith<$Res> get plan {
 
 
 class DailyPlanError implements DailyPlanState {
-  const DailyPlanError({required this.failure});
+  const DailyPlanError({required this.failure, this.retryAttempts = 0});
   
 
  final  Failure failure;
+@JsonKey() final  int retryAttempts;
 
 /// Create a copy of DailyPlanState
 /// with the given fields replaced by the non-null parameter values.
@@ -341,16 +342,16 @@ $DailyPlanErrorCopyWith<DailyPlanError> get copyWith => _$DailyPlanErrorCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyPlanError&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyPlanError&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.retryAttempts, retryAttempts) || other.retryAttempts == retryAttempts));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,failure);
+int get hashCode => Object.hash(runtimeType,failure,retryAttempts);
 
 @override
 String toString() {
-  return 'DailyPlanState.error(failure: $failure)';
+  return 'DailyPlanState.error(failure: $failure, retryAttempts: $retryAttempts)';
 }
 
 
@@ -361,7 +362,7 @@ abstract mixin class $DailyPlanErrorCopyWith<$Res> implements $DailyPlanStateCop
   factory $DailyPlanErrorCopyWith(DailyPlanError value, $Res Function(DailyPlanError) _then) = _$DailyPlanErrorCopyWithImpl;
 @useResult
 $Res call({
- Failure failure
+ Failure failure, int retryAttempts
 });
 
 
@@ -378,10 +379,11 @@ class _$DailyPlanErrorCopyWithImpl<$Res>
 
 /// Create a copy of DailyPlanState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? failure = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? failure = null,Object? retryAttempts = null,}) {
   return _then(DailyPlanError(
 failure: null == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
-as Failure,
+as Failure,retryAttempts: null == retryAttempts ? _self.retryAttempts : retryAttempts // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

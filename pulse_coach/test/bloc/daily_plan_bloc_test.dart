@@ -65,7 +65,7 @@ void main() {
       act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
       expect: () => [
         const DailyPlanState.loading(),
-        const DailyPlanState.error(failure: tFailure),
+        const DailyPlanState.error(failure: tFailure, retryAttempts: 1),
       ],
     );
 
@@ -93,8 +93,29 @@ void main() {
       act: (bloc) => bloc.add(DailyPlanRegenerateRequested()),
       expect: () => [
         const DailyPlanState.loading(),
-        const DailyPlanState.error(failure: tFailure),
+        const DailyPlanState.error(failure: tFailure, retryAttempts: 1),
       ],
+    );
+
+    blocTest<DailyPlanBloc, DailyPlanState>(
+      '6.5-EQ-BLOC-004: two consecutive failures produce distinct error emissions (retry counter increments)',
+      build: () {
+        when(mockGenerate.call()).thenAnswer((_) async => const Left(tFailure));
+        return bloc();
+      },
+      act: (bloc) async {
+        bloc.add(DailyPlanGenerateRequested());
+        await Future<void>.delayed(Duration.zero);
+        await pumpEventQueue();
+        bloc.add(DailyPlanGenerateRequested());
+      },
+      expect: () => [
+        const DailyPlanState.loading(),
+        const DailyPlanState.error(failure: tFailure, retryAttempts: 1),
+        const DailyPlanState.loading(),
+        const DailyPlanState.error(failure: tFailure, retryAttempts: 2),
+      ],
+      verify: (_) => verify(mockGenerate.call()).called(2),
     );
 
     blocTest<DailyPlanBloc, DailyPlanState>(
