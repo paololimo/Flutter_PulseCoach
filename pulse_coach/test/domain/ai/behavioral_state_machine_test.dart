@@ -15,25 +15,24 @@ StateVector _sv({
   List<int> rpe = const [],
   int missed = 0,
   int streak = 0,
-}) =>
-    StateVector(
-      restingHR: 65.0,
-      stepCount: 4000,
-      activityLevel: ActivityLevel.moderate,
-      rpeHistory: rpe,
-      missedSessions: missed,
-      streak: streak,
-      aqiLevel: AqiLevel.low,
-      temperature: 20.0,
-      precipitation: false,
-      userProfile: const UserProfile(
-        fitnessLevel: 'medium',
-        goal: 'cardio',
-        availableTime: 'short',
-        physicalConstraints: 'none',
-      ),
-      currentState: state,
-    );
+}) => StateVector(
+  restingHR: 65.0,
+  stepCount: 4000,
+  activityLevel: ActivityLevel.moderate,
+  rpeHistory: rpe,
+  missedSessions: missed,
+  streak: streak,
+  aqiLevel: AqiLevel.low,
+  temperature: 20.0,
+  precipitation: false,
+  userProfile: const UserProfile(
+    fitnessLevel: 'medium',
+    goal: 'cardio',
+    availableTime: 'short',
+    physicalConstraints: 'none',
+  ),
+  currentState: state,
+);
 
 void main() {
   const machine = BehavioralStateMachine();
@@ -67,11 +66,14 @@ void main() {
       expect(result.stateChanged, isTrue);
     });
 
-    test('5.2-UNIT-004: fires when last 2 RPE avg = 8.5 (above > 8.0 threshold)', () {
-      final sv = _sv(state: BehavioralState.active, rpe: [9, 8]);
-      final result = machine.evaluate(sv);
-      expect(result.newState, equals(BehavioralState.fatigued));
-    });
+    test(
+      '5.2-UNIT-004: fires when last 2 RPE avg = 8.5 (above > 8.0 threshold)',
+      () {
+        final sv = _sv(state: BehavioralState.active, rpe: [9, 8]);
+        final result = machine.evaluate(sv);
+        expect(result.newState, equals(BehavioralState.fatigued));
+      },
+    );
 
     test('5.2-UNIT-005: does NOT fire when last 2 RPE avg = 8.0 (not > 8)', () {
       final sv = _sv(state: BehavioralState.active, rpe: [8, 8]);
@@ -80,11 +82,14 @@ void main() {
       expect(result.stateChanged, isFalse);
     });
 
-    test('5.2-UNIT-006: does NOT fire with only 1 RPE entry (insufficient data)', () {
-      final sv = _sv(state: BehavioralState.active, rpe: [10]);
-      final result = machine.evaluate(sv);
-      expect(result.newState, equals(BehavioralState.active));
-    });
+    test(
+      '5.2-UNIT-006: does NOT fire with only 1 RPE entry (insufficient data)',
+      () {
+        final sv = _sv(state: BehavioralState.active, rpe: [10]);
+        final result = machine.evaluate(sv);
+        expect(result.newState, equals(BehavioralState.active));
+      },
+    );
 
     test('5.2-UNIT-007: does NOT fire with empty rpeHistory', () {
       final sv = _sv(state: BehavioralState.active, rpe: []);
@@ -117,6 +122,38 @@ void main() {
     });
   });
 
+  // ── Transition: active → atRisk (Story 7.1b — Q1) ───────────────────────
+
+  group('active → atRisk (Q1)', () {
+    test('7.1b-UNIT-001: fires when missedSessions >= 2 from active', () {
+      final sv = _sv(state: BehavioralState.active, missed: 2);
+      final result = machine.evaluate(sv);
+      expect(result.newState, equals(BehavioralState.atRisk));
+      expect(result.stateChanged, isTrue);
+      expect(result.transitionMessage, isNotNull);
+      expect(result.transitionMessage, contains('Ci sei mancato'));
+    });
+
+    test(
+      '7.1b-UNIT-002: does NOT fire when missedSessions = 1 from active',
+      () {
+        final sv = _sv(state: BehavioralState.active, missed: 1);
+        final result = machine.evaluate(sv);
+        expect(result.newState, equals(BehavioralState.active));
+        expect(result.stateChanged, isFalse);
+      },
+    );
+
+    test(
+      '7.1b-UNIT-003: priority guard - active + missed=2 + high RPE -> atRisk wins over fatigued',
+      () {
+        final sv = _sv(state: BehavioralState.active, missed: 2, rpe: [9, 9]);
+        final result = machine.evaluate(sv);
+        expect(result.newState, equals(BehavioralState.atRisk));
+      },
+    );
+  });
+
   // ── Transition: atRisk/fatigued → recovering ─────────────────────────────
 
   group('atRisk/fatigued → recovering', () {
@@ -144,16 +181,15 @@ void main() {
       expect(machine.evaluate(sv).newState, equals(BehavioralState.atRisk));
     });
 
-    test('5.2-UNIT-015: fatigued→atRisk takes priority over fatigued→recovering when missed>=2', () {
-      // missed=2 triggers fatigued→atRisk first; recovering rule is NOT checked
-      final sv = _sv(
-        state: BehavioralState.fatigued,
-        rpe: [6, 7],
-        missed: 2,
-      );
-      final result = machine.evaluate(sv);
-      expect(result.newState, equals(BehavioralState.atRisk));
-    });
+    test(
+      '5.2-UNIT-015: fatigued→atRisk takes priority over fatigued→recovering when missed>=2',
+      () {
+        // missed=2 triggers fatigued→atRisk first; recovering rule is NOT checked
+        final sv = _sv(state: BehavioralState.fatigued, rpe: [6, 7], missed: 2);
+        final result = machine.evaluate(sv);
+        expect(result.newState, equals(BehavioralState.atRisk));
+      },
+    );
   });
 
   // ── Transition: recovering → active ─────────────────────────────────────
@@ -170,19 +206,22 @@ void main() {
       expect(result.stateChanged, isTrue);
     });
 
-    test('5.2-UNIT-017: averages only the LAST 3 RPE values (ignores earlier highs)', () {
-      // Guards the sublist(rpe.length - n) logic: earlier high RPEs [9, 9]
-      // must NOT contribute. Last 3: (6 + 7 + 6) / 3 = 6.333 ≤ 6.5 → fires.
-      // Note: an exact avg = 6.5 boundary is unreachable with 3 integer RPEs
-      // (sum = 19.5 is impossible), so this test probes the window semantics
-      // instead of the == 6.5 boundary.
-      final sv = _sv(
-        state: BehavioralState.recovering,
-        rpe: [9, 9, 6, 7, 6],
-        streak: 3,
-      );
-      expect(machine.evaluate(sv).newState, equals(BehavioralState.active));
-    });
+    test(
+      '5.2-UNIT-017: averages only the LAST 3 RPE values (ignores earlier highs)',
+      () {
+        // Guards the sublist(rpe.length - n) logic: earlier high RPEs [9, 9]
+        // must NOT contribute. Last 3: (6 + 7 + 6) / 3 = 6.333 ≤ 6.5 → fires.
+        // Note: an exact avg = 6.5 boundary is unreachable with 3 integer RPEs
+        // (sum = 19.5 is impossible), so this test probes the window semantics
+        // instead of the == 6.5 boundary.
+        final sv = _sv(
+          state: BehavioralState.recovering,
+          rpe: [9, 9, 6, 7, 6],
+          streak: 3,
+        );
+        expect(machine.evaluate(sv).newState, equals(BehavioralState.active));
+      },
+    );
 
     test('5.2-UNIT-018: does NOT fire when avg > 6.5', () {
       // (7 + 7 + 6) / 3 = 6.666... > 6.5
@@ -204,11 +243,7 @@ void main() {
     });
 
     test('5.2-UNIT-020: does NOT fire with fewer than 3 RPE entries', () {
-      final sv = _sv(
-        state: BehavioralState.recovering,
-        rpe: [6, 6],
-        streak: 3,
-      );
+      final sv = _sv(state: BehavioralState.recovering, rpe: [6, 6], streak: 3);
       expect(machine.evaluate(sv).newState, equals(BehavioralState.recovering));
     });
   });
@@ -229,12 +264,15 @@ void main() {
       expect(c.maxSessionCount, equals(2));
     });
 
-    test('5.2-UNIT-023: active → noConstraints (null maxIntensity, maxSessionCount 3)', () {
-      final c = machine.constraintsForState(BehavioralState.active);
-      expect(c.maxIntensity, isNull);
-      expect(c.maxSessionCount, equals(3));
-      expect(c.outdoorAllowed, isTrue);
-    });
+    test(
+      '5.2-UNIT-023: active → noConstraints (null maxIntensity, maxSessionCount 3)',
+      () {
+        final c = machine.constraintsForState(BehavioralState.active);
+        expect(c.maxIntensity, isNull);
+        expect(c.maxSessionCount, equals(3));
+        expect(c.outdoorAllowed, isTrue);
+      },
+    );
 
     test('5.2-UNIT-024: fatigued → medium intensity cap, 3 sessions', () {
       final c = machine.constraintsForState(BehavioralState.fatigued);
@@ -254,9 +292,12 @@ void main() {
       expect(result.transitionMessage, isNull);
     });
 
-    test('5.2-UNIT-026: atRisk stays atRisk when conditions for recovery not met', () {
-      final sv = _sv(state: BehavioralState.atRisk, rpe: [8, 9]);
-      expect(machine.evaluate(sv).newState, equals(BehavioralState.atRisk));
-    });
+    test(
+      '5.2-UNIT-026: atRisk stays atRisk when conditions for recovery not met',
+      () {
+        final sv = _sv(state: BehavioralState.atRisk, rpe: [8, 9]);
+        expect(machine.evaluate(sv).newState, equals(BehavioralState.atRisk));
+      },
+    );
   });
 }

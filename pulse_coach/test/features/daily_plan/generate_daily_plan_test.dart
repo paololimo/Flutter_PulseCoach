@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -492,9 +493,133 @@ void main() {
       },
     );
   });
+
+  group(
+    'GenerateDailyPlan — missedSessions from daily_plans table (Story 7.1b)',
+    () {
+      test(
+        '7.1b-GDP-001: 2 uncompleted plans in last 7d -> missedSessions = 2',
+        () async {
+          setupDefaultMocks();
+          when(
+            mockPlanRepo.getPlanForDate(any),
+          ).thenAnswer((_) async => const Right(null));
+
+          final now = DateTime.now().toUtc();
+          await db.dailyPlansDao.insertPlan(
+            DailyPlansCompanion(
+              planDate: Value(_dateOffset(-1)),
+              planJson: const Value('{}'),
+              generatedAt: Value(now),
+              createdAt: Value(now),
+            ),
+          );
+          await db.dailyPlansDao.insertPlan(
+            DailyPlansCompanion(
+              planDate: Value(_dateOffset(-2)),
+              planJson: const Value('{}'),
+              generatedAt: Value(now),
+              createdAt: Value(now),
+            ),
+          );
+
+          AiEngineInput? capturedInput;
+          when(mockAiEngine.call(any)).thenAnswer((inv) async {
+            capturedInput = inv.positionalArguments.first as AiEngineInput;
+            return tOutput;
+          });
+
+          await sut.call();
+
+          expect(capturedInput!.stateVector.missedSessions, equals(2));
+        },
+      );
+
+      test('7.1b-GDP-002: plans older than 7d excluded from count', () async {
+        setupDefaultMocks();
+        when(
+          mockPlanRepo.getPlanForDate(any),
+        ).thenAnswer((_) async => const Right(null));
+
+        final now = DateTime.now().toUtc();
+        await db.dailyPlansDao.insertPlan(
+          DailyPlansCompanion(
+            planDate: Value(_dateOffset(-3)),
+            planJson: const Value('{}'),
+            generatedAt: Value(now),
+            createdAt: Value(now),
+          ),
+        );
+        await db.dailyPlansDao.insertPlan(
+          DailyPlansCompanion(
+            planDate: Value(_dateOffset(-8)),
+            planJson: const Value('{}'),
+            generatedAt: Value(now),
+            createdAt: Value(now),
+          ),
+        );
+
+        AiEngineInput? capturedInput;
+        when(mockAiEngine.call(any)).thenAnswer((inv) async {
+          capturedInput = inv.positionalArguments.first as AiEngineInput;
+          return tOutput;
+        });
+
+        await sut.call();
+
+        expect(capturedInput!.stateVector.missedSessions, equals(1));
+      });
+
+      test(
+        '7.1b-GDP-003: today\'s uncompleted plan is NOT counted as missed (regenerate guard)',
+        () async {
+          setupDefaultMocks();
+          when(
+            mockPlanRepo.getPlanForDate(any),
+          ).thenAnswer((_) async => const Right(null));
+
+          final now = DateTime.now().toUtc();
+          // Today's plan exists with isCompleted=false (same-day regenerate scenario)
+          await db.dailyPlansDao.insertPlan(
+            DailyPlansCompanion(
+              planDate: Value(_dateOffset(0)),
+              planJson: const Value('{}'),
+              generatedAt: Value(now),
+              createdAt: Value(now),
+            ),
+          );
+          // Plus 1 prior uncompleted plan
+          await db.dailyPlansDao.insertPlan(
+            DailyPlansCompanion(
+              planDate: Value(_dateOffset(-2)),
+              planJson: const Value('{}'),
+              generatedAt: Value(now),
+              createdAt: Value(now),
+            ),
+          );
+
+          AiEngineInput? capturedInput;
+          when(mockAiEngine.call(any)).thenAnswer((inv) async {
+            capturedInput = inv.positionalArguments.first as AiEngineInput;
+            return tOutput;
+          });
+
+          await sut.call();
+
+          // Today excluded from window → only the -2 plan counts.
+          expect(capturedInput!.stateVector.missedSessions, equals(1));
+        },
+      );
+    },
+  );
 }
 
 String _todayDate() {
   final now = DateTime.now();
   return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+}
+
+String _dateOffset(int daysOffset) {
+  final dt = DateTime.now().add(Duration(days: daysOffset));
+  return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 }

@@ -7,10 +7,11 @@ import 'package:pulse_coach/ai/safety/safety_constraints.dart';
 /// BehavioralState + an optional transition message.
 ///
 /// Evaluation order matters — higher-priority transitions are checked first:
-///   1. fatigued → atRisk   (structural risk, checked before active→fatigued)
-///   2. active → fatigued   (exertion signal)
-///   3. atRisk/fatigued → recovering  (recovery signal)
-///   4. recovering → active (full recovery)
+///   1. active → atRisk     (disengagement, checked before active→fatigued)
+///   2. fatigued → atRisk   (structural risk, checked before recovery)
+///   3. active → fatigued   (exertion signal)
+///   4. atRisk/fatigued → recovering  (recovery signal)
+///   5. recovering → active (full recovery)
 ///   (If no rule fires, current state is returned unchanged.)
 ///
 /// Stateless: every call computes from scratch given the StateVector snapshot.
@@ -26,7 +27,16 @@ class BehavioralStateMachine {
     final missed = stateVector.missedSessions;
     final streak = stateVector.streak;
 
-    // Rule 1: fatigued → atRisk
+    // Rule 1: active → atRisk (disengagement — Q1 from 2026-05-15 decision)
+    if (current == BehavioralState.active && missed >= 2) {
+      return const BehavioralTransition(
+        newState: BehavioralState.atRisk,
+        transitionMessage:
+            'Ci sei mancato. Ripartiamo leggeri — 5 minuti bastano oggi.',
+      );
+    }
+
+    // Rule 2: fatigued → atRisk
     if (current == BehavioralState.fatigued && missed >= 2) {
       return const BehavioralTransition(
         newState: BehavioralState.atRisk,
@@ -35,16 +45,15 @@ class BehavioralStateMachine {
       );
     }
 
-    // Rule 2: active → fatigued (needs last 2 RPE values)
+    // Rule 3: active → fatigued (needs last 2 RPE values)
     if (current == BehavioralState.active && _lastNAvg(rpe, 2) > 8.0) {
       return const BehavioralTransition(
         newState: BehavioralState.fatigued,
-        transitionMessage:
-            'You\'ve been pushing hard. Taking it easier today.',
+        transitionMessage: 'You\'ve been pushing hard. Taking it easier today.',
       );
     }
 
-    // Rule 3: atRisk/fatigued → recovering (last 2 sessions RPE ≤ 7)
+    // Rule 4: atRisk/fatigued → recovering (last 2 sessions RPE ≤ 7)
     if ((current == BehavioralState.atRisk ||
             current == BehavioralState.fatigued) &&
         rpe.length >= 2 &&
@@ -57,7 +66,7 @@ class BehavioralStateMachine {
       );
     }
 
-    // Rule 4: recovering → active (3 sessions avg ≤ 6.5, streak ≥ 3)
+    // Rule 5: recovering → active (3 sessions avg ≤ 6.5, streak ≥ 3)
     // Explicit rpe.length >= 3 guard: _lastNAvg returns 0.0 for insufficient
     // data, which would satisfy the <= 6.5 check incorrectly.
     if (current == BehavioralState.recovering &&

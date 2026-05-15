@@ -9,9 +9,16 @@ class DailyPlansDao extends DatabaseAccessor<AppDatabase>
     with _$DailyPlansDaoMixin {
   DailyPlansDao(super.db);
 
-  Future<DailyPlan?> getPlanForDate(String date) =>
-      (select(dailyPlans)..where((t) => t.planDate.equals(date)))
-          .getSingleOrNull();
+  Future<DailyPlan?> getPlanForDate(String date) => (select(
+    dailyPlans,
+  )..where((t) => t.planDate.equals(date))).getSingleOrNull();
+
+  Future<List<DailyPlan>> getPlansInDateRange(
+    String startDate,
+    String endDate,
+  ) => (select(
+    dailyPlans,
+  )..where((t) => t.planDate.isBetweenValues(startDate, endDate))).get();
 
   Future<int> insertPlan(DailyPlansCompanion entry) =>
       into(dailyPlans).insert(entry);
@@ -27,9 +34,10 @@ class DailyPlansDao extends DatabaseAccessor<AppDatabase>
   /// Returns `false` only when no plan exists for [date]; callers can treat
   /// `false` as "no plan to mark", not as a failure.
   Future<bool> markCompleted(String date) async {
-    final rowsAffected = await (update(dailyPlans)
-          ..where((t) => t.planDate.equals(date)))
-        .write(const DailyPlansCompanion(isCompleted: Value(true)));
+    final rowsAffected =
+        await (update(dailyPlans)..where((t) => t.planDate.equals(date))).write(
+          const DailyPlansCompanion(isCompleted: Value(true)),
+        );
     return rowsAffected > 0;
   }
 }
