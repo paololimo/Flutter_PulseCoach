@@ -1,6 +1,16 @@
 abstract class Failure {
   String get message;
   const Failure();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Failure &&
+          runtimeType == other.runtimeType &&
+          message == other.message);
+
+  @override
+  int get hashCode => Object.hash(runtimeType, message);
 }
 
 class ServerFailure extends Failure {
