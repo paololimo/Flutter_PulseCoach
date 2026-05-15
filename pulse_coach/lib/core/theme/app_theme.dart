@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 
 abstract class AppTheme {
+  static const _bodyFontFamily = 'Plus Jakarta Sans';
+
   static ThemeData get darkTheme => ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
+    useMaterial3: true,
+    colorScheme:
+        ColorScheme.fromSeed(
           seedColor: const Color(0xFF7DD3C0),
           brightness: Brightness.dark,
         ).copyWith(
@@ -20,23 +22,22 @@ abstract class AppTheme {
           onSurfaceVariant: PulseCoachTheme.dark.onSurfaceVariant,
           error: PulseCoachTheme.dark.error,
         ),
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(
-          ThemeData(brightness: Brightness.dark).textTheme,
-        ),
-        extensions: const [PulseCoachTheme.dark],
-        cardTheme: const CardThemeData(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(16)),
-          ),
-          elevation: 0,
-        ),
-      );
+    textTheme: ThemeData(
+      brightness: Brightness.dark,
+    ).textTheme.apply(fontFamily: _bodyFontFamily),
+    extensions: const [PulseCoachTheme.dark],
+    cardTheme: const CardThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
+      elevation: 0,
+    ),
+  );
 
   static ThemeData get lightTheme => ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7DD3C0),
-        ).copyWith(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7DD3C0))
+        .copyWith(
           surface: PulseCoachTheme.light.surface,
           surfaceContainerLow: PulseCoachTheme.light.surface,
           surfaceContainer: PulseCoachTheme.light.surfaceContainer,
@@ -48,13 +49,13 @@ abstract class AppTheme {
           onSurfaceVariant: PulseCoachTheme.light.onSurfaceVariant,
           error: PulseCoachTheme.light.error,
         ),
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(),
-        extensions: const [PulseCoachTheme.light],
-        cardTheme: const CardThemeData(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(16)),
-          ),
-          elevation: 0,
-        ),
-      );
+    textTheme: ThemeData().textTheme.apply(fontFamily: _bodyFontFamily),
+    extensions: const [PulseCoachTheme.light],
+    cardTheme: const CardThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
+      elevation: 0,
+    ),
+  );
 }

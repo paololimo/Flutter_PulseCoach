@@ -3,8 +3,10 @@
 // All pages are placeholder UIs (Story X.x stubs); tests form a regression
 // baseline for when real implementations replace them.
 import 'package:drift/native.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
@@ -24,44 +26,45 @@ import 'package:pulse_coach/features/progress/presentation/pages/progress_page.d
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/session_summary_page.dart';
+import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
+import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart';
+import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exercises_by_type.dart';
+import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_cubit.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/privacy_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 
 Widget _wrap(Widget page) => MaterialApp(
-      theme: AppTheme.darkTheme,
-      home: Scaffold(body: page),
-    );
+  theme: AppTheme.darkTheme,
+  home: Scaffold(body: page),
+);
 
 void main() {
   group('Shell tab pages — smoke tests', () {
-    testWidgets(
-      '[P1] 1.7-WIDGET-001: TodayPage renders without crashing',
-      (tester) async {
-        await tester.pumpWidget(_wrap(const TodayPage()));
-        await tester.pump();
-        expect(find.text('Today — Story 7.x'), findsOneWidget);
-      },
-    );
+    testWidgets('[P1] 1.7-WIDGET-001: TodayPage renders without crashing', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(const TodayPage()));
+      await tester.pump();
+      expect(find.text('Today — Story 7.x'), findsOneWidget);
+    });
 
-    testWidgets(
-      '[P1] 1.7-WIDGET-002: SessionsPage renders without crashing',
-      (tester) async {
-        await tester.pumpWidget(_wrap(const SessionsPage()));
-        await tester.pump();
-        expect(find.text('Sessions — Story 6.x'), findsOneWidget);
-      },
-    );
+    testWidgets('[P1] 1.7-WIDGET-002: SessionsPage renders without crashing', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(SessionsPage(cubit: _catalogCubit())));
+      await tester.pumpAndSettle();
+      expect(find.text('Hip Reset'), findsOneWidget);
+    });
 
-    testWidgets(
-      '[P1] 1.7-WIDGET-003: ProgressPage renders without crashing',
-      (tester) async {
-        await tester.pumpWidget(_wrap(const ProgressPage()));
-        await tester.pump();
-        expect(find.text('Progress — Story 10.x'), findsOneWidget);
-      },
-    );
+    testWidgets('[P1] 1.7-WIDGET-003: ProgressPage renders without crashing', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(const ProgressPage()));
+      await tester.pump();
+      expect(find.text('Progress — Story 10.x'), findsOneWidget);
+    });
   });
 
   group('Onboarding pages — smoke tests', () {
@@ -110,10 +113,9 @@ void main() {
     testWidgets(
       '[P1] 1.7-WIDGET-004: OnboardingPage renders disclaimer screen',
       (tester) async {
-        await tester.pumpWidget(MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: const OnboardingPage(),
-        ));
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.darkTheme, home: const OnboardingPage()),
+        );
         await tester.pumpAndSettle();
         // DisclaimerScreen is now the OnboardingPage content (Story 2.1)
         expect(find.text('Your data stays yours.'), findsOneWidget);
@@ -123,10 +125,9 @@ void main() {
     testWidgets(
       '[P1] 1.7-WIDGET-005: ProfilePage renders with correct AppBar title',
       (tester) async {
-        await tester.pumpWidget(MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: const ProfilePage(),
-        ));
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.darkTheme, home: const ProfilePage()),
+        );
         await tester.pumpAndSettle();
         // AppBar title is always visible (loading or form state)
         expect(find.text('Profile'), findsOneWidget);
@@ -138,10 +139,9 @@ void main() {
     testWidgets(
       '[P1] 1.7-WIDGET-006: InSessionPage renders with correct AppBar title',
       (tester) async {
-        await tester.pumpWidget(MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: const InSessionPage(),
-        ));
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.darkTheme, home: const InSessionPage()),
+        );
         await tester.pump();
         expect(find.text('In Session'), findsOneWidget);
         expect(find.text('In Session — Story 8.x'), findsOneWidget);
@@ -151,10 +151,9 @@ void main() {
     testWidgets(
       '[P1] 1.7-WIDGET-007: RpePage renders with correct AppBar title',
       (tester) async {
-        await tester.pumpWidget(MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: const RpePage(),
-        ));
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.darkTheme, home: const RpePage()),
+        );
         await tester.pump();
         expect(find.text('RPE'), findsOneWidget);
         expect(find.text('RPE — Story 9.x'), findsOneWidget);
@@ -164,10 +163,12 @@ void main() {
     testWidgets(
       '[P1] 1.7-WIDGET-008: SessionSummaryPage renders with correct AppBar title',
       (tester) async {
-        await tester.pumpWidget(MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: const SessionSummaryPage(),
-        ));
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.darkTheme,
+            home: const SessionSummaryPage(),
+          ),
+        );
         await tester.pump();
         expect(find.text('Summary'), findsOneWidget);
         expect(find.text('Summary — Story 9.x'), findsOneWidget);
@@ -179,10 +180,9 @@ void main() {
     testWidgets(
       '[P1] 1.7-WIDGET-009: SettingsPage renders with correct AppBar title',
       (tester) async {
-        await tester.pumpWidget(MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: const SettingsPage(),
-        ));
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.darkTheme, home: const SettingsPage()),
+        );
         await tester.pump();
         expect(find.text('Settings'), findsOneWidget);
         expect(find.text('Settings — Story 14.x'), findsOneWidget);
@@ -192,14 +192,41 @@ void main() {
     testWidgets(
       '[P1] 1.7-WIDGET-010: PrivacyPage renders with correct AppBar title',
       (tester) async {
-        await tester.pumpWidget(MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: const PrivacyPage(),
-        ));
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.darkTheme, home: const PrivacyPage()),
+        );
         await tester.pump();
         expect(find.text('Privacy'), findsOneWidget);
         expect(find.text('Privacy — Story 14.x'), findsOneWidget);
       },
     );
   });
+}
+
+SessionsCatalogCubit _catalogCubit() {
+  return SessionsCatalogCubit(GetExercisesByType(_ExerciseRepositoryStub()));
+}
+
+class _ExerciseRepositoryStub implements ExerciseRepository {
+  @override
+  Future<Either<Failure, List<Exercise>>> getExercisesByType(
+    String sessionType,
+  ) async {
+    return Right([
+      Exercise(
+        id: '$sessionType-1',
+        name: sessionType == 'mobility' ? 'Hip Reset' : '$sessionType session',
+        description: 'Test session',
+        sessionType: sessionType,
+        steps: const ['Start', 'Finish'],
+        durationMinutes: 5,
+        difficulty: 'low',
+        indoorCompatible: true,
+        outdoorCompatible: true,
+      ),
+    ]);
+  }
+
+  @override
+  Future<Either<Failure, Unit>> syncCatalog() async => const Right(unit);
 }

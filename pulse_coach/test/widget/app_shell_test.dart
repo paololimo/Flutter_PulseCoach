@@ -1,7 +1,13 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
+import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart';
+import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exercises_by_type.dart';
+import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
@@ -14,10 +20,13 @@ Widget buildTestShell({String initialLocation = '/today'}) {
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
-          GoRoute(path: '/today', builder: (context, state) => const TodayPage()),
+          GoRoute(
+            path: '/today',
+            builder: (context, state) => const TodayPage(),
+          ),
           GoRoute(
             path: '/sessions',
-            builder: (context, state) => const SessionsPage(),
+            builder: (context, state) => SessionsPage(cubit: _catalogCubit()),
           ),
           GoRoute(
             path: '/progress',
@@ -27,10 +36,7 @@ Widget buildTestShell({String initialLocation = '/today'}) {
       ),
     ],
   );
-  return MaterialApp.router(
-    theme: AppTheme.darkTheme,
-    routerConfig: router,
-  );
+  return MaterialApp.router(theme: AppTheme.darkTheme, routerConfig: router);
 }
 
 void main() {
@@ -54,8 +60,9 @@ void main() {
       expect(find.text('Privacy'), findsOneWidget);
     });
 
-    testWidgets('Today tab is selected at initial location /today',
-        (tester) async {
+    testWidgets('Today tab is selected at initial location /today', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestShell(initialLocation: '/today'));
       await tester.pumpAndSettle();
       final bnb = tester.widget<BottomNavigationBar>(
@@ -69,12 +76,13 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sessions'));
       await tester.pumpAndSettle();
-      expect(find.text('Sessions — Story 6.x'), findsOneWidget);
+      expect(find.text('Hip Reset'), findsOneWidget);
     });
 
     // [P1] 1.7-UNIT-004: _currentIndex edge cases not covered above
-    testWidgets('Sessions tab index is 1 at initial location /sessions',
-        (tester) async {
+    testWidgets('Sessions tab index is 1 at initial location /sessions', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestShell(initialLocation: '/sessions'));
       await tester.pumpAndSettle();
       final bnb = tester.widget<BottomNavigationBar>(
@@ -83,8 +91,9 @@ void main() {
       expect(bnb.currentIndex, 1);
     });
 
-    testWidgets('Progress tab index is 2 at initial location /progress',
-        (tester) async {
+    testWidgets('Progress tab index is 2 at initial location /progress', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestShell(initialLocation: '/progress'));
       await tester.pumpAndSettle();
       final bnb = tester.widget<BottomNavigationBar>(
@@ -93,4 +102,32 @@ void main() {
       expect(bnb.currentIndex, 2);
     });
   });
+}
+
+SessionsCatalogCubit _catalogCubit() {
+  return SessionsCatalogCubit(GetExercisesByType(_ExerciseRepositoryStub()));
+}
+
+class _ExerciseRepositoryStub implements ExerciseRepository {
+  @override
+  Future<Either<Failure, List<Exercise>>> getExercisesByType(
+    String sessionType,
+  ) async {
+    return Right([
+      Exercise(
+        id: '$sessionType-1',
+        name: sessionType == 'mobility' ? 'Hip Reset' : '$sessionType session',
+        description: 'Test session',
+        sessionType: sessionType,
+        steps: const ['Start', 'Finish'],
+        durationMinutes: 5,
+        difficulty: 'low',
+        indoorCompatible: true,
+        outdoorCompatible: true,
+      ),
+    ]);
+  }
+
+  @override
+  Future<Either<Failure, Unit>> syncCatalog() async => const Right(unit);
 }

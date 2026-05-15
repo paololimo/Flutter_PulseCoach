@@ -86,6 +86,8 @@ import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exerci
     as _i342;
 import 'package:pulse_coach/features/sessions_catalog/domain/usecases/sync_exercise_catalog.dart'
     as _i574;
+import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_cubit.dart'
+    as _i916;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
 import 'package:pulse_coach/features/weather/data/datasources/weather_local_data_source.dart'
@@ -224,6 +226,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i206.WeatherLocalDataSource>(),
         gh<_i160.LocationService>(),
       ),
+    );
+    gh.lazySingleton<_i916.SessionsCatalogCubit>(
+      () => _i916.SessionsCatalogCubit(gh<_i342.GetExercisesByType>()),
     );
     gh.factory<_i992.GenerateDailyPlan>(
       () => _i992.GenerateDailyPlan(
