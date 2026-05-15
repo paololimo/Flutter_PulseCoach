@@ -93,7 +93,7 @@ void main() {
     await db.close();
   });
 
-  void _setupDefaultMocks() {
+  void setupDefaultMocks() {
     when(mockHealthRepo.fetchHealthData()).thenAnswer(
       (_) async => const Right(HealthData(restingHr: 65, stepCount: 4000)),
     );
@@ -148,7 +148,7 @@ void main() {
     test(
       '5.5-UNIT-011: cache miss → AiEngine IS invoked, plan saved',
       () async {
-        _setupDefaultMocks();
+        setupDefaultMocks();
         when(
           mockPlanRepo.getPlanForDate(any),
         ).thenAnswer((_) async => const Right(null));
@@ -209,7 +209,7 @@ void main() {
     test(
       '5.5-UNIT-013: weather failure → AqiLevel.low default, plan generated',
       () async {
-        _setupDefaultMocks();
+        setupDefaultMocks();
         when(
           mockPlanRepo.getPlanForDate(any),
         ).thenAnswer((_) async => const Right(null));
@@ -345,7 +345,7 @@ void main() {
     test(
       '5.5-UNIT-014: new user (no RPE, no sessions, no state) → active state, plan generated',
       () async {
-        _setupDefaultMocks();
+        setupDefaultMocks();
         when(
           mockPlanRepo.getPlanForDate(any),
         ).thenAnswer((_) async => const Right(null));
@@ -359,7 +359,7 @@ void main() {
     test(
       '5.5-UNIT-015: new user → initialBanditState() used (no bandit row in DB)',
       () async {
-        _setupDefaultMocks();
+        setupDefaultMocks();
         when(
           mockPlanRepo.getPlanForDate(any),
         ).thenAnswer((_) async => const Right(null));
@@ -385,7 +385,7 @@ void main() {
     test(
       '5.5-UNIT-016: state machine produces new state → behavioral_state row inserted',
       () async {
-        _setupDefaultMocks();
+        setupDefaultMocks();
         when(
           mockPlanRepo.getPlanForDate(any),
         ).thenAnswer((_) async => const Right(null));
@@ -408,7 +408,7 @@ void main() {
     test(
       '5.5-UNIT-017: cold-start with no prior state row → row IS inserted (AC6)',
       () async {
-        _setupDefaultMocks();
+        setupDefaultMocks();
         when(
           mockPlanRepo.getPlanForDate(any),
         ).thenAnswer((_) async => const Right(null));
@@ -455,7 +455,7 @@ void main() {
 
   group('GenerateDailyPlan — session metrics (AC8)', () {
     test('5.5-UNIT-019: streak = 0 when no sessions', () async {
-      _setupDefaultMocks();
+      setupDefaultMocks();
       when(
         mockPlanRepo.getPlanForDate(any),
       ).thenAnswer((_) async => const Right(null));
@@ -474,7 +474,7 @@ void main() {
     test(
       '5.5-UNIT-020: missedSessions = 0 for new user with no session history (AC8)',
       () async {
-        _setupDefaultMocks();
+        setupDefaultMocks();
         when(
           mockPlanRepo.getPlanForDate(any),
         ).thenAnswer((_) async => const Right(null));

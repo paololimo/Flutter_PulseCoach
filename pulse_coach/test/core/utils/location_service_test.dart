@@ -1,6 +1,5 @@
 // [P1] LocationService unit tests
 // Tests: city-level rounding, permission denied, service disabled, generic error
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:mockito/annotations.dart';
@@ -18,17 +17,17 @@ void main() {
 
   /// Helper: create a minimal Position object for test use.
   Position makePosition(double lat, double lon) => Position(
-        longitude: lon,
-        latitude: lat,
-        timestamp: DateTime(2026, 1, 1),
-        accuracy: 100.0,
-        altitude: 0.0,
-        altitudeAccuracy: 0.0,
-        heading: 0.0,
-        headingAccuracy: 0.0,
-        speed: 0.0,
-        speedAccuracy: 0.0,
-      );
+    longitude: lon,
+    latitude: lat,
+    timestamp: DateTime(2026, 1, 1),
+    accuracy: 100.0,
+    altitude: 0.0,
+    altitudeAccuracy: 0.0,
+    heading: 0.0,
+    headingAccuracy: 0.0,
+    speed: 0.0,
+    speedAccuracy: 0.0,
+  );
 
   setUp(() {
     mockGeolocator = MockGeolocatorWrapper();
@@ -39,8 +38,9 @@ void main() {
     test(
       '4.3-UNIT-001: returns Left(LocationFailure) when location services are disabled',
       () async {
-        when(mockGeolocator.isLocationServiceEnabled())
-            .thenAnswer((_) async => false);
+        when(
+          mockGeolocator.isLocationServiceEnabled(),
+        ).thenAnswer((_) async => false);
 
         final result = await sut.getCityLevelCoordinates();
 
@@ -55,12 +55,15 @@ void main() {
     test(
       '4.3-UNIT-002: returns Left(LocationFailure) when permission denied after request',
       () async {
-        when(mockGeolocator.isLocationServiceEnabled())
-            .thenAnswer((_) async => true);
-        when(mockGeolocator.checkPermission())
-            .thenAnswer((_) async => LocationPermission.denied);
-        when(mockGeolocator.requestPermission())
-            .thenAnswer((_) async => LocationPermission.denied);
+        when(
+          mockGeolocator.isLocationServiceEnabled(),
+        ).thenAnswer((_) async => true);
+        when(
+          mockGeolocator.checkPermission(),
+        ).thenAnswer((_) async => LocationPermission.denied);
+        when(
+          mockGeolocator.requestPermission(),
+        ).thenAnswer((_) async => LocationPermission.denied);
 
         final result = await sut.getCityLevelCoordinates();
 
@@ -75,10 +78,12 @@ void main() {
     test(
       '4.3-UNIT-003: returns Left(LocationFailure) when permission permanently denied',
       () async {
-        when(mockGeolocator.isLocationServiceEnabled())
-            .thenAnswer((_) async => true);
-        when(mockGeolocator.checkPermission())
-            .thenAnswer((_) async => LocationPermission.deniedForever);
+        when(
+          mockGeolocator.isLocationServiceEnabled(),
+        ).thenAnswer((_) async => true);
+        when(
+          mockGeolocator.checkPermission(),
+        ).thenAnswer((_) async => LocationPermission.deniedForever);
 
         final result = await sut.getCityLevelCoordinates();
 
@@ -94,15 +99,20 @@ void main() {
     test(
       '4.3-UNIT-008: returns Right when checkPermission denied but requestPermission grants whileInUse (first-launch flow)',
       () async {
-        when(mockGeolocator.isLocationServiceEnabled())
-            .thenAnswer((_) async => true);
-        when(mockGeolocator.checkPermission())
-            .thenAnswer((_) async => LocationPermission.denied);
-        when(mockGeolocator.requestPermission())
-            .thenAnswer((_) async => LocationPermission.whileInUse);
-        when(mockGeolocator.getCurrentPosition(
-                locationSettings: anyNamed('locationSettings')))
-            .thenAnswer((_) async => makePosition(45.46, 9.19));
+        when(
+          mockGeolocator.isLocationServiceEnabled(),
+        ).thenAnswer((_) async => true);
+        when(
+          mockGeolocator.checkPermission(),
+        ).thenAnswer((_) async => LocationPermission.denied);
+        when(
+          mockGeolocator.requestPermission(),
+        ).thenAnswer((_) async => LocationPermission.whileInUse);
+        when(
+          mockGeolocator.getCurrentPosition(
+            locationSettings: anyNamed('locationSettings'),
+          ),
+        ).thenAnswer((_) async => makePosition(45.46, 9.19));
 
         final result = await sut.getCityLevelCoordinates();
 
@@ -116,13 +126,17 @@ void main() {
     test(
       '4.3-UNIT-004: returns Right with rounded coordinates when permission granted (AC1)',
       () async {
-        when(mockGeolocator.isLocationServiceEnabled())
-            .thenAnswer((_) async => true);
-        when(mockGeolocator.checkPermission())
-            .thenAnswer((_) async => LocationPermission.whileInUse);
-        when(mockGeolocator.getCurrentPosition(
-                locationSettings: anyNamed('locationSettings')))
-            .thenAnswer((_) async => makePosition(48.856, 2.352));
+        when(
+          mockGeolocator.isLocationServiceEnabled(),
+        ).thenAnswer((_) async => true);
+        when(
+          mockGeolocator.checkPermission(),
+        ).thenAnswer((_) async => LocationPermission.whileInUse);
+        when(
+          mockGeolocator.getCurrentPosition(
+            locationSettings: anyNamed('locationSettings'),
+          ),
+        ).thenAnswer((_) async => makePosition(48.856, 2.352));
 
         final result = await sut.getCityLevelCoordinates();
 
@@ -136,13 +150,17 @@ void main() {
     test(
       '4.3-UNIT-005: rounding is applied to negative coordinates (southern/western hemisphere)',
       () async {
-        when(mockGeolocator.isLocationServiceEnabled())
-            .thenAnswer((_) async => true);
-        when(mockGeolocator.checkPermission())
-            .thenAnswer((_) async => LocationPermission.always);
-        when(mockGeolocator.getCurrentPosition(
-                locationSettings: anyNamed('locationSettings')))
-            .thenAnswer((_) async => makePosition(-33.869, -70.673));
+        when(
+          mockGeolocator.isLocationServiceEnabled(),
+        ).thenAnswer((_) async => true);
+        when(
+          mockGeolocator.checkPermission(),
+        ).thenAnswer((_) async => LocationPermission.always);
+        when(
+          mockGeolocator.getCurrentPosition(
+            locationSettings: anyNamed('locationSettings'),
+          ),
+        ).thenAnswer((_) async => makePosition(-33.869, -70.673));
 
         final result = await sut.getCityLevelCoordinates();
 
@@ -155,13 +173,17 @@ void main() {
     test(
       '4.3-UNIT-006: returns Left(LocationFailure) on generic exception from getCurrentPosition',
       () async {
-        when(mockGeolocator.isLocationServiceEnabled())
-            .thenAnswer((_) async => true);
-        when(mockGeolocator.checkPermission())
-            .thenAnswer((_) async => LocationPermission.whileInUse);
-        when(mockGeolocator.getCurrentPosition(
-                locationSettings: anyNamed('locationSettings')))
-            .thenThrow(Exception('GPS timeout'));
+        when(
+          mockGeolocator.isLocationServiceEnabled(),
+        ).thenAnswer((_) async => true);
+        when(
+          mockGeolocator.checkPermission(),
+        ).thenAnswer((_) async => LocationPermission.whileInUse);
+        when(
+          mockGeolocator.getCurrentPosition(
+            locationSettings: anyNamed('locationSettings'),
+          ),
+        ).thenThrow(Exception('GPS timeout'));
 
         final result = await sut.getCityLevelCoordinates();
 
@@ -176,20 +198,27 @@ void main() {
     test(
       '4.3-UNIT-007: uses LocationAccuracy.low — city-level sufficient, no high-precision GPS (NFR8)',
       () async {
-        when(mockGeolocator.isLocationServiceEnabled())
-            .thenAnswer((_) async => true);
-        when(mockGeolocator.checkPermission())
-            .thenAnswer((_) async => LocationPermission.whileInUse);
-        when(mockGeolocator.getCurrentPosition(
-                locationSettings: anyNamed('locationSettings')))
-            .thenAnswer((_) async => makePosition(45.46, 9.19));
+        when(
+          mockGeolocator.isLocationServiceEnabled(),
+        ).thenAnswer((_) async => true);
+        when(
+          mockGeolocator.checkPermission(),
+        ).thenAnswer((_) async => LocationPermission.whileInUse);
+        when(
+          mockGeolocator.getCurrentPosition(
+            locationSettings: anyNamed('locationSettings'),
+          ),
+        ).thenAnswer((_) async => makePosition(45.46, 9.19));
 
         await sut.getCityLevelCoordinates();
 
-        final captured = verify(mockGeolocator.getCurrentPosition(
-                locationSettings: captureAnyNamed('locationSettings')))
-            .captured
-            .single as LocationSettings;
+        final captured =
+            verify(
+                  mockGeolocator.getCurrentPosition(
+                    locationSettings: captureAnyNamed('locationSettings'),
+                  ),
+                ).captured.single
+                as LocationSettings;
         expect(captured.accuracy, equals(LocationAccuracy.low));
       },
     );

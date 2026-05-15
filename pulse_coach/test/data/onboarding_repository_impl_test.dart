@@ -3,7 +3,6 @@
 //        getProfile (CacheFailure, null-field defaults, field mapping),
 //        updateProfile (missing profile, success), saveProfile (insert/update),
 //        UserProfileDao.insertProfile guard (StateError)
-import 'package:dartz/dartz.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -51,12 +50,18 @@ void main() {
             updatedAt: DateTime.now(),
           ),
         );
-        expect((await db.userProfileDao.getProfile())!.disclaimerAccepted, isFalse);
+        expect(
+          (await db.userProfileDao.getProfile())!.disclaimerAccepted,
+          isFalse,
+        );
 
         final result = await repo.acceptDisclaimer();
 
         expect(result.isRight(), isTrue);
-        expect((await db.userProfileDao.getProfile())!.disclaimerAccepted, isTrue);
+        expect(
+          (await db.userProfileDao.getProfile())!.disclaimerAccepted,
+          isTrue,
+        );
       },
     );
   });
@@ -66,18 +71,12 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('isDisclaimerAccepted', () {
-    test(
-      '[P1] 2.1-INT-003: returns false when no profile exists',
-      () async {
-        final result = await repo.isDisclaimerAccepted();
+    test('[P1] 2.1-INT-003: returns false when no profile exists', () async {
+      final result = await repo.isDisclaimerAccepted();
 
-        expect(result.isRight(), isTrue);
-        result.fold(
-          (_) {},
-          (accepted) => expect(accepted, isFalse),
-        );
-      },
-    );
+      expect(result.isRight(), isTrue);
+      result.fold((_) {}, (accepted) => expect(accepted, isFalse));
+    });
 
     test(
       '[P1] 2.1-INT-004: returns false when profile has disclaimerAccepted=false',
@@ -91,10 +90,7 @@ void main() {
 
         final result = await repo.isDisclaimerAccepted();
 
-        result.fold(
-          (_) {},
-          (accepted) => expect(accepted, isFalse),
-        );
+        result.fold((_) {}, (accepted) => expect(accepted, isFalse));
       },
     );
 
@@ -111,10 +107,7 @@ void main() {
 
         final result = await repo.isDisclaimerAccepted();
 
-        result.fold(
-          (_) {},
-          (accepted) => expect(accepted, isTrue),
-        );
+        result.fold((_) {}, (accepted) => expect(accepted, isTrue));
       },
     );
   });

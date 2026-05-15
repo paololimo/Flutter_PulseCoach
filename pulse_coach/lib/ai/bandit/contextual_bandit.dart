@@ -37,14 +37,14 @@ class BanditEngine {
     Random? random,
     this.epsilon = 0.2,
     RewardCalculator? rewardCalculator,
-  })  : assert(
-          epsilon >= 0.0 && epsilon <= 1.0 && !epsilon.isNaN,
-          'epsilon must be in [0,1], got $epsilon',
-        ),
-        _random = random ?? Random(),
-        _rewardCalc = rewardCalculator ?? const RewardCalculator();
+  }) : assert(
+         epsilon >= 0.0 && epsilon <= 1.0 && !epsilon.isNaN,
+         'epsilon must be in [0,1], got $epsilon',
+       ),
+       _random = random ?? Random(),
+       _rewardCalc = rewardCalculator ?? const RewardCalculator();
 
-  /// Selects up to [constraints.maxSessionCount] sessions.
+  /// Selects up to constraints.maxSessionCount sessions.
   ///
   /// Filters arms by [constraints] (maxIntensity, outdoorAllowed) BEFORE
   /// applying epsilon-greedy selection — no safety constraint can be violated.
@@ -73,9 +73,7 @@ class BanditEngine {
       remaining.remove(arm);
     }
 
-    return selected
-        .map((arm) => _toPlannedSession(arm, constraints))
-        .toList();
+    return selected.map((arm) => _toPlannedSession(arm, constraints)).toList();
   }
 
   /// Updates arm weight after a session; delegates to [RewardCalculator].
@@ -126,7 +124,10 @@ class BanditEngine {
     });
   }
 
-  PlannedSession _toPlannedSession(String armKey, SafetyConstraints constraints) {
+  PlannedSession _toPlannedSession(
+    String armKey,
+    SafetyConstraints constraints,
+  ) {
     final parts = armKey.split('_');
     final sessionType = parts.first; // 'mobility' | 'cardio' | 'breathing'
     final intensityName = parts.last;
@@ -137,30 +138,31 @@ class BanditEngine {
     return PlannedSession(
       sessionType: sessionType,
       intensity: _intensityValue(intensityName),
-      durationMinutes: 10, // Placeholder — Story 6.x populates from exercise catalog
+      durationMinutes:
+          10, // Placeholder — Story 6.x populates from exercise catalog
       isIndoor: !constraints.outdoorAllowed,
     );
   }
 
   int _intensityRank(SessionIntensity i) => switch (i) {
-        SessionIntensity.low => 0,
-        SessionIntensity.medium => 1,
-        SessionIntensity.high => 2,
-      };
+    SessionIntensity.low => 0,
+    SessionIntensity.medium => 1,
+    SessionIntensity.high => 2,
+  };
 
   int _intensityRankByName(String name) => switch (name) {
-        'low' => 0,
-        'medium' => 1,
-        'high' => 2,
-        _ => throw ArgumentError('Unknown intensity name: "$name"'),
-      };
+    'low' => 0,
+    'medium' => 1,
+    'high' => 2,
+    _ => throw ArgumentError('Unknown intensity name: "$name"'),
+  };
 
   /// Maps arm intensity name to the PlannedSession intensity int value.
   /// Ranges: low=1–3 (→3), medium=4–7 (→6), high=8–10 (→8). (safety_constraints.dart)
   int _intensityValue(String name) => switch (name) {
-        'low' => 3,
-        'medium' => 6,
-        'high' => 8,
-        _ => throw ArgumentError('Unknown intensity name: "$name"'),
-      };
+    'low' => 3,
+    'medium' => 6,
+    'high' => 8,
+    _ => throw ArgumentError('Unknown intensity name: "$name"'),
+  };
 }

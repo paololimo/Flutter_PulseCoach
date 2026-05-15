@@ -68,7 +68,7 @@ void main() {
       final bnb = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
       );
-      expect(bnb.currentIndex, 0);
+      expect(bnb.currentIndex, 1);
     });
 
     testWidgets('tapping Sessions tab navigates to /sessions', (tester) async {
@@ -80,7 +80,7 @@ void main() {
     });
 
     // [P1] 1.7-UNIT-004: _currentIndex edge cases not covered above
-    testWidgets('Sessions tab index is 1 at initial location /sessions', (
+    testWidgets('Sessions tab index is 0 at initial location /sessions', (
       tester,
     ) async {
       await tester.pumpWidget(buildTestShell(initialLocation: '/sessions'));
@@ -88,7 +88,7 @@ void main() {
       final bnb = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
       );
-      expect(bnb.currentIndex, 1);
+      expect(bnb.currentIndex, 0);
     });
 
     testWidgets('Progress tab index is 2 at initial location /progress', (

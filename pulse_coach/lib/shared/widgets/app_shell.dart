@@ -9,8 +9,8 @@ class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.child});
 
   static const _tabs = [
-    AppRouter.today,
     AppRouter.sessions,
+    AppRouter.today,
     AppRouter.progress,
   ];
 
@@ -77,11 +77,11 @@ class AppShell extends StatelessWidget {
         unselectedItemColor: theme.onSurfaceVariant,
         onTap: (index) => context.go(_tabs[index]),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.today), label: 'Today'),
           BottomNavigationBarItem(
             icon: Icon(Icons.fitness_center),
             label: 'Sessions',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.today), label: 'Today'),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
             label: 'Progress',

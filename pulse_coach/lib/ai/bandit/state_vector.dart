@@ -21,8 +21,8 @@ enum AqiLevel { low, high }
 ///   - Story 5.1 does NOT cap this list; the state machine reads it and
 ///     evaluates only the last 2–3 entries (Stories 5.2, 5.4).
 ///
-/// [aqiLevel] is derived from [WeatherContext.isAqiHigh] at the use case layer.
-/// [precipitation] is true when precipitationProbability > 50%.
+/// aqiLevel is derived from WeatherContext.isAqiHigh at the use case layer.
+/// precipitation is true when precipitationProbability > 50%.
 @freezed
 abstract class StateVector with _$StateVector {
   const factory StateVector({

@@ -13,22 +13,25 @@ class LocationService {
 
   final GeolocatorWrapper _geolocator;
 
-  Future<Either<Failure, (double lat, double lon)>> getCityLevelCoordinates() async {
+  Future<Either<Failure, (double lat, double lon)>>
+  getCityLevelCoordinates() async {
     try {
       final serviceEnabled = await _geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        return Left(LocationFailure('Location services are disabled'));
+        return const Left(LocationFailure('Location services are disabled'));
       }
 
       LocationPermission permission = await _geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await _geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          return Left(LocationFailure('Location permission denied'));
+          return const Left(LocationFailure('Location permission denied'));
         }
       }
       if (permission == LocationPermission.deniedForever) {
-        return Left(LocationFailure('Location permission permanently denied'));
+        return const Left(
+          LocationFailure('Location permission permanently denied'),
+        );
       }
 
       final position = await _geolocator.getCurrentPosition(
@@ -43,7 +46,7 @@ class LocationService {
       final lon = _roundCityLevel(position.longitude);
       return Right((lat, lon));
     } on LocationServiceDisabledException {
-      return Left(LocationFailure('Location services are disabled'));
+      return const Left(LocationFailure('Location services are disabled'));
     } catch (e) {
       return Left(LocationFailure('Location unavailable: $e'));
     }

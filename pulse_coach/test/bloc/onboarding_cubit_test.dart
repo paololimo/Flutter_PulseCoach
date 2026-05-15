@@ -1,7 +1,5 @@
 // [P1] OnboardingCubit unit tests
 // Tests: initial state, acceptDisclaimer success, failure, double-tap safety
-import 'dart:async';
-
 import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,25 +26,30 @@ void main() {
     mockCheckDisclaimerStatus = MockCheckDisclaimerStatus();
     mockSaveProfile = MockSaveProfile();
     // Default: not yet accepted
-    when(mockCheckDisclaimerStatus()).thenAnswer((_) async => const Right(false));
+    when(
+      mockCheckDisclaimerStatus(),
+    ).thenAnswer((_) async => const Right(false));
   });
 
   group('OnboardingCubit', () {
-    test(
-      '[P1] 2.1-UNIT-001: initial state is disclaimerPending',
-      () {
-        final cubit = OnboardingCubit(mockAcceptDisclaimer, mockCheckDisclaimerStatus, mockSaveProfile);
-        expect(cubit.state, const OnboardingState.disclaimerPending());
-      },
-    );
+    test('[P1] 2.1-UNIT-001: initial state is disclaimerPending', () {
+      final cubit = OnboardingCubit(
+        mockAcceptDisclaimer,
+        mockCheckDisclaimerStatus,
+        mockSaveProfile,
+      );
+      expect(cubit.state, const OnboardingState.disclaimerPending());
+    });
 
     blocTest<OnboardingCubit, OnboardingState>(
       '[P1] 2.1-UNIT-002: acceptDisclaimer emits [loading, disclaimerAccepted] on success',
       build: () {
-        when(mockAcceptDisclaimer()).thenAnswer(
-          (_) async => const Right(null),
+        when(mockAcceptDisclaimer()).thenAnswer((_) async => const Right(null));
+        return OnboardingCubit(
+          mockAcceptDisclaimer,
+          mockCheckDisclaimerStatus,
+          mockSaveProfile,
         );
-        return OnboardingCubit(mockAcceptDisclaimer, mockCheckDisclaimerStatus, mockSaveProfile);
       },
       act: (cubit) => cubit.acceptDisclaimer(),
       expect: () => [
@@ -58,10 +61,14 @@ void main() {
     blocTest<OnboardingCubit, OnboardingState>(
       '[P1] 2.1-UNIT-003: acceptDisclaimer emits [loading, error] on failure',
       build: () {
-        when(mockAcceptDisclaimer()).thenAnswer(
-          (_) async => const Left(CacheFailure('DB error')),
+        when(
+          mockAcceptDisclaimer(),
+        ).thenAnswer((_) async => const Left(CacheFailure('DB error')));
+        return OnboardingCubit(
+          mockAcceptDisclaimer,
+          mockCheckDisclaimerStatus,
+          mockSaveProfile,
         );
-        return OnboardingCubit(mockAcceptDisclaimer, mockCheckDisclaimerStatus, mockSaveProfile);
       },
       act: (cubit) => cubit.acceptDisclaimer(),
       expect: () => [
@@ -73,24 +80,30 @@ void main() {
     blocTest<OnboardingCubit, OnboardingState>(
       '[P1] 2.1-UNIT-007: checkInitialStatus emits disclaimerAccepted when previously accepted',
       build: () {
-        when(mockCheckDisclaimerStatus()).thenAnswer(
-          (_) async => const Right(true),
+        when(
+          mockCheckDisclaimerStatus(),
+        ).thenAnswer((_) async => const Right(true));
+        return OnboardingCubit(
+          mockAcceptDisclaimer,
+          mockCheckDisclaimerStatus,
+          mockSaveProfile,
         );
-        return OnboardingCubit(mockAcceptDisclaimer, mockCheckDisclaimerStatus, mockSaveProfile);
       },
       act: (cubit) => cubit.checkInitialStatus(),
-      expect: () => [
-        const OnboardingState.disclaimerAccepted(),
-      ],
+      expect: () => [const OnboardingState.disclaimerAccepted()],
     );
 
     blocTest<OnboardingCubit, OnboardingState>(
       '[P2] 2.1-UNIT-008: checkInitialStatus stays at disclaimerPending on failure',
       build: () {
-        when(mockCheckDisclaimerStatus()).thenAnswer(
-          (_) async => const Left(CacheFailure('DB error')),
+        when(
+          mockCheckDisclaimerStatus(),
+        ).thenAnswer((_) async => const Left(CacheFailure('DB error')));
+        return OnboardingCubit(
+          mockAcceptDisclaimer,
+          mockCheckDisclaimerStatus,
+          mockSaveProfile,
         );
-        return OnboardingCubit(mockAcceptDisclaimer, mockCheckDisclaimerStatus, mockSaveProfile);
       },
       act: (cubit) => cubit.checkInitialStatus(),
       expect: () => <OnboardingState>[],
@@ -99,7 +112,11 @@ void main() {
     test(
       '[P1] 2.2-UNIT-001: completeOnboardingFlow emits profileSetupReady',
       () {
-        final cubit = OnboardingCubit(mockAcceptDisclaimer, mockCheckDisclaimerStatus, mockSaveProfile);
+        final cubit = OnboardingCubit(
+          mockAcceptDisclaimer,
+          mockCheckDisclaimerStatus,
+          mockSaveProfile,
+        );
         addTearDown(cubit.close);
         cubit.completeOnboardingFlow();
         expect(cubit.state, const OnboardingState.profileSetupReady());
@@ -109,10 +126,12 @@ void main() {
     blocTest<OnboardingCubit, OnboardingState>(
       '[P1] 2.1-UNIT-004: calling acceptDisclaimer twice sequentially emits correct states',
       build: () {
-        when(mockAcceptDisclaimer()).thenAnswer(
-          (_) async => const Right(null),
+        when(mockAcceptDisclaimer()).thenAnswer((_) async => const Right(null));
+        return OnboardingCubit(
+          mockAcceptDisclaimer,
+          mockCheckDisclaimerStatus,
+          mockSaveProfile,
         );
-        return OnboardingCubit(mockAcceptDisclaimer, mockCheckDisclaimerStatus, mockSaveProfile);
       },
       act: (cubit) async {
         await cubit.acceptDisclaimer();
@@ -130,7 +149,11 @@ void main() {
       '[P1] 2.3-UNIT-001: saveProfile emits [loading, onboardingComplete] on success',
       build: () {
         when(mockSaveProfile(any)).thenAnswer((_) async => const Right(null));
-        return OnboardingCubit(mockAcceptDisclaimer, mockCheckDisclaimerStatus, mockSaveProfile);
+        return OnboardingCubit(
+          mockAcceptDisclaimer,
+          mockCheckDisclaimerStatus,
+          mockSaveProfile,
+        );
       },
       act: (cubit) => cubit.saveProfile(
         const UserProfile(
@@ -149,10 +172,14 @@ void main() {
     blocTest<OnboardingCubit, OnboardingState>(
       '[P1] 2.3-UNIT-002: saveProfile emits [loading, error] on failure',
       build: () {
-        when(mockSaveProfile(any)).thenAnswer(
-          (_) async => const Left(CacheFailure('DB error')),
+        when(
+          mockSaveProfile(any),
+        ).thenAnswer((_) async => const Left(CacheFailure('DB error')));
+        return OnboardingCubit(
+          mockAcceptDisclaimer,
+          mockCheckDisclaimerStatus,
+          mockSaveProfile,
         );
-        return OnboardingCubit(mockAcceptDisclaimer, mockCheckDisclaimerStatus, mockSaveProfile);
       },
       act: (cubit) => cubit.saveProfile(
         const UserProfile(

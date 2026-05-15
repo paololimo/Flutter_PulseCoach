@@ -16,25 +16,23 @@ void main() {
 
   final now = DateTime.now();
   final yesterday = now.subtract(const Duration(days: 1));
-  final midnight = DateTime(now.year, now.month, now.day);
 
   HealthDataPoint makePoint({
     required HealthDataType type,
     required HealthDataUnit unit,
     required num value,
-  }) =>
-      HealthDataPoint(
-        uuid: 'test-uuid',
-        value: NumericHealthValue(numericValue: value),
-        type: type,
-        unit: unit,
-        dateFrom: yesterday,
-        dateTo: now,
-        sourcePlatform: HealthPlatformType.appleHealth,
-        sourceDeviceId: '',
-        sourceId: '',
-        sourceName: '',
-      );
+  }) => HealthDataPoint(
+    uuid: 'test-uuid',
+    value: NumericHealthValue(numericValue: value),
+    type: type,
+    unit: unit,
+    dateFrom: yesterday,
+    dateTo: now,
+    sourcePlatform: HealthPlatformType.appleHealth,
+    sourceDeviceId: '',
+    sourceId: '',
+    sourceName: '',
+  );
 
   setUp(() {
     mockHealth = MockHealth();
@@ -58,7 +56,10 @@ void main() {
         );
 
         when(
-          mockHealth.requestAuthorization(any, permissions: anyNamed('permissions')),
+          mockHealth.requestAuthorization(
+            any,
+            permissions: anyNamed('permissions'),
+          ),
         ).thenAnswer((_) async => true);
         when(
           mockHealth.getHealthDataFromTypes(
@@ -86,7 +87,10 @@ void main() {
       '3.1-UNIT-002: throws SensorException("Health permissions denied") when requestAuthorization returns false',
       () async {
         when(
-          mockHealth.requestAuthorization(any, permissions: anyNamed('permissions')),
+          mockHealth.requestAuthorization(
+            any,
+            permissions: anyNamed('permissions'),
+          ),
         ).thenAnswer((_) async => false);
 
         await expectLater(
@@ -106,7 +110,10 @@ void main() {
       '3.1-UNIT-003: returns HealthData(restingHr: null, stepCount: null) when both data lists are empty',
       () async {
         when(
-          mockHealth.requestAuthorization(any, permissions: anyNamed('permissions')),
+          mockHealth.requestAuthorization(
+            any,
+            permissions: anyNamed('permissions'),
+          ),
         ).thenAnswer((_) async => true);
         when(
           mockHealth.getHealthDataFromTypes(
@@ -123,57 +130,57 @@ void main() {
       },
     );
 
-    test(
-      '3.1-UNIT-004: wraps unknown exceptions as SensorException',
-      () async {
-        when(
-          mockHealth.requestAuthorization(any, permissions: anyNamed('permissions')),
-        ).thenThrow(Exception('platform channel error'));
+    test('3.1-UNIT-004: wraps unknown exceptions as SensorException', () async {
+      when(
+        mockHealth.requestAuthorization(
+          any,
+          permissions: anyNamed('permissions'),
+        ),
+      ).thenThrow(Exception('platform channel error'));
 
-        await expectLater(
-          () => sut.fetchHealthData(),
-          throwsA(isA<SensorException>()),
-        );
-      },
-    );
+      await expectLater(
+        () => sut.fetchHealthData(),
+        throwsA(isA<SensorException>()),
+      );
+    });
 
-    test(
-      '3.1-UNIT-011: sums multiple step data points correctly',
-      () async {
-        final stepPoint1 = makePoint(
-          type: HealthDataType.STEPS,
-          unit: HealthDataUnit.COUNT,
-          value: 2000.0,
-        );
-        final stepPoint2 = makePoint(
-          type: HealthDataType.STEPS,
-          unit: HealthDataUnit.COUNT,
-          value: 3500.0,
-        );
+    test('3.1-UNIT-011: sums multiple step data points correctly', () async {
+      final stepPoint1 = makePoint(
+        type: HealthDataType.STEPS,
+        unit: HealthDataUnit.COUNT,
+        value: 2000.0,
+      );
+      final stepPoint2 = makePoint(
+        type: HealthDataType.STEPS,
+        unit: HealthDataUnit.COUNT,
+        value: 3500.0,
+      );
 
-        when(
-          mockHealth.requestAuthorization(any, permissions: anyNamed('permissions')),
-        ).thenAnswer((_) async => true);
-        when(
-          mockHealth.getHealthDataFromTypes(
-            startTime: anyNamed('startTime'),
-            endTime: anyNamed('endTime'),
-            types: [HealthDataType.RESTING_HEART_RATE],
-          ),
-        ).thenAnswer((_) async => []);
-        when(
-          mockHealth.getHealthDataFromTypes(
-            startTime: anyNamed('startTime'),
-            endTime: anyNamed('endTime'),
-            types: [HealthDataType.STEPS],
-          ),
-        ).thenAnswer((_) async => [stepPoint1, stepPoint2]);
+      when(
+        mockHealth.requestAuthorization(
+          any,
+          permissions: anyNamed('permissions'),
+        ),
+      ).thenAnswer((_) async => true);
+      when(
+        mockHealth.getHealthDataFromTypes(
+          startTime: anyNamed('startTime'),
+          endTime: anyNamed('endTime'),
+          types: [HealthDataType.RESTING_HEART_RATE],
+        ),
+      ).thenAnswer((_) async => []);
+      when(
+        mockHealth.getHealthDataFromTypes(
+          startTime: anyNamed('startTime'),
+          endTime: anyNamed('endTime'),
+          types: [HealthDataType.STEPS],
+        ),
+      ).thenAnswer((_) async => [stepPoint1, stepPoint2]);
 
-        final result = await sut.fetchHealthData();
+      final result = await sut.fetchHealthData();
 
-        expect(result.restingHr, isNull);
-        expect(result.stepCount, equals(5500)); // 2000 + 3500
-      },
-    );
+      expect(result.restingHr, isNull);
+      expect(result.stepCount, equals(5500)); // 2000 + 3500
+    });
   });
 }

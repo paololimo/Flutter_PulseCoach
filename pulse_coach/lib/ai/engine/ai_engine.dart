@@ -12,10 +12,7 @@ class AiEngineInput {
   final StateVector stateVector;
   final ai_bandit.BanditState banditState;
 
-  const AiEngineInput({
-    required this.stateVector,
-    required this.banditState,
-  });
+  const AiEngineInput({required this.stateVector, required this.banditState});
 }
 
 /// Bundled result returned from the AI pipeline isolate.
@@ -27,13 +24,10 @@ class AiEngineOutput {
   final DailyPlan plan;
   final BehavioralState newBehavioralState;
 
-  const AiEngineOutput({
-    required this.plan,
-    required this.newBehavioralState,
-  });
+  const AiEngineOutput({required this.plan, required this.newBehavioralState});
 }
 
-/// Contract for AI computation. Implemented by [AiEngineIsolate] in production,
+/// Contract for AI computation. Implemented by AiEngineIsolate in production,
 /// mockable in tests.
 ///
 /// ARCH7: No Flutter imports allowed in implementations. Pure Dart only.

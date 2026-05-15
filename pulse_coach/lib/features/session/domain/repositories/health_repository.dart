@@ -7,6 +7,6 @@ abstract class HealthRepository {
   /// Returns [SensorFailure] if permissions denied or Health API unavailable.
   Future<Either<Failure, HealthData>> fetchHealthData();
 
-  /// Persists [HealthData] to [behavioral_state] table.
+  /// Persists [HealthData] to behavioral_state table.
   Future<Either<Failure, void>> saveHealthData(HealthData data);
 }

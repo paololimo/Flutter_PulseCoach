@@ -52,14 +52,16 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     try {
       final data = await _db.userProfileDao.getProfile();
       if (data == null) {
-        return Left(CacheFailure('Profile not found'));
+        return const Left(CacheFailure('Profile not found'));
       }
-      return Right(UserProfile(
-        fitnessLevel: data.intensityPreference ?? 'low',
-        goal: data.fitnessGoal ?? 'cardio',
-        availableTime: data.availableTime ?? 'short',
-        physicalConstraints: data.physicalConstraints ?? 'none',
-      ));
+      return Right(
+        UserProfile(
+          fitnessLevel: data.intensityPreference ?? 'low',
+          goal: data.fitnessGoal ?? 'cardio',
+          availableTime: data.availableTime ?? 'short',
+          physicalConstraints: data.physicalConstraints ?? 'none',
+        ),
+      );
     } catch (e) {
       return Left(CacheFailure(e.toString()));
     }
@@ -70,7 +72,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     try {
       final existing = await _db.userProfileDao.getProfile();
       if (existing == null) {
-        return Left(CacheFailure('Profile not found'));
+        return const Left(CacheFailure('Profile not found'));
       }
       final updated = await _db.userProfileDao.updateProfile(
         existing.copyWith(
@@ -82,7 +84,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
         ),
       );
       if (!updated) {
-        return Left(CacheFailure('Profile update failed'));
+        return const Left(CacheFailure('Profile update failed'));
       }
       return const Right(null);
     } catch (e) {

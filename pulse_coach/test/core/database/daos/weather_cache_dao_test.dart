@@ -15,7 +15,7 @@ void main() {
   });
 
   group('WeatherCacheDao.replaceCache', () {
-    WeatherCacheCompanion _entry({double temperature = 20.0}) =>
+    WeatherCacheCompanion entry({double temperature = 20.0}) =>
         WeatherCacheCompanion.insert(
           latitude: 48.8,
           longitude: 2.3,
@@ -27,22 +27,23 @@ void main() {
 
     // ── 4.2-UNIT-006 ─────────────────────────────────────────────────────────
     test(
-        '4.2-UNIT-006: replaceCache with existing row → exactly 1 row in table after call',
-        () async {
-      // Insert an initial row
-      await db.weatherCacheDao.insertOrReplace(_entry(temperature: 15.0));
+      '4.2-UNIT-006: replaceCache with existing row → exactly 1 row in table after call',
+      () async {
+        // Insert an initial row
+        await db.weatherCacheDao.insertOrReplace(entry(temperature: 15.0));
 
-      // Replace it
-      await db.weatherCacheDao.replaceCache(_entry(temperature: 25.0));
+        // Replace it
+        await db.weatherCacheDao.replaceCache(entry(temperature: 25.0));
 
-      // Verify only one row remains
-      final rows = await db.weatherCacheDao.getLatestCache();
-      expect(rows, isNotNull);
-      expect(rows!.temperature, 25.0);
+        // Verify only one row remains
+        final rows = await db.weatherCacheDao.getLatestCache();
+        expect(rows, isNotNull);
+        expect(rows!.temperature, 25.0);
 
-      // Verify no extra rows by counting via select all
-      final allRows = await db.select(db.weatherCache).get();
-      expect(allRows.length, 1);
-    });
+        // Verify no extra rows by counting via select all
+        final allRows = await db.select(db.weatherCache).get();
+        expect(allRows.length, 1);
+      },
+    );
   });
 }

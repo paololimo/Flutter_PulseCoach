@@ -36,18 +36,18 @@ void main() {
     mockRegenerate = MockRegenerateDailyPlan();
   });
 
-  DailyPlanBloc _bloc() => DailyPlanBloc(mockGenerate, mockRegenerate);
+  DailyPlanBloc bloc() => DailyPlanBloc(mockGenerate, mockRegenerate);
 
   group('DailyPlanBloc', () {
     test('5.5-UNIT-027: initial state is DailyPlanInitial', () {
-      expect(_bloc().state, const DailyPlanState.initial());
+      expect(bloc().state, const DailyPlanState.initial());
     });
 
     blocTest<DailyPlanBloc, DailyPlanState>(
       '5.5-UNIT-028: DailyPlanGenerateRequested → [loading, loaded] on success',
       build: () {
         when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
-        return _bloc();
+        return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
       expect: () => [
@@ -60,7 +60,7 @@ void main() {
       '5.5-UNIT-029: DailyPlanGenerateRequested → [loading, error] on failure',
       build: () {
         when(mockGenerate.call()).thenAnswer((_) async => const Left(tFailure));
-        return _bloc();
+        return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
       expect: () => [
@@ -73,7 +73,7 @@ void main() {
       '5.5-UNIT-030: DailyPlanRegenerateRequested → [loading, loaded] on success',
       build: () {
         when(mockRegenerate.call()).thenAnswer((_) async => Right(tPlan));
-        return _bloc();
+        return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanRegenerateRequested()),
       expect: () => [
@@ -85,9 +85,10 @@ void main() {
     blocTest<DailyPlanBloc, DailyPlanState>(
       '5.5-UNIT-031: DailyPlanRegenerateRequested → [loading, error] on failure',
       build: () {
-        when(mockRegenerate.call())
-            .thenAnswer((_) async => const Left(tFailure));
-        return _bloc();
+        when(
+          mockRegenerate.call(),
+        ).thenAnswer((_) async => const Left(tFailure));
+        return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanRegenerateRequested()),
       expect: () => [
@@ -100,7 +101,7 @@ void main() {
       '5.5-UNIT-032: DailyPlanGenerateRequested dispatched twice → use case invoked twice, two loaded emissions',
       build: () {
         when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
-        return _bloc();
+        return bloc();
       },
       act: (bloc) async {
         bloc.add(DailyPlanGenerateRequested());

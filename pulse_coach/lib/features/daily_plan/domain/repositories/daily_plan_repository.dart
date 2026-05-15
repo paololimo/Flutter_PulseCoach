@@ -6,7 +6,7 @@ abstract class DailyPlanRepository {
   /// Returns the plan for [planDate] ('YYYY-MM-DD'), or null if not cached.
   Future<Either<Failure, DailyPlan?>> getPlanForDate(String planDate);
 
-  /// Persists [plan]. If a plan for the same [planDate] already exists,
+  /// Persists [plan]. If a plan for the same planDate already exists,
   /// replaces it (upsert semantics via delete + insert).
   Future<Either<Failure, void>> savePlan(DailyPlan plan);
 

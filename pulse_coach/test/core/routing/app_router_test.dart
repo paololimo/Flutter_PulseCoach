@@ -177,11 +177,11 @@ void main() {
           routes: [
             GoRoute(
               path: '/onboarding',
-              builder: (_, __) => const OnboardingPage(),
+              builder: (_, _) => const OnboardingPage(),
             ),
             GoRoute(
               path: '/today',
-              builder: (_, __) => const Scaffold(
+              builder: (_, _) => const Scaffold(
                 body: Center(child: Text('Today — Story 7.x')),
               ),
             ),
@@ -229,7 +229,9 @@ void main() {
         await tester.tap(find.byType(FilledButton));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500)); // DB write
-        await tester.pump(const Duration(milliseconds: 100)); // BlocListener + router
+        await tester.pump(
+          const Duration(milliseconds: 100),
+        ); // BlocListener + router
 
         // OnboardingPage.BlocListener received onboardingComplete → context.go('/today')
         expect(find.text('Today — Story 7.x'), findsOneWidget);
