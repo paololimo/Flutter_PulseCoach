@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/features/sessions_catalog/data/datasources/exercise_local_data_source.dart';
@@ -158,6 +161,105 @@ void main() {
       expect(countsByType['mobility'], greaterThanOrEqualTo(10));
       expect(countsByType['cardio'], greaterThanOrEqualTo(10));
       expect(countsByType['breathing'], greaterThanOrEqualTo(10));
+    },
+  );
+
+  test(
+    '6.5-UNIT-001: loadFallbackExercisesByType normalizes uppercase sessionType',
+    () async {
+      final upper = await sut.loadFallbackExercisesByType('BREATHING');
+      final lower = await sut.loadFallbackExercisesByType('breathing');
+
+      expect(upper, hasLength(lower.length));
+      expect(upper, isNotEmpty);
+    },
+  );
+
+  test(
+    '6.5-UNIT-002: loadFallbackExercisesByType normalizes sessionType with trailing space',
+    () async {
+      final spaced = await sut.loadFallbackExercisesByType('breathing ');
+      final normal = await sut.loadFallbackExercisesByType('breathing');
+
+      expect(spaced, hasLength(normal.length));
+      expect(spaced, isNotEmpty);
+    },
+  );
+
+  test(
+    '6.5-UNIT-003: getCachedExercisesByType normalizes uppercase sessionType',
+    () async {
+      final cachedAt = DateTime.utc(2026, 5, 14, 9);
+      const exercise = Exercise(
+        id: 'mobility-norm-test',
+        name: 'Norm Test',
+        description: 'Test.',
+        sessionType: 'mobility',
+        steps: ['Step'],
+        durationMinutes: 5,
+        difficulty: 'low',
+        indoorCompatible: true,
+        outdoorCompatible: true,
+      );
+      await sut.cacheExercises([exercise], cachedAt);
+
+      final upper = await sut.getCachedExercisesByType('MOBILITY');
+
+      expect(upper, hasLength(1));
+      expect(upper.first.exercise.id, 'mobility-norm-test');
+    },
+  );
+
+  test(
+    '6.5-UNIT-004: loadFallbackExercisesByType deduplicates records by id',
+    () async {
+      const assetKey = 'assets/data/fallback_exercises.json';
+      const dupeJson = '''
+[
+  {
+    "id": "fallback_dup",
+    "name": "First",
+    "description": "d",
+    "sessionType": "breathing",
+    "steps": ["a", "b", "c"],
+    "durationMinutes": 5,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  },
+  {
+    "id": "fallback_dup",
+    "name": "Second",
+    "description": "d",
+    "sessionType": "breathing",
+    "steps": ["a", "b", "c"],
+    "durationMinutes": 5,
+    "difficulty": "low",
+    "indoorCompatible": true,
+    "outdoorCompatible": true
+  }
+]
+''';
+
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      rootBundle.evict(assetKey);
+      binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', (
+        ByteData? message,
+      ) async {
+        return ByteData.view(Uint8List.fromList(utf8.encode(dupeJson)).buffer);
+      });
+      addTearDown(() {
+        binding.defaultBinaryMessenger.setMockMessageHandler(
+          'flutter/assets',
+          null,
+        );
+        rootBundle.evict(assetKey);
+      });
+
+      final result = await sut.loadFallbackExercisesByType('breathing');
+
+      expect(result, hasLength(1));
+      expect(result.first.name, 'First');
     },
   );
 }

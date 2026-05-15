@@ -18,6 +18,21 @@ class ExerciseLocalDataSource {
   Future<List<CachedExerciseEntry>> getCachedExercisesByType(
     String sessionType,
   ) async {
+    final normalizedType = sessionType.trim().toLowerCase();
+    if (normalizedType != sessionType) {
+      developer.log(
+        'sessionType "$sessionType" normalized to "$normalizedType"',
+        name: 'ExerciseLocalDataSource',
+      );
+    }
+    if (normalizedType.isEmpty) {
+      developer.log(
+        'Empty sessionType passed - returning empty list',
+        name: 'ExerciseLocalDataSource',
+      );
+      return List.unmodifiable(const <CachedExerciseEntry>[]);
+    }
+
     final List<ExerciseCacheData> rows;
     try {
       rows = await _dao.getAll();
@@ -31,7 +46,7 @@ class ExerciseLocalDataSource {
         final exercise = ExerciseModel.fromPulseCoachJson(
           jsonDecode(row.exerciseJson) as Map<String, dynamic>,
         ).toEntity();
-        if (exercise.sessionType == sessionType) {
+        if (exercise.sessionType == normalizedType) {
           entries.add(
             CachedExerciseEntry(exercise: exercise, cachedAt: row.cachedAt),
           );
@@ -45,6 +60,12 @@ class ExerciseLocalDataSource {
           error: e,
         );
       }
+    }
+    if (entries.isEmpty) {
+      developer.log(
+        'No cached exercises found for sessionType "$normalizedType"',
+        name: 'ExerciseLocalDataSource',
+      );
     }
     return List.unmodifiable(entries);
   }
@@ -67,10 +88,7 @@ class ExerciseLocalDataSource {
     }
   }
 
-  Future<void> replaceCache(
-    List<Exercise> exercises,
-    DateTime cachedAt,
-  ) async {
+  Future<void> replaceCache(List<Exercise> exercises, DateTime cachedAt) async {
     try {
       await _dao.deleteAll();
       if (exercises.isEmpty) {
@@ -90,6 +108,21 @@ class ExerciseLocalDataSource {
   }
 
   Future<List<Exercise>> loadFallbackExercisesByType(String sessionType) async {
+    final normalizedType = sessionType.trim().toLowerCase();
+    if (normalizedType != sessionType) {
+      developer.log(
+        'sessionType "$sessionType" normalized to "$normalizedType"',
+        name: 'ExerciseLocalDataSource',
+      );
+    }
+    if (normalizedType.isEmpty) {
+      developer.log(
+        'Empty sessionType passed - returning empty list',
+        name: 'ExerciseLocalDataSource',
+      );
+      return List.unmodifiable(const <Exercise>[]);
+    }
+
     final String jsonString;
     final dynamic decoded;
     try {
@@ -106,13 +139,21 @@ class ExerciseLocalDataSource {
     }
 
     final exercises = <Exercise>[];
+    final seen = <String>{};
     for (final entry in decoded) {
       if (entry is! Map<String, dynamic>) {
         continue;
       }
       try {
         final exercise = Exercise.fromJson(entry);
-        if (exercise.sessionType == sessionType) {
+        if (exercise.sessionType == normalizedType) {
+          if (!seen.add(exercise.id)) {
+            developer.log(
+              'Duplicate fallback id "${exercise.id}" - skipping',
+              name: 'ExerciseLocalDataSource',
+            );
+            continue;
+          }
           exercises.add(exercise);
         }
       } catch (e) {
@@ -124,6 +165,12 @@ class ExerciseLocalDataSource {
           error: e,
         );
       }
+    }
+    if (exercises.isEmpty) {
+      developer.log(
+        'No fallback exercises found for sessionType "$normalizedType"',
+        name: 'ExerciseLocalDataSource',
+      );
     }
     return List.unmodifiable(exercises);
   }
