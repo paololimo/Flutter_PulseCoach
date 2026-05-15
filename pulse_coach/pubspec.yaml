@@ -39,7 +39,7 @@ dependencies:
 
   # UI
   google_fonts: ^6.2.1
-  fl_chart: ^0.70.2
+  fl_chart: ^1.0.0
   lottie: ^3.3.1
   flutter_animate: ^4.5.2
   shimmer: ^3.0.0
