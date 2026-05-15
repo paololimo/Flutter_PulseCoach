@@ -109,6 +109,33 @@ void main() {
     );
 
     test(
+      '5.5-UNIT-023b: savePlan after markCompleted preserves isCompleted (regression: regenerate must not reset completion)',
+      () async {
+        // Save initial plan and mark it completed via the DAO write-path.
+        await repo.savePlan(plan());
+        final marked =
+            await db.dailyPlansDao.markCompleted('2026-04-29');
+        expect(marked, isTrue);
+
+        // Regenerate (savePlan again for the same date). Pre-fix this would
+        // silently reset is_completed back to false because savePlan does
+        // delete-then-insert.
+        final regenerated = plan().copyWith(
+          generatedAt: DateTime.utc(2026, 4, 29, 12, 0, 0),
+        );
+        await repo.savePlan(regenerated);
+
+        final row = await db.dailyPlansDao.getPlanForDate('2026-04-29');
+        expect(row, isNotNull);
+        expect(
+          row!.isCompleted,
+          isTrue,
+          reason: 'savePlan must carry isCompleted across delete-then-insert',
+        );
+      },
+    );
+
+    test(
       '5.5-UNIT-024: deletePlanForDate → plan removed, getPlanForDate returns null',
       () async {
         await repo.savePlan(plan());

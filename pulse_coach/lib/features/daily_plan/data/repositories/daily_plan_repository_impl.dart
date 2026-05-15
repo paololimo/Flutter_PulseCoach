@@ -46,12 +46,17 @@ class DailyPlanRepositoryImpl implements DailyPlanRepository {
           await _db.dailyPlansDao.deletePlan(existing.id);
         }
         final now = DateTime.now().toUtc();
+        // Preserve completion across re-saves: if today's plan was already
+        // marked completed, a regeneration must not silently reset it. New
+        // rows fall back to the column default (false).
+        final preservedIsCompleted = existing?.isCompleted ?? false;
         await _db.dailyPlansDao.insertPlan(
           DailyPlansCompanion(
             planDate: Value(plan.planDate),
             planJson: Value(jsonEncode(plan.toJson())),
             generatedAt: Value(plan.generatedAt),
             createdAt: Value(now),
+            isCompleted: Value(preservedIsCompleted),
           ),
         );
       });

@@ -43,6 +43,58 @@ void main() {
       expect(plan!.planDate, '2026-03-28');
     });
 
+    test('daily_plans: isCompleted defaults to false on insert', () async {
+      await db.dailyPlansDao.insertPlan(
+        DailyPlansCompanion.insert(
+          planDate: '2026-03-29',
+          planJson: '{"sessions":[]}',
+          generatedAt: DateTime.now(),
+          createdAt: DateTime.now(),
+        ),
+      );
+      final plan = await db.dailyPlansDao.getPlanForDate('2026-03-29');
+      expect(plan, isNotNull);
+      expect(plan!.isCompleted, false);
+    });
+
+    test('daily_plans: markCompleted sets isCompleted to true', () async {
+      await db.dailyPlansDao.insertPlan(
+        DailyPlansCompanion.insert(
+          planDate: '2026-03-30',
+          planJson: '{"sessions":[]}',
+          generatedAt: DateTime.now(),
+          createdAt: DateTime.now(),
+        ),
+      );
+      final updated = await db.dailyPlansDao.markCompleted('2026-03-30');
+      expect(updated, true);
+      final plan = await db.dailyPlansDao.getPlanForDate('2026-03-30');
+      expect(plan!.isCompleted, true);
+    });
+
+    test('daily_plans: markCompleted returns false when no plan matches',
+        () async {
+      final updated = await db.dailyPlansDao.markCompleted('2099-01-01');
+      expect(updated, false);
+    });
+
+    test('daily_plans: markCompleted is idempotent on already-completed row',
+        () async {
+      await db.dailyPlansDao.insertPlan(
+        DailyPlansCompanion.insert(
+          planDate: '2026-03-31',
+          planJson: '{"sessions":[]}',
+          generatedAt: DateTime.now(),
+          createdAt: DateTime.now(),
+        ),
+      );
+      expect(await db.dailyPlansDao.markCompleted('2026-03-31'), true);
+      // Second call on already-completed row stays true; row remains completed.
+      expect(await db.dailyPlansDao.markCompleted('2026-03-31'), true);
+      final plan = await db.dailyPlansDao.getPlanForDate('2026-03-31');
+      expect(plan!.isCompleted, true);
+    });
+
     test('user_profile table: insert and retrieve', () async {
       await db.userProfileDao.insertProfile(
         UserProfileCompanion.insert(
@@ -154,8 +206,8 @@ void main() {
       expect(db.migration.onUpgrade, isNotNull);
     });
 
-    test('schemaVersion is 3', () {
-      expect(db.schemaVersion, 3);
+    test('schemaVersion is 4', () {
+      expect(db.schemaVersion, 4);
     });
   });
 
@@ -163,6 +215,8 @@ void main() {
     test('disclaimerAccepted column added with default false', () async {
       // Build an in-memory SQLite database with the v1 schema
       // (user_profile without disclaimer_accepted) and user_version = 1.
+      // All tables present in v1 onCreate are included so that later
+      // migrations (v3→v4 adds daily_plans.is_completed) do not fail.
       final v1Raw = sqlite3.openInMemory();
       v1Raw.execute('''
         CREATE TABLE IF NOT EXISTS user_profile (
@@ -174,6 +228,15 @@ void main() {
           onboarding_completed INTEGER NOT NULL DEFAULT 0,
           created_at INTEGER NOT NULL,
           updated_at INTEGER NOT NULL
+        )
+      ''');
+      v1Raw.execute('''
+        CREATE TABLE IF NOT EXISTS daily_plans (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          plan_date TEXT NOT NULL UNIQUE,
+          plan_json TEXT NOT NULL,
+          generated_at INTEGER NOT NULL,
+          created_at INTEGER NOT NULL
         )
       ''');
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -199,5 +262,50 @@ void main() {
 
       await migratedDb.close();
     });
+  });
+
+  group('AppDatabase - real migration v3 → v4', () {
+    test(
+      'daily_plans.is_completed column added with default 0 on existing rows',
+      () async {
+        // Build a raw v3 schema: all v3 tables present, with a pre-existing
+        // row in daily_plans WITHOUT the is_completed column.
+        // user_version = 3 → drift calls onUpgrade(m, 3, 4), which must
+        // ALTER TABLE daily_plans ADD COLUMN is_completed with DEFAULT 0
+        // so the pre-existing row is backfilled to false.
+        final v3Raw = sqlite3.openInMemory();
+        v3Raw.execute('''
+          CREATE TABLE IF NOT EXISTS daily_plans (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            plan_date TEXT NOT NULL UNIQUE,
+            plan_json TEXT NOT NULL,
+            generated_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL
+          )
+        ''');
+        final now = DateTime.now().millisecondsSinceEpoch;
+        v3Raw.execute(
+          'INSERT INTO daily_plans '
+          '(plan_date, plan_json, generated_at, created_at) '
+          'VALUES (?, ?, ?, ?)',
+          ['2026-04-01', '{"sessions":[]}', now, now],
+        );
+        v3Raw.execute('PRAGMA user_version = 3');
+
+        final migratedDb =
+            AppDatabase.forTesting(NativeDatabase.opened(v3Raw));
+
+        final plan = await migratedDb.dailyPlansDao.getPlanForDate('2026-04-01');
+
+        expect(plan, isNotNull);
+        expect(
+          plan!.isCompleted,
+          false,
+          reason: 'v3 → v4 migration must add is_completed with DEFAULT 0',
+        );
+
+        await migratedDb.close();
+      },
+    );
   });
 }

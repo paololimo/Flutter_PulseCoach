@@ -537,6 +537,21 @@ class $DailyPlansTable extends DailyPlans
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _isCompletedMeta = const VerificationMeta(
+    'isCompleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isCompleted = GeneratedColumn<bool>(
+    'is_completed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_completed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -544,6 +559,7 @@ class $DailyPlansTable extends DailyPlans
     planJson,
     generatedAt,
     createdAt,
+    isCompleted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -595,6 +611,15 @@ class $DailyPlansTable extends DailyPlans
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('is_completed')) {
+      context.handle(
+        _isCompletedMeta,
+        isCompleted.isAcceptableOrUnknown(
+          data['is_completed']!,
+          _isCompletedMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -624,6 +649,10 @@ class $DailyPlansTable extends DailyPlans
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      isCompleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_completed'],
+      )!,
     );
   }
 
@@ -639,12 +668,14 @@ class DailyPlan extends DataClass implements Insertable<DailyPlan> {
   final String planJson;
   final DateTime generatedAt;
   final DateTime createdAt;
+  final bool isCompleted;
   const DailyPlan({
     required this.id,
     required this.planDate,
     required this.planJson,
     required this.generatedAt,
     required this.createdAt,
+    required this.isCompleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -654,6 +685,7 @@ class DailyPlan extends DataClass implements Insertable<DailyPlan> {
     map['plan_json'] = Variable<String>(planJson);
     map['generated_at'] = Variable<DateTime>(generatedAt);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['is_completed'] = Variable<bool>(isCompleted);
     return map;
   }
 
@@ -664,6 +696,7 @@ class DailyPlan extends DataClass implements Insertable<DailyPlan> {
       planJson: Value(planJson),
       generatedAt: Value(generatedAt),
       createdAt: Value(createdAt),
+      isCompleted: Value(isCompleted),
     );
   }
 
@@ -678,6 +711,7 @@ class DailyPlan extends DataClass implements Insertable<DailyPlan> {
       planJson: serializer.fromJson<String>(json['planJson']),
       generatedAt: serializer.fromJson<DateTime>(json['generatedAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      isCompleted: serializer.fromJson<bool>(json['isCompleted']),
     );
   }
   @override
@@ -689,6 +723,7 @@ class DailyPlan extends DataClass implements Insertable<DailyPlan> {
       'planJson': serializer.toJson<String>(planJson),
       'generatedAt': serializer.toJson<DateTime>(generatedAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'isCompleted': serializer.toJson<bool>(isCompleted),
     };
   }
 
@@ -698,12 +733,14 @@ class DailyPlan extends DataClass implements Insertable<DailyPlan> {
     String? planJson,
     DateTime? generatedAt,
     DateTime? createdAt,
+    bool? isCompleted,
   }) => DailyPlan(
     id: id ?? this.id,
     planDate: planDate ?? this.planDate,
     planJson: planJson ?? this.planJson,
     generatedAt: generatedAt ?? this.generatedAt,
     createdAt: createdAt ?? this.createdAt,
+    isCompleted: isCompleted ?? this.isCompleted,
   );
   DailyPlan copyWithCompanion(DailyPlansCompanion data) {
     return DailyPlan(
@@ -714,6 +751,9 @@ class DailyPlan extends DataClass implements Insertable<DailyPlan> {
           ? data.generatedAt.value
           : this.generatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      isCompleted: data.isCompleted.present
+          ? data.isCompleted.value
+          : this.isCompleted,
     );
   }
 
@@ -724,14 +764,15 @@ class DailyPlan extends DataClass implements Insertable<DailyPlan> {
           ..write('planDate: $planDate, ')
           ..write('planJson: $planJson, ')
           ..write('generatedAt: $generatedAt, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('isCompleted: $isCompleted')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, planDate, planJson, generatedAt, createdAt);
+      Object.hash(id, planDate, planJson, generatedAt, createdAt, isCompleted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -740,7 +781,8 @@ class DailyPlan extends DataClass implements Insertable<DailyPlan> {
           other.planDate == this.planDate &&
           other.planJson == this.planJson &&
           other.generatedAt == this.generatedAt &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.isCompleted == this.isCompleted);
 }
 
 class DailyPlansCompanion extends UpdateCompanion<DailyPlan> {
@@ -749,12 +791,14 @@ class DailyPlansCompanion extends UpdateCompanion<DailyPlan> {
   final Value<String> planJson;
   final Value<DateTime> generatedAt;
   final Value<DateTime> createdAt;
+  final Value<bool> isCompleted;
   const DailyPlansCompanion({
     this.id = const Value.absent(),
     this.planDate = const Value.absent(),
     this.planJson = const Value.absent(),
     this.generatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.isCompleted = const Value.absent(),
   });
   DailyPlansCompanion.insert({
     this.id = const Value.absent(),
@@ -762,6 +806,7 @@ class DailyPlansCompanion extends UpdateCompanion<DailyPlan> {
     required String planJson,
     required DateTime generatedAt,
     required DateTime createdAt,
+    this.isCompleted = const Value.absent(),
   }) : planDate = Value(planDate),
        planJson = Value(planJson),
        generatedAt = Value(generatedAt),
@@ -772,6 +817,7 @@ class DailyPlansCompanion extends UpdateCompanion<DailyPlan> {
     Expression<String>? planJson,
     Expression<DateTime>? generatedAt,
     Expression<DateTime>? createdAt,
+    Expression<bool>? isCompleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -779,6 +825,7 @@ class DailyPlansCompanion extends UpdateCompanion<DailyPlan> {
       if (planJson != null) 'plan_json': planJson,
       if (generatedAt != null) 'generated_at': generatedAt,
       if (createdAt != null) 'created_at': createdAt,
+      if (isCompleted != null) 'is_completed': isCompleted,
     });
   }
 
@@ -788,6 +835,7 @@ class DailyPlansCompanion extends UpdateCompanion<DailyPlan> {
     Value<String>? planJson,
     Value<DateTime>? generatedAt,
     Value<DateTime>? createdAt,
+    Value<bool>? isCompleted,
   }) {
     return DailyPlansCompanion(
       id: id ?? this.id,
@@ -795,6 +843,7 @@ class DailyPlansCompanion extends UpdateCompanion<DailyPlan> {
       planJson: planJson ?? this.planJson,
       generatedAt: generatedAt ?? this.generatedAt,
       createdAt: createdAt ?? this.createdAt,
+      isCompleted: isCompleted ?? this.isCompleted,
     );
   }
 
@@ -816,6 +865,9 @@ class DailyPlansCompanion extends UpdateCompanion<DailyPlan> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (isCompleted.present) {
+      map['is_completed'] = Variable<bool>(isCompleted.value);
+    }
     return map;
   }
 
@@ -826,7 +878,8 @@ class DailyPlansCompanion extends UpdateCompanion<DailyPlan> {
           ..write('planDate: $planDate, ')
           ..write('planJson: $planJson, ')
           ..write('generatedAt: $generatedAt, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('isCompleted: $isCompleted')
           ..write(')'))
         .toString();
   }
@@ -4063,6 +4116,7 @@ typedef $$DailyPlansTableCreateCompanionBuilder =
       required String planJson,
       required DateTime generatedAt,
       required DateTime createdAt,
+      Value<bool> isCompleted,
     });
 typedef $$DailyPlansTableUpdateCompanionBuilder =
     DailyPlansCompanion Function({
@@ -4071,6 +4125,7 @@ typedef $$DailyPlansTableUpdateCompanionBuilder =
       Value<String> planJson,
       Value<DateTime> generatedAt,
       Value<DateTime> createdAt,
+      Value<bool> isCompleted,
     });
 
 class $$DailyPlansTableFilterComposer
@@ -4104,6 +4159,11 @@ class $$DailyPlansTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isCompleted => $composableBuilder(
+    column: $table.isCompleted,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4141,6 +4201,11 @@ class $$DailyPlansTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isCompleted => $composableBuilder(
+    column: $table.isCompleted,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DailyPlansTableAnnotationComposer
@@ -4168,6 +4233,11 @@ class $$DailyPlansTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isCompleted => $composableBuilder(
+    column: $table.isCompleted,
+    builder: (column) => column,
+  );
 }
 
 class $$DailyPlansTableTableManager
@@ -4206,12 +4276,14 @@ class $$DailyPlansTableTableManager
                 Value<String> planJson = const Value.absent(),
                 Value<DateTime> generatedAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> isCompleted = const Value.absent(),
               }) => DailyPlansCompanion(
                 id: id,
                 planDate: planDate,
                 planJson: planJson,
                 generatedAt: generatedAt,
                 createdAt: createdAt,
+                isCompleted: isCompleted,
               ),
           createCompanionCallback:
               ({
@@ -4220,12 +4292,14 @@ class $$DailyPlansTableTableManager
                 required String planJson,
                 required DateTime generatedAt,
                 required DateTime createdAt,
+                Value<bool> isCompleted = const Value.absent(),
               }) => DailyPlansCompanion.insert(
                 id: id,
                 planDate: planDate,
                 planJson: planJson,
                 generatedAt: generatedAt,
                 createdAt: createdAt,
+                isCompleted: isCompleted,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

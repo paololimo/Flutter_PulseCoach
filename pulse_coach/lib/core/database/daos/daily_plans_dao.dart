@@ -18,4 +18,18 @@ class DailyPlansDao extends DatabaseAccessor<AppDatabase>
 
   Future<int> deletePlan(int id) =>
       (delete(dailyPlans)..where((t) => t.id.equals(id))).go();
+
+  /// Sets `is_completed = true` for the plan matching [date] (`'YYYY-MM-DD'`).
+  ///
+  /// Returns `true` when a row was updated (either flipped from `false` to
+  /// `true`, or already `true` — SQLite reports `rowsAffected = 1` in both
+  /// cases, so calls are idempotent from the database's perspective).
+  /// Returns `false` only when no plan exists for [date]; callers can treat
+  /// `false` as "no plan to mark", not as a failure.
+  Future<bool> markCompleted(String date) async {
+    final rowsAffected = await (update(dailyPlans)
+          ..where((t) => t.planDate.equals(date)))
+        .write(const DailyPlansCompanion(isCompleted: Value(true)));
+    return rowsAffected > 0;
+  }
 }
