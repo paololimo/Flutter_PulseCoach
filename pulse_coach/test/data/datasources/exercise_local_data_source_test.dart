@@ -262,4 +262,36 @@ void main() {
       expect(result.first.name, 'First');
     },
   );
+
+  test(
+    '6.5-UNIT-005: loadFallbackExercisesByType returns empty for blank sessionType',
+    () async {
+      final result = await sut.loadFallbackExercisesByType('   ');
+
+      expect(result, isEmpty);
+    },
+  );
+
+  test(
+    '6.5-UNIT-006: getCachedExercisesByType returns empty for blank sessionType',
+    () async {
+      final cachedAt = DateTime.utc(2026, 5, 14, 9);
+      const exercise = Exercise(
+        id: 'blank-session-type-guard',
+        name: 'Blank Guard',
+        description: 'Test.',
+        sessionType: 'mobility',
+        steps: ['Step'],
+        durationMinutes: 5,
+        difficulty: 'low',
+        indoorCompatible: true,
+        outdoorCompatible: true,
+      );
+      await sut.cacheExercises([exercise], cachedAt);
+
+      final result = await sut.getCachedExercisesByType(' ');
+
+      expect(result, isEmpty);
+    },
+  );
 }
