@@ -11,6 +11,7 @@ import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer
 import 'package:pulse_coach/features/onboarding/domain/usecases/save_profile.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 void main() {
   setUp(() {
@@ -49,4 +50,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(MaterialApp), findsOneWidget);
   });
+
+  testWidgets(
+    '7.5-L10N-001: app forces Italian locale and registers localization delegates',
+    (tester) async {
+      await tester.pumpWidget(const PulseCoachApp());
+      await tester.pumpAndSettle();
+
+      final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+      expect(app.locale, equals(const Locale('it')));
+      expect(app.localizationsDelegates, contains(AppLocalizations.delegate));
+      expect(
+        app.supportedLocales,
+        containsAll([const Locale('en'), const Locale('it')]),
+      );
+    },
+  );
 }
