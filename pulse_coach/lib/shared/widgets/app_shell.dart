@@ -33,9 +33,18 @@ class AppShell extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
+            Container(
               decoration: BoxDecoration(color: theme.surfaceContainer),
-              child: const Text('PulseCoach'),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  child: Text(
+                    'PulseCoach',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.person),

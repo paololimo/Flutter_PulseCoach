@@ -88,70 +88,95 @@ class TodayPage extends StatelessWidget {
           _SessionEntry(index: i, session: sessions[i]),
     ];
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(child: StateIndicator(state: loaded.behavioralState)),
-                const SizedBox(width: 12),
-                CompletionRing(completed: completedCount, total: total),
-              ],
-            ),
-            const SizedBox(height: 16),
-            for (final entry in completedEntries) ...[
-              CompletedSessionCard(session: entry.session),
-              const SizedBox(height: 8),
-            ],
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: allDone
-                  ? const _AllDoneWidget(key: ValueKey('all-done'))
-                  : _HeroZone(
-                      key: ValueKey(
-                        'hero-${sessions[heroIndex].sessionType}-$heroIndex',
-                      ),
-                      plan: plan,
-                      heroIndex: heroIndex,
-                      onRegenerate: () {
-                        final bloc = context.read<DailyPlanBloc>();
-                        // Guard against rapid double-taps while AnimatedSwitcher
-                        // is cross-fading the old hero card out.
-                        if (bloc.state is DailyPlanLoaded) {
-                          bloc.add(DailyPlanRegenerateRequested());
-                        }
-                      },
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: StateIndicator(state: loaded.behavioralState),
+                        ),
+                        const SizedBox(width: 12),
+                        CompletionRing(
+                          completed: completedCount,
+                          total: total,
+                        ),
+                      ],
                     ),
-            ),
-            if (upcomingEntries.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                'COMING UP',
-                style: AppTextStyles.caption.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).extension<PulseCoachTheme>()!.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
+                    const SizedBox(height: 16),
+                    for (final entry in completedEntries) ...[
+                      CompletedSessionCard(session: entry.session),
+                      const SizedBox(height: 8),
+                    ],
+                    if (allDone)
+                      const Expanded(
+                        child: Center(
+                          child: AnimatedSwitcher(
+                            duration: Duration(milliseconds: 300),
+                            child: _AllDoneWidget(key: ValueKey('all-done')),
+                          ),
+                        ),
+                      )
+                    else ...[
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: _HeroZone(
+                          key: ValueKey(
+                            'hero-${sessions[heroIndex].sessionType}-$heroIndex',
+                          ),
+                          plan: plan,
+                          heroIndex: heroIndex,
+                          onRegenerate: () {
+                            final bloc = context.read<DailyPlanBloc>();
+                            // Guard against rapid double-taps while
+                            // AnimatedSwitcher is cross-fading the old hero
+                            // card out.
+                            if (bloc.state is DailyPlanLoaded) {
+                              bloc.add(DailyPlanRegenerateRequested());
+                            }
+                          },
+                        ),
+                      ),
+                      if (upcomingEntries.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          'COMING UP',
+                          style: AppTextStyles.caption.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).extension<PulseCoachTheme>()!.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        for (final entry in upcomingEntries) ...[
+                          CompactSessionCard(
+                            session: entry.session,
+                            heroTag:
+                                'session-compact-${entry.session.sessionType}-${entry.index}',
+                            onTap: () => context
+                                .read<TodaySessionCubit>()
+                                .swapHero(entry.index),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ],
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              for (final entry in upcomingEntries) ...[
-                CompactSessionCard(
-                  session: entry.session,
-                  heroTag:
-                      'session-compact-${entry.session.sessionType}-${entry.index}',
-                  onTap: () =>
-                      context.read<TodaySessionCubit>().swapHero(entry.index),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ],
-          ],
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 
