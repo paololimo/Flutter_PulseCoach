@@ -26,12 +26,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>PulseCoach uses your approximate city-level location to provide weather-adjusted workout recommendations.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Used to personalize your sessions. Stays on your device.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Used to record workout data. Stays on your device.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>PulseCoach uses your approximate city-level location to provide weather-adjusted workout recommendations.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
