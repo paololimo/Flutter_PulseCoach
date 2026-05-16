@@ -116,6 +116,14 @@ class TodayPage extends StatelessWidget {
                       ),
                       plan: plan,
                       heroIndex: heroIndex,
+                      onRegenerate: () {
+                        final bloc = context.read<DailyPlanBloc>();
+                        // Guard against rapid double-taps while AnimatedSwitcher
+                        // is cross-fading the old hero card out.
+                        if (bloc.state is DailyPlanLoaded) {
+                          bloc.add(DailyPlanRegenerateRequested());
+                        }
+                      },
                     ),
             ),
             if (upcomingEntries.isNotEmpty) ...[
@@ -175,8 +183,14 @@ class TodayPage extends StatelessWidget {
 class _HeroZone extends StatelessWidget {
   final DailyPlan plan;
   final int heroIndex;
+  final VoidCallback? onRegenerate;
 
-  const _HeroZone({super.key, required this.plan, required this.heroIndex});
+  const _HeroZone({
+    super.key,
+    required this.plan,
+    required this.heroIndex,
+    this.onRegenerate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +203,7 @@ class _HeroZone extends StatelessWidget {
       session: session,
       heroTag: 'session-hero-${session.sessionType}-$heroIndex',
       onStart: () => context.read<TodaySessionCubit>().markSessionCompleted(),
+      onRegenerate: onRegenerate,
     );
   }
 }

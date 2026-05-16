@@ -240,6 +240,39 @@ void main() {
       expect(icon.size, equals(32));
       expect(icon.color, equals(PulseCoachTheme.dark.secondary));
     });
+
+    testWidgets('7.4-HERO-001: shows regenerate icon when callback exists', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(HeroSessionCard(session: _session(), onRegenerate: () {})),
+      );
+
+      expect(find.byIcon(Icons.refresh), findsOneWidget);
+    });
+
+    testWidgets('7.4-HERO-002: hides regenerate icon without callback', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(HeroSessionCard(session: _session())));
+
+      expect(find.byIcon(Icons.refresh), findsNothing);
+    });
+
+    testWidgets('7.4-HERO-003: tapping regenerate invokes the callback', (
+      tester,
+    ) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        _wrap(
+          HeroSessionCard(session: _session(), onRegenerate: () => taps++),
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.refresh));
+
+      expect(taps, equals(1));
+    });
   });
 
   group('CompactSessionCard content (AC3)', () {

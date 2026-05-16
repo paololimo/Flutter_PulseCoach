@@ -122,6 +122,42 @@ void main() {
       expect(find.text('0/3'), findsOneWidget);
     });
 
+    testWidgets('7.4-PAGE-001: loaded state shows regenerate IconButton', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
+      );
+
+      expect(
+        find.widgetWithIcon(IconButton, Icons.refresh),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+      '7.4-PAGE-002: tapping regenerate dispatches DailyPlanRegenerateRequested',
+      (tester) async {
+        await tester.pumpWidget(
+          wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
+        );
+
+        await tester.tap(find.byIcon(Icons.refresh));
+
+        verify(
+          dailyPlanBloc.add(argThat(isA<DailyPlanRegenerateRequested>())),
+        ).called(1);
+      },
+    );
+
+    testWidgets('7.4-PAGE-003: loading state hides regenerate IconButton', (
+      tester,
+    ) async {
+      await tester.pumpWidget(wrap(planState: const DailyPlanState.loading()));
+
+      expect(find.byIcon(Icons.refresh), findsNothing);
+    });
+
     testWidgets('7.3-PAGE-006: never shows CircularProgressIndicator', (
       tester,
     ) async {

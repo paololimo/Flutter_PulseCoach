@@ -8,12 +8,14 @@ class HeroSessionCard extends StatelessWidget {
   final PlannedSession session;
   final VoidCallback? onStart;
   final String? heroTag;
+  final VoidCallback? onRegenerate;
 
   const HeroSessionCard({
     super.key,
     required this.session,
     this.onStart,
     this.heroTag,
+    this.onRegenerate,
   });
 
   @override
@@ -87,6 +89,22 @@ class HeroSessionCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (onRegenerate != null)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.refresh,
+                        size: 20,
+                        semanticLabel: 'Rigenera il piano allenamento',
+                      ),
+                      color: pulseTheme.onSurfaceVariant,
+                      onPressed: onRegenerate,
+                      tooltip: 'Rigenera',
+                      padding: const EdgeInsets.all(6),
+                      constraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 48,
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 8),
