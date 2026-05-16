@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulse_coach/core/theme/app_text_styles.dart';
@@ -20,13 +22,21 @@ class TodayPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<DailyPlanBloc, DailyPlanState>(
-      listenWhen: (previous, current) =>
-          current is DailyPlanLoaded &&
-          (previous is! DailyPlanLoaded ||
-              !_isSamePlan(previous.plan, current.plan)),
+      listenWhen: (previous, current) {
+        if (current is! DailyPlanLoaded) return false;
+        if (previous is! DailyPlanLoaded) return true;
+        // planDbId is nullable: null means "not persisted" (e.g. fresh-install
+        // race or a future ephemeral preview). Two consecutive nulls still
+        // fire — we cannot tell them apart and the cubit's reset is cheap.
+        if (previous.planDbId == null || current.planDbId == null) return true;
+        return previous.planDbId != current.planDbId;
+      },
       listener: (context, state) {
-        if (state case DailyPlanLoaded(:final plan)) {
-          context.read<TodaySessionCubit>().planLoaded(plan.sessions.length);
+        if (state case DailyPlanLoaded(:final plan, :final planDbId)) {
+          context
+              .read<TodaySessionCubit>()
+              .planLoaded(plan.sessions.length, planDbId)
+              .ignore();
         }
       },
       builder: (context, state) {
@@ -42,9 +52,6 @@ class TodayPage extends StatelessWidget {
       },
     );
   }
-
-  static bool _isSamePlan(DailyPlan a, DailyPlan b) =>
-      a.generatedAt == b.generatedAt && a.sessions.length == b.sessions.length;
 
   Widget _buildShimmer(BuildContext context) {
     return const Padding(
@@ -227,7 +234,8 @@ class _HeroZone extends StatelessWidget {
     return HeroSessionCard(
       session: session,
       heroTag: 'session-hero-${session.sessionType}-$heroIndex',
-      onStart: () => context.read<TodaySessionCubit>().markSessionCompleted(),
+      onStart: () =>
+          context.read<TodaySessionCubit>().markSessionCompleted().ignore(),
       onRegenerate: onRegenerate,
     );
   }

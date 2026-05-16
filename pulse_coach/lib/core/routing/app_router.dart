@@ -50,7 +50,7 @@ class AppRouter {
                   create: (_) =>
                       getIt<DailyPlanBloc>()..add(DailyPlanGenerateRequested()),
                 ),
-                BlocProvider(create: (_) => TodaySessionCubit()),
+                BlocProvider(create: (_) => getIt<TodaySessionCubit>()),
               ],
               child: const TodayPage(),
             ),

@@ -26,6 +26,7 @@ import 'package:pulse_coach/features/onboarding/domain/usecases/update_profile.d
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
+import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 
 /// Registers the onboarding DI chain needed for OnboardingPage.
 /// Must be called AFTER AppDatabase is registered in getIt.
@@ -62,6 +63,9 @@ void _registerOnboardingDeps() {
 
 void _registerTodayDeps() {
   getIt.registerFactory<DailyPlanBloc>(() => _StubDailyPlanBloc());
+  getIt.registerFactory<TodaySessionCubit>(
+    () => TodaySessionCubit(getIt<AppDatabase>().sessionLogsDao),
+  );
 }
 
 void main() {

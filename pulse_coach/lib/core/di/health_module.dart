@@ -6,6 +6,7 @@ import 'package:pulse_coach/core/database/daos/behavioral_state_dao.dart';
 import 'package:pulse_coach/core/database/daos/daily_plans_dao.dart';
 import 'package:pulse_coach/core/database/daos/exercise_cache_dao.dart';
 import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart';
+import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart';
 
 @module
@@ -31,4 +32,7 @@ abstract class HealthModule {
 
   @singleton
   RpeFeedbackDao rpeFeedbackDao(AppDatabase db) => db.rpeFeedbackDao;
+
+  @singleton
+  SessionLogsDao sessionLogsDao(AppDatabase db) => db.sessionLogsDao;
 }

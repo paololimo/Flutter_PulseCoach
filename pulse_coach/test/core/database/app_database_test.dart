@@ -72,28 +72,32 @@ void main() {
       expect(plan!.isCompleted, true);
     });
 
-    test('daily_plans: markCompleted returns false when no plan matches',
-        () async {
-      final updated = await db.dailyPlansDao.markCompleted('2099-01-01');
-      expect(updated, false);
-    });
+    test(
+      'daily_plans: markCompleted returns false when no plan matches',
+      () async {
+        final updated = await db.dailyPlansDao.markCompleted('2099-01-01');
+        expect(updated, false);
+      },
+    );
 
-    test('daily_plans: markCompleted is idempotent on already-completed row',
-        () async {
-      await db.dailyPlansDao.insertPlan(
-        DailyPlansCompanion.insert(
-          planDate: '2026-03-31',
-          planJson: '{"sessions":[]}',
-          generatedAt: DateTime.now(),
-          createdAt: DateTime.now(),
-        ),
-      );
-      expect(await db.dailyPlansDao.markCompleted('2026-03-31'), true);
-      // Second call on already-completed row stays true; row remains completed.
-      expect(await db.dailyPlansDao.markCompleted('2026-03-31'), true);
-      final plan = await db.dailyPlansDao.getPlanForDate('2026-03-31');
-      expect(plan!.isCompleted, true);
-    });
+    test(
+      'daily_plans: markCompleted is idempotent on already-completed row',
+      () async {
+        await db.dailyPlansDao.insertPlan(
+          DailyPlansCompanion.insert(
+            planDate: '2026-03-31',
+            planJson: '{"sessions":[]}',
+            generatedAt: DateTime.now(),
+            createdAt: DateTime.now(),
+          ),
+        );
+        expect(await db.dailyPlansDao.markCompleted('2026-03-31'), true);
+        // Second call on already-completed row stays true; row remains completed.
+        expect(await db.dailyPlansDao.markCompleted('2026-03-31'), true);
+        final plan = await db.dailyPlansDao.getPlanForDate('2026-03-31');
+        expect(plan!.isCompleted, true);
+      },
+    );
 
     test('user_profile table: insert and retrieve', () async {
       await db.userProfileDao.insertProfile(
@@ -106,18 +110,20 @@ void main() {
       expect(profile, isNotNull);
     });
 
-    test('user_profile: disclaimerAccepted defaults to false on insert',
-        () async {
-      await db.userProfileDao.insertProfile(
-        UserProfileCompanion.insert(
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
-      final profile = await db.userProfileDao.getProfile();
-      expect(profile, isNotNull);
-      expect(profile!.disclaimerAccepted, false);
-    });
+    test(
+      'user_profile: disclaimerAccepted defaults to false on insert',
+      () async {
+        await db.userProfileDao.insertProfile(
+          UserProfileCompanion.insert(
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+        final profile = await db.userProfileDao.getProfile();
+        expect(profile, isNotNull);
+        expect(profile!.disclaimerAccepted, false);
+      },
+    );
 
     test('rpe_feedback table: insert and retrieve', () async {
       await db.rpeFeedbackDao.insertFeedback(
@@ -181,8 +187,7 @@ void main() {
           cachedAt: DateTime.now(),
         ),
       );
-      final exercise =
-          await db.exerciseCacheDao.getByExerciseId('ex-001');
+      final exercise = await db.exerciseCacheDao.getByExerciseId('ex-001');
       expect(exercise, isNotNull);
       expect(exercise!.exerciseId, 'ex-001');
     });
@@ -206,8 +211,8 @@ void main() {
       expect(db.migration.onUpgrade, isNotNull);
     });
 
-    test('schemaVersion is 4', () {
-      expect(db.schemaVersion, 4);
+    test('schemaVersion is 6', () {
+      expect(db.schemaVersion, 6);
     });
   });
 
@@ -248,8 +253,7 @@ void main() {
 
       // Open as AppDatabase — drift detects user_version=1 < schemaVersion=2
       // and calls onUpgrade(m, 1, 2), which adds disclaimer_accepted column.
-      final migratedDb =
-          AppDatabase.forTesting(NativeDatabase.opened(v1Raw));
+      final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v1Raw));
 
       final profile = await migratedDb.userProfileDao.getProfile();
 
@@ -292,10 +296,11 @@ void main() {
         );
         v3Raw.execute('PRAGMA user_version = 3');
 
-        final migratedDb =
-            AppDatabase.forTesting(NativeDatabase.opened(v3Raw));
+        final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v3Raw));
 
-        final plan = await migratedDb.dailyPlansDao.getPlanForDate('2026-04-01');
+        final plan = await migratedDb.dailyPlansDao.getPlanForDate(
+          '2026-04-01',
+        );
 
         expect(plan, isNotNull);
         expect(
@@ -303,6 +308,112 @@ void main() {
           false,
           reason: 'v3 → v4 migration must add is_completed with DEFAULT 0',
         );
+
+        await migratedDb.close();
+      },
+    );
+  });
+
+  group('AppDatabase - real migration v4 → v6', () {
+    test('session_logs table is created, FK-enforced, and writable', () async {
+      final v4Raw = sqlite3.openInMemory();
+      // v4 schema needs daily_plans pre-existing (with is_completed, added in
+      // v3→v4) so the FK lookup from session_logs can resolve a real row.
+      v4Raw.execute('''
+        CREATE TABLE IF NOT EXISTS daily_plans (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          plan_date TEXT NOT NULL UNIQUE,
+          plan_json TEXT NOT NULL,
+          generated_at INTEGER NOT NULL,
+          created_at INTEGER NOT NULL,
+          is_completed INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+      v4Raw.execute('PRAGMA user_version = 4');
+
+      final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v4Raw));
+      final now = DateTime.utc(2026, 5, 16, 9);
+
+      // FK→daily_plans is now enforced (v6 added ON DELETE CASCADE + pragma).
+      // Insert a parent row so the child insert can succeed.
+      final planId = await migratedDb.dailyPlansDao.insertPlan(
+        DailyPlansCompanion.insert(
+          planDate: '2026-05-16',
+          planJson: '{"sessions":[]}',
+          generatedAt: now,
+          createdAt: now,
+        ),
+      );
+
+      await migratedDb.sessionLogsDao.insertLog(
+        SessionLogsCompanion.insert(
+          dailyPlanId: planId,
+          sessionIndex: 0,
+          completedAt: now,
+          createdAt: now,
+        ),
+      );
+
+      final logs = await migratedDb.sessionLogsDao.getLogsForPlan(planId);
+
+      expect(logs, hasLength(1));
+      expect(logs.single.sessionIndex, 0);
+
+      await migratedDb.close();
+    });
+  });
+
+  group('AppDatabase - real migration v3 → v6 (composite)', () {
+    test(
+      'addColumn (v3→v4) + createTable (v4→v5) + recreate with FK (v5→v6) '
+      'all run cleanly in one upgrade',
+      () async {
+        // Build a raw v3 schema with a pre-existing daily_plans row and no
+        // is_completed column. user_version = 3 → drift fires the full chain
+        // (v3→v4: addColumn is_completed, v4→v5: createTable session_logs,
+        // v5→v6: drop+recreate session_logs with FK + UNIQUE).
+        final v3Raw = sqlite3.openInMemory();
+        v3Raw.execute('''
+          CREATE TABLE IF NOT EXISTS daily_plans (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            plan_date TEXT NOT NULL UNIQUE,
+            plan_json TEXT NOT NULL,
+            generated_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL
+          )
+        ''');
+        final nowMs = DateTime.now().millisecondsSinceEpoch;
+        v3Raw.execute(
+          'INSERT INTO daily_plans '
+          '(plan_date, plan_json, generated_at, created_at) '
+          'VALUES (?, ?, ?, ?)',
+          ['2026-04-01', '{"sessions":[]}', nowMs, nowMs],
+        );
+        v3Raw.execute('PRAGMA user_version = 3');
+
+        final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v3Raw));
+
+        // v3→v4: column was added, pre-existing row backfilled to false.
+        final preExisting = await migratedDb.dailyPlansDao.getPlanForDate(
+          '2026-04-01',
+        );
+        expect(preExisting, isNotNull);
+        expect(preExisting!.isCompleted, false);
+
+        // v4→v5→v6: session_logs is present, enforces FK, and accepts inserts.
+        final now = DateTime.utc(2026, 5, 16, 9);
+        await migratedDb.sessionLogsDao.insertLog(
+          SessionLogsCompanion.insert(
+            dailyPlanId: preExisting.id,
+            sessionIndex: 0,
+            completedAt: now,
+            createdAt: now,
+          ),
+        );
+        final logs = await migratedDb.sessionLogsDao.getLogsForPlan(
+          preExisting.id,
+        );
+        expect(logs, hasLength(1));
 
         await migratedDb.close();
       },

@@ -3825,6 +3825,381 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueEntry> {
   }
 }
 
+class $SessionLogsTable extends SessionLogs
+    with TableInfo<$SessionLogsTable, SessionLog> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SessionLogsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _dailyPlanIdMeta = const VerificationMeta(
+    'dailyPlanId',
+  );
+  @override
+  late final GeneratedColumn<int> dailyPlanId = GeneratedColumn<int>(
+    'daily_plan_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES daily_plans (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _sessionIndexMeta = const VerificationMeta(
+    'sessionIndex',
+  );
+  @override
+  late final GeneratedColumn<int> sessionIndex = GeneratedColumn<int>(
+    'session_index',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    dailyPlanId,
+    sessionIndex,
+    completedAt,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'session_logs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SessionLog> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('daily_plan_id')) {
+      context.handle(
+        _dailyPlanIdMeta,
+        dailyPlanId.isAcceptableOrUnknown(
+          data['daily_plan_id']!,
+          _dailyPlanIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dailyPlanIdMeta);
+    }
+    if (data.containsKey('session_index')) {
+      context.handle(
+        _sessionIndexMeta,
+        sessionIndex.isAcceptableOrUnknown(
+          data['session_index']!,
+          _sessionIndexMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIndexMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_completedAtMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {dailyPlanId, sessionIndex},
+  ];
+  @override
+  SessionLog map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SessionLog(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      dailyPlanId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}daily_plan_id'],
+      )!,
+      sessionIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_index'],
+      )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SessionLogsTable createAlias(String alias) {
+    return $SessionLogsTable(attachedDatabase, alias);
+  }
+}
+
+class SessionLog extends DataClass implements Insertable<SessionLog> {
+  final int id;
+  final int dailyPlanId;
+  final int sessionIndex;
+  final DateTime completedAt;
+  final DateTime createdAt;
+  const SessionLog({
+    required this.id,
+    required this.dailyPlanId,
+    required this.sessionIndex,
+    required this.completedAt,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['daily_plan_id'] = Variable<int>(dailyPlanId);
+    map['session_index'] = Variable<int>(sessionIndex);
+    map['completed_at'] = Variable<DateTime>(completedAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  SessionLogsCompanion toCompanion(bool nullToAbsent) {
+    return SessionLogsCompanion(
+      id: Value(id),
+      dailyPlanId: Value(dailyPlanId),
+      sessionIndex: Value(sessionIndex),
+      completedAt: Value(completedAt),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory SessionLog.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SessionLog(
+      id: serializer.fromJson<int>(json['id']),
+      dailyPlanId: serializer.fromJson<int>(json['dailyPlanId']),
+      sessionIndex: serializer.fromJson<int>(json['sessionIndex']),
+      completedAt: serializer.fromJson<DateTime>(json['completedAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'dailyPlanId': serializer.toJson<int>(dailyPlanId),
+      'sessionIndex': serializer.toJson<int>(sessionIndex),
+      'completedAt': serializer.toJson<DateTime>(completedAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  SessionLog copyWith({
+    int? id,
+    int? dailyPlanId,
+    int? sessionIndex,
+    DateTime? completedAt,
+    DateTime? createdAt,
+  }) => SessionLog(
+    id: id ?? this.id,
+    dailyPlanId: dailyPlanId ?? this.dailyPlanId,
+    sessionIndex: sessionIndex ?? this.sessionIndex,
+    completedAt: completedAt ?? this.completedAt,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  SessionLog copyWithCompanion(SessionLogsCompanion data) {
+    return SessionLog(
+      id: data.id.present ? data.id.value : this.id,
+      dailyPlanId: data.dailyPlanId.present
+          ? data.dailyPlanId.value
+          : this.dailyPlanId,
+      sessionIndex: data.sessionIndex.present
+          ? data.sessionIndex.value
+          : this.sessionIndex,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SessionLog(')
+          ..write('id: $id, ')
+          ..write('dailyPlanId: $dailyPlanId, ')
+          ..write('sessionIndex: $sessionIndex, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, dailyPlanId, sessionIndex, completedAt, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SessionLog &&
+          other.id == this.id &&
+          other.dailyPlanId == this.dailyPlanId &&
+          other.sessionIndex == this.sessionIndex &&
+          other.completedAt == this.completedAt &&
+          other.createdAt == this.createdAt);
+}
+
+class SessionLogsCompanion extends UpdateCompanion<SessionLog> {
+  final Value<int> id;
+  final Value<int> dailyPlanId;
+  final Value<int> sessionIndex;
+  final Value<DateTime> completedAt;
+  final Value<DateTime> createdAt;
+  const SessionLogsCompanion({
+    this.id = const Value.absent(),
+    this.dailyPlanId = const Value.absent(),
+    this.sessionIndex = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  SessionLogsCompanion.insert({
+    this.id = const Value.absent(),
+    required int dailyPlanId,
+    required int sessionIndex,
+    required DateTime completedAt,
+    required DateTime createdAt,
+  }) : dailyPlanId = Value(dailyPlanId),
+       sessionIndex = Value(sessionIndex),
+       completedAt = Value(completedAt),
+       createdAt = Value(createdAt);
+  static Insertable<SessionLog> custom({
+    Expression<int>? id,
+    Expression<int>? dailyPlanId,
+    Expression<int>? sessionIndex,
+    Expression<DateTime>? completedAt,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (dailyPlanId != null) 'daily_plan_id': dailyPlanId,
+      if (sessionIndex != null) 'session_index': sessionIndex,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  SessionLogsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? dailyPlanId,
+    Value<int>? sessionIndex,
+    Value<DateTime>? completedAt,
+    Value<DateTime>? createdAt,
+  }) {
+    return SessionLogsCompanion(
+      id: id ?? this.id,
+      dailyPlanId: dailyPlanId ?? this.dailyPlanId,
+      sessionIndex: sessionIndex ?? this.sessionIndex,
+      completedAt: completedAt ?? this.completedAt,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (dailyPlanId.present) {
+      map['daily_plan_id'] = Variable<int>(dailyPlanId.value);
+    }
+    if (sessionIndex.present) {
+      map['session_index'] = Variable<int>(sessionIndex.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SessionLogsCompanion(')
+          ..write('id: $id, ')
+          ..write('dailyPlanId: $dailyPlanId, ')
+          ..write('sessionIndex: $sessionIndex, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3839,6 +4214,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $WeatherCacheTable weatherCache = $WeatherCacheTable(this);
   late final $ExerciseCacheTable exerciseCache = $ExerciseCacheTable(this);
   late final $SyncQueueTable syncQueue = $SyncQueueTable(this);
+  late final $SessionLogsTable sessionLogs = $SessionLogsTable(this);
   late final SessionsDao sessionsDao = SessionsDao(this as AppDatabase);
   late final DailyPlansDao dailyPlansDao = DailyPlansDao(this as AppDatabase);
   late final UserProfileDao userProfileDao = UserProfileDao(
@@ -3860,6 +4236,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this as AppDatabase,
   );
   late final SyncQueueDao syncQueueDao = SyncQueueDao(this as AppDatabase);
+  late final SessionLogsDao sessionLogsDao = SessionLogsDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3874,7 +4253,18 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     weatherCache,
     exerciseCache,
     syncQueue,
+    sessionLogs,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'daily_plans',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('session_logs', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$SessionsTableCreateCompanionBuilder =
@@ -4128,6 +4518,32 @@ typedef $$DailyPlansTableUpdateCompanionBuilder =
       Value<bool> isCompleted,
     });
 
+final class $$DailyPlansTableReferences
+    extends BaseReferences<_$AppDatabase, $DailyPlansTable, DailyPlan> {
+  $$DailyPlansTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$SessionLogsTable, List<SessionLog>>
+  _sessionLogsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.sessionLogs,
+    aliasName: $_aliasNameGenerator(
+      db.dailyPlans.id,
+      db.sessionLogs.dailyPlanId,
+    ),
+  );
+
+  $$SessionLogsTableProcessedTableManager get sessionLogsRefs {
+    final manager = $$SessionLogsTableTableManager(
+      $_db,
+      $_db.sessionLogs,
+    ).filter((f) => f.dailyPlanId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_sessionLogsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
 class $$DailyPlansTableFilterComposer
     extends Composer<_$AppDatabase, $DailyPlansTable> {
   $$DailyPlansTableFilterComposer({
@@ -4166,6 +4582,31 @@ class $$DailyPlansTableFilterComposer
     column: $table.isCompleted,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> sessionLogsRefs(
+    Expression<bool> Function($$SessionLogsTableFilterComposer f) f,
+  ) {
+    final $$SessionLogsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sessionLogs,
+      getReferencedColumn: (t) => t.dailyPlanId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionLogsTableFilterComposer(
+            $db: $db,
+            $table: $db.sessionLogs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$DailyPlansTableOrderingComposer
@@ -4238,6 +4679,31 @@ class $$DailyPlansTableAnnotationComposer
     column: $table.isCompleted,
     builder: (column) => column,
   );
+
+  Expression<T> sessionLogsRefs<T extends Object>(
+    Expression<T> Function($$SessionLogsTableAnnotationComposer a) f,
+  ) {
+    final $$SessionLogsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sessionLogs,
+      getReferencedColumn: (t) => t.dailyPlanId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionLogsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sessionLogs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$DailyPlansTableTableManager
@@ -4251,12 +4717,9 @@ class $$DailyPlansTableTableManager
           $$DailyPlansTableAnnotationComposer,
           $$DailyPlansTableCreateCompanionBuilder,
           $$DailyPlansTableUpdateCompanionBuilder,
-          (
-            DailyPlan,
-            BaseReferences<_$AppDatabase, $DailyPlansTable, DailyPlan>,
-          ),
+          (DailyPlan, $$DailyPlansTableReferences),
           DailyPlan,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool sessionLogsRefs})
         > {
   $$DailyPlansTableTableManager(_$AppDatabase db, $DailyPlansTable table)
     : super(
@@ -4302,9 +4765,45 @@ class $$DailyPlansTableTableManager
                 isCompleted: isCompleted,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$DailyPlansTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({sessionLogsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (sessionLogsRefs) db.sessionLogs],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (sessionLogsRefs)
+                    await $_getPrefetchedData<
+                      DailyPlan,
+                      $DailyPlansTable,
+                      SessionLog
+                    >(
+                      currentTable: table,
+                      referencedTable: $$DailyPlansTableReferences
+                          ._sessionLogsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$DailyPlansTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).sessionLogsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.dailyPlanId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -4319,9 +4818,9 @@ typedef $$DailyPlansTableProcessedTableManager =
       $$DailyPlansTableAnnotationComposer,
       $$DailyPlansTableCreateCompanionBuilder,
       $$DailyPlansTableUpdateCompanionBuilder,
-      (DailyPlan, BaseReferences<_$AppDatabase, $DailyPlansTable, DailyPlan>),
+      (DailyPlan, $$DailyPlansTableReferences),
       DailyPlan,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool sessionLogsRefs})
     >;
 typedef $$UserProfileTableCreateCompanionBuilder =
     UserProfileCompanion Function({
@@ -5866,6 +6365,323 @@ typedef $$SyncQueueTableProcessedTableManager =
       SyncQueueEntry,
       PrefetchHooks Function()
     >;
+typedef $$SessionLogsTableCreateCompanionBuilder =
+    SessionLogsCompanion Function({
+      Value<int> id,
+      required int dailyPlanId,
+      required int sessionIndex,
+      required DateTime completedAt,
+      required DateTime createdAt,
+    });
+typedef $$SessionLogsTableUpdateCompanionBuilder =
+    SessionLogsCompanion Function({
+      Value<int> id,
+      Value<int> dailyPlanId,
+      Value<int> sessionIndex,
+      Value<DateTime> completedAt,
+      Value<DateTime> createdAt,
+    });
+
+final class $$SessionLogsTableReferences
+    extends BaseReferences<_$AppDatabase, $SessionLogsTable, SessionLog> {
+  $$SessionLogsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $DailyPlansTable _dailyPlanIdTable(_$AppDatabase db) =>
+      db.dailyPlans.createAlias(
+        $_aliasNameGenerator(db.sessionLogs.dailyPlanId, db.dailyPlans.id),
+      );
+
+  $$DailyPlansTableProcessedTableManager get dailyPlanId {
+    final $_column = $_itemColumn<int>('daily_plan_id')!;
+
+    final manager = $$DailyPlansTableTableManager(
+      $_db,
+      $_db.dailyPlans,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_dailyPlanIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SessionLogsTableFilterComposer
+    extends Composer<_$AppDatabase, $SessionLogsTable> {
+  $$SessionLogsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sessionIndex => $composableBuilder(
+    column: $table.sessionIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$DailyPlansTableFilterComposer get dailyPlanId {
+    final $$DailyPlansTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.dailyPlanId,
+      referencedTable: $db.dailyPlans,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DailyPlansTableFilterComposer(
+            $db: $db,
+            $table: $db.dailyPlans,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionLogsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SessionLogsTable> {
+  $$SessionLogsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sessionIndex => $composableBuilder(
+    column: $table.sessionIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$DailyPlansTableOrderingComposer get dailyPlanId {
+    final $$DailyPlansTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.dailyPlanId,
+      referencedTable: $db.dailyPlans,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DailyPlansTableOrderingComposer(
+            $db: $db,
+            $table: $db.dailyPlans,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionLogsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SessionLogsTable> {
+  $$SessionLogsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sessionIndex => $composableBuilder(
+    column: $table.sessionIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$DailyPlansTableAnnotationComposer get dailyPlanId {
+    final $$DailyPlansTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.dailyPlanId,
+      referencedTable: $db.dailyPlans,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DailyPlansTableAnnotationComposer(
+            $db: $db,
+            $table: $db.dailyPlans,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionLogsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SessionLogsTable,
+          SessionLog,
+          $$SessionLogsTableFilterComposer,
+          $$SessionLogsTableOrderingComposer,
+          $$SessionLogsTableAnnotationComposer,
+          $$SessionLogsTableCreateCompanionBuilder,
+          $$SessionLogsTableUpdateCompanionBuilder,
+          (SessionLog, $$SessionLogsTableReferences),
+          SessionLog,
+          PrefetchHooks Function({bool dailyPlanId})
+        > {
+  $$SessionLogsTableTableManager(_$AppDatabase db, $SessionLogsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SessionLogsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SessionLogsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SessionLogsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> dailyPlanId = const Value.absent(),
+                Value<int> sessionIndex = const Value.absent(),
+                Value<DateTime> completedAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => SessionLogsCompanion(
+                id: id,
+                dailyPlanId: dailyPlanId,
+                sessionIndex: sessionIndex,
+                completedAt: completedAt,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int dailyPlanId,
+                required int sessionIndex,
+                required DateTime completedAt,
+                required DateTime createdAt,
+              }) => SessionLogsCompanion.insert(
+                id: id,
+                dailyPlanId: dailyPlanId,
+                sessionIndex: sessionIndex,
+                completedAt: completedAt,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$SessionLogsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({dailyPlanId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (dailyPlanId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.dailyPlanId,
+                                referencedTable: $$SessionLogsTableReferences
+                                    ._dailyPlanIdTable(db),
+                                referencedColumn: $$SessionLogsTableReferences
+                                    ._dailyPlanIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SessionLogsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SessionLogsTable,
+      SessionLog,
+      $$SessionLogsTableFilterComposer,
+      $$SessionLogsTableOrderingComposer,
+      $$SessionLogsTableAnnotationComposer,
+      $$SessionLogsTableCreateCompanionBuilder,
+      $$SessionLogsTableUpdateCompanionBuilder,
+      (SessionLog, $$SessionLogsTableReferences),
+      SessionLog,
+      PrefetchHooks Function({bool dailyPlanId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5888,4 +6704,6 @@ class $AppDatabaseManager {
       $$ExerciseCacheTableTableManager(_db, _db.exerciseCache);
   $$SyncQueueTableTableManager get syncQueue =>
       $$SyncQueueTableTableManager(_db, _db.syncQueue);
+  $$SessionLogsTableTableManager get sessionLogs =>
+      $$SessionLogsTableTableManager(_db, _db.sessionLogs);
 }

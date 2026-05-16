@@ -21,6 +21,10 @@ sealed class DailyPlanState with _$DailyPlanState {
   const factory DailyPlanState.loaded({
     required DailyPlan plan,
     @Default(BehavioralState.active) BehavioralState behavioralState,
+    // Null means "plan was not (yet) persisted to daily_plans".
+    // TodaySessionCubit treats null as "skip persistence" rather than relying
+    // on a `== 0` sentinel that could collide with a real autoincrement id.
+    int? planDbId,
   }) = DailyPlanLoaded;
   const factory DailyPlanState.error({
     required Failure failure,
@@ -63,11 +67,13 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
         ),
         (plan) async {
           final stateRow = await _db.behavioralStateDao.getLatestState();
+          final planRow = await _db.dailyPlansDao.getPlanForDate(plan.planDate);
           if (isClosed) return;
           emit(
             DailyPlanState.loaded(
               plan: plan,
               behavioralState: _parseState(stateRow?.currentState),
+              planDbId: planRow?.id,
             ),
           );
         },
@@ -98,11 +104,13 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
         ),
         (plan) async {
           final stateRow = await _db.behavioralStateDao.getLatestState();
+          final planRow = await _db.dailyPlansDao.getPlanForDate(plan.planDate);
           if (isClosed) return;
           emit(
             DailyPlanState.loaded(
               plan: plan,
               behavioralState: _parseState(stateRow?.currentState),
+              planDbId: planRow?.id,
             ),
           );
         },

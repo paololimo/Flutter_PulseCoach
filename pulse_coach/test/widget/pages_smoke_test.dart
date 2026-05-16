@@ -2,8 +2,10 @@
 // without crashing and displays the expected scaffold structure.
 // All pages are placeholder UIs (Story X.x stubs); tests form a regression
 // baseline for when real implementations replace them.
-import 'package:drift/native.dart';
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -216,10 +218,29 @@ Widget _todayPageWithProviders() {
   return MultiBlocProvider(
     providers: [
       BlocProvider<DailyPlanBloc>(create: (_) => _StubDailyPlanBloc()),
-      BlocProvider(create: (_) => TodaySessionCubit()..planLoaded(1)),
+      BlocProvider(create: (_) => _todaySessionCubit(1)),
     ],
     child: const TodayPage(),
   );
+}
+
+TodaySessionCubit _todaySessionCubit(int totalSessions) {
+  final db = AppDatabase.forTesting(NativeDatabase.memory());
+  final cubit = _TestingTodaySessionCubit(db);
+  cubit.planLoaded(totalSessions, null).ignore();
+  return cubit;
+}
+
+class _TestingTodaySessionCubit extends TodaySessionCubit {
+  final AppDatabase _db;
+
+  _TestingTodaySessionCubit(this._db) : super(_db.sessionLogsDao);
+
+  @override
+  Future<void> close() async {
+    await super.close();
+    await _db.close();
+  }
 }
 
 class _StubDailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState>

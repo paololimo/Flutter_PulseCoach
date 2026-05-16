@@ -7,6 +7,7 @@ import 'package:pulse_coach/core/database/daos/daily_plans_dao.dart';
 import 'package:pulse_coach/core/database/daos/exercise_cache_dao.dart';
 import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart';
 import 'package:pulse_coach/core/database/daos/sessions_dao.dart';
+import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/database/daos/sync_queue_dao.dart';
 import 'package:pulse_coach/core/database/daos/user_profile_dao.dart';
 import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart';
@@ -16,6 +17,7 @@ import 'package:pulse_coach/core/database/tables/daily_plans_table.dart';
 import 'package:pulse_coach/core/database/tables/exercise_cache_table.dart';
 import 'package:pulse_coach/core/database/tables/rpe_feedback_table.dart';
 import 'package:pulse_coach/core/database/tables/sessions_table.dart';
+import 'package:pulse_coach/core/database/tables/session_logs_table.dart';
 import 'package:pulse_coach/core/database/tables/sync_queue_table.dart';
 import 'package:pulse_coach/core/database/tables/user_profile_table.dart';
 import 'package:pulse_coach/core/database/tables/weather_cache_table.dart';
@@ -34,6 +36,7 @@ part 'app_database.g.dart';
     WeatherCache,
     ExerciseCache,
     SyncQueue,
+    SessionLogs,
   ],
   daos: [
     SessionsDao,
@@ -45,6 +48,7 @@ part 'app_database.g.dart';
     WeatherCacheDao,
     ExerciseCacheDao,
     SyncQueueDao,
+    SessionLogsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -54,7 +58,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -72,6 +76,23 @@ class AppDatabase extends _$AppDatabase {
       if (from < 4) {
         await m.addColumn(dailyPlans, dailyPlans.isCompleted);
       }
+      if (from < 5) {
+        await m.createTable(sessionLogs);
+      }
+      if (from < 6) {
+        // session_logs gained a FK to daily_plans (ON DELETE CASCADE) and a
+        // UNIQUE(dailyPlanId, sessionIndex) constraint. SQLite cannot ALTER an
+        // existing table to add a FK or UNIQUE, so drop and recreate — the
+        // table was introduced in v5 and only carries ephemeral alpha data.
+        await m.deleteTable('session_logs');
+        await m.createTable(sessionLogs);
+      }
+    },
+    beforeOpen: (details) async {
+      // Required so the new session_logs FK (ON DELETE CASCADE) and the
+      // UNIQUE constraint are actually enforced — SQLite leaves FKs off by
+      // default per connection.
+      await customStatement('PRAGMA foreign_keys = ON');
     },
   );
 }

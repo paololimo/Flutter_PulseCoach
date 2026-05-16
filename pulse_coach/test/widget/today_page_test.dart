@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
+import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
@@ -20,9 +23,10 @@ import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 import 'today_page_test.mocks.dart';
 
-@GenerateMocks([DailyPlanBloc])
+@GenerateMocks([DailyPlanBloc, SessionLogsDao])
 void main() {
   late MockDailyPlanBloc dailyPlanBloc;
+  late MockSessionLogsDao sessionLogsDao;
 
   setUpAll(() {
     provideDummy<DailyPlanState>(const DailyPlanState.initial());
@@ -30,6 +34,7 @@ void main() {
 
   setUp(() {
     dailyPlanBloc = MockDailyPlanBloc();
+    sessionLogsDao = MockSessionLogsDao();
     when(dailyPlanBloc.stream).thenAnswer((_) => const Stream.empty());
     when(dailyPlanBloc.close()).thenAnswer((_) async {});
   });
@@ -40,12 +45,12 @@ void main() {
   }) {
     when(dailyPlanBloc.state).thenReturn(planState);
 
-    final cubit = _TestingTodaySessionCubit();
+    final cubit = _TestingTodaySessionCubit(sessionLogsDao);
     final total = switch (planState) {
       DailyPlanLoaded(:final plan) => plan.sessions.length,
       _ => sessionState?.totalSessions ?? 0,
     };
-    cubit.planLoaded(total);
+    cubit.planLoaded(total, null).ignore();
     if (sessionState != null) cubit.seed(sessionState);
 
     return MaterialApp(
@@ -299,5 +304,7 @@ PlannedSession _session({
 );
 
 class _TestingTodaySessionCubit extends TodaySessionCubit {
+  _TestingTodaySessionCubit(super.sessionLogsDao);
+
   void seed(TodaySessionState state) => emit(state);
 }

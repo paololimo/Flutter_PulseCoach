@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pulse_coach/core/database/app_database.dart' hide DailyPlan;
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
@@ -33,7 +37,7 @@ Widget buildTestShell({String initialLocation = '/today'}) {
                 BlocProvider<DailyPlanBloc>(
                   create: (_) => _StubDailyPlanBloc(),
                 ),
-                BlocProvider(create: (_) => TodaySessionCubit()..planLoaded(1)),
+                BlocProvider(create: (_) => _todaySessionCubit(1)),
               ],
               child: const TodayPage(),
             ),
@@ -122,6 +126,25 @@ void main() {
       expect(bnb.currentIndex, 2);
     });
   });
+}
+
+TodaySessionCubit _todaySessionCubit(int totalSessions) {
+  final db = AppDatabase.forTesting(NativeDatabase.memory());
+  final cubit = _TestingTodaySessionCubit(db);
+  cubit.planLoaded(totalSessions, null).ignore();
+  return cubit;
+}
+
+class _TestingTodaySessionCubit extends TodaySessionCubit {
+  final AppDatabase _db;
+
+  _TestingTodaySessionCubit(this._db) : super(_db.sessionLogsDao);
+
+  @override
+  Future<void> close() async {
+    await super.close();
+    await _db.close();
+  }
 }
 
 class _StubDailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState>

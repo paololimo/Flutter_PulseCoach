@@ -23,6 +23,7 @@ import 'package:pulse_coach/core/database/daos/daily_plans_dao.dart' as _i562;
 import 'package:pulse_coach/core/database/daos/exercise_cache_dao.dart'
     as _i224;
 import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart' as _i224;
+import 'package:pulse_coach/core/database/daos/session_logs_dao.dart' as _i30;
 import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart' as _i194;
 import 'package:pulse_coach/core/di/health_module.dart' as _i294;
 import 'package:pulse_coach/core/di/network_module.dart' as _i731;
@@ -90,6 +91,8 @@ import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions
     as _i916;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
+import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart'
+    as _i491;
 import 'package:pulse_coach/features/weather/data/datasources/weather_local_data_source.dart'
     as _i206;
 import 'package:pulse_coach/features/weather/data/datasources/weather_remote_data_source.dart'
@@ -149,6 +152,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i224.RpeFeedbackDao>(
       () => healthModule.rpeFeedbackDao(gh<_i79.AppDatabase>()),
     );
+    gh.singleton<_i30.SessionLogsDao>(
+      () => healthModule.sessionLogsDao(gh<_i79.AppDatabase>()),
+    );
     gh.factory<_i635.ExerciseRemoteDataSource>(
       () => _i635.ExerciseRemoteDataSource(gh<_i361.Dio>()),
     );
@@ -163,6 +169,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i311.HealthDataSource>(),
         gh<_i227.BehavioralStateDao>(),
       ),
+    );
+    gh.factory<_i491.TodaySessionCubit>(
+      () => _i491.TodaySessionCubit(gh<_i30.SessionLogsDao>()),
     );
     gh.factory<_i160.LocationService>(
       () => _i160.LocationService(gh<_i973.GeolocatorWrapper>()),

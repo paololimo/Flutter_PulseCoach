@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -97,6 +98,31 @@ void main() {
     );
 
     blocTest<DailyPlanBloc, DailyPlanState>(
+      '8.0-UNIT-007: DailyPlanGenerateRequested exposes persisted planDbId',
+      setUp: () async {
+        await db.dailyPlansDao.insertPlan(
+          db_models.DailyPlansCompanion.insert(
+            planDate: tPlan.planDate,
+            planJson: '{"sessions":[]}',
+            generatedAt: tPlan.generatedAt,
+            createdAt: tPlan.generatedAt,
+          ),
+        );
+      },
+      build: () {
+        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
+        return bloc();
+      },
+      act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
+      expect: () => [
+        const DailyPlanState.loading(),
+        isA<DailyPlanLoaded>()
+            .having((state) => state.plan, 'plan', tPlan)
+            .having((state) => state.planDbId, 'planDbId', 1),
+      ],
+    );
+
+    blocTest<DailyPlanBloc, DailyPlanState>(
       '7.3-UNIT-003: DailyPlanGenerateRequested parses AtRisk behavioral state',
       setUp: () async {
         await db.behavioralStateDao.insertState(
@@ -144,6 +170,32 @@ void main() {
       expect: () => [
         const DailyPlanState.loading(),
         DailyPlanState.loaded(plan: tPlan),
+      ],
+    );
+
+    blocTest<DailyPlanBloc, DailyPlanState>(
+      '8.0-UNIT-008: DailyPlanRegenerateRequested exposes persisted planDbId',
+      setUp: () async {
+        await db.dailyPlansDao.insertPlan(
+          db_models.DailyPlansCompanion.insert(
+            planDate: tPlan.planDate,
+            planJson: '{"sessions":[]}',
+            generatedAt: tPlan.generatedAt,
+            createdAt: tPlan.generatedAt,
+            isCompleted: const Value(true),
+          ),
+        );
+      },
+      build: () {
+        when(mockRegenerate.call()).thenAnswer((_) async => Right(tPlan));
+        return bloc();
+      },
+      act: (bloc) => bloc.add(DailyPlanRegenerateRequested()),
+      expect: () => [
+        const DailyPlanState.loading(),
+        isA<DailyPlanLoaded>()
+            .having((state) => state.plan, 'plan', tPlan)
+            .having((state) => state.planDbId, 'planDbId', 1),
       ],
     );
 
