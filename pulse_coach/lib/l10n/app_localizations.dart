@@ -103,6 +103,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PulseCoach'**
   String get appTitle;
+
+  /// No description provided for @stateLabelActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get stateLabelActive;
+
+  /// No description provided for @stateLabelFatigued.
+  ///
+  /// In en, this message translates to:
+  /// **'Under load'**
+  String get stateLabelFatigued;
+
+  /// No description provided for @stateLabelAtRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'At risk'**
+  String get stateLabelAtRisk;
+
+  /// No description provided for @stateLabelRecovering.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovering'**
+  String get stateLabelRecovering;
+
+  /// No description provided for @staticCopyActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for today\'s plan.'**
+  String get staticCopyActive;
+
+  /// No description provided for @staticCopyFatigued.
+  ///
+  /// In en, this message translates to:
+  /// **'Today we lighten the load to recover.'**
+  String get staticCopyFatigued;
+
+  /// No description provided for @staticCopyAtRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s restart gently. Short, easy sessions.'**
+  String get staticCopyAtRisk;
+
+  /// No description provided for @staticCopyRecovering.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s build the rhythm, one step at a time.'**
+  String get staticCopyRecovering;
+
+  /// No description provided for @transitionActiveAtRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'We missed you. Let\'s restart light - 5 minutes is enough today.'**
+  String get transitionActiveAtRisk;
+
+  /// No description provided for @transitionActiveFatigued.
+  ///
+  /// In en, this message translates to:
+  /// **'You pushed hard. Today we lighten up: short session.'**
+  String get transitionActiveFatigued;
+
+  /// No description provided for @transitionFatiguedAtRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Your body is asking for a longer pause. Let\'s resume gently.'**
+  String get transitionFatiguedAtRisk;
+
+  /// No description provided for @transitionRecoveringFatigued.
+  ///
+  /// In en, this message translates to:
+  /// **'We are getting back, but the last effort was intense. Let\'s return to an easy session.'**
+  String get transitionRecoveringFatigued;
+
+  /// No description provided for @transitionAtRiskRecovering.
+  ///
+  /// In en, this message translates to:
+  /// **'You are getting back into rhythm. Let\'s keep it calm.'**
+  String get transitionAtRiskRecovering;
+
+  /// No description provided for @transitionFatiguedRecovering.
+  ///
+  /// In en, this message translates to:
+  /// **'You are getting back into rhythm. Let\'s keep it calm.'**
+  String get transitionFatiguedRecovering;
+
+  /// No description provided for @transitionRecoveringActive.
+  ///
+  /// In en, this message translates to:
+  /// **'You are back in shape! Let\'s resume the full plan.'**
+  String get transitionRecoveringActive;
+
+  /// No description provided for @comingUpHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'COMING UP'**
+  String get comingUpHeader;
+
+  /// No description provided for @errorLoadingPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load the plan.'**
+  String get errorLoadingPlan;
+
+  /// No description provided for @allDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Great work!'**
+  String get allDoneTitle;
+
+  /// No description provided for @allDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All sessions are complete for today.'**
+  String get allDoneBody;
+
+  /// No description provided for @heroCardSemanticPreamble.
+  ///
+  /// In en, this message translates to:
+  /// **'Next session: {displayName}, {durationLabel}'**
+  String heroCardSemanticPreamble(String displayName, String durationLabel);
+
+  /// No description provided for @heroCardSemanticCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to start.'**
+  String get heroCardSemanticCta;
+
+  /// No description provided for @regenSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate workout plan'**
+  String get regenSemanticLabel;
+
+  /// No description provided for @regenTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get regenTooltip;
+
+  /// No description provided for @startSessionButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start session'**
+  String get startSessionButton;
+
+  /// No description provided for @completedCardSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed: {displayName}, {durationLabel}.'**
+  String completedCardSemanticLabel(String displayName, String durationLabel);
+
+  /// No description provided for @compactCardSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next session: {displayName}, {durationLabel}. Tap to select as the next session.'**
+  String compactCardSemanticLabel(String displayName, String durationLabel);
+
+  /// No description provided for @completionRingSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily progress: {completed} of {total} sessions completed'**
+  String completionRingSemanticLabel(String completed, String total);
+
+  /// No description provided for @sessionNameMobility.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobility'**
+  String get sessionNameMobility;
+
+  /// No description provided for @sessionNameCardio.
+  ///
+  /// In en, this message translates to:
+  /// **'Cardio'**
+  String get sessionNameCardio;
+
+  /// No description provided for @sessionNameBreathing.
+  ///
+  /// In en, this message translates to:
+  /// **'Breathing'**
+  String get sessionNameBreathing;
+
+  /// No description provided for @intensityLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get intensityLow;
+
+  /// No description provided for @intensityMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get intensityMedium;
+
+  /// No description provided for @intensityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Intense'**
+  String get intensityHigh;
 }
 
 class _AppLocalizationsDelegate

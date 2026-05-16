@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 Color sessionAccentColor(String sessionType, PulseCoachTheme theme) {
   switch (sessionType) {
@@ -14,14 +15,14 @@ Color sessionAccentColor(String sessionType, PulseCoachTheme theme) {
   }
 }
 
-String sessionDisplayName(String sessionType) {
+String sessionDisplayName(String sessionType, AppLocalizations l10n) {
   switch (sessionType) {
     case 'mobility':
-      return 'Mobilità';
+      return l10n.sessionNameMobility;
     case 'cardio':
-      return 'Cardio';
+      return l10n.sessionNameCardio;
     case 'breathing':
-      return 'Respirazione';
+      return l10n.sessionNameBreathing;
     default:
       return sessionType;
   }
@@ -40,9 +41,9 @@ IconData sessionIcon(String sessionType) {
   }
 }
 
-String intensityLabel(int intensity) {
-  if (intensity >= 1 && intensity <= 3) return 'Leggera';
-  if (intensity >= 4 && intensity <= 7) return 'Moderata';
-  if (intensity >= 8 && intensity <= 10) return 'Intensa';
-  return 'Moderata';
+String intensityLabel(int intensity, AppLocalizations l10n) {
+  if (intensity >= 1 && intensity <= 3) return l10n.intensityLow;
+  if (intensity >= 4 && intensity <= 7) return l10n.intensityMedium;
+  if (intensity >= 8 && intensity <= 10) return l10n.intensityHigh;
+  return l10n.intensityMedium;
 }

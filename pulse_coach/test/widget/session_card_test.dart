@@ -6,8 +6,12 @@ import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.
 import 'package:pulse_coach/features/today/presentation/widgets/compact_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/hero_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
+  locale: const Locale('it'),
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   theme: AppTheme.darkTheme,
   home: Scaffold(
     body: Padding(padding: const EdgeInsets.all(16), child: child),
@@ -39,54 +43,66 @@ Text _text(String value) {
 
 void main() {
   group('sessionDisplayName', () {
-    test('7.2-HELPER-001: mobility -> Mobilità', () {
-      expect(sessionDisplayName('mobility'), equals('Mobilità'));
+    test('7.2-HELPER-001: mobility -> Mobilità', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(sessionDisplayName('mobility', l10n), equals('Mobilità'));
     });
 
-    test('7.2-HELPER-002: cardio -> Cardio', () {
-      expect(sessionDisplayName('cardio'), equals('Cardio'));
+    test('7.2-HELPER-002: cardio -> Cardio', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(sessionDisplayName('cardio', l10n), equals('Cardio'));
     });
 
-    test('7.2-HELPER-003: breathing -> Respirazione', () {
-      expect(sessionDisplayName('breathing'), equals('Respirazione'));
+    test('7.2-HELPER-003: breathing -> Respirazione', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(sessionDisplayName('breathing', l10n), equals('Respirazione'));
     });
 
-    test('7.2-HELPER-004: unknown type -> pass-through', () {
-      expect(sessionDisplayName('unknown'), equals('unknown'));
+    test('7.2-HELPER-004: unknown type -> pass-through', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(sessionDisplayName('unknown', l10n), equals('unknown'));
     });
   });
 
   group('intensityLabel', () {
-    test('7.2-HELPER-005: intensity 1 -> Leggera', () {
-      expect(intensityLabel(1), equals('Leggera'));
+    test('7.2-HELPER-005: intensity 1 -> Leggera', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(intensityLabel(1, l10n), equals('Leggera'));
     });
 
-    test('7.2-HELPER-006: intensity 3 -> Leggera boundary', () {
-      expect(intensityLabel(3), equals('Leggera'));
+    test('7.2-HELPER-006: intensity 3 -> Leggera boundary', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(intensityLabel(3, l10n), equals('Leggera'));
     });
 
-    test('7.2-HELPER-007: intensity 4 -> Moderata boundary', () {
-      expect(intensityLabel(4), equals('Moderata'));
+    test('7.2-HELPER-007: intensity 4 -> Moderata boundary', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(intensityLabel(4, l10n), equals('Moderata'));
     });
 
-    test('7.2-HELPER-008: intensity 7 -> Moderata boundary', () {
-      expect(intensityLabel(7), equals('Moderata'));
+    test('7.2-HELPER-008: intensity 7 -> Moderata boundary', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(intensityLabel(7, l10n), equals('Moderata'));
     });
 
-    test('7.2-HELPER-009: intensity 8 -> Intensa boundary', () {
-      expect(intensityLabel(8), equals('Intensa'));
+    test('7.2-HELPER-009: intensity 8 -> Intensa boundary', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(intensityLabel(8, l10n), equals('Intensa'));
     });
 
-    test('7.2-HELPER-010: intensity 10 -> Intensa', () {
-      expect(intensityLabel(10), equals('Intensa'));
+    test('7.2-HELPER-010: intensity 10 -> Intensa', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(intensityLabel(10, l10n), equals('Intensa'));
     });
 
-    test('7.2-HELPER-011: out-of-range low -> Moderata fallback', () {
-      expect(intensityLabel(0), equals('Moderata'));
+    test('7.2-HELPER-011: out-of-range low -> Moderata fallback', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(intensityLabel(0, l10n), equals('Moderata'));
     });
 
-    test('7.2-HELPER-012: out-of-range high -> Moderata fallback', () {
-      expect(intensityLabel(11), equals('Moderata'));
+    test('7.2-HELPER-012: out-of-range high -> Moderata fallback', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+      expect(intensityLabel(11, l10n), equals('Moderata'));
     });
   });
 
@@ -264,9 +280,7 @@ void main() {
     ) async {
       var taps = 0;
       await tester.pumpWidget(
-        _wrap(
-          HeroSessionCard(session: _session(), onRegenerate: () => taps++),
-        ),
+        _wrap(HeroSessionCard(session: _session(), onRegenerate: () => taps++)),
       );
 
       await tester.tap(find.byIcon(Icons.refresh));

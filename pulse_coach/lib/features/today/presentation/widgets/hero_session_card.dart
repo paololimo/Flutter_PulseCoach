@@ -3,6 +3,7 @@ import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class HeroSessionCard extends StatelessWidget {
   final PlannedSession session;
@@ -26,21 +27,22 @@ class HeroSessionCard extends StatelessWidget {
       'HeroSessionCard requires PulseCoachTheme extension',
     );
     final pulseTheme = pulseThemeOrNull!;
+    final l10n = AppLocalizations.of(context)!;
 
     final accentColor = sessionAccentColor(session.sessionType, pulseTheme);
-    final displayName = sessionDisplayName(session.sessionType);
+    final displayName = sessionDisplayName(session.sessionType, l10n);
     final durationLabel = '${session.durationMinutes} min';
-    final intensityText = intensityLabel(session.intensity);
+    final intensityText = intensityLabel(session.intensity, l10n);
     final hasExplanation = session.explanation.isNotEmpty;
     final canStart = onStart != null;
 
     final summary = StringBuffer(
-      'Prossima sessione: $displayName, $durationLabel',
+      l10n.heroCardSemanticPreamble(displayName, durationLabel),
     );
     if (hasExplanation) {
       summary.write(', ${session.explanation}');
     }
-    summary.write('. Tocca per iniziare.');
+    summary.write('. ${l10n.heroCardSemanticCta}');
 
     return Semantics(
       label: summary.toString(),
@@ -91,14 +93,14 @@ class HeroSessionCard extends StatelessWidget {
                   ),
                   if (onRegenerate != null)
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.refresh,
                         size: 20,
-                        semanticLabel: 'Rigenera il piano allenamento',
+                        semanticLabel: l10n.regenSemanticLabel,
                       ),
                       color: pulseTheme.onSurfaceVariant,
                       onPressed: onRegenerate,
-                      tooltip: 'Rigenera',
+                      tooltip: l10n.regenTooltip,
                       padding: const EdgeInsets.all(6),
                       constraints: const BoxConstraints(
                         minWidth: 48,
@@ -139,7 +141,7 @@ class HeroSessionCard extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: onStart,
-                  child: const Text('Inizia sessione'),
+                  child: Text(l10n.startSessionButton),
                 ),
               ),
             ],

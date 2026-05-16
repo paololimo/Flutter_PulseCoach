@@ -16,6 +16,7 @@ import 'package:pulse_coach/features/progress/presentation/pages/progress_page.d
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/app_shell.dart';
 
 Widget buildTestShell({String initialLocation = '/today'}) {
@@ -49,7 +50,13 @@ Widget buildTestShell({String initialLocation = '/today'}) {
       ),
     ],
   );
-  return MaterialApp.router(theme: AppTheme.darkTheme, routerConfig: router);
+  return MaterialApp.router(
+    locale: const Locale('it'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    theme: AppTheme.darkTheme,
+    routerConfig: router,
+  );
 }
 
 void main() {

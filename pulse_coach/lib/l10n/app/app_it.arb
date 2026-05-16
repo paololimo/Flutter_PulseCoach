@@ -1,4 +1,77 @@
 {
   "@@locale": "it",
-  "appTitle": "PulseCoach"
+  "appTitle": "PulseCoach",
+  "stateLabelActive": "In forma",
+  "stateLabelFatigued": "Sotto sforzo",
+  "stateLabelAtRisk": "In ripresa",
+  "stateLabelRecovering": "In recupero",
+  "staticCopyActive": "Pronto per il piano di oggi.",
+  "staticCopyFatigued": "Oggi alleggeriamo per recuperare.",
+  "staticCopyAtRisk": "Ripartiamo con calma. Sessioni brevi e leggere.",
+  "staticCopyRecovering": "Costruiamo il ritmo, un passo alla volta.",
+  "transitionActiveAtRisk": "Ci sei mancato. Ripartiamo leggeri — 5 minuti bastano oggi.",
+  "transitionActiveFatigued": "Hai spinto forte. Oggi alleggeriamo: sessione corta.",
+  "transitionFatiguedAtRisk": "Il corpo chiede una pausa più lunga. Riprendiamo dolcemente.",
+  "transitionRecoveringFatigued": "Stiamo rientrando, ma l'ultimo sforzo è stato intenso. Torniamo a una sessione facile.",
+  "transitionAtRiskRecovering": "Stai tornando in ritmo. Continuiamo con calma.",
+  "transitionFatiguedRecovering": "Stai tornando in ritmo. Continuiamo con calma.",
+  "transitionRecoveringActive": "Sei di nuovo in forma! Riprendiamoci il piano completo.",
+  "comingUpHeader": "PROSSIME",
+  "errorLoadingPlan": "Impossibile caricare il piano.",
+  "allDoneTitle": "Ottimo lavoro!",
+  "allDoneBody": "Tutte le sessioni completate per oggi.",
+  "heroCardSemanticPreamble": "Prossima sessione: {displayName}, {durationLabel}",
+  "@heroCardSemanticPreamble": {
+    "placeholders": {
+      "displayName": {
+        "type": "String"
+      },
+      "durationLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "heroCardSemanticCta": "Tocca per iniziare.",
+  "regenSemanticLabel": "Rigenera il piano allenamento",
+  "regenTooltip": "Rigenera",
+  "startSessionButton": "Inizia sessione",
+  "completedCardSemanticLabel": "Completata: {displayName}, {durationLabel}.",
+  "@completedCardSemanticLabel": {
+    "placeholders": {
+      "displayName": {
+        "type": "String"
+      },
+      "durationLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "compactCardSemanticLabel": "Sessione successiva: {displayName}, {durationLabel}. Tocca per selezionare come prossima sessione.",
+  "@compactCardSemanticLabel": {
+    "placeholders": {
+      "displayName": {
+        "type": "String"
+      },
+      "durationLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "completionRingSemanticLabel": "Progressione giornaliera: {completed} di {total} sessioni completate",
+  "@completionRingSemanticLabel": {
+    "placeholders": {
+      "completed": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionNameMobility": "Mobilità",
+  "sessionNameCardio": "Cardio",
+  "sessionNameBreathing": "Respirazione",
+  "intensityLow": "Leggera",
+  "intensityMedium": "Moderata",
+  "intensityHigh": "Intensa"
 }

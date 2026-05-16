@@ -7,8 +7,12 @@ import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/state_indicator.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
+  locale: const Locale('it'),
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   theme: AppTheme.darkTheme,
   home: Scaffold(
     body: Padding(padding: const EdgeInsets.all(16), child: child),
@@ -25,7 +29,7 @@ Text _testerText(Finder finder) {
 }
 
 Map<String, Object?> _stateMessagesArb() {
-  final file = File('lib/l10n/state_messages.it.arb');
+  final file = File('lib/l10n/app/app_it.arb');
   return (jsonDecode(file.readAsStringSync()) as Map<String, dynamic>).cast();
 }
 
@@ -194,29 +198,29 @@ void main() {
   });
 
   group('StateMessages — ARB invariants (AC7, AC8, AC11)', () {
-    test('7.1-ARB-001: ARB file has exactly 15 user-facing keys', () {
+    test('7.1-ARB-001: ARB file has exactly 34 user-facing keys', () {
       final arb = _stateMessagesArb();
       final userFacingKeys = arb.keys.where((key) => !key.startsWith('@'));
 
-      expect(userFacingKeys, hasLength(15));
+      expect(userFacingKeys, hasLength(34));
       expect(
         userFacingKeys,
         containsAll([
-          'transition_active_atRisk',
-          'transition_active_fatigued',
-          'transition_fatigued_atRisk',
-          'transition_recovering_fatigued',
-          'transition_atRisk_recovering',
-          'transition_fatigued_recovering',
-          'transition_recovering_active',
-          'state_label_active',
-          'state_label_fatigued',
-          'state_label_atRisk',
-          'state_label_recovering',
-          'state_static_active',
-          'state_static_fatigued',
-          'state_static_atRisk',
-          'state_static_recovering',
+          'transitionActiveAtRisk',
+          'transitionActiveFatigued',
+          'transitionFatiguedAtRisk',
+          'transitionRecoveringFatigued',
+          'transitionAtRiskRecovering',
+          'transitionFatiguedRecovering',
+          'transitionRecoveringActive',
+          'stateLabelActive',
+          'stateLabelFatigued',
+          'stateLabelAtRisk',
+          'stateLabelRecovering',
+          'staticCopyActive',
+          'staticCopyFatigued',
+          'staticCopyAtRisk',
+          'staticCopyRecovering',
         ]),
       );
     });
@@ -225,8 +229,8 @@ void main() {
       final arb = _stateMessagesArb();
 
       expect(
-        arb['transition_active_fatigued'],
-        isNot(equals(arb['transition_recovering_fatigued'])),
+        arb['transitionActiveFatigued'],
+        isNot(equals(arb['transitionRecoveringFatigued'])),
       );
     });
 
@@ -245,10 +249,7 @@ void main() {
           value,
           isNot(
             contains(
-              RegExp(
-                r'[\u{2600}-\u{27BF}\u{1F300}-\u{1FAFF}]',
-                unicode: true,
-              ),
+              RegExp(r'[\u{2600}-\u{27BF}\u{1F300}-\u{1FAFF}]', unicode: true),
             ),
           ),
         );

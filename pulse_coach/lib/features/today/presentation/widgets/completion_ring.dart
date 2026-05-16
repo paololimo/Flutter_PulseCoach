@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class CompletionRing extends StatefulWidget {
   final int completed;
@@ -111,14 +112,16 @@ class _CompletionRingState extends State<CompletionRing>
       'CompletionRing requires PulseCoachTheme extension',
     );
     final pulseTheme = pulseThemeOrNull!;
+    final l10n = AppLocalizations.of(context)!;
 
     return AnimatedBuilder(
       animation: Listenable.merge([_arcController, _pulseController]),
       builder: (context, _) {
         return Semantics(
-          label:
-              'Progressione giornaliera: ${widget.completed} di '
-              '${widget.total} sessioni completate',
+          label: l10n.completionRingSemanticLabel(
+            widget.completed.toString(),
+            widget.total.toString(),
+          ),
           child: Transform.scale(
             scale: _pulseAnimation.value,
             child: SizedBox(

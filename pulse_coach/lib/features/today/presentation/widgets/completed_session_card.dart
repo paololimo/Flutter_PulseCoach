@@ -3,6 +3,7 @@ import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class CompletedSessionCard extends StatelessWidget {
   final PlannedSession session;
@@ -17,11 +18,12 @@ class CompletedSessionCard extends StatelessWidget {
       'CompletedSessionCard requires PulseCoachTheme extension',
     );
     final pulseTheme = pulseThemeOrNull!;
-    final displayName = sessionDisplayName(session.sessionType);
+    final l10n = AppLocalizations.of(context)!;
+    final displayName = sessionDisplayName(session.sessionType, l10n);
     final durationLabel = '${session.durationMinutes} min';
 
     return Semantics(
-      label: 'Completata: $displayName, $durationLabel.',
+      label: l10n.completedCardSemanticLabel(displayName, durationLabel),
       excludeSemantics: false,
       child: Container(
         decoration: BoxDecoration(

@@ -3,6 +3,7 @@ import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class CompactSessionCard extends StatelessWidget {
   final PlannedSession session;
@@ -24,17 +25,16 @@ class CompactSessionCard extends StatelessWidget {
       'CompactSessionCard requires PulseCoachTheme extension',
     );
     final pulseTheme = pulseThemeOrNull!;
+    final l10n = AppLocalizations.of(context)!;
 
     final accentColor = sessionAccentColor(session.sessionType, pulseTheme);
-    final displayName = sessionDisplayName(session.sessionType);
+    final displayName = sessionDisplayName(session.sessionType, l10n);
     final durationLabel = '${session.durationMinutes} min';
     final canTap = onTap != null;
     final radius = BorderRadius.circular(16);
 
     return Semantics(
-      label:
-          'Sessione successiva: $displayName, $durationLabel. '
-          'Tocca per selezionare come prossima sessione.',
+      label: l10n.compactCardSemanticLabel(displayName, durationLabel),
       button: canTap,
       onTap: onTap,
       child: Material(

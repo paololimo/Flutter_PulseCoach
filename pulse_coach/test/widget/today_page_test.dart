@@ -15,6 +15,7 @@ import 'package:pulse_coach/features/today/presentation/widgets/compact_session_
 import 'package:pulse_coach/features/today/presentation/widgets/completion_ring.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/hero_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/state_indicator.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 import 'today_page_test.mocks.dart';
@@ -48,6 +49,9 @@ void main() {
     if (sessionState != null) cubit.seed(sessionState);
 
     return MaterialApp(
+      locale: const Locale('it'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.darkTheme,
       home: Scaffold(
         body: MultiBlocProvider(
@@ -79,7 +83,7 @@ void main() {
       );
 
       expect(find.byType(HeroSessionCard), findsOneWidget);
-      expect(find.text('COMING UP'), findsNothing);
+      expect(find.text('PROSSIME'), findsNothing);
       expect(find.byType(CompactSessionCard), findsNothing);
     });
 
@@ -91,7 +95,7 @@ void main() {
       );
 
       expect(find.byType(HeroSessionCard), findsOneWidget);
-      expect(find.text('COMING UP'), findsOneWidget);
+      expect(find.text('PROSSIME'), findsOneWidget);
       expect(find.byType(CompactSessionCard), findsNWidgets(2));
     });
 
@@ -129,10 +133,7 @@ void main() {
         wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
       );
 
-      expect(
-        find.widgetWithIcon(IconButton, Icons.refresh),
-        findsOneWidget,
-      );
+      expect(find.widgetWithIcon(IconButton, Icons.refresh), findsOneWidget);
     });
 
     testWidgets(

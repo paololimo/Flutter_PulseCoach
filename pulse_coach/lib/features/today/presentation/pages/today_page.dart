@@ -11,6 +11,7 @@ import 'package:pulse_coach/features/today/presentation/widgets/completed_sessio
 import 'package:pulse_coach/features/today/presentation/widgets/completion_ring.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/hero_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/state_indicator.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 class TodayPage extends StatelessWidget {
@@ -68,6 +69,7 @@ class TodayPage extends StatelessWidget {
     DailyPlanLoaded loaded,
     TodaySessionState sessionState,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final plan = loaded.plan;
     final sessions = plan.sessions;
     final total = sessions.length;
@@ -105,10 +107,7 @@ class TodayPage extends StatelessWidget {
                           child: StateIndicator(state: loaded.behavioralState),
                         ),
                         const SizedBox(width: 12),
-                        CompletionRing(
-                          completed: completedCount,
-                          total: total,
-                        ),
+                        CompletionRing(completed: completedCount, total: total),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -148,7 +147,7 @@ class TodayPage extends StatelessWidget {
                       if (upcomingEntries.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Text(
-                          'COMING UP',
+                          l10n.comingUpHeader,
                           style: AppTextStyles.caption.copyWith(
                             color: Theme.of(
                               context,
@@ -182,6 +181,7 @@ class TodayPage extends StatelessWidget {
 
   Widget _buildError(BuildContext context, DailyPlanError error) {
     final pulseTheme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Column(
@@ -194,7 +194,7 @@ class TodayPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Impossibile caricare il piano.',
+            l10n.errorLoadingPlan,
             style: AppTextStyles.bodySmall.copyWith(
               color: pulseTheme.onSurfaceVariant,
             ),
@@ -239,6 +239,7 @@ class _AllDoneWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pulseTheme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -249,10 +250,10 @@ class _AllDoneWidget extends StatelessWidget {
           color: pulseTheme.primaryColor,
         ),
         const SizedBox(height: 16),
-        const Text('Ottimo lavoro!', style: AppTextStyles.h2),
+        Text(l10n.allDoneTitle, style: AppTextStyles.h2),
         const SizedBox(height: 8),
         Text(
-          'Tutte le sessioni completate per oggi.',
+          l10n.allDoneBody,
           style: AppTextStyles.bodySmall.copyWith(
             color: pulseTheme.onSurfaceVariant,
           ),

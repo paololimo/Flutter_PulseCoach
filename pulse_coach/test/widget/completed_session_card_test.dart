@@ -3,8 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/completed_session_card.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
+  locale: const Locale('it'),
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   theme: AppTheme.darkTheme,
   home: Scaffold(
     body: Padding(padding: const EdgeInsets.all(16), child: child),

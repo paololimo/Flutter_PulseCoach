@@ -39,8 +39,12 @@ import 'package:pulse_coach/features/settings/presentation/pages/privacy_page.da
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 Widget _wrap(Widget page) => MaterialApp(
+  locale: const Locale('it'),
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   theme: AppTheme.darkTheme,
   home: Scaffold(body: page),
 );

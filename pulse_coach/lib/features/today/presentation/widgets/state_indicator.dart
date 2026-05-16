@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 /// Displays the current behavioral state label and plain-language explanation.
 ///
@@ -24,8 +25,10 @@ class StateIndicator extends StatelessWidget {
       'StateIndicator requires PulseCoachTheme to be registered on the ambient ThemeData (see AppTheme).',
     );
     final pulseTheme = pulseThemeOrNull!;
+    final l10n = AppLocalizations.of(context)!;
     final stateColor = StateMessages.colorFor(state, pulseTheme);
-    final subCopy = transitionMessage ?? StateMessages.staticCopyFor(state);
+    final subCopy =
+        transitionMessage ?? StateMessages.staticCopyFor(state, l10n);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -38,7 +41,7 @@ class StateIndicator extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                StateMessages.labelFor(state),
+                StateMessages.labelFor(state, l10n),
                 style: AppTextStyles.h3.copyWith(color: stateColor),
               ),
               const SizedBox(height: 2),
@@ -59,29 +62,29 @@ class StateIndicator extends StatelessWidget {
 class StateMessages {
   const StateMessages._();
 
-  static String labelFor(BehavioralState state) {
+  static String labelFor(BehavioralState state, AppLocalizations l10n) {
     switch (state) {
       case BehavioralState.active:
-        return 'In forma';
+        return l10n.stateLabelActive;
       case BehavioralState.fatigued:
-        return 'Sotto sforzo';
+        return l10n.stateLabelFatigued;
       case BehavioralState.atRisk:
-        return 'In ripresa';
+        return l10n.stateLabelAtRisk;
       case BehavioralState.recovering:
-        return 'In recupero';
+        return l10n.stateLabelRecovering;
     }
   }
 
-  static String staticCopyFor(BehavioralState state) {
+  static String staticCopyFor(BehavioralState state, AppLocalizations l10n) {
     switch (state) {
       case BehavioralState.active:
-        return 'Pronto per il piano di oggi.';
+        return l10n.staticCopyActive;
       case BehavioralState.fatigued:
-        return 'Oggi alleggeriamo per recuperare.';
+        return l10n.staticCopyFatigued;
       case BehavioralState.atRisk:
-        return 'Ripartiamo con calma. Sessioni brevi e leggere.';
+        return l10n.staticCopyAtRisk;
       case BehavioralState.recovering:
-        return 'Costruiamo il ritmo, un passo alla volta.';
+        return l10n.staticCopyRecovering;
     }
   }
 
