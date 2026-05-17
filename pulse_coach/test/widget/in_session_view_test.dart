@@ -34,14 +34,16 @@ Widget _wrap(Widget child) => MaterialApp(
   home: child,
 );
 
-InSessionView _view({int step = 0, int seconds = 60}) => InSessionView(
-  sessionState: InSessionState(
-    steps: _steps,
-    currentStepIndex: step,
-    secondsRemaining: seconds,
-  ),
-  onAbandon: () {},
-);
+InSessionView _view({int step = 0, int seconds = 60, int? liveHr}) =>
+    InSessionView(
+      sessionState: InSessionState(
+        steps: _steps,
+        currentStepIndex: step,
+        secondsRemaining: seconds,
+        liveHr: liveHr,
+      ),
+      onAbandon: () {},
+    );
 
 void main() {
   group('InSessionView', () {
@@ -111,6 +113,82 @@ void main() {
       await tester.pumpWidget(_wrap(_view()));
       await tester.pump();
 
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('8.4-WIDGET-001: HR badge is absent when liveHr is null', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(_view()));
+      await tester.pump();
+
+      expect(find.textContaining('♥'), findsNothing);
+    });
+
+    testWidgets('8.4-WIDGET-002: HR badge shows value when liveHr is present', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(_view(liveHr: 72)));
+      await tester.pump();
+
+      expect(find.text('♥ 72 bpm'), findsOneWidget);
+    });
+
+    testWidgets('8.4-WIDGET-003: HR badge uses Caption typography', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(_view(liveHr: 90)));
+      await tester.pump();
+
+      final text = tester.widget<Text>(find.text('♥ 90 bpm'));
+      expect(text.style?.fontSize, AppTextStyles.caption.fontSize);
+      expect(text.style?.fontWeight, AppTextStyles.caption.fontWeight);
+    });
+
+    testWidgets('8.4-WIDGET-004: HR badge is positioned in a Stack', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(_view(liveHr: 65)));
+      await tester.pump();
+
+      expect(find.textContaining('♥'), findsOneWidget);
+      expect(
+        find.ancestor(
+          of: find.textContaining('♥'),
+          matching: find.byType(Positioned),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('8.4-WIDGET-005: HR badge value updates when liveHr changes', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(_view(liveHr: 70)));
+      await tester.pump();
+      expect(find.text('♥ 70 bpm'), findsOneWidget);
+
+      await tester.pumpWidget(_wrap(_view(liveHr: 85)));
+      await tester.pump();
+
+      expect(find.text('♥ 85 bpm'), findsOneWidget);
+      expect(find.text('♥ 70 bpm'), findsNothing);
+    });
+
+    testWidgets('8.4-WIDGET-006: HR badge disappearing does not overflow', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(_wrap(_view(liveHr: 72)));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(_wrap(_view()));
+      await tester.pump();
       expect(tester.takeException(), isNull);
     });
   });

@@ -101,5 +101,13 @@
         "type": "String"
       }
     }
+  },
+  "inSessionHrDisplay": "♥ {bpm} bpm",
+  "@inSessionHrDisplay": {
+    "placeholders": {
+      "bpm": {
+        "type": "String"
+      }
+    }
   }
 }

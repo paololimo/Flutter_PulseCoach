@@ -1,6 +1,9 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:health/health.dart';
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
@@ -8,6 +11,7 @@ import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.dart';
 import 'package:pulse_coach/features/session/presentation/utils/haptic_service.dart';
+import 'package:pulse_coach/features/session/presentation/utils/live_hr_service.dart';
 import 'package:pulse_coach/features/session/presentation/utils/session_step_generator.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/countdown_overlay.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/in_session_view.dart';
@@ -32,6 +36,7 @@ class InSessionPage extends StatefulWidget {
 
 class _InSessionPageState extends State<InSessionPage> {
   final VibrationHapticService _hapticService = VibrationHapticService();
+  HealthLiveHrService? _liveHrService;
   bool _countdownDone = false;
   InSessionCubit? _cubit;
 
@@ -39,6 +44,10 @@ class _InSessionPageState extends State<InSessionPage> {
   void initState() {
     super.initState();
     _hapticService.init();
+    if (getIt.isRegistered<Health>()) {
+      _liveHrService = HealthLiveHrService(getIt<Health>());
+      unawaited(_liveHrService!.init());
+    }
   }
 
   void _onCountdownComplete() {
@@ -51,6 +60,7 @@ class _InSessionPageState extends State<InSessionPage> {
       planId: widget.planId,
       sessionIndex: widget.sessionIndex,
       hapticService: _hapticService,
+      liveHrService: _liveHrService,
     )..start();
 
     setState(() {

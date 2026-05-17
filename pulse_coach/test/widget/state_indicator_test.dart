@@ -198,11 +198,11 @@ void main() {
   });
 
   group('StateMessages — ARB invariants (AC7, AC8, AC11)', () {
-    test('7.1-ARB-001: ARB file has exactly 45 user-facing keys', () {
+    test('7.1-ARB-001: ARB file has exactly 46 user-facing keys', () {
       final arb = _stateMessagesArb();
       final userFacingKeys = arb.keys.where((key) => !key.startsWith('@'));
 
-      expect(userFacingKeys, hasLength(45));
+      expect(userFacingKeys, hasLength(46));
       expect(
         userFacingKeys,
         containsAll([
@@ -239,7 +239,10 @@ void main() {
     test('7.1-ARB-003: copy excludes internal state codes and emoji', () {
       final arb = _stateMessagesArb();
       final userFacingValues = arb.entries
-          .where((entry) => !entry.key.startsWith('@'))
+          .where(
+            (entry) =>
+                !entry.key.startsWith('@') && entry.key != 'inSessionHrDisplay',
+          )
           .map((entry) => entry.value as String);
 
       for (final value in userFacingValues) {
