@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
@@ -234,8 +236,7 @@ class _HeroZone extends StatelessWidget {
     return HeroSessionCard(
       session: session,
       heroTag: 'session-hero-${session.sessionType}-$heroIndex',
-      onStart: () =>
-          context.read<TodaySessionCubit>().markSessionCompleted().ignore(),
+      onStart: () => context.go(AppRouter.sessionActive, extra: session),
       onRegenerate: onRegenerate,
     );
   }

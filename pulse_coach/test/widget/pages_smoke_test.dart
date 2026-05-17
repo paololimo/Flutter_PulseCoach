@@ -32,6 +32,7 @@ import 'package:pulse_coach/features/progress/presentation/pages/progress_page.d
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/session_summary_page.dart';
+import 'package:pulse_coach/features/session/presentation/widgets/countdown_overlay.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exercises_by_type.dart';
@@ -148,14 +149,13 @@ void main() {
 
   group('Session pages — smoke tests', () {
     testWidgets(
-      '[P1] 1.7-WIDGET-006: InSessionPage renders with correct AppBar title',
+      '[P1] 1.7-WIDGET-006: InSessionPage renders countdown full-screen',
       (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(theme: AppTheme.darkTheme, home: const InSessionPage()),
-        );
+        await tester.pumpWidget(_wrap(const InSessionPage()));
         await tester.pump();
-        expect(find.text('In Session'), findsOneWidget);
-        expect(find.text('In Session — Story 8.x'), findsOneWidget);
+        expect(find.byType(CountdownOverlay), findsOneWidget);
+        expect(find.text('3'), findsOneWidget);
+        expect(find.byType(AppBar), findsNothing);
       },
     );
 

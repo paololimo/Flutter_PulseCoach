@@ -73,5 +73,14 @@
   "sessionNameBreathing": "Respirazione",
   "intensityLow": "Leggera",
   "intensityMedium": "Moderata",
-  "intensityHigh": "Intensa"
+  "intensityHigh": "Intensa",
+  "countdownSemanticAnnounce": "Inizia tra {count}",
+  "@countdownSemanticAnnounce": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "countdownGoAnnounce": "Vai"
 }

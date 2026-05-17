@@ -301,6 +301,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Intense'**
   String get intensityHigh;
+
+  /// No description provided for @countdownSemanticAnnounce.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting in {count}'**
+  String countdownSemanticAnnounce(String count);
+
+  /// No description provided for @countdownGoAnnounce.
+  ///
+  /// In en, this message translates to:
+  /// **'Go'**
+  String get countdownGoAnnounce;
 }
 
 class _AppLocalizationsDelegate

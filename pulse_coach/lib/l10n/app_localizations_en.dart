@@ -125,4 +125,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get intensityHigh => 'Intense';
+
+  @override
+  String countdownSemanticAnnounce(String count) {
+    return 'Starting in $count';
+  }
+
+  @override
+  String get countdownGoAnnounce => 'Go';
 }

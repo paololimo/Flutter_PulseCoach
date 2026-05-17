@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
@@ -67,6 +69,45 @@ void main() {
           child: const TodayPage(),
         ),
       ),
+    );
+  }
+
+  Widget wrapWithRouter({required DailyPlanState planState}) {
+    when(dailyPlanBloc.state).thenReturn(planState);
+
+    final cubit = _TestingTodaySessionCubit(sessionLogsDao);
+    final total = switch (planState) {
+      DailyPlanLoaded(:final plan) => plan.sessions.length,
+      _ => 0,
+    };
+    cubit.seed(TodaySessionState(totalSessions: total));
+
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => MultiBlocProvider(
+            providers: [
+              BlocProvider<DailyPlanBloc>.value(value: dailyPlanBloc),
+              BlocProvider<TodaySessionCubit>.value(value: cubit),
+            ],
+            child: const TodayPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRouter.sessionActive,
+          builder: (context, state) =>
+              const Scaffold(body: Text('session_stub')),
+        ),
+      ],
+    );
+
+    return MaterialApp.router(
+      locale: const Locale('it'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: AppTheme.darkTheme,
+      routerConfig: router,
     );
   }
 
@@ -195,37 +236,19 @@ void main() {
     });
 
     testWidgets(
-      '7.3-PAGE-011: mark completed progresses hero and shrinks coming-up',
+      '7.3-PAGE-011: tapping Start Session navigates to session view',
       (tester) async {
         await tester.pumpWidget(
-          wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
+          wrapWithRouter(planState: DailyPlanState.loaded(plan: _plan(3))),
         );
+        await tester.pumpAndSettle();
 
-        // Initial: 3 sessions → hero is Mobilità (index 0), 2 in COMING UP.
-        expect(
-          find.descendant(
-            of: find.byType(HeroSessionCard),
-            matching: find.text('Mobilità'),
-          ),
-          findsOneWidget,
-        );
-        expect(find.byType(CompactSessionCard), findsNWidgets(2));
+        expect(find.byType(HeroSessionCard), findsOneWidget);
 
-        // Tap "Inizia sessione" to complete the hero.
         await tester.tap(find.text('Inizia sessione'));
         await tester.pumpAndSettle();
 
-        // Cardio becomes the new hero, Breathing remains as 1 upcoming.
-        expect(
-          find.descendant(
-            of: find.byType(HeroSessionCard),
-            matching: find.text('Cardio'),
-          ),
-          findsOneWidget,
-        );
-        expect(find.byType(CompactSessionCard), findsOneWidget);
-        // CompletionRing shows 1/3.
-        expect(find.text('1/3'), findsOneWidget);
+        expect(find.text('session_stub'), findsOneWidget);
       },
     );
 

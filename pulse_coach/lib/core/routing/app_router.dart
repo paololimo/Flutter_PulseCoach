@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
@@ -67,7 +68,10 @@ class AppRouter {
       ),
       GoRoute(
         path: sessionActive,
-        builder: (context, state) => const InSessionPage(),
+        builder: (context, state) {
+          final session = state.extra as PlannedSession?;
+          return InSessionPage(session: session);
+        },
       ),
       GoRoute(path: sessionRpe, builder: (context, state) => const RpePage()),
       GoRoute(
