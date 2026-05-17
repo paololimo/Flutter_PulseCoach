@@ -5,6 +5,7 @@ import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/countdown_overlay.dart';
+import 'package:pulse_coach/features/session/presentation/widgets/in_session_view.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 Widget _wrap(Widget child, {bool disableAnimations = false}) => MediaQuery(
@@ -125,7 +126,7 @@ void main() {
     );
 
     testWidgets(
-      '8.1-WIDGET-007: InSessionPage shows session placeholder after countdown',
+      '8.1-WIDGET-007: InSessionPage shows InSessionView after countdown',
       (tester) async {
         await tester.pumpWidget(
           _wrap(const InSessionPage(), disableAnimations: true),
@@ -138,7 +139,9 @@ void main() {
         await tester.pump();
 
         expect(find.byType(CountdownOverlay), findsNothing);
-        expect(find.text('In Session — Story 8.2'), findsOneWidget);
+        expect(find.byType(InSessionView), findsOneWidget);
+
+        await tester.pumpWidget(const SizedBox.shrink());
       },
     );
   });

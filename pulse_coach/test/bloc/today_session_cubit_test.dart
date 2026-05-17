@@ -20,6 +20,9 @@ void main() {
     sessionLogsDao = MockSessionLogsDao();
     when(sessionLogsDao.getLogsForPlan(any)).thenAnswer((_) async => []);
     when(sessionLogsDao.insertLog(any)).thenAnswer((_) async => 1);
+    when(
+      sessionLogsDao.watchLogsForPlan(any),
+    ).thenAnswer((_) => const Stream<List<SessionLog>>.empty());
   });
 
   group('TodaySessionCubit', () {

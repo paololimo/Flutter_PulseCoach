@@ -378,6 +378,14 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
           as _i6.Future<List<_i2.SessionLog>>);
 
   @override
+  _i6.Stream<List<_i2.SessionLog>> watchLogsForPlan(int? planId) =>
+      (super.noSuchMethod(
+            Invocation.method(#watchLogsForPlan, [planId]),
+            returnValue: _i6.Stream<List<_i2.SessionLog>>.empty(),
+          )
+          as _i6.Stream<List<_i2.SessionLog>>);
+
+  @override
   _i6.Future<int> deleteLogsForPlan(int? planId) =>
       (super.noSuchMethod(
             Invocation.method(#deleteLogsForPlan, [planId]),

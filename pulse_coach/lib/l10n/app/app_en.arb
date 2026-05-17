@@ -82,5 +82,24 @@
       }
     }
   },
-  "countdownGoAnnounce": "Go"
+  "countdownGoAnnounce": "Go",
+  "inSessionWarmupTitle": "Warm-up",
+  "inSessionCooldownTitle": "Cool-down",
+  "inSessionWarmupInstruction": "Move slowly to prepare your body.",
+  "inSessionCooldownInstruction": "Slow down gradually. Breathe deeply.",
+  "inSessionMainMobilityInstruction": "Perform movements smoothly and in control.",
+  "inSessionMainCardioInstruction": "Keep the pace with steady breathing.",
+  "inSessionMainBreathingInstruction": "Focus on deep, rhythmic breathing.",
+  "inSessionAbandonButton": "Abandon",
+  "inSessionStepLabel": "{current} of {total}",
+  "@inSessionStepLabel": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  }
 }

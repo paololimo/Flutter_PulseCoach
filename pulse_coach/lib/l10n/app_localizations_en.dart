@@ -133,4 +133,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get countdownGoAnnounce => 'Go';
+
+  @override
+  String get inSessionWarmupTitle => 'Warm-up';
+
+  @override
+  String get inSessionCooldownTitle => 'Cool-down';
+
+  @override
+  String get inSessionWarmupInstruction => 'Move slowly to prepare your body.';
+
+  @override
+  String get inSessionCooldownInstruction =>
+      'Slow down gradually. Breathe deeply.';
+
+  @override
+  String get inSessionMainMobilityInstruction =>
+      'Perform movements smoothly and in control.';
+
+  @override
+  String get inSessionMainCardioInstruction =>
+      'Keep the pace with steady breathing.';
+
+  @override
+  String get inSessionMainBreathingInstruction =>
+      'Focus on deep, rhythmic breathing.';
+
+  @override
+  String get inSessionAbandonButton => 'Abandon';
+
+  @override
+  String inSessionStepLabel(String current, String total) {
+    return '$current of $total';
+  }
 }

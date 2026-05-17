@@ -9,6 +9,7 @@ import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
+import 'package:pulse_coach/features/session/domain/entities/session_start_args.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/compact_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/completed_session_card.dart';
@@ -236,7 +237,14 @@ class _HeroZone extends StatelessWidget {
     return HeroSessionCard(
       session: session,
       heroTag: 'session-hero-${session.sessionType}-$heroIndex',
-      onStart: () => context.go(AppRouter.sessionActive, extra: session),
+      onStart: () => context.go(
+        AppRouter.sessionActive,
+        extra: SessionStartArgs(
+          session: session,
+          planId: context.read<TodaySessionCubit>().currentPlanId,
+          sessionIndex: heroIndex,
+        ),
+      ),
       onRegenerate: onRegenerate,
     );
   }

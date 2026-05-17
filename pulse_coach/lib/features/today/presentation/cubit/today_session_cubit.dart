@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show Value;
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart' show debugPrint, setEquals;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/database/app_database.dart'
-    show SessionLogsCompanion;
+    show SessionLog, SessionLogsCompanion;
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 
 class TodaySessionState {
@@ -36,10 +38,20 @@ class TodaySessionState {
 class TodaySessionCubit extends Cubit<TodaySessionState> {
   final SessionLogsDao _sessionLogsDao;
   int? _currentPlanId;
+  StreamSubscription<List<SessionLog>>? _logsSubscription;
 
   TodaySessionCubit(this._sessionLogsDao) : super(const TodaySessionState());
 
+  /// Exposes the active plan ID for navigation handoff to InSessionPage.
+  int? get currentPlanId => _currentPlanId;
+
   Future<void> planLoaded(int totalSessions, int? planId) async {
+    // Fire-and-forget so the null-planId branch below stays synchronous on the
+    // first emit (avoids a microtask gap that would let a caller's seed() race
+    // ahead of this reset).
+    _logsSubscription?.cancel();
+    _logsSubscription = null;
+
     if (planId == null) {
       _currentPlanId = null;
       emit(TodaySessionState(totalSessions: totalSessions));
@@ -53,14 +65,7 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
     // otherwise stale logs from a prior plan would overwrite the active state.
     if (_currentPlanId != planId) return;
 
-    final completed = <int>{
-      for (final log in logs)
-        // Drop any stale rows whose index falls outside the new plan's
-        // session count (covers the "regenerate produced fewer sessions" case;
-        // also defends against schema drift).
-        if (log.sessionIndex >= 0 && log.sessionIndex < totalSessions)
-          log.sessionIndex,
-    };
+    final completed = _completedFromLogs(logs, totalSessions);
     final heroIndex = _pickHeroIndex(completed, totalSessions, after: -1);
     emit(
       TodaySessionState(
@@ -69,6 +74,39 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
         totalSessions: totalSessions,
       ),
     );
+
+    // Subscribe to live updates so SessionLog writes from other call sites
+    // (notably InSessionCubit on session completion) surface in the Today UI
+    // without waiting for the next planLoaded round-trip. .skip(1) drops the
+    // initial replay drift fires on subscribe — we already emitted that
+    // snapshot above from the one-shot get.
+    _logsSubscription = _sessionLogsDao
+        .watchLogsForPlan(planId)
+        .skip(1)
+        .listen((logs) => _onLogsChanged(planId, totalSessions, logs));
+  }
+
+  void _onLogsChanged(int planId, int totalSessions, List<SessionLog> logs) {
+    if (isClosed || _currentPlanId != planId) return;
+    final completed = _completedFromLogs(logs, totalSessions);
+    if (setEquals(completed, state.completedIndices)) return;
+    // Preserve the user's current hero unless it's now completed — only then
+    // advance to the next incomplete session.
+    final hero = completed.contains(state.heroIndex)
+        ? _pickHeroIndex(completed, totalSessions, after: state.heroIndex)
+        : state.heroIndex;
+    emit(state.copyWith(completedIndices: completed, heroIndex: hero));
+  }
+
+  static Set<int> _completedFromLogs(List<SessionLog> logs, int totalSessions) {
+    return <int>{
+      for (final log in logs)
+        // Drop any stale rows whose index falls outside the new plan's
+        // session count (covers the "regenerate produced fewer sessions" case;
+        // also defends against schema drift).
+        if (log.sessionIndex >= 0 && log.sessionIndex < totalSessions)
+          log.sessionIndex,
+    };
   }
 
   void swapHero(int tappedSessionIndex) {
@@ -122,12 +160,13 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
       state.totalSessions,
       after: heroAtStart,
     );
-    emit(
-      state.copyWith(
-        completedIndices: newCompleted,
-        heroIndex: nextHero,
-      ),
-    );
+    emit(state.copyWith(completedIndices: newCompleted, heroIndex: nextHero));
+  }
+
+  @override
+  Future<void> close() async {
+    await _logsSubscription?.cancel();
+    return super.close();
   }
 
   /// Picks the next incomplete session index, searching forward from

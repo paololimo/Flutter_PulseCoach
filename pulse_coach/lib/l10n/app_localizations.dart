@@ -313,6 +313,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go'**
   String get countdownGoAnnounce;
+
+  /// No description provided for @inSessionWarmupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm-up'**
+  String get inSessionWarmupTitle;
+
+  /// No description provided for @inSessionCooldownTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cool-down'**
+  String get inSessionCooldownTitle;
+
+  /// No description provided for @inSessionWarmupInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Move slowly to prepare your body.'**
+  String get inSessionWarmupInstruction;
+
+  /// No description provided for @inSessionCooldownInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Slow down gradually. Breathe deeply.'**
+  String get inSessionCooldownInstruction;
+
+  /// No description provided for @inSessionMainMobilityInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Perform movements smoothly and in control.'**
+  String get inSessionMainMobilityInstruction;
+
+  /// No description provided for @inSessionMainCardioInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the pace with steady breathing.'**
+  String get inSessionMainCardioInstruction;
+
+  /// No description provided for @inSessionMainBreathingInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus on deep, rhythmic breathing.'**
+  String get inSessionMainBreathingInstruction;
+
+  /// No description provided for @inSessionAbandonButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Abandon'**
+  String get inSessionAbandonButton;
+
+  /// No description provided for @inSessionStepLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String inSessionStepLabel(String current, String total);
 }
 
 class _AppLocalizationsDelegate

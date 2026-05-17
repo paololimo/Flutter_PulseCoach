@@ -134,4 +134,38 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get countdownGoAnnounce => 'Vai';
+
+  @override
+  String get inSessionWarmupTitle => 'Riscaldamento';
+
+  @override
+  String get inSessionCooldownTitle => 'Defaticamento';
+
+  @override
+  String get inSessionWarmupInstruction =>
+      'Muoviti lentamente per preparare il corpo.';
+
+  @override
+  String get inSessionCooldownInstruction =>
+      'Rallenta gradualmente. Respira profondo.';
+
+  @override
+  String get inSessionMainMobilityInstruction =>
+      'Esegui i movimenti con fluidità e controllo.';
+
+  @override
+  String get inSessionMainCardioInstruction =>
+      'Mantieni il ritmo con respiro regolare.';
+
+  @override
+  String get inSessionMainBreathingInstruction =>
+      'Concentrati sul respiro profondo e ritmico.';
+
+  @override
+  String get inSessionAbandonButton => 'Abbandona';
+
+  @override
+  String inSessionStepLabel(String current, String total) {
+    return '$current di $total';
+  }
 }
