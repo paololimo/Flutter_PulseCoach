@@ -7,6 +7,7 @@ import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.dart';
+import 'package:pulse_coach/features/session/presentation/utils/haptic_service.dart';
 import 'package:pulse_coach/features/session/presentation/utils/session_step_generator.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/countdown_overlay.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/in_session_view.dart';
@@ -30,8 +31,15 @@ class InSessionPage extends StatefulWidget {
 }
 
 class _InSessionPageState extends State<InSessionPage> {
+  final VibrationHapticService _hapticService = VibrationHapticService();
   bool _countdownDone = false;
   InSessionCubit? _cubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _hapticService.init();
+  }
 
   void _onCountdownComplete() {
     if (!mounted) return;
@@ -42,6 +50,7 @@ class _InSessionPageState extends State<InSessionPage> {
       sessionLogsDao: getIt.isRegistered<SessionLogsDao>() ? getIt() : null,
       planId: widget.planId,
       sessionIndex: widget.sessionIndex,
+      hapticService: _hapticService,
     )..start();
 
     setState(() {

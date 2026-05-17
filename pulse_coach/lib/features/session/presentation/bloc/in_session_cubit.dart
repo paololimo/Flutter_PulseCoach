@@ -8,11 +8,13 @@ import 'package:pulse_coach/core/database/app_database.dart'
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.dart';
+import 'package:pulse_coach/features/session/presentation/utils/haptic_service.dart';
 
 class InSessionCubit extends Cubit<InSessionState> {
   final SessionLogsDao? _sessionLogsDao;
   final int? _planId;
   final int _sessionIndex;
+  final HapticService? _hapticService;
   Timer? _timer;
 
   InSessionCubit({
@@ -20,9 +22,11 @@ class InSessionCubit extends Cubit<InSessionState> {
     SessionLogsDao? sessionLogsDao,
     int? planId,
     int sessionIndex = 0,
+    HapticService? hapticService,
   }) : _sessionLogsDao = sessionLogsDao,
        _planId = planId,
        _sessionIndex = sessionIndex,
+       _hapticService = hapticService,
        super(
          InSessionState(
            steps: steps,
@@ -48,9 +52,11 @@ class InSessionCubit extends Cubit<InSessionState> {
   void _advanceStep() {
     final nextIndex = state.currentStepIndex + 1;
     if (nextIndex >= state.steps.length) {
+      _hapticService?.stepTransition();
       _timer?.cancel();
       unawaited(_persistCompletion());
     } else {
+      _hapticService?.stepTransition();
       emit(
         state.copyWith(
           currentStepIndex: nextIndex,
