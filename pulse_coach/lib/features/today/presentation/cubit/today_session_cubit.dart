@@ -103,8 +103,12 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
       for (final log in logs)
         // Drop any stale rows whose index falls outside the new plan's
         // session count (covers the "regenerate produced fewer sessions" case;
-        // also defends against schema drift).
-        if (log.sessionIndex >= 0 && log.sessionIndex < totalSessions)
+        // also defends against schema drift). Abandoned rows are excluded —
+        // partial sessions are recorded but do not count as completed (review
+        // BLOCKER #2).
+        if (!log.abandoned &&
+            log.sessionIndex >= 0 &&
+            log.sessionIndex < totalSessions)
           log.sessionIndex,
     };
   }
@@ -131,7 +135,10 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
     if (planIdAtStart != null) {
       final now = DateTime.now();
       try {
-        await _sessionLogsDao.insertLog(
+        // upsertCompletion overwrites any prior abandoned row for the same
+        // (planId, sessionIndex) so a completion always wins (review fix
+        // for BLOCKER #1).
+        await _sessionLogsDao.upsertCompletion(
           SessionLogsCompanion(
             dailyPlanId: Value(planIdAtStart),
             sessionIndex: Value(heroAtStart),
@@ -143,7 +150,7 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
         // DB-locked / disk-full / FK constraint — degrade silently rather than
         // freeze the UI. The next planLoaded will reconcile from the source of
         // truth.
-        debugPrint('TodaySessionCubit: insertLog failed: $e');
+        debugPrint('TodaySessionCubit: upsertCompletion failed: $e');
         return;
       }
       if (isClosed) return;

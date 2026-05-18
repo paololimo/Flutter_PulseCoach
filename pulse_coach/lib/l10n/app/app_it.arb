@@ -91,6 +91,10 @@
   "inSessionMainCardioInstruction": "Mantieni il ritmo con respiro regolare.",
   "inSessionMainBreathingInstruction": "Concentrati sul respiro profondo e ritmico.",
   "inSessionAbandonButton": "Abbandona",
+  "inSessionAbandonConfirmTitle": "Vuoi abbandonare la sessione?",
+  "inSessionAbandonConfirmBody": "Il progresso parziale verrà registrato.",
+  "inSessionAbandonConfirmButton": "Abbandona sessione",
+  "inSessionAbandonKeepGoingButton": "Continua",
   "inSessionStepLabel": "{current} di {total}",
   "@inSessionStepLabel": {
     "placeholders": {

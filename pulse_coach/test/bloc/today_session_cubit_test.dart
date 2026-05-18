@@ -20,6 +20,7 @@ void main() {
     sessionLogsDao = MockSessionLogsDao();
     when(sessionLogsDao.getLogsForPlan(any)).thenAnswer((_) async => []);
     when(sessionLogsDao.insertLog(any)).thenAnswer((_) async => 1);
+    when(sessionLogsDao.upsertCompletion(any)).thenAnswer((_) async => 1);
     when(
       sessionLogsDao.watchLogsForPlan(any),
     ).thenAnswer((_) => const Stream<List<SessionLog>>.empty());
@@ -253,7 +254,7 @@ void main() {
       ],
       verify: (_) {
         final captured =
-            verify(sessionLogsDao.insertLog(captureAny)).captured.single
+            verify(sessionLogsDao.upsertCompletion(captureAny)).captured.single
                 as SessionLogsCompanion;
         expect(captured.dailyPlanId, const Value(20));
         expect(captured.sessionIndex, const Value(2));
@@ -275,9 +276,7 @@ void main() {
     blocTest<TodaySessionCubit, TodaySessionState>(
       '8.0-UNIT-005: planLoaded(validId)→planLoaded(null)→markSessionCompleted does not write to previous plan',
       build: () {
-        when(
-          sessionLogsDao.getLogsForPlan(20),
-        ).thenAnswer((_) async => []);
+        when(sessionLogsDao.getLogsForPlan(20)).thenAnswer((_) async => []);
         return buildCubit();
       },
       act: (cubit) async {
@@ -289,7 +288,7 @@ void main() {
         // After planLoaded(null), the previous planId (20) must not be
         // reused. No insert should happen because the cubit treats null as
         // "skip persistence".
-        verifyNever(sessionLogsDao.insertLog(any));
+        verifyNever(sessionLogsDao.upsertCompletion(any));
       },
     );
 
@@ -304,7 +303,7 @@ void main() {
       act: (cubit) => cubit.markSessionCompleted(),
       expect: () => <TodaySessionState>[],
       verify: (_) {
-        verifyNever(sessionLogsDao.insertLog(any));
+        verifyNever(sessionLogsDao.upsertCompletion(any));
       },
     );
 
@@ -323,11 +322,11 @@ void main() {
       act: (cubit) => cubit.planLoaded(3, 30),
       expect: () => [
         isA<TodaySessionState>()
-            .having(
-              (state) => state.completedIndices,
-              'completedIndices',
-              {0, 1, 2},
-            )
+            .having((state) => state.completedIndices, 'completedIndices', {
+              0,
+              1,
+              2,
+            })
             .having((state) => state.completedCount, 'completedCount', 3)
             .having(
               (state) => state.heroIndex,
@@ -342,14 +341,10 @@ void main() {
     blocTest<TodaySessionCubit, TodaySessionState>(
       '8.0-UNIT-008: insertLog throwing degrades silently — no state emit, no crash',
       build: () {
-        when(sessionLogsDao.insertLog(any))
-            .thenThrow(StateError('disk full'));
+        when(sessionLogsDao.upsertCompletion(any)).thenThrow(StateError('disk full'));
         return buildCubit();
       },
-      seed: () => const TodaySessionState(
-        heroIndex: 0,
-        totalSessions: 3,
-      ),
+      seed: () => const TodaySessionState(heroIndex: 0, totalSessions: 3),
       act: (cubit) async {
         await cubit.planLoaded(3, 40);
         await cubit.markSessionCompleted();
@@ -362,6 +357,25 @@ void main() {
           'completedIndices',
           isEmpty,
         ),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '8.5-UNIT-001: regression — abandoned logs are NOT counted as completed',
+      build: () {
+        when(sessionLogsDao.getLogsForPlan(60)).thenAnswer(
+          (_) async => [
+            _log(planId: 60, sessionIndex: 0, abandoned: true),
+            _log(planId: 60, sessionIndex: 1),
+          ],
+        );
+        return buildCubit();
+      },
+      act: (cubit) => cubit.planLoaded(3, 60),
+      expect: () => [
+        isA<TodaySessionState>()
+            .having((state) => state.completedIndices, 'completedIndices', {1})
+            .having((state) => state.completedCount, 'completedCount', 1),
       ],
     );
 
@@ -382,18 +396,21 @@ void main() {
       expect: () => [
         isA<TodaySessionState>()
             .having((state) => state.totalSessions, 'totalSessions', 2)
-            .having(
-              (state) => state.completedIndices,
-              'completedIndices',
-              {0, 1},
-            )
+            .having((state) => state.completedIndices, 'completedIndices', {
+              0,
+              1,
+            })
             .having((state) => state.completedCount, 'completedCount', 2),
       ],
     );
   });
 }
 
-SessionLog _log({required int planId, required int sessionIndex}) {
+SessionLog _log({
+  required int planId,
+  required int sessionIndex,
+  bool abandoned = false,
+}) {
   final now = DateTime.utc(2026, 5, 16, 9);
   return SessionLog(
     id: sessionIndex + 1,
@@ -401,5 +418,6 @@ SessionLog _log({required int planId, required int sessionIndex}) {
     sessionIndex: sessionIndex,
     completedAt: now,
     createdAt: now,
+    abandoned: abandoned,
   );
 }

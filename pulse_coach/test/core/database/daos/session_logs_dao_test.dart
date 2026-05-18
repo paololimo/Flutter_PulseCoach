@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
@@ -218,6 +219,94 @@ void main() {
         await db.dailyPlansDao.deletePlan(planId);
 
         expect(await db.sessionLogsDao.getLogsForPlan(planId), isEmpty);
+      },
+    );
+
+    test(
+      '8.5-DAO-001: insertLog stores abandoned partial-session metadata',
+      () async {
+        final planId = await seedPlan('2026-05-17');
+        final abandonedAt = DateTime.utc(2026, 5, 17, 10);
+
+        await db.sessionLogsDao.insertLog(
+          SessionLogsCompanion(
+            dailyPlanId: Value(planId),
+            sessionIndex: const Value(0),
+            completedAt: Value(abandonedAt),
+            createdAt: Value(abandonedAt),
+            abandoned: const Value(true),
+            elapsedSeconds: const Value(3),
+            currentStepIndex: const Value(0),
+          ),
+        );
+
+        final logs = await db.sessionLogsDao.getLogsForPlan(planId);
+
+        expect(logs, hasLength(1));
+        expect(logs.single.abandoned, isTrue);
+        expect(logs.single.elapsedSeconds, 3);
+        expect(logs.single.currentStepIndex, 0);
+      },
+    );
+
+    test('8.5-DAO-002: completion rows default abandoned to false', () async {
+      final planId = await seedPlan('2026-05-18');
+      final completedAt = DateTime.utc(2026, 5, 18, 9);
+
+      await db.sessionLogsDao.insertLog(
+        SessionLogsCompanion.insert(
+          dailyPlanId: planId,
+          sessionIndex: 0,
+          completedAt: completedAt,
+          createdAt: completedAt,
+        ),
+      );
+
+      final logs = await db.sessionLogsDao.getLogsForPlan(planId);
+
+      expect(logs.single.abandoned, isFalse);
+      expect(logs.single.elapsedSeconds, isNull);
+      expect(logs.single.currentStepIndex, isNull);
+    });
+
+    test(
+      '8.5-DAO-003: upsertCompletion replaces a prior abandoned row for the same (planId, sessionIndex)',
+      () async {
+        final planId = await seedPlan('2026-05-19');
+        final abandonAt = DateTime.utc(2026, 5, 19, 9);
+        final completedAt = DateTime.utc(2026, 5, 19, 10);
+
+        // First — abandon row.
+        await db.sessionLogsDao.insertLog(
+          SessionLogsCompanion(
+            dailyPlanId: Value(planId),
+            sessionIndex: const Value(0),
+            completedAt: Value(abandonAt),
+            createdAt: Value(abandonAt),
+            abandoned: const Value(true),
+            elapsedSeconds: const Value(5),
+            currentStepIndex: const Value(1),
+          ),
+        );
+
+        // Then — retry, completes the session via upsertCompletion. UNIQUE
+        // (planId, sessionIndex) means insertOrIgnore would have silently
+        // dropped this; insertOrReplace overwrites the abandoned row.
+        await db.sessionLogsDao.upsertCompletion(
+          SessionLogsCompanion.insert(
+            dailyPlanId: planId,
+            sessionIndex: 0,
+            completedAt: completedAt,
+            createdAt: completedAt,
+          ),
+        );
+
+        final logs = await db.sessionLogsDao.getLogsForPlan(planId);
+
+        expect(logs, hasLength(1));
+        expect(logs.single.abandoned, isFalse);
+        expect(logs.single.elapsedSeconds, isNull);
+        expect(logs.single.currentStepIndex, isNull);
       },
     );
   });

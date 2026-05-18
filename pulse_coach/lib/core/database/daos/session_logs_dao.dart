@@ -16,6 +16,14 @@ class SessionLogsDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertLog(SessionLogsCompanion entry) =>
       into(sessionLogs).insert(entry, mode: InsertMode.insertOrIgnore);
 
+  /// Completion-path insert: uses [InsertMode.insertOrReplace] so a previous
+  /// abandoned row for the same `(dailyPlanId, sessionIndex)` is overwritten
+  /// when the user restarts and finishes the session. Without this, the
+  /// UNIQUE constraint + `insertOrIgnore` would silently drop the completion
+  /// and leave the abandoned row as the source of truth (review BLOCKER #1).
+  Future<int> upsertCompletion(SessionLogsCompanion entry) =>
+      into(sessionLogs).insert(entry, mode: InsertMode.insertOrReplace);
+
   Future<List<SessionLog>> getLogsForPlan(int planId) =>
       (select(sessionLogs)..where((t) => t.dailyPlanId.equals(planId))).get();
 

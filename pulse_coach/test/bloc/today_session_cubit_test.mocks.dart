@@ -260,6 +260,14 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
           as _i6.Future<int>);
 
   @override
+  _i6.Future<int> upsertCompletion(_i2.SessionLogsCompanion? entry) =>
+      (super.noSuchMethod(
+            Invocation.method(#upsertCompletion, [entry]),
+            returnValue: _i6.Future<int>.value(0),
+          )
+          as _i6.Future<int>);
+
+  @override
   _i6.Future<List<_i2.SessionLog>> getLogsForPlan(int? planId) =>
       (super.noSuchMethod(
             Invocation.method(#getLogsForPlan, [planId]),

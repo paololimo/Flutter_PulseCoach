@@ -93,16 +93,102 @@ class _InSessionPageState extends State<InSessionPage> {
       value: _cubit!,
       child: BlocListener<InSessionCubit, InSessionState>(
         listenWhen: (previous, current) =>
-            current.isComplete && !previous.isComplete,
+            (current.isComplete && !previous.isComplete) ||
+            (current.isAbandoned && !previous.isAbandoned),
         listener: (context, state) => context.go(AppRouter.sessionRpe),
         child: BlocBuilder<InSessionCubit, InSessionState>(
           builder: (context, state) => InSessionView(
             sessionState: state,
-            onAbandon: () {
-              _cubit!.abandon();
-              context.go(AppRouter.today);
-            },
+            onAbandon: () => unawaited(_confirmAndAbandon(context)),
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmAndAbandon(BuildContext context) async {
+    // Pause the countdown while the sheet is open so the session cannot
+    // auto-complete underneath the modal (review fix: pause-on-sheet).
+    _cubit?.pauseTimers();
+    bool? confirmed;
+    try {
+      confirmed = await showModalBottomSheet<bool>(
+        context: context,
+        showDragHandle: true,
+        builder: (sheetContext) => _AbandonConfirmSheet(sheetContext),
+      );
+    } catch (e, st) {
+      debugPrint('InSessionPage: confirmation sheet failed: $e\n$st');
+    }
+
+    if (confirmed == true && mounted) {
+      try {
+        await _cubit?.abandon();
+      } catch (e, st) {
+        debugPrint('InSessionPage: abandon failed: $e\n$st');
+      }
+    } else {
+      // User cancelled (or sheet failed). Resume the countdown.
+      _cubit?.resumeTimers();
+    }
+  }
+}
+
+class _AbandonConfirmSheet extends StatefulWidget {
+  // The sheet's own BuildContext from showModalBottomSheet's builder. Held so
+  // pop() targets the correct route even if the underlying page is rebuilt.
+  final BuildContext sheetContext;
+
+  const _AbandonConfirmSheet(this.sheetContext);
+
+  @override
+  State<_AbandonConfirmSheet> createState() => _AbandonConfirmSheetState();
+}
+
+class _AbandonConfirmSheetState extends State<_AbandonConfirmSheet> {
+  // Debounce double-taps: once a decision is being processed, ignore further
+  // taps so a second tap cannot pop the underlying InSessionPage route
+  // (review fix: button debounce).
+  bool _popping = false;
+
+  void _pop(bool value) {
+    if (_popping) return;
+    _popping = true;
+    Navigator.of(widget.sheetContext).pop(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.inSessionAbandonConfirmTitle,
+              style: theme.textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.inSessionAbandonConfirmBody,
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: _popping ? null : () => _pop(false),
+              child: Text(l10n.inSessionAbandonKeepGoingButton),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: _popping ? null : () => _pop(true),
+              child: Text(l10n.inSessionAbandonConfirmButton),
+            ),
+          ],
         ),
       ),
     );

@@ -91,6 +91,10 @@
   "inSessionMainCardioInstruction": "Keep the pace with steady breathing.",
   "inSessionMainBreathingInstruction": "Focus on deep, rhythmic breathing.",
   "inSessionAbandonButton": "Abandon",
+  "inSessionAbandonConfirmTitle": "Abandon this session?",
+  "inSessionAbandonConfirmBody": "Partial progress will be recorded.",
+  "inSessionAbandonConfirmButton": "Abandon session",
+  "inSessionAbandonKeepGoingButton": "Keep going",
   "inSessionStepLabel": "{current} of {total}",
   "@inSessionStepLabel": {
     "placeholders": {

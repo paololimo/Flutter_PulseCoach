@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
@@ -211,8 +212,8 @@ void main() {
       expect(db.migration.onUpgrade, isNotNull);
     });
 
-    test('schemaVersion is 6', () {
-      expect(db.schemaVersion, 6);
+    test('schemaVersion is 7', () {
+      expect(db.schemaVersion, 7);
     });
   });
 
@@ -364,16 +365,14 @@ void main() {
   });
 
   group('AppDatabase - real migration v3 → v6 (composite)', () {
-    test(
-      'addColumn (v3→v4) + createTable (v4→v5) + recreate with FK (v5→v6) '
-      'all run cleanly in one upgrade',
-      () async {
-        // Build a raw v3 schema with a pre-existing daily_plans row and no
-        // is_completed column. user_version = 3 → drift fires the full chain
-        // (v3→v4: addColumn is_completed, v4→v5: createTable session_logs,
-        // v5→v6: drop+recreate session_logs with FK + UNIQUE).
-        final v3Raw = sqlite3.openInMemory();
-        v3Raw.execute('''
+    test('addColumn (v3→v4) + createTable (v4→v5) + recreate with FK (v5→v6) '
+        'all run cleanly in one upgrade', () async {
+      // Build a raw v3 schema with a pre-existing daily_plans row and no
+      // is_completed column. user_version = 3 → drift fires the full chain
+      // (v3→v4: addColumn is_completed, v4→v5: createTable session_logs,
+      // v5→v6: drop+recreate session_logs with FK + UNIQUE).
+      final v3Raw = sqlite3.openInMemory();
+      v3Raw.execute('''
           CREATE TABLE IF NOT EXISTS daily_plans (
             id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
             plan_date TEXT NOT NULL UNIQUE,
@@ -382,41 +381,154 @@ void main() {
             created_at INTEGER NOT NULL
           )
         ''');
-        final nowMs = DateTime.now().millisecondsSinceEpoch;
-        v3Raw.execute(
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      v3Raw.execute(
+        'INSERT INTO daily_plans '
+        '(plan_date, plan_json, generated_at, created_at) '
+        'VALUES (?, ?, ?, ?)',
+        ['2026-04-01', '{"sessions":[]}', nowMs, nowMs],
+      );
+      v3Raw.execute('PRAGMA user_version = 3');
+
+      final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v3Raw));
+
+      // v3→v4: column was added, pre-existing row backfilled to false.
+      final preExisting = await migratedDb.dailyPlansDao.getPlanForDate(
+        '2026-04-01',
+      );
+      expect(preExisting, isNotNull);
+      expect(preExisting!.isCompleted, false);
+
+      // v4→v5→v6: session_logs is present, enforces FK, and accepts inserts.
+      final now = DateTime.utc(2026, 5, 16, 9);
+      await migratedDb.sessionLogsDao.insertLog(
+        SessionLogsCompanion.insert(
+          dailyPlanId: preExisting.id,
+          sessionIndex: 0,
+          completedAt: now,
+          createdAt: now,
+        ),
+      );
+      final logs = await migratedDb.sessionLogsDao.getLogsForPlan(
+        preExisting.id,
+      );
+      expect(logs, hasLength(1));
+
+      await migratedDb.close();
+    });
+  });
+
+  group('AppDatabase - real migration v6 → v7', () {
+    test(
+      'session_logs abandon columns are added and backfilled safely',
+      () async {
+        final v6Raw = sqlite3.openInMemory();
+        final now = DateTime.utc(2026, 5, 17, 9).millisecondsSinceEpoch;
+        v6Raw.execute('''
+        CREATE TABLE IF NOT EXISTS daily_plans (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          plan_date TEXT NOT NULL UNIQUE,
+          plan_json TEXT NOT NULL,
+          generated_at INTEGER NOT NULL,
+          created_at INTEGER NOT NULL,
+          is_completed INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+        v6Raw.execute('''
+        CREATE TABLE IF NOT EXISTS session_logs (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          daily_plan_id INTEGER NOT NULL REFERENCES daily_plans (id) ON DELETE CASCADE,
+          session_index INTEGER NOT NULL,
+          completed_at INTEGER NOT NULL,
+          created_at INTEGER NOT NULL,
+          UNIQUE (daily_plan_id, session_index)
+        )
+      ''');
+        v6Raw.execute(
           'INSERT INTO daily_plans '
-          '(plan_date, plan_json, generated_at, created_at) '
+          '(id, plan_date, plan_json, generated_at, created_at, is_completed) '
+          'VALUES (?, ?, ?, ?, ?, ?)',
+          [1, '2026-05-17', '{"sessions":[]}', now, now, 0],
+        );
+        v6Raw.execute(
+          'INSERT INTO session_logs '
+          '(daily_plan_id, session_index, completed_at, created_at) '
           'VALUES (?, ?, ?, ?)',
-          ['2026-04-01', '{"sessions":[]}', nowMs, nowMs],
+          [1, 0, now, now],
         );
-        v3Raw.execute('PRAGMA user_version = 3');
+        v6Raw.execute('PRAGMA user_version = 6');
 
-        final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v3Raw));
+        final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v6Raw));
 
-        // v3→v4: column was added, pre-existing row backfilled to false.
-        final preExisting = await migratedDb.dailyPlansDao.getPlanForDate(
-          '2026-04-01',
-        );
-        expect(preExisting, isNotNull);
-        expect(preExisting!.isCompleted, false);
+        final logs = await migratedDb.sessionLogsDao.getLogsForPlan(1);
 
-        // v4→v5→v6: session_logs is present, enforces FK, and accepts inserts.
-        final now = DateTime.utc(2026, 5, 16, 9);
-        await migratedDb.sessionLogsDao.insertLog(
-          SessionLogsCompanion.insert(
-            dailyPlanId: preExisting.id,
-            sessionIndex: 0,
-            completedAt: now,
-            createdAt: now,
-          ),
-        );
-        final logs = await migratedDb.sessionLogsDao.getLogsForPlan(
-          preExisting.id,
-        );
         expect(logs, hasLength(1));
+        expect(logs.single.abandoned, isFalse);
+        expect(logs.single.elapsedSeconds, isNull);
+        expect(logs.single.currentStepIndex, isNull);
 
         await migratedDb.close();
       },
     );
+  });
+
+  group('AppDatabase - real migration v3 → v7 (composite)', () {
+    test('the full v3 → v7 upgrade chain runs cleanly on an existing user DB '
+        '(v3→v4 addColumn, v4→v5 createTable, v5→v6 drop+recreate with FK + '
+        'UNIQUE, v6→v7 addColumns abandon/elapsed/currentStepIndex)', () async {
+      // Regression for review action item: previously the only composite test
+      // stopped at v6, so the longest realistic upgrade path was uncovered.
+      final v3Raw = sqlite3.openInMemory();
+      v3Raw.execute('''
+          CREATE TABLE IF NOT EXISTS daily_plans (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            plan_date TEXT NOT NULL UNIQUE,
+            plan_json TEXT NOT NULL,
+            generated_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL
+          )
+        ''');
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      v3Raw.execute(
+        'INSERT INTO daily_plans '
+        '(plan_date, plan_json, generated_at, created_at) '
+        'VALUES (?, ?, ?, ?)',
+        ['2026-04-01', '{"sessions":[]}', nowMs, nowMs],
+      );
+      v3Raw.execute('PRAGMA user_version = 3');
+
+      final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v3Raw));
+
+      // v3→v4 backfill survived.
+      final preExisting = await migratedDb.dailyPlansDao.getPlanForDate(
+        '2026-04-01',
+      );
+      expect(preExisting, isNotNull);
+      expect(preExisting!.isCompleted, false);
+
+      // v6→v7: the new columns are present and abandoned/elapsed/current
+      // round-trip correctly.
+      final now = DateTime.utc(2026, 5, 17, 9);
+      await migratedDb.sessionLogsDao.insertLog(
+        SessionLogsCompanion(
+          dailyPlanId: Value(preExisting.id),
+          sessionIndex: const Value(0),
+          completedAt: Value(now),
+          createdAt: Value(now),
+          abandoned: const Value(true),
+          elapsedSeconds: const Value(7),
+          currentStepIndex: const Value(2),
+        ),
+      );
+      final logs = await migratedDb.sessionLogsDao.getLogsForPlan(
+        preExisting.id,
+      );
+      expect(logs, hasLength(1));
+      expect(logs.single.abandoned, isTrue);
+      expect(logs.single.elapsedSeconds, 7);
+      expect(logs.single.currentStepIndex, 2);
+
+      await migratedDb.close();
+    });
   });
 }

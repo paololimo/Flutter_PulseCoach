@@ -58,7 +58,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -86,6 +86,11 @@ class AppDatabase extends _$AppDatabase {
         // table was introduced in v5 and only carries ephemeral alpha data.
         await m.deleteTable('session_logs');
         await m.createTable(sessionLogs);
+      }
+      if (from >= 6 && from < 7) {
+        await m.addColumn(sessionLogs, sessionLogs.abandoned);
+        await m.addColumn(sessionLogs, sessionLogs.elapsedSeconds);
+        await m.addColumn(sessionLogs, sessionLogs.currentStepIndex);
       }
     },
     beforeOpen: (details) async {

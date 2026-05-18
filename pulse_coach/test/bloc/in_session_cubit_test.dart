@@ -1,4 +1,10 @@
+import 'dart:async';
+
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pulse_coach/core/database/app_database.dart'
+    show SessionLogsCompanion;
+import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_cubit.dart';
 
@@ -9,6 +15,41 @@ const _steps = [
 ];
 
 InSessionCubit _cubit() => InSessionCubit(steps: _steps);
+
+class _FakeSessionLogsDao extends Fake implements SessionLogsDao {
+  final List<SessionLogsCompanion> insertedLogs = [];
+  final List<SessionLogsCompanion> upsertedCompletions = [];
+
+  @override
+  Future<int> insertLog(SessionLogsCompanion entry) async {
+    insertedLogs.add(entry);
+    return 1;
+  }
+
+  @override
+  Future<int> upsertCompletion(SessionLogsCompanion entry) async {
+    upsertedCompletions.add(entry);
+    return 1;
+  }
+}
+
+/// Drives DateTime.now() in tests where `tester.pump(Duration)` advances
+/// Timer.periodic but not the wall clock.
+class _ManualClock {
+  DateTime current;
+  _ManualClock(this.current);
+  DateTime call() => current;
+  void advance(Duration d) => current = current.add(d);
+}
+
+/// Holds insertLog open until the test completes the completer — lets us
+/// observe state between emit and DAO resolution.
+class _SlowSessionLogsDao extends Fake implements SessionLogsDao {
+  final Completer<int> completer = Completer<int>();
+
+  @override
+  Future<int> insertLog(SessionLogsCompanion entry) => completer.future;
+}
 
 void main() {
   group('InSessionCubit', () {
@@ -97,7 +138,7 @@ void main() {
       (tester) async {
         final cubit = _cubit()..start();
 
-        cubit.abandon();
+        await cubit.abandon();
         final stateAfterAbandon = cubit.state;
         await tester.pump(const Duration(seconds: 10));
 
@@ -114,6 +155,219 @@ void main() {
           stateAfterAbandon.secondsRemaining,
         );
         await cubit.close();
+      },
+    );
+
+    testWidgets('8.5-CUBIT-001: abandon after 3 ticks marks abandoned only', (
+      tester,
+    ) async {
+      final cubit = _cubit()..start();
+
+      await tester.pump(const Duration(seconds: 3));
+      await cubit.abandon();
+
+      expect(cubit.state.isAbandoned, isTrue);
+      expect(cubit.state.isComplete, isFalse);
+      await cubit.close();
+    });
+
+    testWidgets(
+      '8.5-CUBIT-002: abandon persists wall-clock elapsed seconds and current step',
+      (tester) async {
+        final dao = _FakeSessionLogsDao();
+        final clock = _ManualClock(DateTime.utc(2026, 5, 17, 9));
+        final cubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 42,
+          sessionIndex: 1,
+          now: clock.call,
+        )..start();
+
+        await tester.pump(const Duration(seconds: 3));
+        clock.advance(const Duration(seconds: 3));
+        await cubit.abandon();
+
+        expect(dao.insertedLogs, hasLength(1));
+        final inserted = dao.insertedLogs.single;
+        expect(inserted.dailyPlanId, const Value(42));
+        expect(inserted.sessionIndex, const Value(1));
+        expect(inserted.abandoned, const Value(true));
+        expect(inserted.elapsedSeconds, const Value(3));
+        // Renamed from lastCompletedStepIndex (review D1): the cubit records
+        // the CURRENT step at the moment of abandon, not the last completed.
+        expect(inserted.currentStepIndex, const Value(0));
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '8.5-CUBIT-005: abandon at start (no elapsed time) writes elapsedSeconds=0 with currentStepIndex=0',
+      (tester) async {
+        final dao = _FakeSessionLogsDao();
+        final clock = _ManualClock(DateTime.utc(2026, 5, 17, 9));
+        final cubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 42,
+          now: clock.call,
+        )..start();
+
+        // No time advance — abandon immediately after start.
+        await cubit.abandon();
+
+        expect(dao.insertedLogs, hasLength(1));
+        expect(dao.insertedLogs.single.elapsedSeconds, const Value(0));
+        expect(dao.insertedLogs.single.currentStepIndex, const Value(0));
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '8.5-CUBIT-006: abandon does NOT use upsertCompletion path (only insertLog)',
+      (tester) async {
+        final dao = _FakeSessionLogsDao();
+        final cubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 42,
+        )..start();
+
+        await tester.pump(const Duration(seconds: 1));
+        await cubit.abandon();
+
+        expect(dao.insertedLogs, hasLength(1));
+        // Completion path is untouched on abandon — the upsert is reserved
+        // for actual session completion (review BLOCKER #1 fix).
+        expect(dao.upsertedCompletions, isEmpty);
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '8.5-CUBIT-007: emits isAbandoned BEFORE awaiting persistence (UI race fix)',
+      (tester) async {
+        final dao = _SlowSessionLogsDao();
+        final cubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 42,
+        )..start();
+
+        await tester.pump(const Duration(seconds: 1));
+        final abandonFuture = cubit.abandon();
+        // Allow the synchronous emit to land but don't yet drain the await on
+        // the DAO — state should already report isAbandoned.
+        await tester.pump();
+        expect(
+          cubit.state.isAbandoned,
+          isTrue,
+          reason: 'isAbandoned must be emitted before persistence resolves',
+        );
+        dao.completer.complete(1);
+        await abandonFuture;
+        await cubit.close();
+      },
+    );
+
+    testWidgets('8.5-CUBIT-003: abandon is idempotent', (tester) async {
+      final dao = _FakeSessionLogsDao();
+      final cubit = InSessionCubit(
+        steps: _steps,
+        sessionLogsDao: dao,
+        planId: 42,
+      )..start();
+
+      await tester.pump(const Duration(seconds: 1));
+      await cubit.abandon();
+      await tester.pump();
+      final stateAfterFirstAbandon = cubit.state;
+      await cubit.abandon();
+      await tester.pump();
+
+      expect(dao.insertedLogs, hasLength(1));
+      expect(cubit.state, stateAfterFirstAbandon);
+
+      await cubit.close();
+    });
+
+    testWidgets(
+      '8.5-CUBIT-004: abandon without SessionLogsDao still emits abandoned',
+      (tester) async {
+        final cubit = _cubit()..start();
+
+        await tester.pump(const Duration(seconds: 1));
+        await cubit.abandon();
+
+        expect(cubit.state.isAbandoned, isTrue);
+        expect(cubit.state.isComplete, isFalse);
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '8.5-CUBIT-008: pauseTimers + resumeTimers preserves countdown state',
+      (tester) async {
+        final cubit = _cubit()..start();
+        await tester.pump(const Duration(seconds: 1));
+        final pausedRemaining = cubit.state.secondsRemaining;
+
+        cubit.pauseTimers();
+        await tester.pump(const Duration(seconds: 5));
+
+        // No tick fired while paused.
+        expect(cubit.state.secondsRemaining, pausedRemaining);
+
+        cubit.resumeTimers();
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(cubit.state.secondsRemaining, pausedRemaining - 1);
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '8.5-CUBIT-009: regression — abandon then complete same session goes through completion path',
+      (tester) async {
+        final dao = _FakeSessionLogsDao();
+        final clock = _ManualClock(DateTime.utc(2026, 5, 17, 9));
+        final firstCubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 7,
+          sessionIndex: 0,
+          now: clock.call,
+        )..start();
+        await tester.pump(const Duration(seconds: 2));
+        clock.advance(const Duration(seconds: 2));
+        await firstCubit.abandon();
+        await firstCubit.close();
+
+        // Same (planId=7, sessionIndex=0) — completion path on retry.
+        final secondCubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 7,
+          sessionIndex: 0,
+          now: clock.call,
+        )..start();
+        // Drive all steps to natural completion.
+        final totalSeconds = _steps.fold<int>(
+          0,
+          (sum, step) => sum + step.durationSeconds + 1,
+        );
+        await tester.pump(Duration(seconds: totalSeconds));
+        await tester.pump();
+
+        // The completion call goes through upsertCompletion, NOT insertLog
+        // (which would have been silently ignored by insertOrIgnore + UNIQUE
+        // and left the abandoned row as the source of truth).
+        expect(dao.upsertedCompletions, hasLength(1));
+        expect(
+          dao.upsertedCompletions.single.sessionIndex,
+          const Value(0),
+        );
+        await secondCubit.close();
       },
     );
   });

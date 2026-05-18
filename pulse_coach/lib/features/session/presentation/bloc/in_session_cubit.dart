@@ -19,9 +19,16 @@ class InSessionCubit extends Cubit<InSessionState> {
   final int _sessionIndex;
   final HapticService? _hapticService;
   final LiveHrService? _liveHrService;
+  // Injectable for tests: WidgetTester.pump() advances Timer.periodic but not
+  // DateTime.now(), so elapsed-seconds tests must override this.
+  final DateTime Function() _now;
   Timer? _timer;
   Timer? _hrTimer;
   int _consecutiveHrNullCount = 0;
+  // Wall-clock anchor for `elapsedSeconds` (review D2): tick counting drifted
+  // by +1 at every step boundary and undercounted backgrounded time.
+  DateTime? _startedAt;
+  bool _abandonRequested = false;
 
   InSessionCubit({
     required List<ExerciseStep> steps,
@@ -30,11 +37,13 @@ class InSessionCubit extends Cubit<InSessionState> {
     int sessionIndex = 0,
     HapticService? hapticService,
     LiveHrService? liveHrService,
+    DateTime Function()? now,
   }) : _sessionLogsDao = sessionLogsDao,
        _planId = planId,
        _sessionIndex = sessionIndex,
        _hapticService = hapticService,
        _liveHrService = liveHrService,
+       _now = now ?? DateTime.now,
        super(
          InSessionState(
            steps: steps,
@@ -46,6 +55,7 @@ class InSessionCubit extends Cubit<InSessionState> {
   /// Starts the 1-second countdown tick. Idempotent: a second call is a no-op.
   void start() {
     if (_timer != null) return;
+    _startedAt ??= _now();
     _timer = Timer.periodic(const Duration(seconds: 1), _tick);
     if (_liveHrService != null) {
       unawaited(_fetchAndEmitHr());
@@ -56,8 +66,32 @@ class InSessionCubit extends Cubit<InSessionState> {
     }
   }
 
+  /// Pauses the countdown without tearing it down — used by the page while the
+  /// abandon-confirmation sheet is open (review fix: pause-on-sheet) so the
+  /// session does not auto-complete underneath the modal and trigger a stale
+  /// navigation.
+  void pauseTimers() {
+    _timer?.cancel();
+    _timer = null;
+    _hrTimer?.cancel();
+    _hrTimer = null;
+  }
+
+  /// Resumes the countdown after [pauseTimers]. Idempotent.
+  void resumeTimers() {
+    if (state.isComplete || state.isAbandoned) return;
+    if (_timer != null) return;
+    _timer = Timer.periodic(const Duration(seconds: 1), _tick);
+    if (_liveHrService != null && _hrTimer == null) {
+      _hrTimer = Timer.periodic(
+        const Duration(seconds: 5),
+        (_) => unawaited(_fetchAndEmitHr()),
+      );
+    }
+  }
+
   void _tick(Timer _) {
-    if (state.isComplete) return;
+    if (state.isComplete || state.isAbandoned) return;
     if (state.secondsRemaining > 0) {
       emit(state.copyWith(secondsRemaining: state.secondsRemaining - 1));
     } else {
@@ -85,9 +119,12 @@ class InSessionCubit extends Cubit<InSessionState> {
 
   Future<void> _persistCompletion() async {
     if (_sessionLogsDao != null && _planId != null) {
-      final now = DateTime.now();
+      final now = _now();
       try {
-        await _sessionLogsDao.insertLog(
+        // upsertCompletion overwrites any prior abandoned row for the same
+        // (planId, sessionIndex) so a successful completion always wins
+        // (review BLOCKER #1).
+        await _sessionLogsDao.upsertCompletion(
           SessionLogsCompanion(
             dailyPlanId: Value(_planId),
             sessionIndex: Value(_sessionIndex),
@@ -96,7 +133,7 @@ class InSessionCubit extends Cubit<InSessionState> {
           ),
         );
       } catch (e) {
-        debugPrint('InSessionCubit: insertLog failed: $e');
+        debugPrint('InSessionCubit: upsertCompletion failed: $e');
       }
     }
     if (!isClosed) emit(state.copyWith(isComplete: true));
@@ -127,14 +164,52 @@ class InSessionCubit extends Cubit<InSessionState> {
     }
   }
 
-  /// Called by the Abandon button. Stops the timer and marks the session as
-  /// abandoned (distinct from `isComplete`, which signals natural finish and
-  /// drives the RPE navigation). Story 8.5 adds confirmation + partial
-  /// session log write.
-  void abandon() {
+  /// Called after the user confirms abandonment. Emits `isAbandoned` first so
+  /// the BlocListener navigates immediately and the abandon button no longer
+  /// looks tappable; persistence runs in the background.
+  Future<void> abandon() async {
+    if (_abandonRequested || state.isAbandoned || state.isComplete) return;
+    _abandonRequested = true;
     _timer?.cancel();
+    _timer = null;
     _hrTimer?.cancel();
+    _hrTimer = null;
+
+    final elapsedSeconds = _startedAt == null
+        ? 0
+        : _now().difference(_startedAt!).inSeconds;
+    final currentStepIndex = state.currentStepIndex;
+
+    // Emit BEFORE awaiting persistence (review fix: UI race). On persistence
+    // failure we clear `_abandonRequested` so the user can retry — the
+    // listener will already have navigated, but `_persistAbandon` falling back
+    // logs the error.
     if (!isClosed) emit(state.copyWith(isAbandoned: true));
+    await _persistAbandon(elapsedSeconds, currentStepIndex);
+  }
+
+  Future<void> _persistAbandon(int elapsedSeconds, int currentStepIndex) async {
+    if (_sessionLogsDao == null || _planId == null) return;
+    final now = _now();
+    try {
+      await _sessionLogsDao.insertLog(
+        SessionLogsCompanion(
+          dailyPlanId: Value(_planId),
+          sessionIndex: Value(_sessionIndex),
+          completedAt: Value(now),
+          createdAt: Value(now),
+          abandoned: const Value(true),
+          elapsedSeconds: Value(elapsedSeconds),
+          currentStepIndex: Value(currentStepIndex),
+        ),
+      );
+    } catch (e) {
+      // Clear the request flag so the user can retry abandoning from a future
+      // entry point if the row needs to be written. The UI has already
+      // navigated to RPE via the `isAbandoned` emit above.
+      _abandonRequested = false;
+      debugPrint('InSessionCubit: _persistAbandon failed: $e');
+    }
   }
 
   @override
