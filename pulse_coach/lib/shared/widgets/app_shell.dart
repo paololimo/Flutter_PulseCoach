@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class AppShell extends StatelessWidget {
   final Widget child;
@@ -23,6 +24,7 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     final theme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -48,7 +50,7 @@ class AppShell extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.person),
-              title: const Text('Profile'),
+              title: Text(l10n.drawerProfile),
               onTap: () {
                 Navigator.pop(context);
                 context.go(AppRouter.profile);
@@ -56,7 +58,7 @@ class AppShell extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
+              title: Text(l10n.drawerSettings),
               onTap: () {
                 Navigator.pop(context);
                 context.go(AppRouter.settings);
@@ -64,7 +66,7 @@ class AppShell extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.privacy_tip),
-              title: const Text('Privacy'),
+              title: Text(l10n.drawerPrivacy),
               onTap: () {
                 Navigator.pop(context);
                 context.go(AppRouter.privacy);
@@ -73,7 +75,7 @@ class AppShell extends StatelessWidget {
             if (kDebugMode)
               ListTile(
                 leading: const Icon(Icons.bug_report),
-                title: const Text('Debug'),
+                title: Text(l10n.drawerDebug),
                 onTap: () => Navigator.pop(context),
               ),
           ],
@@ -85,15 +87,18 @@ class AppShell extends StatelessWidget {
         selectedItemColor: theme.primaryColor,
         unselectedItemColor: theme.onSurfaceVariant,
         onTap: (index) => context.go(_tabs[index]),
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center),
-            label: 'Sessions',
+            icon: const Icon(Icons.fitness_center),
+            label: l10n.navTabSessions,
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.today), label: 'Today'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Progress',
+            icon: const Icon(Icons.today),
+            label: l10n.navTabToday,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.bar_chart),
+            label: l10n.navTabProgress,
           ),
         ],
       ),

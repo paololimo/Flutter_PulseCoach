@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 part 'sessions_catalog_state.freezed.dart';
 
@@ -13,11 +14,11 @@ const sessionsCatalogDisplayCategories = <SessionsCatalogCategory>[
 ];
 
 extension SessionsCatalogCategoryX on SessionsCatalogCategory {
-  String get label => switch (this) {
-    SessionsCatalogCategory.all => 'All',
-    SessionsCatalogCategory.mobility => 'Mobility',
-    SessionsCatalogCategory.cardio => 'Cardio',
-    SessionsCatalogCategory.breathing => 'Breathing',
+  String localizedLabel(AppLocalizations l10n) => switch (this) {
+    SessionsCatalogCategory.all => l10n.catalogCategoryAll,
+    SessionsCatalogCategory.mobility => l10n.sessionNameMobility,
+    SessionsCatalogCategory.cardio => l10n.sessionNameCardio,
+    SessionsCatalogCategory.breathing => l10n.sessionNameBreathing,
   };
 
   String? get sessionType => switch (this) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_state.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class SessionCatalogCard extends StatelessWidget {
   const SessionCatalogCard({
@@ -44,7 +45,11 @@ class SessionCatalogCard extends StatelessWidget {
                         runSpacing: 8,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          _TypeChip(label: category.label),
+                          _TypeChip(
+                            label: category.localizedLabel(
+                              AppLocalizations.of(context)!,
+                            ),
+                          ),
                           _DifficultyDots(difficulty: exercise.difficulty),
                         ],
                       ),

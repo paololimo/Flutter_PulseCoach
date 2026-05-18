@@ -113,5 +113,30 @@
         "type": "String"
       }
     }
-  }
+  },
+  "catalogCategoryAll": "All",
+  "catalogUnavailable": "{category} sessions are unavailable right now.",
+  "@catalogUnavailable": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogEmpty": "No {category} sessions available.",
+  "@catalogEmpty": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "navTabSessions": "Sessions",
+  "navTabToday": "Today",
+  "navTabProgress": "Progress",
+  "drawerProfile": "Profile",
+  "drawerSettings": "Settings",
+  "drawerPrivacy": "Privacy",
+  "drawerDebug": "Debug",
+  "sessionsPageTitle": "Sessions"
 }

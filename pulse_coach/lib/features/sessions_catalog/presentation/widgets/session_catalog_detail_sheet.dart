@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_state.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class SessionCatalogDetailSheet extends StatelessWidget {
   const SessionCatalogDetailSheet({super.key, required this.exercise});
@@ -47,7 +48,11 @@ class SessionCatalogDetailSheet extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _MetadataPill(label: category.label),
+                  _MetadataPill(
+                    label: category.localizedLabel(
+                      AppLocalizations.of(context)!,
+                    ),
+                  ),
                   _MetadataPill(label: '${exercise.durationMinutes} min'),
                   _MetadataPill(label: intensity),
                 ],

@@ -287,9 +287,9 @@ void main() {
         await tester.pumpWidget(const PulseCoachApp());
         await tester.pumpAndSettle();
         // AppShell BottomNavigationBar confirms we are in the shell route
-        expect(find.text('Today'), findsOneWidget);
-        expect(find.text('Sessions'), findsOneWidget);
-        expect(find.text('Progress'), findsOneWidget);
+        expect(find.text('Oggi'), findsOneWidget);
+        expect(find.text('Sessioni'), findsOneWidget);
+        expect(find.text('Progressi'), findsOneWidget);
       },
     );
   });

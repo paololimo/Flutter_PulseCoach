@@ -12,6 +12,7 @@ import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exerci
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_cubit.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_state.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'sessions_page_test.mocks.dart';
@@ -79,6 +80,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.darkTheme,
+        locale: const Locale('it'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SessionsPage(
             cubit: cubit ?? SessionsCatalogCubit(mockGetExercisesByType),
@@ -97,10 +101,10 @@ void main() {
       await pumpPage(tester);
       await tester.pumpAndSettle();
 
-      expect(find.text('Sessions'), findsOneWidget);
-      expect(find.text('Mobility'), findsWidgets);
+      expect(find.text('Sessioni'), findsOneWidget);
+      expect(find.text('Mobilità'), findsWidgets);
       expect(find.text('Cardio'), findsWidgets);
-      expect(find.text('Breathing'), findsWidgets);
+      expect(find.text('Respirazione'), findsWidgets);
       expect(find.text('Hip Reset'), findsOneWidget);
       expect(find.text('Tempo Walk'), findsOneWidget);
       expect(find.text('Box Breathing'), findsOneWidget);
@@ -188,7 +192,7 @@ void main() {
         await pumpPage(tester, cubit: cubit);
         await tester.pumpAndSettle();
 
-        final breathingFinder = find.widgetWithText(FilterChip, 'Breathing');
+        final breathingFinder = find.widgetWithText(FilterChip, 'Respirazione');
         final initialRect = tester.getRect(breathingFinder);
         expect(initialRect.right, greaterThan(tester.view.physicalSize.width));
 

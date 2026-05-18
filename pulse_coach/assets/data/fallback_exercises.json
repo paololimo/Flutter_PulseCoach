@@ -1,13 +1,13 @@
 [
   {
     "id": "fallback_mobility_neck_rolls",
-    "name": "Neck Rolls",
-    "description": "Gentle neck mobility for a short movement break.",
+    "name": "Rotazioni del collo",
+    "description": "Mobilità delicata del collo per una breve pausa.",
     "sessionType": "mobility",
     "steps": [
-      "Sit or stand tall with shoulders relaxed.",
-      "Draw a small slow circle with your head.",
-      "Reverse direction and keep the movement controlled."
+      "Siediti o stai in piedi con le spalle rilassate.",
+      "Disegna un piccolo cerchio lento con la testa.",
+      "Inverti il senso e mantieni il movimento controllato."
     ],
     "durationMinutes": 4,
     "difficulty": "low",
@@ -16,13 +16,13 @@
   },
   {
     "id": "fallback_mobility_shoulder_circles",
-    "name": "Shoulder Circles",
-    "description": "Simple shoulder mobility for desk or standing breaks.",
+    "name": "Circonduzioni delle spalle",
+    "description": "Semplice mobilità delle spalle per pause da scrivania o in piedi.",
     "sessionType": "mobility",
     "steps": [
-      "Stand or sit tall with arms relaxed at your sides.",
-      "Roll both shoulders forward in smooth circles.",
-      "Switch direction and keep your breathing easy."
+      "In piedi o seduto, braccia rilassate lungo i fianchi.",
+      "Ruota entrambe le spalle in avanti con cerchi fluidi.",
+      "Cambia direzione mantenendo il respiro tranquillo."
     ],
     "durationMinutes": 3,
     "difficulty": "low",
@@ -31,13 +31,13 @@
   },
   {
     "id": "fallback_mobility_thoracic_rotations",
-    "name": "Standing Thoracic Rotations",
-    "description": "Upper-body rotation drill for quick mobility sessions.",
+    "name": "Rotazioni toraciche in piedi",
+    "description": "Esercizio di rotazione della parte alta per sessioni brevi.",
     "sessionType": "mobility",
     "steps": [
-      "Stand with feet hip-width apart and arms crossed lightly.",
-      "Rotate your chest to one side without forcing range.",
-      "Return to center and alternate sides at a steady pace."
+      "In piedi con i piedi alla larghezza dei fianchi e braccia incrociate.",
+      "Ruota il torace da un lato senza forzare l'apertura.",
+      "Torna al centro e alterna i lati con ritmo costante."
     ],
     "durationMinutes": 5,
     "difficulty": "low",
@@ -46,13 +46,13 @@
   },
   {
     "id": "fallback_mobility_cat_cow_standing",
-    "name": "Standing Cat-Cow",
-    "description": "Equipment-free spine mobility without floor contact.",
+    "name": "Gatto-mucca in piedi",
+    "description": "Mobilità della colonna senza attrezzi né contatto col pavimento.",
     "sessionType": "mobility",
     "steps": [
-      "Place hands on thighs with knees softly bent.",
-      "Round your back gently and tuck your chin.",
-      "Lift your chest and lengthen through the spine."
+      "Mani sulle cosce e ginocchia leggermente piegate.",
+      "Curva delicatamente la schiena e raccogli il mento.",
+      "Solleva il petto e allunga la colonna."
     ],
     "durationMinutes": 4,
     "difficulty": "low",
@@ -61,13 +61,13 @@
   },
   {
     "id": "fallback_mobility_hip_circles",
-    "name": "Hip Circles",
-    "description": "Controlled hip mobility for small indoor spaces.",
+    "name": "Circonduzioni delle anche",
+    "description": "Mobilità controllata delle anche per piccoli spazi interni.",
     "sessionType": "mobility",
     "steps": [
-      "Stand tall with feet hip-width apart.",
-      "Place hands on hips and draw slow circles.",
-      "Reverse direction while keeping the movement smooth."
+      "In piedi, piedi alla larghezza dei fianchi.",
+      "Mani sui fianchi e disegna lenti cerchi con il bacino.",
+      "Inverti il senso mantenendo il movimento fluido."
     ],
     "durationMinutes": 4,
     "difficulty": "low",
@@ -76,13 +76,13 @@
   },
   {
     "id": "fallback_mobility_ankle_rocks",
-    "name": "Ankle Rocks",
-    "description": "Short ankle mobility sequence for standing breaks.",
+    "name": "Oscillazioni delle caviglie",
+    "description": "Breve sequenza di mobilità per le caviglie da fare in piedi.",
     "sessionType": "mobility",
     "steps": [
-      "Stand near a wall or chair if you want balance support.",
-      "Rock gently from heels to toes.",
-      "Circle each ankle slowly before switching sides."
+      "Stai vicino a un muro o una sedia per appoggiarti se serve.",
+      "Oscilla dolcemente dai talloni alle punte.",
+      "Ruota lentamente ogni caviglia prima di cambiare lato."
     ],
     "durationMinutes": 3,
     "difficulty": "low",
@@ -91,13 +91,13 @@
   },
   {
     "id": "fallback_mobility_wrist_mobility",
-    "name": "Wrist Mobility",
-    "description": "Quick wrist and hand mobility for screen breaks.",
+    "name": "Mobilità dei polsi",
+    "description": "Mobilità rapida di polsi e mani per pause dallo schermo.",
     "sessionType": "mobility",
     "steps": [
-      "Extend both arms forward with relaxed shoulders.",
-      "Make slow wrist circles in one direction.",
-      "Reverse direction and gently open and close your hands."
+      "Allunga entrambe le braccia in avanti con spalle rilassate.",
+      "Disegna lenti cerchi con i polsi in una direzione.",
+      "Inverti il senso e apri e chiudi delicatamente le mani."
     ],
     "durationMinutes": 2,
     "difficulty": "low",
@@ -106,13 +106,13 @@
   },
   {
     "id": "fallback_mobility_standing_side_bends",
-    "name": "Standing Side Bends",
-    "description": "Side-body mobility that fits in a compact room.",
+    "name": "Flessioni laterali in piedi",
+    "description": "Mobilità del busto laterale che entra in una stanza piccola.",
     "sessionType": "mobility",
     "steps": [
-      "Stand tall with feet grounded.",
-      "Reach one arm overhead and lean gently to the opposite side.",
-      "Return to center and alternate sides with control."
+      "In piedi con i piedi ben appoggiati al suolo.",
+      "Allunga un braccio sopra la testa e inclinati dolcemente dal lato opposto.",
+      "Torna al centro e alterna i lati con controllo."
     ],
     "durationMinutes": 5,
     "difficulty": "low",
@@ -121,13 +121,13 @@
   },
   {
     "id": "fallback_mobility_hamstring_sweeps",
-    "name": "Hamstring Sweeps",
-    "description": "Low-impact posterior-chain mobility for micro-sessions.",
+    "name": "Allungo dei femorali",
+    "description": "Mobilità leggera della catena posteriore per micro-sessioni.",
     "sessionType": "mobility",
     "steps": [
-      "Step one heel slightly forward with toes lifted.",
-      "Hinge at the hips and sweep both hands toward the toes.",
-      "Stand back up and alternate legs at an easy pace."
+      "Avanza un tallone in avanti con la punta sollevata.",
+      "Piega le anche e sfiora le punte con entrambe le mani.",
+      "Rialzati e alterna le gambe con ritmo tranquillo."
     ],
     "durationMinutes": 6,
     "difficulty": "medium",
@@ -136,13 +136,13 @@
   },
   {
     "id": "fallback_mobility_seated_spinal_twist",
-    "name": "Seated Spinal Twist",
-    "description": "Chair-friendly rotation drill for short mobility breaks.",
+    "name": "Torsione spinale seduta",
+    "description": "Rotazione da sedia per brevi pause di mobilità.",
     "sessionType": "mobility",
     "steps": [
-      "Sit tall with feet flat on the floor.",
-      "Turn your chest gently toward one side.",
-      "Return to center and repeat on the other side."
+      "Siediti dritto con i piedi appoggiati al pavimento.",
+      "Ruota delicatamente il torace verso un lato.",
+      "Torna al centro e ripeti dall'altro lato."
     ],
     "durationMinutes": 4,
     "difficulty": "low",
@@ -151,13 +151,13 @@
   },
   {
     "id": "fallback_cardio_march_in_place",
-    "name": "Brisk March In Place",
-    "description": "Low-impact cardio for a quick indoor energy lift.",
+    "name": "Marcia sul posto",
+    "description": "Cardio a basso impatto per una rapida sferzata di energia in casa.",
     "sessionType": "cardio",
     "steps": [
-      "Stand tall with feet hip-width apart.",
-      "March in place while lifting knees comfortably.",
-      "Swing your arms naturally and keep a steady pace."
+      "In piedi, piedi alla larghezza dei fianchi.",
+      "Marcia sul posto sollevando le ginocchia comodamente.",
+      "Oscilla le braccia in modo naturale mantenendo un ritmo costante."
     ],
     "durationMinutes": 7,
     "difficulty": "medium",
@@ -166,13 +166,13 @@
   },
   {
     "id": "fallback_cardio_step_jacks",
-    "name": "Step Jacks",
-    "description": "No-jump cardio variation for small spaces.",
+    "name": "Step jacks",
+    "description": "Variante di cardio senza salto per spazi piccoli.",
     "sessionType": "cardio",
     "steps": [
-      "Stand with feet together and arms by your sides.",
-      "Step one foot out while raising both arms overhead.",
-      "Step back in and alternate sides at a lively pace."
+      "Piedi uniti e braccia lungo i fianchi.",
+      "Sposta un piede di lato sollevando entrambe le braccia sopra la testa.",
+      "Rientra e alterna i lati con ritmo vivace."
     ],
     "durationMinutes": 6,
     "difficulty": "medium",
@@ -181,13 +181,13 @@
   },
   {
     "id": "fallback_cardio_low_impact_skaters",
-    "name": "Low-Impact Skaters",
-    "description": "Side-to-side cardio without jumping.",
+    "name": "Pattinatori a basso impatto",
+    "description": "Cardio laterale senza salti.",
     "sessionType": "cardio",
     "steps": [
-      "Stand with knees softly bent.",
-      "Step diagonally behind with one foot while reaching across.",
-      "Alternate sides and keep the movement light."
+      "In piedi con le ginocchia leggermente piegate.",
+      "Sposta un piede in diagonale dietro l'altro mentre il braccio attraversa.",
+      "Alterna i lati mantenendo il movimento leggero."
     ],
     "durationMinutes": 7,
     "difficulty": "medium",
@@ -196,13 +196,13 @@
   },
   {
     "id": "fallback_cardio_toe_taps",
-    "name": "Forward Toe Taps",
-    "description": "Compact cardio drill with a steady rhythm.",
+    "name": "Toccate avanti con la punta",
+    "description": "Cardio compatto con ritmo costante.",
     "sessionType": "cardio",
     "steps": [
-      "Stand tall with arms relaxed.",
-      "Tap one toe forward and return it under your hips.",
-      "Alternate feet and add arm swings as the pace increases."
+      "In piedi dritto con le braccia rilassate.",
+      "Tocca con una punta in avanti e riportala sotto i fianchi.",
+      "Alterna i piedi e aggiungi oscillazioni delle braccia accelerando."
     ],
     "durationMinutes": 5,
     "difficulty": "low",
@@ -211,13 +211,13 @@
   },
   {
     "id": "fallback_cardio_side_steps",
-    "name": "Quick Side Steps",
-    "description": "Room-friendly cardio using short lateral steps.",
+    "name": "Passi laterali rapidi",
+    "description": "Cardio adatto a piccoli spazi con brevi passi laterali.",
     "sessionType": "cardio",
     "steps": [
-      "Stand with feet under hips and knees soft.",
-      "Step two counts to one side.",
-      "Step back the other way and keep your torso tall."
+      "In piedi con piedi sotto i fianchi e ginocchia morbide.",
+      "Sposta due passi verso un lato.",
+      "Ritorna dall'altra parte mantenendo il busto dritto."
     ],
     "durationMinutes": 6,
     "difficulty": "low",
@@ -226,13 +226,13 @@
   },
   {
     "id": "fallback_cardio_shadow_boxing",
-    "name": "Shadow Boxing",
-    "description": "Equipment-free cardio with controlled punches.",
+    "name": "Shadow boxing",
+    "description": "Cardio senza attrezzi con pugni controllati.",
     "sessionType": "cardio",
     "steps": [
-      "Stand with feet staggered and hands near your chest.",
-      "Punch forward lightly, alternating arms.",
-      "Keep elbows soft and move your feet gently."
+      "In guardia con i piedi sfalsati e le mani vicino al petto.",
+      "Tira pugni leggeri in avanti alternando le braccia.",
+      "Mantieni i gomiti morbidi e muovi delicatamente i piedi."
     ],
     "durationMinutes": 8,
     "difficulty": "medium",
@@ -241,13 +241,13 @@
   },
   {
     "id": "fallback_cardio_standing_knee_lifts",
-    "name": "Standing Knee Lifts",
-    "description": "Simple cardio sequence using controlled knee drives.",
+    "name": "Ginocchia alte in piedi",
+    "description": "Semplice sequenza cardio con sollevamenti controllati delle ginocchia.",
     "sessionType": "cardio",
     "steps": [
-      "Stand tall with hands relaxed or lightly in front.",
-      "Lift one knee toward waist height as comfortable.",
-      "Lower it and alternate sides with a steady rhythm."
+      "In piedi dritto, mani rilassate o leggermente davanti.",
+      "Solleva un ginocchio fino all'altezza della vita se comodo.",
+      "Abbassalo e alterna i lati con ritmo costante."
     ],
     "durationMinutes": 6,
     "difficulty": "medium",
@@ -256,13 +256,13 @@
   },
   {
     "id": "fallback_cardio_standing_mountain_climbers",
-    "name": "Standing Mountain Climbers",
-    "description": "Upright cardio option without floor contact.",
+    "name": "Mountain climbers in piedi",
+    "description": "Variante cardio in piedi senza contatto con il pavimento.",
     "sessionType": "cardio",
     "steps": [
-      "Stand tall and extend both arms forward.",
-      "Drive one knee up while pulling the opposite elbow back.",
-      "Alternate sides and keep the pace controlled."
+      "In piedi dritto con entrambe le braccia tese in avanti.",
+      "Solleva un ginocchio mentre tiri indietro il gomito opposto.",
+      "Alterna i lati mantenendo il ritmo controllato."
     ],
     "durationMinutes": 7,
     "difficulty": "high",
@@ -271,13 +271,13 @@
   },
   {
     "id": "fallback_cardio_squat_to_reach",
-    "name": "Squat to Reach",
-    "description": "Short full-body cardio using shallow squats.",
+    "name": "Squat con allungo",
+    "description": "Breve cardio total body con squat leggeri.",
     "sessionType": "cardio",
     "steps": [
-      "Stand with feet slightly wider than hips.",
-      "Sit into a comfortable shallow squat.",
-      "Stand and reach both arms overhead before repeating."
+      "Piedi leggermente più larghi delle anche.",
+      "Scendi in uno squat poco profondo e confortevole.",
+      "Risali e allunga entrambe le braccia sopra la testa prima di ripetere."
     ],
     "durationMinutes": 8,
     "difficulty": "medium",
@@ -286,13 +286,13 @@
   },
   {
     "id": "fallback_cardio_fast_feet",
-    "name": "Fast Feet",
-    "description": "Higher-tempo cardio drill for short indoor bursts.",
+    "name": "Piedi veloci",
+    "description": "Cardio ad alta intensità per brevi esplosioni in casa.",
     "sessionType": "cardio",
     "steps": [
-      "Stand with knees bent and feet under hips.",
-      "Take quick light steps in place.",
-      "Keep your chest lifted and slow down whenever needed."
+      "Ginocchia piegate e piedi sotto i fianchi.",
+      "Esegui passi rapidi e leggeri sul posto.",
+      "Mantieni il petto sollevato e rallenta quando serve."
     ],
     "durationMinutes": 4,
     "difficulty": "high",
@@ -301,13 +301,13 @@
   },
   {
     "id": "fallback_breathing_box_breathing",
-    "name": "Box Breathing",
-    "description": "Structured breathing drill with equal phases.",
+    "name": "Respirazione quadrata",
+    "description": "Esercizio di respirazione strutturato con fasi uguali.",
     "sessionType": "breathing",
     "steps": [
-      "Inhale through the nose for four counts.",
-      "Pause gently for four counts.",
-      "Exhale for four counts and pause again for four counts."
+      "Inspira dal naso per quattro tempi.",
+      "Trattieni delicatamente per quattro tempi.",
+      "Espira per quattro tempi e trattieni ancora per quattro."
     ],
     "durationMinutes": 4,
     "difficulty": "low",
@@ -316,13 +316,13 @@
   },
   {
     "id": "fallback_breathing_four_six_breathing",
-    "name": "4-6 Breathing",
-    "description": "Paced breathing with a longer exhale.",
+    "name": "Respirazione 4-6",
+    "description": "Respirazione cadenzata con espirazione più lunga.",
     "sessionType": "breathing",
     "steps": [
-      "Sit or stand comfortably with relaxed shoulders.",
-      "Inhale through the nose for four counts.",
-      "Exhale slowly for six counts and repeat."
+      "Siediti o stai in piedi comodo con le spalle rilassate.",
+      "Inspira dal naso per quattro tempi.",
+      "Espira lentamente per sei tempi e ripeti."
     ],
     "durationMinutes": 5,
     "difficulty": "low",
@@ -331,13 +331,13 @@
   },
   {
     "id": "fallback_breathing_paced_nasal_breathing",
-    "name": "Paced Nasal Breathing",
-    "description": "Quiet nasal breathing practice for a short reset.",
+    "name": "Respirazione nasale cadenzata",
+    "description": "Pratica di respirazione nasale silenziosa per un breve reset.",
     "sessionType": "breathing",
     "steps": [
-      "Close your mouth gently and breathe through the nose.",
-      "Match each inhale and exhale to a comfortable count.",
-      "Keep the pace smooth without straining."
+      "Chiudi delicatamente la bocca e respira dal naso.",
+      "Abbina ogni inspirazione ed espirazione a un conteggio comodo.",
+      "Mantieni il ritmo fluido senza forzare."
     ],
     "durationMinutes": 4,
     "difficulty": "low",
@@ -346,13 +346,13 @@
   },
   {
     "id": "fallback_breathing_physiological_sigh",
-    "name": "Physiological Sigh",
-    "description": "Short breathing pattern using two inhales and one exhale.",
+    "name": "Sospiro fisiologico",
+    "description": "Breve pattern di respirazione con due inspirazioni e un'espirazione.",
     "sessionType": "breathing",
     "steps": [
-      "Take a comfortable inhale through the nose.",
-      "Add a small second inhale at the top.",
-      "Exhale slowly through the mouth and repeat calmly."
+      "Inspira comodamente dal naso.",
+      "Aggiungi una piccola seconda inspirazione al culmine.",
+      "Espira lentamente dalla bocca e ripeti con calma."
     ],
     "durationMinutes": 3,
     "difficulty": "low",
@@ -361,13 +361,13 @@
   },
   {
     "id": "fallback_breathing_equal_breathing",
-    "name": "Equal Breathing",
-    "description": "Simple inhale and exhale rhythm for micro-sessions.",
+    "name": "Respirazione uguale",
+    "description": "Ritmo semplice di inspirazione ed espirazione per micro-sessioni.",
     "sessionType": "breathing",
     "steps": [
-      "Choose a comfortable count such as four.",
-      "Inhale for that count without lifting the shoulders.",
-      "Exhale for the same count and continue evenly."
+      "Scegli un conteggio comodo, ad esempio quattro.",
+      "Inspira per quel conteggio senza sollevare le spalle.",
+      "Espira per lo stesso conteggio e continua in modo costante."
     ],
     "durationMinutes": 4,
     "difficulty": "low",
@@ -376,13 +376,13 @@
   },
   {
     "id": "fallback_breathing_extended_exhale",
-    "name": "Extended Exhale",
-    "description": "Low-effort breathing drill with a longer release.",
+    "name": "Espirazione prolungata",
+    "description": "Esercizio di respirazione leggero con rilascio più lungo.",
     "sessionType": "breathing",
     "steps": [
-      "Inhale naturally through the nose.",
-      "Exhale slightly longer than the inhale.",
-      "Let each breath stay quiet and unforced."
+      "Inspira naturalmente dal naso.",
+      "Espira leggermente più a lungo dell'inspirazione.",
+      "Lascia ogni respiro silenzioso e senza forzature."
     ],
     "durationMinutes": 5,
     "difficulty": "low",
@@ -391,13 +391,13 @@
   },
   {
     "id": "fallback_breathing_belly_breathing",
-    "name": "Belly Breathing",
-    "description": "Foundational breathing practice with relaxed posture.",
+    "name": "Respirazione addominale",
+    "description": "Pratica di respirazione fondamentale con postura rilassata.",
     "sessionType": "breathing",
     "steps": [
-      "Place one hand on your belly if comfortable.",
-      "Inhale and let the belly expand gently.",
-      "Exhale and let the belly settle back naturally."
+      "Appoggia una mano sulla pancia se ti è comodo.",
+      "Inspira e lascia che la pancia si espanda delicatamente.",
+      "Espira e lascia che la pancia rientri in modo naturale."
     ],
     "durationMinutes": 6,
     "difficulty": "low",
@@ -406,13 +406,13 @@
   },
   {
     "id": "fallback_breathing_shoulder_drop_breathing",
-    "name": "Shoulder-Drop Breathing",
-    "description": "Breathing drill paired with gentle shoulder release.",
+    "name": "Respirazione con rilascio spalle",
+    "description": "Esercizio di respirazione abbinato a un rilascio delicato delle spalle.",
     "sessionType": "breathing",
     "steps": [
-      "Inhale and let the shoulders rise slightly.",
-      "Exhale and let the shoulders drop with control.",
-      "Repeat at an easy pace without forcing range."
+      "Inspira lasciando salire leggermente le spalle.",
+      "Espira lasciandole scendere con controllo.",
+      "Ripeti con ritmo tranquillo senza forzare."
     ],
     "durationMinutes": 3,
     "difficulty": "low",
@@ -421,13 +421,13 @@
   },
   {
     "id": "fallback_breathing_triangle_breathing",
-    "name": "Triangle Breathing",
-    "description": "Three-part breathing rhythm for short guided sessions.",
+    "name": "Respirazione triangolare",
+    "description": "Ritmo di respirazione in tre fasi per brevi sessioni guidate.",
     "sessionType": "breathing",
     "steps": [
-      "Inhale for three or four counts.",
-      "Pause gently for the same count.",
-      "Exhale for the same count and repeat."
+      "Inspira per tre o quattro tempi.",
+      "Trattieni delicatamente per lo stesso conteggio.",
+      "Espira per lo stesso conteggio e ripeti."
     ],
     "durationMinutes": 4,
     "difficulty": "low",
@@ -436,13 +436,13 @@
   },
   {
     "id": "fallback_breathing_reset_breath_scan",
-    "name": "Reset Breath Scan",
-    "description": "Short breathing sequence with attention to posture.",
+    "name": "Reset del respiro",
+    "description": "Breve sequenza di respirazione con attenzione alla postura.",
     "sessionType": "breathing",
     "steps": [
-      "Stand or sit comfortably and notice your posture.",
-      "Take three slow breaths at a natural pace.",
-      "Relax the jaw, hands, and shoulders as you continue."
+      "In piedi o seduto, osserva la tua postura.",
+      "Esegui tre respiri lenti a ritmo naturale.",
+      "Rilascia mandibola, mani e spalle mentre continui."
     ],
     "durationMinutes": 5,
     "difficulty": "low",

@@ -69,9 +69,9 @@ void main() {
       await tester.pumpWidget(buildTestShell());
       await tester.pumpAndSettle();
       expect(find.byType(BottomNavigationBar), findsOneWidget);
-      expect(find.text('Today'), findsOneWidget);
-      expect(find.text('Sessions'), findsOneWidget);
-      expect(find.text('Progress'), findsOneWidget);
+      expect(find.text('Oggi'), findsOneWidget);
+      expect(find.text('Sessioni'), findsOneWidget);
+      expect(find.text('Progressi'), findsOneWidget);
     });
 
     testWidgets('shows Drawer with Profile, Settings, Privacy', (tester) async {
@@ -79,8 +79,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DrawerButton));
       await tester.pumpAndSettle();
-      expect(find.text('Profile'), findsOneWidget);
-      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Profilo'), findsOneWidget);
+      expect(find.text('Impostazioni'), findsOneWidget);
       expect(find.text('Privacy'), findsOneWidget);
     });
 
@@ -98,7 +98,7 @@ void main() {
     testWidgets('tapping Sessions tab navigates to /sessions', (tester) async {
       await tester.pumpWidget(buildTestShell());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Sessions'));
+      await tester.tap(find.text('Sessioni'));
       await tester.pumpAndSettle();
       expect(find.text('Hip Reset'), findsOneWidget);
     });

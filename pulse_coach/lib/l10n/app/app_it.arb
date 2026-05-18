@@ -113,5 +113,30 @@
         "type": "String"
       }
     }
-  }
+  },
+  "catalogCategoryAll": "Tutti",
+  "catalogUnavailable": "Le sessioni {category} non sono disponibili in questo momento.",
+  "@catalogUnavailable": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogEmpty": "Nessuna sessione {category} disponibile.",
+  "@catalogEmpty": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "navTabSessions": "Sessioni",
+  "navTabToday": "Oggi",
+  "navTabProgress": "Progressi",
+  "drawerProfile": "Profilo",
+  "drawerSettings": "Impostazioni",
+  "drawerPrivacy": "Privacy",
+  "drawerDebug": "Debug",
+  "sessionsPageTitle": "Sessioni"
 }

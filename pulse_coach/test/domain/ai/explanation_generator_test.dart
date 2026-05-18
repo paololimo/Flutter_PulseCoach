@@ -76,7 +76,7 @@ void main() {
     test('5.6-UNIT-006: Recovering → reduced-intensity message', () {
       final sv = _sv(state: BehavioralState.recovering);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('lighter'));
+      expect(result.single.toLowerCase(), contains('leggera'));
     });
 
     test('5.6-UNIT-007: Recovering overrides biometric signals', () {
@@ -88,7 +88,7 @@ void main() {
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
       // Must still use Recovering message, not the biometric/streak message
-      expect(result.single.toLowerCase(), contains('lighter'));
+      expect(result.single.toLowerCase(), contains('leggera'));
     });
   });
 
@@ -97,21 +97,21 @@ void main() {
       final sv = _sv(restingHR: 80.0, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
       final text = result.single.toLowerCase();
-      expect(text.contains('hr') || text.contains('gentle') || text.contains('elevated'), isTrue);
+      expect(text.contains('frequenza') || text.contains('dolce') || text.contains('elevata'), isTrue);
     });
 
     test('5.6-UNIT-009: low step count → mentions step count or light movement', () {
       final sv = _sv(stepCount: 1500, restingHR: null, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
       final text = result.single.toLowerCase();
-      expect(text.contains('step') || text.contains('light') || text.contains('movement'), isTrue);
+      expect(text.contains('passi') || text.contains('leggero') || text.contains('movimento'), isTrue);
     });
 
     test('5.6-UNIT-010: good streak → positive/momentum message', () {
       final sv = _sv(streak: 4, restingHR: null, stepCount: null, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
       final text = result.single.toLowerCase();
-      expect(text.contains('streak') || text.contains('momentum') || text.contains('consistent'), isTrue);
+      expect(text.contains('serie') || text.contains('ritmo') || text.contains('costante'), isTrue);
     });
   });
 
@@ -127,7 +127,7 @@ void main() {
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
       final text = result.single.toLowerCase();
       expect(
-        text.contains('consistent') || text.contains('stepping') || text.contains('week'),
+        text.contains('costante') || text.contains('asticella') || text.contains('settimana'),
         isTrue,
       );
     });
@@ -142,7 +142,7 @@ void main() {
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
       final text = result.single.toLowerCase();
       expect(
-        text.contains('high') || text.contains('moderate') || text.contains('effort'),
+        text.contains('intenso') || text.contains('moderati') || text.contains('sforzo'),
         isTrue,
       );
     });
@@ -160,7 +160,7 @@ void main() {
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
       final text = result.single.toLowerCase();
       expect(
-        text.contains('high') || text.contains('effort') || text.contains('dial') || text.contains('intensity'),
+        text.contains('massimo') || text.contains('sforzo') || text.contains('riduciamo') || text.contains('intensità'),
         isTrue,
       );
     });
@@ -175,7 +175,7 @@ void main() {
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
       final text = result.single.toLowerCase();
-      expect(text.contains('back') || text.contains('easing') || text.contains('gentle'), isTrue);
+      expect(text.contains('bentornato') || text.contains('dolcemente') || text.contains('ripartiamo'), isTrue);
     });
   });
 
@@ -183,19 +183,19 @@ void main() {
     test('5.6-UNIT-018: HR exactly 75.0 → not classified as elevated (boundary)', () {
       final sv = _sv(restingHR: 75.0, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), isNot(contains('elevated')));
+      expect(result.single.toLowerCase(), isNot(contains('elevata')));
     });
 
     test('5.6-UNIT-019: HR exactly 60.0 with streak=1 → "solid" message (boundary)', () {
       final sv = _sv(restingHR: 60.0, streak: 1, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('solid'));
+      expect(result.single.toLowerCase(), contains('ottima'));
     });
 
     test('5.6-UNIT-020: stepCount exactly 3000 → not classified as low (boundary)', () {
       final sv = _sv(stepCount: 3000, restingHR: null, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), isNot(contains('low step')));
+      expect(result.single.toLowerCase(), isNot(contains('pochi passi')));
     });
 
     test('5.6-UNIT-021: RPE avg exactly 6.5 with streak=2 → step-up message (boundary)', () {
@@ -207,7 +207,7 @@ void main() {
         state: BehavioralState.active,
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('stepping it up'));
+      expect(result.single.toLowerCase(), contains('asticella'));
     });
 
     test('5.6-UNIT-022: RPE avg exactly 7.5 → falls to generic (boundary; > is exclusive)', () {
@@ -218,25 +218,25 @@ void main() {
         state: BehavioralState.active,
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('comfort zone'));
+      expect(result.single.toLowerCase(), contains('comfort'));
     });
 
     test('5.6-UNIT-023: streak exactly 3 → momentum message (boundary)', () {
       final sv = _sv(streak: 3, restingHR: null, stepCount: null, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('momentum'));
+      expect(result.single.toLowerCase(), contains('ritmo'));
     });
 
     test('5.6-UNIT-024: AtRisk + missedSessions exactly 2 → rebuild message (boundary)', () {
       final sv = _sv(state: BehavioralState.atRisk, missedSessions: 2);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('rebuild'));
+      expect(result.single.toLowerCase(), contains('calma'));
     });
 
     test('5.6-UNIT-025: AtRisk + missedSessions exactly 1 → high-load message (boundary)', () {
       final sv = _sv(state: BehavioralState.atRisk, missedSessions: 1);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('high load'));
+      expect(result.single.toLowerCase(), contains('carico alto'));
     });
   });
 

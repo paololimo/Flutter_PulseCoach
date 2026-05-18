@@ -198,11 +198,11 @@ void main() {
   });
 
   group('StateMessages — ARB invariants (AC7, AC8, AC11)', () {
-    test('7.1-ARB-001: ARB file has exactly 50 user-facing keys', () {
+    test('7.1-ARB-001: ARB file has exactly 61 user-facing keys', () {
       final arb = _stateMessagesArb();
       final userFacingKeys = arb.keys.where((key) => !key.startsWith('@'));
 
-      expect(userFacingKeys, hasLength(50));
+      expect(userFacingKeys, hasLength(61));
       expect(
         userFacingKeys,
         containsAll([

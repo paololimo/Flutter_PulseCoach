@@ -7,6 +7,7 @@ import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_state.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/widgets/session_catalog_card.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/widgets/session_catalog_detail_sheet.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:shimmer/shimmer.dart';
 
 class SessionsPage extends StatefulWidget {
@@ -79,7 +80,7 @@ class _LoadedCatalog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Sessions',
+                  AppLocalizations.of(context)!.sessionsPageTitle,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: pulseTheme.onSurface,
                     fontWeight: FontWeight.w800,
@@ -161,7 +162,9 @@ class _CategoryFiltersState extends State<_CategoryFilters> {
               padding: const EdgeInsets.only(right: 8),
               child: FilterChip(
                 key: _chipKeys[category],
-                label: Text(category.label),
+                label: Text(
+                  category.localizedLabel(AppLocalizations.of(context)!),
+                ),
                 selected: widget.selectedCategory == category,
                 onSelected: (_) => widget.onSelected(category),
               ),
@@ -187,13 +190,15 @@ class _CategorySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pulseTheme = theme.extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
+    final categoryName = category.localizedLabel(l10n);
 
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
           Text(
-            category.label,
+            categoryName,
             style: theme.textTheme.titleLarge?.copyWith(
               color: pulseTheme.onSurface,
               fontWeight: FontWeight.w800,
@@ -205,8 +210,8 @@ class _CategorySection extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
                 degraded
-                    ? '${category.label} sessions are unavailable right now.'
-                    : 'No ${category.label.toLowerCase()} sessions available.',
+                    ? l10n.catalogUnavailable(categoryName)
+                    : l10n.catalogEmpty(categoryName.toLowerCase()),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: pulseTheme.onSurfaceVariant,
                 ),
