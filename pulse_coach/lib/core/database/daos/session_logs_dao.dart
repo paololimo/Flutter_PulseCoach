@@ -27,6 +27,19 @@ class SessionLogsDao extends DatabaseAccessor<AppDatabase>
   Future<List<SessionLog>> getLogsForPlan(int planId) =>
       (select(sessionLogs)..where((t) => t.dailyPlanId.equals(planId))).get();
 
+  /// Returns the persisted log row for `(planId, sessionIndex)`, or null when
+  /// none exists yet (e.g. the user reached `RpePage` without an upstream
+  /// `session_logs` write).
+  Future<SessionLog?> getLogFor(int planId, int sessionIndex) =>
+      (select(sessionLogs)
+            ..where(
+              (t) =>
+                  t.dailyPlanId.equals(planId) &
+                  t.sessionIndex.equals(sessionIndex),
+            )
+            ..limit(1))
+          .getSingleOrNull();
+
   /// Drift-native live query. Emits the current rows immediately and re-emits
   /// after every insert/update/delete touching `sessionLogs`. TodaySessionCubit
   /// subscribes to this so InSessionCubit's persistence flow surfaces in the

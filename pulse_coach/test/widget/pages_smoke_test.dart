@@ -30,6 +30,7 @@ import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
+import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/session_summary_page.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/countdown_overlay.dart';
@@ -159,17 +160,39 @@ void main() {
       },
     );
 
-    testWidgets(
-      '[P1] 1.7-WIDGET-007: RpePage renders with correct AppBar title',
-      (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(theme: AppTheme.darkTheme, home: const RpePage()),
-        );
-        await tester.pump();
-        expect(find.text('RPE'), findsOneWidget);
-        expect(find.text('RPE — Story 9.x'), findsOneWidget);
-      },
-    );
+    testWidgets('[P1] 1.7-WIDGET-007: RpePage renders post-session RPE input', (
+      tester,
+    ) async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      getIt.registerSingleton(db.rpeFeedbackDao);
+      addTearDown(() async {
+        await db.close();
+        await getIt.reset();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('it'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.darkTheme,
+          // P4 fix: RpePage redirects to /today on null args; provide
+          // realistic extras so the smoke test exercises the rendered UI.
+          home: const RpePage(
+            args: RpeSubmitArgs(
+              planId: 1,
+              sessionIndex: 0,
+              abandoned: false,
+              armKey: 'mobility_low',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.text("Com'è andata?"), findsOneWidget);
+      expect(find.text('10'), findsOneWidget);
+    });
 
     testWidgets(
       '[P1] 1.7-WIDGET-008: SessionSummaryPage renders with correct AppBar title',

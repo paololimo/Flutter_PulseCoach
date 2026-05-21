@@ -212,9 +212,153 @@ void main() {
       expect(db.migration.onUpgrade, isNotNull);
     });
 
-    test('schemaVersion is 7', () {
-      expect(db.schemaVersion, 7);
+    test('schemaVersion is 8', () {
+      expect(db.schemaVersion, 8);
     });
+  });
+
+  group('AppDatabase - rpe_feedback v8 schema', () {
+    test('9.1-DB-001: fresh install creates session_log_id column', () async {
+      final columns = await db
+          .customSelect('PRAGMA table_info(rpe_feedback)')
+          .get();
+      final names = columns.map((row) => row.data['name']);
+
+      expect(names, contains('session_log_id'));
+    });
+
+    test(
+      '9.1-DB-002: migration v7 → v8 adds nullable session_log_id',
+      () async {
+        final v7Raw = sqlite3.openInMemory();
+        final now = DateTime.utc(2026, 5, 20, 9).millisecondsSinceEpoch;
+        v7Raw.execute('''
+          CREATE TABLE IF NOT EXISTS rpe_feedback (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            rpe_value INTEGER NOT NULL,
+            recorded_at INTEGER NOT NULL
+          )
+        ''');
+        v7Raw.execute(
+          'INSERT INTO rpe_feedback (session_id, rpe_value, recorded_at) '
+          'VALUES (?, ?, ?)',
+          [1, 7, now],
+        );
+        v7Raw.execute('PRAGMA user_version = 7');
+
+        final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v7Raw));
+        final columns = await migratedDb
+            .customSelect('PRAGMA table_info(rpe_feedback)')
+            .get();
+        final names = columns.map((row) => row.data['name']);
+        final rows = await migratedDb
+            .customSelect('SELECT session_log_id FROM rpe_feedback')
+            .get();
+
+        expect(names, contains('session_log_id'));
+        expect(rows.single.data['session_log_id'], isNull);
+
+        await migratedDb.close();
+      },
+    );
+
+    test('9.1-DB-003: composite migration v3 → v8 runs cleanly', () async {
+      final v3Raw = sqlite3.openInMemory();
+      v3Raw.execute('''
+          CREATE TABLE IF NOT EXISTS daily_plans (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            plan_date TEXT NOT NULL UNIQUE,
+            plan_json TEXT NOT NULL,
+            generated_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL
+          )
+        ''');
+      v3Raw.execute('''
+          CREATE TABLE IF NOT EXISTS rpe_feedback (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            rpe_value INTEGER NOT NULL,
+            recorded_at INTEGER NOT NULL
+          )
+        ''');
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      v3Raw.execute(
+        'INSERT INTO daily_plans '
+        '(plan_date, plan_json, generated_at, created_at) '
+        'VALUES (?, ?, ?, ?)',
+        ['2026-04-01', '{"sessions":[]}', nowMs, nowMs],
+      );
+      v3Raw.execute(
+        'INSERT INTO rpe_feedback (session_id, rpe_value, recorded_at) '
+        'VALUES (?, ?, ?)',
+        [1, 6, nowMs],
+      );
+      v3Raw.execute('PRAGMA user_version = 3');
+
+      final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v3Raw));
+
+      final plan = await migratedDb.dailyPlansDao.getPlanForDate('2026-04-01');
+      expect(plan, isNotNull);
+      expect(plan!.isCompleted, false);
+
+      final columns = await migratedDb
+          .customSelect('PRAGMA table_info(rpe_feedback)')
+          .get();
+      expect(
+        columns.map((row) => row.data['name']),
+        contains('session_log_id'),
+      );
+
+      final feedback = await migratedDb.rpeFeedbackDao.getAllFeedback();
+      expect(feedback, hasLength(1));
+      expect(feedback.single.rpeValue, 6);
+      // P11 (review): the v3→v8 chain must preserve old data with a NULL
+      // session_log_id — this is the contract that lets us defer wiring the
+      // FK on pre-9.1 rows without losing them.
+      expect(feedback.single.sessionLogId, isNull);
+
+      await migratedDb.close();
+    });
+
+    test(
+      '9.1-DB-004: re-running migration on a v7 schema already carrying '
+      'session_log_id is a no-op (P3: survive partial v8)',
+      () async {
+        // Simulate a partial v8: the column was added by a previous run but
+        // user_version was never bumped (process killed between addColumn and
+        // the implicit PRAGMA write). Drift will fire onUpgrade again — and
+        // without the column-exists guard SQLite would throw "duplicate column
+        // name: session_log_id" and brick the open.
+        final raw = sqlite3.openInMemory();
+        raw.execute('''
+          CREATE TABLE IF NOT EXISTS rpe_feedback (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            rpe_value INTEGER NOT NULL,
+            recorded_at INTEGER NOT NULL,
+            session_log_id INTEGER
+          )
+        ''');
+        raw.execute('PRAGMA user_version = 7');
+
+        final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(raw));
+        final columns = await migratedDb
+            .customSelect('PRAGMA table_info(rpe_feedback)')
+            .get();
+        final sessionLogIdHits = columns
+            .where((row) => row.data['name'] == 'session_log_id')
+            .toList();
+
+        expect(
+          sessionLogIdHits,
+          hasLength(1),
+          reason: 'column must remain unique — no duplicate add',
+        );
+
+        await migratedDb.close();
+      },
+    );
   });
 
   group('AppDatabase - real migration v1 → v2', () {

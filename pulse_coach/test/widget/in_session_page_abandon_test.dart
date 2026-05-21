@@ -5,6 +5,7 @@ import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
+import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
@@ -15,7 +16,7 @@ const _session = PlannedSession(
   isIndoor: true,
 );
 
-GoRouter _router() => GoRouter(
+GoRouter _router({void Function(Object? extra)? onRpeExtra}) => GoRouter(
   initialLocation: AppRouter.sessionActive,
   routes: [
     GoRoute(
@@ -24,7 +25,10 @@ GoRouter _router() => GoRouter(
     ),
     GoRoute(
       path: AppRouter.sessionRpe,
-      builder: (_, _) => const Scaffold(body: Text('RPE target')),
+      builder: (_, state) {
+        onRpeExtra?.call(state.extra);
+        return const Scaffold(body: Text('RPE target'));
+      },
     ),
   ],
 );
@@ -90,7 +94,10 @@ void main() {
     testWidgets(
       '8.5-VIEW-003: confirming abandonment routes to RPE through state listener',
       (tester) async {
-        await tester.pumpWidget(_wrap(_router()));
+        Object? rpeExtra;
+        await tester.pumpWidget(
+          _wrap(_router(onRpeExtra: (extra) => rpeExtra = extra)),
+        );
         await _pumpPastCountdown(tester);
 
         await tester.tap(find.text('Abbandona'));
@@ -99,6 +106,13 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('RPE target'), findsOneWidget);
+        expect(rpeExtra, isA<RpeSubmitArgs>());
+        final args = rpeExtra! as RpeSubmitArgs;
+        expect(args.sessionIndex, 0);
+        expect(args.abandoned, isTrue);
+        // P6 fix: intensity 3 falls in the low band (1..3) per
+        // safety_constraints.dart, mirroring ContextualBandit._intensityValue.
+        expect(args.armKey, 'cardio_low');
       },
     );
   });

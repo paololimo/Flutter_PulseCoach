@@ -1631,6 +1631,17 @@ class $RpeFeedbackTable extends RpeFeedback
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _sessionLogIdMeta = const VerificationMeta(
+    'sessionLogId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionLogId = GeneratedColumn<int>(
+    'session_log_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _rpeValueMeta = const VerificationMeta(
     'rpeValue',
   );
@@ -1654,7 +1665,13 @@ class $RpeFeedbackTable extends RpeFeedback
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, sessionId, rpeValue, recordedAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    sessionLogId,
+    rpeValue,
+    recordedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1677,6 +1694,15 @@ class $RpeFeedbackTable extends RpeFeedback
       );
     } else if (isInserting) {
       context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('session_log_id')) {
+      context.handle(
+        _sessionLogIdMeta,
+        sessionLogId.isAcceptableOrUnknown(
+          data['session_log_id']!,
+          _sessionLogIdMeta,
+        ),
+      );
     }
     if (data.containsKey('rpe_value')) {
       context.handle(
@@ -1711,6 +1737,10 @@ class $RpeFeedbackTable extends RpeFeedback
         DriftSqlType.int,
         data['${effectivePrefix}session_id'],
       )!,
+      sessionLogId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_log_id'],
+      ),
       rpeValue: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}rpe_value'],
@@ -1731,11 +1761,13 @@ class $RpeFeedbackTable extends RpeFeedback
 class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
   final int id;
   final int sessionId;
+  final int? sessionLogId;
   final int rpeValue;
   final DateTime recordedAt;
   const RpeFeedbackData({
     required this.id,
     required this.sessionId,
+    this.sessionLogId,
     required this.rpeValue,
     required this.recordedAt,
   });
@@ -1744,6 +1776,9 @@ class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['session_id'] = Variable<int>(sessionId);
+    if (!nullToAbsent || sessionLogId != null) {
+      map['session_log_id'] = Variable<int>(sessionLogId);
+    }
     map['rpe_value'] = Variable<int>(rpeValue);
     map['recorded_at'] = Variable<DateTime>(recordedAt);
     return map;
@@ -1753,6 +1788,9 @@ class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
     return RpeFeedbackCompanion(
       id: Value(id),
       sessionId: Value(sessionId),
+      sessionLogId: sessionLogId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sessionLogId),
       rpeValue: Value(rpeValue),
       recordedAt: Value(recordedAt),
     );
@@ -1766,6 +1804,7 @@ class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
     return RpeFeedbackData(
       id: serializer.fromJson<int>(json['id']),
       sessionId: serializer.fromJson<int>(json['sessionId']),
+      sessionLogId: serializer.fromJson<int?>(json['sessionLogId']),
       rpeValue: serializer.fromJson<int>(json['rpeValue']),
       recordedAt: serializer.fromJson<DateTime>(json['recordedAt']),
     );
@@ -1776,6 +1815,7 @@ class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'sessionId': serializer.toJson<int>(sessionId),
+      'sessionLogId': serializer.toJson<int?>(sessionLogId),
       'rpeValue': serializer.toJson<int>(rpeValue),
       'recordedAt': serializer.toJson<DateTime>(recordedAt),
     };
@@ -1784,11 +1824,13 @@ class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
   RpeFeedbackData copyWith({
     int? id,
     int? sessionId,
+    Value<int?> sessionLogId = const Value.absent(),
     int? rpeValue,
     DateTime? recordedAt,
   }) => RpeFeedbackData(
     id: id ?? this.id,
     sessionId: sessionId ?? this.sessionId,
+    sessionLogId: sessionLogId.present ? sessionLogId.value : this.sessionLogId,
     rpeValue: rpeValue ?? this.rpeValue,
     recordedAt: recordedAt ?? this.recordedAt,
   );
@@ -1796,6 +1838,9 @@ class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
     return RpeFeedbackData(
       id: data.id.present ? data.id.value : this.id,
       sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      sessionLogId: data.sessionLogId.present
+          ? data.sessionLogId.value
+          : this.sessionLogId,
       rpeValue: data.rpeValue.present ? data.rpeValue.value : this.rpeValue,
       recordedAt: data.recordedAt.present
           ? data.recordedAt.value
@@ -1808,6 +1853,7 @@ class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
     return (StringBuffer('RpeFeedbackData(')
           ..write('id: $id, ')
           ..write('sessionId: $sessionId, ')
+          ..write('sessionLogId: $sessionLogId, ')
           ..write('rpeValue: $rpeValue, ')
           ..write('recordedAt: $recordedAt')
           ..write(')'))
@@ -1815,13 +1861,15 @@ class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
   }
 
   @override
-  int get hashCode => Object.hash(id, sessionId, rpeValue, recordedAt);
+  int get hashCode =>
+      Object.hash(id, sessionId, sessionLogId, rpeValue, recordedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RpeFeedbackData &&
           other.id == this.id &&
           other.sessionId == this.sessionId &&
+          other.sessionLogId == this.sessionLogId &&
           other.rpeValue == this.rpeValue &&
           other.recordedAt == this.recordedAt);
 }
@@ -1829,17 +1877,20 @@ class RpeFeedbackData extends DataClass implements Insertable<RpeFeedbackData> {
 class RpeFeedbackCompanion extends UpdateCompanion<RpeFeedbackData> {
   final Value<int> id;
   final Value<int> sessionId;
+  final Value<int?> sessionLogId;
   final Value<int> rpeValue;
   final Value<DateTime> recordedAt;
   const RpeFeedbackCompanion({
     this.id = const Value.absent(),
     this.sessionId = const Value.absent(),
+    this.sessionLogId = const Value.absent(),
     this.rpeValue = const Value.absent(),
     this.recordedAt = const Value.absent(),
   });
   RpeFeedbackCompanion.insert({
     this.id = const Value.absent(),
     required int sessionId,
+    this.sessionLogId = const Value.absent(),
     required int rpeValue,
     required DateTime recordedAt,
   }) : sessionId = Value(sessionId),
@@ -1848,12 +1899,14 @@ class RpeFeedbackCompanion extends UpdateCompanion<RpeFeedbackData> {
   static Insertable<RpeFeedbackData> custom({
     Expression<int>? id,
     Expression<int>? sessionId,
+    Expression<int>? sessionLogId,
     Expression<int>? rpeValue,
     Expression<DateTime>? recordedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (sessionId != null) 'session_id': sessionId,
+      if (sessionLogId != null) 'session_log_id': sessionLogId,
       if (rpeValue != null) 'rpe_value': rpeValue,
       if (recordedAt != null) 'recorded_at': recordedAt,
     });
@@ -1862,12 +1915,14 @@ class RpeFeedbackCompanion extends UpdateCompanion<RpeFeedbackData> {
   RpeFeedbackCompanion copyWith({
     Value<int>? id,
     Value<int>? sessionId,
+    Value<int?>? sessionLogId,
     Value<int>? rpeValue,
     Value<DateTime>? recordedAt,
   }) {
     return RpeFeedbackCompanion(
       id: id ?? this.id,
       sessionId: sessionId ?? this.sessionId,
+      sessionLogId: sessionLogId ?? this.sessionLogId,
       rpeValue: rpeValue ?? this.rpeValue,
       recordedAt: recordedAt ?? this.recordedAt,
     );
@@ -1881,6 +1936,9 @@ class RpeFeedbackCompanion extends UpdateCompanion<RpeFeedbackData> {
     }
     if (sessionId.present) {
       map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (sessionLogId.present) {
+      map['session_log_id'] = Variable<int>(sessionLogId.value);
     }
     if (rpeValue.present) {
       map['rpe_value'] = Variable<int>(rpeValue.value);
@@ -1896,6 +1954,7 @@ class RpeFeedbackCompanion extends UpdateCompanion<RpeFeedbackData> {
     return (StringBuffer('RpeFeedbackCompanion(')
           ..write('id: $id, ')
           ..write('sessionId: $sessionId, ')
+          ..write('sessionLogId: $sessionLogId, ')
           ..write('rpeValue: $rpeValue, ')
           ..write('recordedAt: $recordedAt')
           ..write(')'))
@@ -5316,6 +5375,7 @@ typedef $$RpeFeedbackTableCreateCompanionBuilder =
     RpeFeedbackCompanion Function({
       Value<int> id,
       required int sessionId,
+      Value<int?> sessionLogId,
       required int rpeValue,
       required DateTime recordedAt,
     });
@@ -5323,6 +5383,7 @@ typedef $$RpeFeedbackTableUpdateCompanionBuilder =
     RpeFeedbackCompanion Function({
       Value<int> id,
       Value<int> sessionId,
+      Value<int?> sessionLogId,
       Value<int> rpeValue,
       Value<DateTime> recordedAt,
     });
@@ -5343,6 +5404,11 @@ class $$RpeFeedbackTableFilterComposer
 
   ColumnFilters<int> get sessionId => $composableBuilder(
     column: $table.sessionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sessionLogId => $composableBuilder(
+    column: $table.sessionLogId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5376,6 +5442,11 @@ class $$RpeFeedbackTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get sessionLogId => $composableBuilder(
+    column: $table.sessionLogId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get rpeValue => $composableBuilder(
     column: $table.rpeValue,
     builder: (column) => ColumnOrderings(column),
@@ -5401,6 +5472,11 @@ class $$RpeFeedbackTableAnnotationComposer
 
   GeneratedColumn<int> get sessionId =>
       $composableBuilder(column: $table.sessionId, builder: (column) => column);
+
+  GeneratedColumn<int> get sessionLogId => $composableBuilder(
+    column: $table.sessionLogId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get rpeValue =>
       $composableBuilder(column: $table.rpeValue, builder: (column) => column);
@@ -5444,11 +5520,13 @@ class $$RpeFeedbackTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> sessionId = const Value.absent(),
+                Value<int?> sessionLogId = const Value.absent(),
                 Value<int> rpeValue = const Value.absent(),
                 Value<DateTime> recordedAt = const Value.absent(),
               }) => RpeFeedbackCompanion(
                 id: id,
                 sessionId: sessionId,
+                sessionLogId: sessionLogId,
                 rpeValue: rpeValue,
                 recordedAt: recordedAt,
               ),
@@ -5456,11 +5534,13 @@ class $$RpeFeedbackTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required int sessionId,
+                Value<int?> sessionLogId = const Value.absent(),
                 required int rpeValue,
                 required DateTime recordedAt,
               }) => RpeFeedbackCompanion.insert(
                 id: id,
                 sessionId: sessionId,
+                sessionLogId: sessionLogId,
                 rpeValue: rpeValue,
                 recordedAt: recordedAt,
               ),

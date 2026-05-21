@@ -8,6 +8,7 @@ import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_blo
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
+import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/session/domain/entities/session_start_args.dart';
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
@@ -81,7 +82,13 @@ class AppRouter {
           return InSessionPage(session: extra as PlannedSession?);
         },
       ),
-      GoRoute(path: sessionRpe, builder: (context, state) => const RpePage()),
+      GoRoute(
+        path: sessionRpe,
+        builder: (context, state) {
+          final extra = state.extra;
+          return RpePage(args: extra is RpeSubmitArgs ? extra : null);
+        },
+      ),
       GoRoute(
         path: sessionSummary,
         builder: (context, state) => const SessionSummaryPage(),

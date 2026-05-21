@@ -8,6 +8,7 @@ import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
+import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.dart';
 import 'package:pulse_coach/features/session/presentation/utils/haptic_service.dart';
@@ -95,7 +96,31 @@ class _InSessionPageState extends State<InSessionPage> {
         listenWhen: (previous, current) =>
             (current.isComplete && !previous.isComplete) ||
             (current.isAbandoned && !previous.isAbandoned),
-        listener: (context, state) => context.go(AppRouter.sessionRpe),
+        listener: (context, state) {
+          final session = widget.session;
+          // Skip the RPE leg entirely when we cannot derive a real arm key —
+          // an empty key would otherwise be persisted into bandit reward
+          // space (Story 9.3) and corrupt arm statistics.
+          if (session == null) {
+            context.go(AppRouter.today);
+            return;
+          }
+          final armKey =
+              '${session.sessionType}_${_intensityName(session.intensity)}';
+          context.go(
+            AppRouter.sessionRpe,
+            extra: RpeSubmitArgs(
+              planId: widget.planId,
+              sessionIndex: widget.sessionIndex,
+              abandoned: state.isAbandoned,
+              armKey: armKey,
+              // Resolved by RpeFeedbackCubit from (planId, sessionIndex) —
+              // InSessionCubit owns the SessionLog write but does not surface
+              // the row id here.
+              sessionLogId: null,
+            ),
+          );
+        },
         child: BlocBuilder<InSessionCubit, InSessionState>(
           builder: (context, state) => InSessionView(
             sessionState: state,
@@ -104,6 +129,17 @@ class _InSessionPageState extends State<InSessionPage> {
         ),
       ),
     );
+  }
+
+  /// Inverse of `ContextualBandit._intensityValue`: maps the persisted
+  /// `PlannedSession.intensity` int (1..10) back to the arm-key bucket. Ranges
+  /// follow `safety_constraints.dart`: low = 1..3, medium = 4..7, high = 8..10.
+  /// Inputs outside that range are clamped into the nearest bucket so a
+  /// corrupted intensity cannot silently invent a new arm.
+  String _intensityName(int intensity) {
+    if (intensity <= 3) return 'low';
+    if (intensity <= 7) return 'medium';
+    return 'high';
   }
 
   Future<void> _confirmAndAbandon(BuildContext context) async {

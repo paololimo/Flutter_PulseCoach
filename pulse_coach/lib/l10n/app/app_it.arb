@@ -114,6 +114,15 @@
       }
     }
   },
+  "rpePrompt": "Com'è andata?",
+  "rpeSemanticLabel": "Scegli il tuo RPE: {value}",
+  "@rpeSemanticLabel": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
   "catalogCategoryAll": "Tutti",
   "catalogUnavailable": "Le sessioni {category} non sono disponibili in questo momento.",
   "@catalogUnavailable": {

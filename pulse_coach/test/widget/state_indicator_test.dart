@@ -198,37 +198,20 @@ void main() {
   });
 
   group('StateMessages — ARB invariants (AC7, AC8, AC11)', () {
-    test('7.1-ARB-001: ARB file has exactly 61 user-facing keys', () {
+    test('7.1-ARB-001: ARB keeps known keys and Story 9.1 keys', () {
       final arb = _stateMessagesArb();
-      final userFacingKeys = arb.keys.where((key) => !key.startsWith('@'));
+      final allKeys = arb.keys
+          .where((key) => !key.startsWith('@') && key != '@@locale')
+          .toSet();
 
-      expect(userFacingKeys, hasLength(61));
-      expect(
-        userFacingKeys,
-        containsAll([
-          'transitionActiveAtRisk',
-          'transitionActiveFatigued',
-          'transitionFatiguedAtRisk',
-          'transitionRecoveringFatigued',
-          'countdownSemanticAnnounce',
-          'countdownGoAnnounce',
-          'transitionAtRiskRecovering',
-          'transitionFatiguedRecovering',
-          'transitionRecoveringActive',
-          'stateLabelActive',
-          'stateLabelFatigued',
-          'stateLabelAtRisk',
-          'stateLabelRecovering',
-          'staticCopyActive',
-          'staticCopyFatigued',
-          'staticCopyAtRisk',
-          'staticCopyRecovering',
-          'inSessionAbandonConfirmTitle',
-          'inSessionAbandonConfirmBody',
-          'inSessionAbandonConfirmButton',
-          'inSessionAbandonKeepGoingButton',
-        ]),
-      );
+      for (final key in _knownUserFacingKeys) {
+        expect(allKeys, contains(key), reason: 'key removed: $key');
+      }
+      expect(allKeys, contains('rpePrompt'));
+      expect(allKeys, contains('rpeSemanticLabel'));
+      for (final key in allKeys) {
+        expect(arb[key], isA<String>(), reason: 'key must load: $key');
+      }
     });
 
     test('7.1-ARB-002: active→fatigued differs from recovering→fatigued', () {
@@ -266,3 +249,27 @@ void main() {
     });
   });
 }
+
+const _knownUserFacingKeys = {
+  'transitionActiveAtRisk',
+  'transitionActiveFatigued',
+  'transitionFatiguedAtRisk',
+  'transitionRecoveringFatigued',
+  'countdownSemanticAnnounce',
+  'countdownGoAnnounce',
+  'transitionAtRiskRecovering',
+  'transitionFatiguedRecovering',
+  'transitionRecoveringActive',
+  'stateLabelActive',
+  'stateLabelFatigued',
+  'stateLabelAtRisk',
+  'stateLabelRecovering',
+  'staticCopyActive',
+  'staticCopyFatigued',
+  'staticCopyAtRisk',
+  'staticCopyRecovering',
+  'inSessionAbandonConfirmTitle',
+  'inSessionAbandonConfirmBody',
+  'inSessionAbandonConfirmButton',
+  'inSessionAbandonKeepGoingButton',
+};

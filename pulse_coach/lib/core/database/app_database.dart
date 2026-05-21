@@ -58,7 +58,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -91,6 +91,29 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(sessionLogs, sessionLogs.abandoned);
         await m.addColumn(sessionLogs, sessionLogs.elapsedSeconds);
         await m.addColumn(sessionLogs, sessionLogs.currentStepIndex);
+      }
+      if (from < 8) {
+        final rpeFeedbackExists = await customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'rpe_feedback'",
+        ).get();
+        if (rpeFeedbackExists.isEmpty) {
+          await m.createTable(rpeFeedback);
+        } else {
+          // Survive a partial v8 (process killed mid-onUpgrade after addColumn
+          // but before user_version was bumped) by skipping the column add
+          // when it is already there. Without this PRAGMA check the second
+          // run throws "duplicate column name" and bricks the DB open.
+          final columns = await customSelect(
+            'PRAGMA table_info(rpe_feedback)',
+          ).get();
+          final hasSessionLogId = columns.any(
+            (row) => row.data['name'] == 'session_log_id',
+          );
+          if (!hasSessionLogId) {
+            await m.addColumn(rpeFeedback, rpeFeedback.sessionLogId);
+          }
+        }
       }
     },
     beforeOpen: (details) async {

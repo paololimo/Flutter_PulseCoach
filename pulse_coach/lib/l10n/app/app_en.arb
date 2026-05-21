@@ -114,6 +114,15 @@
       }
     }
   },
+  "rpePrompt": "How did that feel?",
+  "rpeSemanticLabel": "Rate your effort: {value}",
+  "@rpeSemanticLabel": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
   "catalogCategoryAll": "All",
   "catalogUnavailable": "{category} sessions are unavailable right now.",
   "@catalogUnavailable": {
