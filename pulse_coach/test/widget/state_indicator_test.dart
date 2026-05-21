@@ -198,7 +198,7 @@ void main() {
   });
 
   group('StateMessages — ARB invariants (AC7, AC8, AC11)', () {
-    test('7.1-ARB-001: ARB keeps known keys and Story 9.1 keys', () {
+    test('7.1-ARB-001: ARB keeps known keys and Story 9.x keys', () {
       final arb = _stateMessagesArb();
       final allKeys = arb.keys
           .where((key) => !key.startsWith('@') && key != '@@locale')
@@ -209,6 +209,11 @@ void main() {
       }
       expect(allKeys, contains('rpePrompt'));
       expect(allKeys, contains('rpeSemanticLabel'));
+      expect(allKeys, contains('miniSummaryHeader'));
+      expect(allKeys, contains('miniSummaryAbandonedHeader'));
+      expect(allKeys, contains('miniSummaryRpeLabel'));
+      expect(allKeys, contains('miniSummaryFeedback'));
+      expect(allKeys, contains('miniSummarySemanticLabel'));
       for (final key in allKeys) {
         expect(arb[key], isA<String>(), reason: 'key must load: $key');
       }

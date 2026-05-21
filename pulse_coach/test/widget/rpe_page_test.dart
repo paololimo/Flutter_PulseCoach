@@ -7,6 +7,7 @@ import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/rpe_input_widget.dart';
@@ -28,12 +29,19 @@ Widget _wrap(GoRouter router) => MaterialApp.router(
   routerConfig: router,
 );
 
-GoRouter _router() => GoRouter(
+GoRouter _router({void Function(Object? extra)? onSummaryExtra}) => GoRouter(
   initialLocation: AppRouter.sessionRpe,
   routes: [
     GoRoute(
       path: AppRouter.sessionRpe,
       builder: (_, _) => const RpePage(args: _args),
+    ),
+    GoRoute(
+      path: AppRouter.sessionSummary,
+      builder: (_, state) {
+        onSummaryExtra?.call(state.extra);
+        return const Scaffold(body: Text('Summary target'));
+      },
     ),
     GoRoute(
       path: AppRouter.today,
@@ -67,18 +75,28 @@ void main() {
     }
   });
 
-  testWidgets('9.1-PAGE-002: RpePage navigates to Today after submit', (
+  testWidgets('9.2-PAGE-002: RpePage navigates to summary after submit', (
     tester,
   ) async {
+    Object? summaryExtra;
     db = AppDatabase.forTesting(NativeDatabase.memory());
     getIt.registerSingleton<RpeFeedbackDao>(db!.rpeFeedbackDao);
 
-    await tester.pumpWidget(_wrap(_router()));
+    await tester.pumpWidget(
+      _wrap(_router(onSummaryExtra: (extra) => summaryExtra = extra)),
+    );
     await tester.tap(find.text('7'));
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pumpAndSettle();
 
-    expect(find.text('Today target'), findsOneWidget);
+    expect(find.text('Summary target'), findsOneWidget);
+    expect(summaryExtra, isA<MiniSummaryArgs>());
+    final args = summaryExtra! as MiniSummaryArgs;
+    expect(args.rpeValue, 7);
+    expect(args.sessionType, 'mobility');
+    expect(args.durationMinutes, 0);
+    expect(args.abandoned, isFalse);
+    expect(args.planId, 1);
   });
 
   testWidgets('9.1-PAGE-003: RpePage shows SnackBar on persistence error', (

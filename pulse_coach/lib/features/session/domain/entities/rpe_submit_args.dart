@@ -8,6 +8,7 @@ class RpeSubmitArgs {
   final bool abandoned;
   final String armKey;
   final int? sessionLogId;
+  final int durationMinutes;
 
   const RpeSubmitArgs({
     this.planId,
@@ -15,5 +16,6 @@ class RpeSubmitArgs {
     required this.abandoned,
     required this.armKey,
     this.sessionLogId,
+    this.durationMinutes = 0,
   });
 }

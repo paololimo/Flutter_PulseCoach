@@ -13,6 +13,10 @@ class DailyPlansDao extends DatabaseAccessor<AppDatabase>
     dailyPlans,
   )..where((t) => t.planDate.equals(date))).getSingleOrNull();
 
+  /// Returns the raw DB row for [id], or null when not found.
+  Future<DailyPlan?> getPlanById(int id) =>
+      (select(dailyPlans)..where((t) => t.id.equals(id))).getSingleOrNull();
+
   Future<List<DailyPlan>> getPlansInDateRange(
     String startDate,
     String endDate,

@@ -114,6 +114,7 @@ class _InSessionPageState extends State<InSessionPage> {
               sessionIndex: widget.sessionIndex,
               abandoned: state.isAbandoned,
               armKey: armKey,
+              durationMinutes: session.durationMinutes,
               // Resolved by RpeFeedbackCubit from (planId, sessionIndex) —
               // InSessionCubit owns the SessionLog write but does not surface
               // the row id here.

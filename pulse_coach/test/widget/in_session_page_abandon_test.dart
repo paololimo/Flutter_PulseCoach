@@ -110,6 +110,7 @@ void main() {
         final args = rpeExtra! as RpeSubmitArgs;
         expect(args.sessionIndex, 0);
         expect(args.abandoned, isTrue);
+        expect(args.durationMinutes, 1);
         // P6 fix: intensity 3 falls in the low band (1..3) per
         // safety_constraints.dart, mirroring ContextualBandit._intensityValue.
         expect(args.armKey, 'cardio_low');

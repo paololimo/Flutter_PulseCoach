@@ -6,6 +6,7 @@ import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart';
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
+import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_state.dart';
@@ -85,7 +86,18 @@ class _RpePageState extends State<RpePage> {
                       previous is! RpeFeedbackSubmitted,
                   listener: (context, state) {
                     if (!context.mounted) return;
-                    context.go(AppRouter.today);
+                    final submitted = state as RpeFeedbackSubmitted;
+                    final args = widget.args;
+                    final summaryArgs = args == null
+                        ? null
+                        : MiniSummaryArgs(
+                            rpeValue: submitted.rpeValue,
+                            sessionType: args.armKey.split('_').first,
+                            durationMinutes: args.durationMinutes,
+                            abandoned: args.abandoned,
+                            planId: args.planId,
+                          );
+                    context.go(AppRouter.sessionSummary, extra: summaryArgs);
                   },
                 ),
                 BlocListener<RpeFeedbackCubit, RpeFeedbackState>(

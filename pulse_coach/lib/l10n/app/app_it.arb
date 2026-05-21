@@ -123,6 +123,21 @@
       }
     }
   },
+  "miniSummaryHeader": "Fatto!",
+  "miniSummaryAbandonedHeader": "Sessione finita",
+  "miniSummaryRpeLabel": "Sforzo",
+  "miniSummaryFeedback": "Registrato. Aggiustiamo l'intensità domani.",
+  "miniSummarySemanticLabel": "Sessione completata. {duration} minuti, sforzo {rpe}.",
+  "@miniSummarySemanticLabel": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "rpe": {
+        "type": "String"
+      }
+    }
+  },
   "catalogCategoryAll": "Tutti",
   "catalogUnavailable": "Le sessioni {category} non sono disponibili in questo momento.",
   "@catalogUnavailable": {

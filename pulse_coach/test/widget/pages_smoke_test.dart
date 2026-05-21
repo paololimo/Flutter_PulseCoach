@@ -30,6 +30,7 @@ import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
+import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/session_summary_page.dart';
@@ -194,20 +195,38 @@ void main() {
       expect(find.text('10'), findsOneWidget);
     });
 
-    testWidgets(
-      '[P1] 1.7-WIDGET-008: SessionSummaryPage renders with correct AppBar title',
-      (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.darkTheme,
-            home: const SessionSummaryPage(),
+    testWidgets('[P1] 1.7-WIDGET-008: MiniSummaryPage renders without AppBar', (
+      tester,
+    ) async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      getIt.registerSingleton(db.sessionLogsDao);
+      getIt.registerSingleton(db.dailyPlansDao);
+      addTearDown(() async {
+        await db.close();
+        await getIt.reset();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('it'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.darkTheme,
+          home: const MiniSummaryPage(
+            args: MiniSummaryArgs(
+              rpeValue: 7,
+              sessionType: 'mobility',
+              durationMinutes: 12,
+              abandoned: false,
+              planId: 1,
+            ),
           ),
-        );
-        await tester.pump();
-        expect(find.text('Summary'), findsOneWidget);
-        expect(find.text('Summary — Story 9.x'), findsOneWidget);
-      },
-    );
+        ),
+      );
+      await tester.pump();
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.text('Fatto!'), findsOneWidget);
+    });
   });
 
   group('Settings pages — smoke tests', () {

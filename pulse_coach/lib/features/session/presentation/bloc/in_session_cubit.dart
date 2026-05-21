@@ -118,12 +118,14 @@ class InSessionCubit extends Cubit<InSessionState> {
   }
 
   Future<void> _persistCompletion() async {
+    // Story 9.2 review-decision #1: the SessionLog write MUST be committed
+    // before `isComplete: true` is emitted, so the downstream MiniSummary
+    // read of `getLogsForPlan` sees the new row and the ring animates from
+    // previousCompletedCount to newCompletedCount. The `await` below is the
+    // barrier — do not move the emit above it.
     if (_sessionLogsDao != null && _planId != null) {
       final now = _now();
       try {
-        // upsertCompletion overwrites any prior abandoned row for the same
-        // (planId, sessionIndex) so a successful completion always wins
-        // (review BLOCKER #1).
         await _sessionLogsDao.upsertCompletion(
           SessionLogsCompanion(
             dailyPlanId: Value(_planId),

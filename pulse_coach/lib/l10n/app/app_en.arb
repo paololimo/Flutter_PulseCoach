@@ -123,6 +123,21 @@
       }
     }
   },
+  "miniSummaryHeader": "Done!",
+  "miniSummaryAbandonedHeader": "Session ended",
+  "miniSummaryRpeLabel": "Effort",
+  "miniSummaryFeedback": "Got it. Adjusting intensity tomorrow.",
+  "miniSummarySemanticLabel": "Session complete. {duration} minutes, effort {rpe}.",
+  "@miniSummarySemanticLabel": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "rpe": {
+        "type": "String"
+      }
+    }
+  },
   "catalogCategoryAll": "All",
   "catalogUnavailable": "{category} sessions are unavailable right now.",
   "@catalogUnavailable": {

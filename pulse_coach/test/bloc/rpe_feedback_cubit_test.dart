@@ -30,7 +30,11 @@ void main() {
       wait: const Duration(milliseconds: 30),
       expect: () => [
         isA<RpeFeedbackAnimating>().having((state) => state.rpe, 'rpe', 7),
-        isA<RpeFeedbackSubmitted>(),
+        isA<RpeFeedbackSubmitted>().having(
+          (state) => state.rpeValue,
+          'rpeValue',
+          7,
+        ),
       ],
     );
 
@@ -48,7 +52,11 @@ void main() {
       wait: const Duration(milliseconds: 30),
       expect: () => [
         isA<RpeFeedbackAnimating>().having((state) => state.rpe, 'rpe', 7),
-        isA<RpeFeedbackSubmitted>(),
+        isA<RpeFeedbackSubmitted>().having(
+          (state) => state.rpeValue,
+          'rpeValue',
+          7,
+        ),
       ],
     );
 
@@ -120,75 +128,67 @@ void main() {
       },
     );
 
-    test(
-      '9.1-CUBIT-006: close() during in-flight DAO persist suppresses '
-      'Submitted (P5: AC5(b) real cancellation invariant)',
-      () async {
-        final dao = _SlowFakeRpeFeedbackDao(
-          completion: Completer<int>(),
-        );
-        final cubit = RpeFeedbackCubit(
-          dao: dao,
-          args: _args,
-          animationDuration: Duration.zero,
-        );
-        final emitted = <RpeFeedbackState>[];
-        final subscription = cubit.stream.listen(emitted.add);
+    test('9.1-CUBIT-006: close() during in-flight DAO persist suppresses '
+        'Submitted (P5: AC5(b) real cancellation invariant)', () async {
+      final dao = _SlowFakeRpeFeedbackDao(completion: Completer<int>());
+      final cubit = RpeFeedbackCubit(
+        dao: dao,
+        args: _args,
+        animationDuration: Duration.zero,
+      );
+      final emitted = <RpeFeedbackState>[];
+      final subscription = cubit.stream.listen(emitted.add);
 
-        cubit.submit(7);
-        // Let the Animating emit propagate and _persist enter the DAO call.
-        await Future<void>.delayed(Duration.zero);
-        await cubit.close();
-        // Now resolve the in-flight insert — the cubit should NOT emit
-        // Submitted because isClosed gates the late emit.
-        dao.completion.complete(1);
-        await Future<void>.delayed(const Duration(milliseconds: 10));
-        await subscription.cancel();
+      cubit.submit(7);
+      // Let the Animating emit propagate and _persist enter the DAO call.
+      await Future<void>.delayed(Duration.zero);
+      await cubit.close();
+      // Now resolve the in-flight insert — the cubit should NOT emit
+      // Submitted because isClosed gates the late emit.
+      dao.completion.complete(1);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      await subscription.cancel();
 
-        expect(
-          emitted.whereType<RpeFeedbackSubmitted>(),
-          isEmpty,
-          reason: 'no Submitted emission after close()',
-        );
-      },
-    );
+      expect(
+        emitted.whereType<RpeFeedbackSubmitted>(),
+        isEmpty,
+        reason: 'no Submitted emission after close()',
+      );
+    });
 
-    test(
-      '9.1-CUBIT-007: submit() is single-shot after error — no retry '
-      '(D3: AC5(a) strict idempotency)',
-      () async {
-        final dao = _ToggleFakeRpeFeedbackDao();
-        final cubit = RpeFeedbackCubit(
-          dao: dao,
-          args: _args,
-          animationDuration: Duration.zero,
-        );
-        final emitted = <RpeFeedbackState>[];
-        final subscription = cubit.stream.listen(emitted.add);
+    test('9.1-CUBIT-007: submit() is single-shot after error — no retry '
+        '(D3: AC5(a) strict idempotency)', () async {
+      final dao = _ToggleFakeRpeFeedbackDao();
+      final cubit = RpeFeedbackCubit(
+        dao: dao,
+        args: _args,
+        animationDuration: Duration.zero,
+      );
+      final emitted = <RpeFeedbackState>[];
+      final subscription = cubit.stream.listen(emitted.add);
 
-        cubit.submit(7);
-        await Future<void>.delayed(const Duration(milliseconds: 5));
-        // First attempt failed: state is RpeFeedbackError. A second tap
-        // would historically reset `_submitted` and re-attempt; spec-correct
-        // behaviour is no-op.
-        cubit.submit(5);
-        await Future<void>.delayed(const Duration(milliseconds: 5));
-        await subscription.cancel();
-        await cubit.close();
+      cubit.submit(7);
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      // First attempt failed: state is RpeFeedbackError. A second tap
+      // would historically reset `_submitted` and re-attempt; spec-correct
+      // behaviour is no-op.
+      cubit.submit(5);
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      await subscription.cancel();
+      await cubit.close();
 
-        expect(dao.callCount, 1, reason: 'DAO must not be called twice');
-        expect(
-          emitted.whereType<RpeFeedbackAnimating>(),
-          hasLength(1),
-          reason: 'only the first Animating emit should occur',
-        );
-        expect(
-          emitted.last,
-          isA<RpeFeedbackError>(),
-          reason: 'cubit stays in error state until disposed',
-        );
-      },
-    );
+      expect(dao.callCount, 1, reason: 'DAO must not be called twice');
+      expect(
+        emitted.whereType<RpeFeedbackAnimating>(),
+        hasLength(1),
+        reason: 'only the first Animating emit should occur',
+      );
+      expect(
+        emitted.last,
+        isA<RpeFeedbackError>(),
+        reason: 'cubit stays in error state until disposed',
+      );
+    });
   });
 }
 
