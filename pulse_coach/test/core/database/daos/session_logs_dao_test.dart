@@ -223,6 +223,106 @@ void main() {
     );
 
     test(
+      '8.0-DAO-009: getLogFor returns only the matching plan and session row',
+      () async {
+        final planA = await seedPlan('2026-05-16');
+        final planB = await seedPlan('2026-05-17');
+        final completedAt = DateTime.utc(2026, 5, 16, 9);
+
+        await db.sessionLogsDao.insertLog(
+          SessionLogsCompanion.insert(
+            dailyPlanId: planA,
+            sessionIndex: 0,
+            completedAt: completedAt,
+            createdAt: completedAt,
+          ),
+        );
+        await db.sessionLogsDao.insertLog(
+          SessionLogsCompanion.insert(
+            dailyPlanId: planA,
+            sessionIndex: 1,
+            completedAt: completedAt.add(const Duration(minutes: 5)),
+            createdAt: completedAt,
+          ),
+        );
+        await db.sessionLogsDao.insertLog(
+          SessionLogsCompanion.insert(
+            dailyPlanId: planB,
+            sessionIndex: 1,
+            completedAt: completedAt.add(const Duration(minutes: 10)),
+            createdAt: completedAt,
+          ),
+        );
+
+        final log = await db.sessionLogsDao.getLogFor(planA, 1);
+
+        expect(log, isNotNull);
+        expect(log!.dailyPlanId, planA);
+        expect(log.sessionIndex, 1);
+        expect(
+          log.completedAt.millisecondsSinceEpoch,
+          completedAt.add(const Duration(minutes: 5)).millisecondsSinceEpoch,
+        );
+      },
+    );
+
+    test(
+      '8.0-DAO-010: getLogFor returns null for a missing session index',
+      () async {
+        final planId = await seedPlan('2026-05-16');
+        final completedAt = DateTime.utc(2026, 5, 16, 9);
+
+        await db.sessionLogsDao.insertLog(
+          SessionLogsCompanion.insert(
+            dailyPlanId: planId,
+            sessionIndex: 0,
+            completedAt: completedAt,
+            createdAt: completedAt,
+          ),
+        );
+
+        final log = await db.sessionLogsDao.getLogFor(planId, 2);
+
+        expect(log, isNull);
+      },
+    );
+
+    test(
+      '8.0-DAO-011: watchLogsForPlan emits initial rows and re-emits after insert',
+      () async {
+        final planId = await seedPlan('2026-05-16');
+        final completedAt = DateTime.utc(2026, 5, 16, 9);
+
+        final expectation = expectLater(
+          db.sessionLogsDao.watchLogsForPlan(planId),
+          emitsInOrder([
+            isEmpty,
+            predicate<List<SessionLog>>(
+              (logs) =>
+                  logs.length == 1 &&
+                  logs.single.dailyPlanId == planId &&
+                  logs.single.sessionIndex == 0,
+              'one inserted log for the watched plan',
+            ),
+          ]),
+        );
+
+        await pumpEventQueue();
+
+        await db.sessionLogsDao.insertLog(
+          SessionLogsCompanion.insert(
+            dailyPlanId: planId,
+            sessionIndex: 0,
+            completedAt: completedAt,
+            createdAt: completedAt,
+          ),
+        );
+
+        await expectation;
+      },
+    );
+
+    test(
       '8.5-DAO-001: insertLog stores abandoned partial-session metadata',
       () async {
         final planId = await seedPlan('2026-05-17');

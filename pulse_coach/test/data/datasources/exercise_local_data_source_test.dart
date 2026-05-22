@@ -4,8 +4,29 @@ import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
+import 'package:pulse_coach/core/database/daos/exercise_cache_dao.dart';
+import 'package:pulse_coach/core/error/exceptions.dart';
 import 'package:pulse_coach/features/sessions_catalog/data/datasources/exercise_local_data_source.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
+
+class _ThrowingExerciseCacheDao extends Fake implements ExerciseCacheDao {
+  _ThrowingExerciseCacheDao({this.throwOnDelete = false});
+
+  final bool throwOnDelete;
+
+  @override
+  Future<int> deleteAll() async {
+    if (throwOnDelete) {
+      throw StateError('delete failed');
+    }
+    return 0;
+  }
+
+  @override
+  Future<void> insertOrReplaceBatch(
+    List<ExerciseCacheCompanion> entries,
+  ) async {}
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -22,34 +43,35 @@ void main() {
     await db.close();
   });
 
+  const mobilityExercise = Exercise(
+    id: 'mobility-1',
+    name: 'Neck Rolls',
+    description: 'Mobility work.',
+    sessionType: 'mobility',
+    steps: ['Move slowly'],
+    durationMinutes: 4,
+    difficulty: 'low',
+    indoorCompatible: true,
+    outdoorCompatible: true,
+  );
+
+  const cardioExercise = Exercise(
+    id: 'cardio-1',
+    name: 'March In Place',
+    description: 'Cardio work.',
+    sessionType: 'cardio',
+    steps: ['March quickly'],
+    durationMinutes: 7,
+    difficulty: 'medium',
+    indoorCompatible: true,
+    outdoorCompatible: true,
+  );
+
   test(
     '6.1-UNIT-002: cacheExercises + getCachedExercisesByType preserves rows and cachedAt',
     () async {
       final cachedAt = DateTime.utc(2026, 5, 14, 9);
-      const exercises = [
-        Exercise(
-          id: 'mobility-1',
-          name: 'Neck Rolls',
-          description: 'Mobility work.',
-          sessionType: 'mobility',
-          steps: ['Move slowly'],
-          durationMinutes: 4,
-          difficulty: 'low',
-          indoorCompatible: true,
-          outdoorCompatible: true,
-        ),
-        Exercise(
-          id: 'cardio-1',
-          name: 'March In Place',
-          description: 'Cardio work.',
-          sessionType: 'cardio',
-          steps: ['March quickly'],
-          durationMinutes: 7,
-          difficulty: 'medium',
-          indoorCompatible: true,
-          outdoorCompatible: true,
-        ),
-      ];
+      const exercises = [mobilityExercise, cardioExercise];
 
       await sut.cacheExercises(exercises, cachedAt);
 
@@ -64,6 +86,63 @@ void main() {
       );
       expect(cachedCardio, hasLength(1));
       expect(cachedCardio.first.exercise.durationMinutes, 7);
+    },
+  );
+
+  test(
+    '6.1-LOCAL-007: replaceCache deletes old rows and writes replacement catalog',
+    () async {
+      final oldCachedAt = DateTime.utc(2026, 5, 14, 9);
+      final newCachedAt = DateTime.utc(2026, 5, 15, 9);
+
+      await sut.cacheExercises([mobilityExercise], oldCachedAt);
+
+      await sut.replaceCache([cardioExercise], newCachedAt);
+
+      final mobility = await sut.getCachedExercisesByType('mobility');
+      final cardio = await sut.getCachedExercisesByType('cardio');
+      final rows = await db.exerciseCacheDao.getAll();
+
+      expect(rows, hasLength(1));
+      expect(mobility, isEmpty);
+      expect(cardio, hasLength(1));
+      expect(cardio.single.exercise.id, 'cardio-1');
+      expect(
+        cardio.single.cachedAt.millisecondsSinceEpoch,
+        newCachedAt.millisecondsSinceEpoch,
+      );
+    },
+  );
+
+  test('6.1-LOCAL-008: replaceCache with empty list clears cache', () async {
+    final cachedAt = DateTime.utc(2026, 5, 14, 9);
+
+    await sut.cacheExercises([mobilityExercise, cardioExercise], cachedAt);
+
+    await sut.replaceCache(const [], DateTime.utc(2026, 5, 15, 9));
+
+    expect(await db.exerciseCacheDao.getAll(), isEmpty);
+  });
+
+  test(
+    '6.1-LOCAL-009: replaceCache wraps DAO failures in CacheException',
+    () async {
+      final throwingSut = ExerciseLocalDataSource(
+        _ThrowingExerciseCacheDao(throwOnDelete: true),
+      );
+
+      expect(
+        () => throwingSut.replaceCache([
+          mobilityExercise,
+        ], DateTime.utc(2026, 5, 14, 9)),
+        throwsA(
+          isA<CacheException>().having(
+            (exception) => exception.message,
+            'message',
+            contains('Failed to replace exercise cache'),
+          ),
+        ),
+      );
     },
   );
 
