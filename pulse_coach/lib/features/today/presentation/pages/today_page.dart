@@ -114,7 +114,10 @@ class TodayPage extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: StateIndicator(state: loaded.behavioralState),
+                          child: StateIndicator(
+                            state: loaded.behavioralState,
+                            transitionKey: loaded.transitionKey,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         CompletionRing(completed: completedCount, total: total),

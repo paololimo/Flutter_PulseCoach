@@ -59,8 +59,9 @@ void main() {
       () async {
         when(mockPlanRepo.deletePlanForDate(any))
             .thenAnswer((_) async => const Right(null));
-        when(mockGenerateDailyPlan.call())
-            .thenAnswer((_) async => Right(tPlan));
+        when(mockGenerateDailyPlan.call()).thenAnswer(
+          (_) async => Right(GenerateDailyPlanResult(plan: tPlan)),
+        );
 
         final result = await sut.call();
 

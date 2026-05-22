@@ -10,6 +10,7 @@ import 'package:pulse_coach/ai/bandit/state_vector.dart';
 import 'package:pulse_coach/ai/engine/ai_engine.dart';
 import 'package:pulse_coach/ai/missed_sessions/missed_sessions_calculator.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart' as ai_state;
+import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
@@ -22,6 +23,23 @@ import 'package:pulse_coach/features/session/domain/repositories/sensor_reposito
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart';
 import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart';
+
+/// Bundled return of `GenerateDailyPlan` / `RegenerateDailyPlan`.
+///
+/// Carries the generated [plan] plus the [transitionKey] emitted by the
+/// state machine inside the AI pipeline (Story 9.3 / E7.5-T1). `null` when
+/// no behavioral transition fired (or when the cached plan was served).
+///
+/// The bloc consumes `transitionKey` directly instead of re-deriving it
+/// from pre/post `behavioral_state` DB reads — which previously left a
+/// TOCTOU window vs. concurrent `UpdateBanditReward` writes and dropped
+/// the value of the key already plumbed through `AiEngineOutput`.
+class GenerateDailyPlanResult {
+  final domain.DailyPlan plan;
+  final BehavioralTransitionKey? transitionKey;
+
+  const GenerateDailyPlanResult({required this.plan, this.transitionKey});
+}
 
 @injectable
 class GenerateDailyPlan {
@@ -45,13 +63,16 @@ class GenerateDailyPlan {
     this._db,
   );
 
-  Future<Either<Failure, domain.DailyPlan>> call() async {
+  Future<Either<Failure, GenerateDailyPlanResult>> call() async {
     try {
       // AC5: serve cached plan if it exists for today
       final today = _todayDate();
       final cached = await _planRepo.getPlanForDate(today);
       final cachedPlan = cached.fold<domain.DailyPlan?>((_) => null, (p) => p);
-      if (cachedPlan != null) return Right(cachedPlan);
+      if (cachedPlan != null) {
+        // No AI pipeline ran → no fresh transition to surface.
+        return Right(GenerateDailyPlanResult(plan: cachedPlan));
+      }
 
       // Build StateVector — all sensor/weather failures degrade gracefully (AC7)
       final sv = await _buildStateVector();
@@ -73,7 +94,7 @@ class GenerateDailyPlan {
       // by a savePlan failure.
       final saveResult = await _planRepo.savePlan(plan);
       return await saveResult.fold(
-        (failure) async => Left<Failure, domain.DailyPlan>(failure),
+        (failure) async => Left<Failure, GenerateDailyPlanResult>(failure),
         (_) async {
           // AC6: persist new BehavioralState when it changed OR when no row exists.
           // The "(or no state exists)" clause is critical for cold-start (AC8) —
@@ -91,7 +112,12 @@ class GenerateDailyPlan {
               ),
             );
           }
-          return Right<Failure, domain.DailyPlan>(plan);
+          return Right<Failure, GenerateDailyPlanResult>(
+            GenerateDailyPlanResult(
+              plan: plan,
+              transitionKey: output.transitionKey,
+            ),
+          );
         },
       );
     } on TimeoutException catch (e) {

@@ -5,6 +5,7 @@ import 'package:pulse_coach/ai/safety/safety_constraints.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state_machine.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_transition.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
 import 'package:pulse_coach/features/session/domain/entities/activity_level.dart';
 
@@ -40,16 +41,16 @@ void main() {
   // ── BehavioralTransition ──────────────────────────────────────────────────
 
   group('BehavioralTransition', () {
-    test('5.2-UNIT-001: stateChanged is false when no message', () {
+    test('5.2-UNIT-001: stateChanged is false when no transition key', () {
       const t = BehavioralTransition(newState: BehavioralState.active);
       expect(t.stateChanged, isFalse);
-      expect(t.transitionMessage, isNull);
+      expect(t.transitionKey, isNull);
     });
 
-    test('5.2-UNIT-002: stateChanged is true when message provided', () {
+    test('5.2-UNIT-002: stateChanged is true when transition key provided', () {
       const t = BehavioralTransition(
         newState: BehavioralState.fatigued,
-        transitionMessage: 'Pushing hard.',
+        transitionKey: BehavioralTransitionKey.activeToFatigued,
       );
       expect(t.stateChanged, isTrue);
     });
@@ -62,7 +63,10 @@ void main() {
       final sv = _sv(state: BehavioralState.active, rpe: [7, 9, 9]);
       final result = machine.evaluate(sv);
       expect(result.newState, equals(BehavioralState.fatigued));
-      expect(result.transitionMessage, isNotNull);
+      expect(
+        result.transitionKey,
+        equals(BehavioralTransitionKey.activeToFatigued),
+      );
       expect(result.stateChanged, isTrue);
     });
 
@@ -130,8 +134,10 @@ void main() {
       final result = machine.evaluate(sv);
       expect(result.newState, equals(BehavioralState.atRisk));
       expect(result.stateChanged, isTrue);
-      expect(result.transitionMessage, isNotNull);
-      expect(result.transitionMessage, contains('Ci sei mancato'));
+      expect(
+        result.transitionKey,
+        equals(BehavioralTransitionKey.activeToAtRisk),
+      );
     });
 
     test(
@@ -302,7 +308,10 @@ void main() {
       final result = machine.evaluate(sv);
       expect(result.newState, equals(BehavioralState.fatigued));
       expect(result.stateChanged, isTrue);
-      expect(result.transitionMessage, isNotNull);
+      expect(
+        result.transitionKey,
+        equals(BehavioralTransitionKey.recoveringToFatigued),
+      );
     });
 
     test('7.1-UNIT-Q2-002: recovering + last RPE = 10 → fatigued', () {
@@ -384,7 +393,7 @@ void main() {
       final result = machine.evaluate(sv);
       expect(result.newState, equals(BehavioralState.active));
       expect(result.stateChanged, isFalse);
-      expect(result.transitionMessage, isNull);
+      expect(result.transitionKey, isNull);
     });
 
     test(

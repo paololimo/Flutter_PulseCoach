@@ -125,12 +125,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( DailyPlan plan,  BehavioralState behavioralState,  int? planDbId)?  loaded,TResult Function( Failure failure,  int retryAttempts)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( DailyPlan plan,  BehavioralState behavioralState,  int? planDbId,  BehavioralTransitionKey? transitionKey)?  loaded,TResult Function( Failure failure,  int retryAttempts)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DailyPlanInitial() when initial != null:
 return initial();case DailyPlanLoading() when loading != null:
 return loading();case DailyPlanLoaded() when loaded != null:
-return loaded(_that.plan,_that.behavioralState,_that.planDbId);case DailyPlanError() when error != null:
+return loaded(_that.plan,_that.behavioralState,_that.planDbId,_that.transitionKey);case DailyPlanError() when error != null:
 return error(_that.failure,_that.retryAttempts);case _:
   return orElse();
 
@@ -149,12 +149,12 @@ return error(_that.failure,_that.retryAttempts);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( DailyPlan plan,  BehavioralState behavioralState,  int? planDbId)  loaded,required TResult Function( Failure failure,  int retryAttempts)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( DailyPlan plan,  BehavioralState behavioralState,  int? planDbId,  BehavioralTransitionKey? transitionKey)  loaded,required TResult Function( Failure failure,  int retryAttempts)  error,}) {final _that = this;
 switch (_that) {
 case DailyPlanInitial():
 return initial();case DailyPlanLoading():
 return loading();case DailyPlanLoaded():
-return loaded(_that.plan,_that.behavioralState,_that.planDbId);case DailyPlanError():
+return loaded(_that.plan,_that.behavioralState,_that.planDbId,_that.transitionKey);case DailyPlanError():
 return error(_that.failure,_that.retryAttempts);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -169,12 +169,12 @@ return error(_that.failure,_that.retryAttempts);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( DailyPlan plan,  BehavioralState behavioralState,  int? planDbId)?  loaded,TResult? Function( Failure failure,  int retryAttempts)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( DailyPlan plan,  BehavioralState behavioralState,  int? planDbId,  BehavioralTransitionKey? transitionKey)?  loaded,TResult? Function( Failure failure,  int retryAttempts)?  error,}) {final _that = this;
 switch (_that) {
 case DailyPlanInitial() when initial != null:
 return initial();case DailyPlanLoading() when loading != null:
 return loading();case DailyPlanLoaded() when loaded != null:
-return loaded(_that.plan,_that.behavioralState,_that.planDbId);case DailyPlanError() when error != null:
+return loaded(_that.plan,_that.behavioralState,_that.planDbId,_that.transitionKey);case DailyPlanError() when error != null:
 return error(_that.failure,_that.retryAttempts);case _:
   return null;
 
@@ -251,7 +251,7 @@ String toString() {
 
 
 class DailyPlanLoaded implements DailyPlanState {
-  const DailyPlanLoaded({required this.plan, this.behavioralState = BehavioralState.active, this.planDbId});
+  const DailyPlanLoaded({required this.plan, this.behavioralState = BehavioralState.active, this.planDbId, this.transitionKey});
   
 
  final  DailyPlan plan;
@@ -260,6 +260,7 @@ class DailyPlanLoaded implements DailyPlanState {
 // TodaySessionCubit treats null as "skip persistence" rather than relying
 // on a `== 0` sentinel that could collide with a real autoincrement id.
  final  int? planDbId;
+ final  BehavioralTransitionKey? transitionKey;
 
 /// Create a copy of DailyPlanState
 /// with the given fields replaced by the non-null parameter values.
@@ -271,16 +272,16 @@ $DailyPlanLoadedCopyWith<DailyPlanLoaded> get copyWith => _$DailyPlanLoadedCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyPlanLoaded&&(identical(other.plan, plan) || other.plan == plan)&&(identical(other.behavioralState, behavioralState) || other.behavioralState == behavioralState)&&(identical(other.planDbId, planDbId) || other.planDbId == planDbId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyPlanLoaded&&(identical(other.plan, plan) || other.plan == plan)&&(identical(other.behavioralState, behavioralState) || other.behavioralState == behavioralState)&&(identical(other.planDbId, planDbId) || other.planDbId == planDbId)&&(identical(other.transitionKey, transitionKey) || other.transitionKey == transitionKey));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,plan,behavioralState,planDbId);
+int get hashCode => Object.hash(runtimeType,plan,behavioralState,planDbId,transitionKey);
 
 @override
 String toString() {
-  return 'DailyPlanState.loaded(plan: $plan, behavioralState: $behavioralState, planDbId: $planDbId)';
+  return 'DailyPlanState.loaded(plan: $plan, behavioralState: $behavioralState, planDbId: $planDbId, transitionKey: $transitionKey)';
 }
 
 
@@ -291,7 +292,7 @@ abstract mixin class $DailyPlanLoadedCopyWith<$Res> implements $DailyPlanStateCo
   factory $DailyPlanLoadedCopyWith(DailyPlanLoaded value, $Res Function(DailyPlanLoaded) _then) = _$DailyPlanLoadedCopyWithImpl;
 @useResult
 $Res call({
- DailyPlan plan, BehavioralState behavioralState, int? planDbId
+ DailyPlan plan, BehavioralState behavioralState, int? planDbId, BehavioralTransitionKey? transitionKey
 });
 
 
@@ -308,12 +309,13 @@ class _$DailyPlanLoadedCopyWithImpl<$Res>
 
 /// Create a copy of DailyPlanState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? plan = null,Object? behavioralState = null,Object? planDbId = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? plan = null,Object? behavioralState = null,Object? planDbId = freezed,Object? transitionKey = freezed,}) {
   return _then(DailyPlanLoaded(
 plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
 as DailyPlan,behavioralState: null == behavioralState ? _self.behavioralState : behavioralState // ignore: cast_nullable_to_non_nullable
 as BehavioralState,planDbId: freezed == planDbId ? _self.planDbId : planDbId // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,transitionKey: freezed == transitionKey ? _self.transitionKey : transitionKey // ignore: cast_nullable_to_non_nullable
+as BehavioralTransitionKey?,
   ));
 }
 

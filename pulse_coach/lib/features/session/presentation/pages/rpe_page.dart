@@ -8,6 +8,8 @@ import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
+import 'package:pulse_coach/features/session/domain/usecases/update_bandit_reward.dart';
+import 'package:pulse_coach/features/session/presentation/bloc/post_rpe_adaptation_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_state.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/rpe_input_widget.dart';
@@ -24,6 +26,7 @@ class RpePage extends StatefulWidget {
 
 class _RpePageState extends State<RpePage> {
   RpeFeedbackCubit? _cubit;
+  PostRpeAdaptationCubit? _adaptationCubit;
 
   @override
   void initState() {
@@ -44,11 +47,16 @@ class _RpePageState extends State<RpePage> {
           : null,
       args: args,
     );
+    _adaptationCubit = PostRpeAdaptationCubit(
+      useCase: getIt<UpdateBanditReward>(),
+      armKey: args.armKey,
+    );
   }
 
   @override
   void dispose() {
     _cubit?.close();
+    _adaptationCubit?.close();
     super.dispose();
   }
 
@@ -87,6 +95,7 @@ class _RpePageState extends State<RpePage> {
                   listener: (context, state) {
                     if (!context.mounted) return;
                     final submitted = state as RpeFeedbackSubmitted;
+                    _adaptationCubit?.triggerUpdate(submitted.rpeValue);
                     final args = widget.args;
                     final summaryArgs = args == null
                         ? null

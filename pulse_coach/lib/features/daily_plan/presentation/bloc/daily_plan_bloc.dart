@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/core/database/app_database.dart' show AppDatabase;
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
@@ -25,6 +26,7 @@ sealed class DailyPlanState with _$DailyPlanState {
     // TodaySessionCubit treats null as "skip persistence" rather than relying
     // on a `== 0` sentinel that could collide with a real autoincrement id.
     int? planDbId,
+    BehavioralTransitionKey? transitionKey,
   }) = DailyPlanLoaded;
   const factory DailyPlanState.error({
     required Failure failure,
@@ -65,15 +67,18 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
         (failure) async => emit(
           DailyPlanState.error(failure: failure, retryAttempts: retryAttempts),
         ),
-        (plan) async {
+        (generated) async {
           final stateRow = await _db.behavioralStateDao.getLatestState();
-          final planRow = await _db.dailyPlansDao.getPlanForDate(plan.planDate);
+          final planRow = await _db.dailyPlansDao.getPlanForDate(
+            generated.plan.planDate,
+          );
           if (isClosed) return;
           emit(
             DailyPlanState.loaded(
-              plan: plan,
+              plan: generated.plan,
               behavioralState: _parseState(stateRow?.currentState),
               planDbId: planRow?.id,
+              transitionKey: generated.transitionKey,
             ),
           );
         },
@@ -102,15 +107,18 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
         (failure) async => emit(
           DailyPlanState.error(failure: failure, retryAttempts: retryAttempts),
         ),
-        (plan) async {
+        (generated) async {
           final stateRow = await _db.behavioralStateDao.getLatestState();
-          final planRow = await _db.dailyPlansDao.getPlanForDate(plan.planDate);
+          final planRow = await _db.dailyPlansDao.getPlanForDate(
+            generated.plan.planDate,
+          );
           if (isClosed) return;
           emit(
             DailyPlanState.loaded(
-              plan: plan,
+              plan: generated.plan,
               behavioralState: _parseState(stateRow?.currentState),
               planDbId: planRow?.id,
+              transitionKey: generated.transitionKey,
             ),
           );
         },

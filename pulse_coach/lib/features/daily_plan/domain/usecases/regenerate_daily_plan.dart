@@ -1,7 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/error/failures.dart';
-import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart';
 import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart';
 
@@ -16,7 +15,7 @@ class RegenerateDailyPlan {
 
   RegenerateDailyPlan(this._planRepo, this._generateDailyPlan);
 
-  Future<Either<Failure, DailyPlan>> call() async {
+  Future<Either<Failure, GenerateDailyPlanResult>> call() async {
     final today = _todayDate();
     // Delete cached plan first; surface the failure if the delete itself fails,
     // otherwise GenerateDailyPlan would silently return the still-cached plan

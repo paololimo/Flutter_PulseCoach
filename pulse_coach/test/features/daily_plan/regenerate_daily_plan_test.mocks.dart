@@ -98,16 +98,18 @@ class MockGenerateDailyPlan extends _i1.Mock implements _i7.GenerateDailyPlan {
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>> call() =>
+  _i4.Future<_i2.Either<_i5.Failure, _i7.GenerateDailyPlanResult>> call() =>
       (super.noSuchMethod(
             Invocation.method(#call, []),
             returnValue:
-                _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>.value(
-                  _FakeEither_0<_i5.Failure, _i6.DailyPlan>(
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i7.GenerateDailyPlanResult>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i7.GenerateDailyPlanResult>(
                     this,
                     Invocation.method(#call, []),
                   ),
                 ),
           )
-          as _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>);
+          as _i4.Future<_i2.Either<_i5.Failure, _i7.GenerateDailyPlanResult>>);
 }

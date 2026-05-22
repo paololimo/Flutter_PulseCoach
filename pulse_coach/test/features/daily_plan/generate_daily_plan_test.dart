@@ -137,8 +137,8 @@ void main() {
         final result = await sut.call();
 
         expect(result.isRight(), isTrue);
-        result.fold((_) => fail('Expected Right'), (plan) {
-          expect(plan.planDate, equals(tPlan.planDate));
+        result.fold((_) => fail('Expected Right'), (generated) {
+          expect(generated.plan.planDate, equals(tPlan.planDate));
         });
         verifyNever(mockAiEngine.call(any));
       },
@@ -329,12 +329,12 @@ void main() {
         final result = await sut.call();
 
         expect(result.isRight(), isTrue);
-        result.fold((_) => fail('Expected Right'), (plan) {
-          expect(plan.sessions, hasLength(3));
+        result.fold((_) => fail('Expected Right'), (generated) {
+          expect(generated.plan.sessions, hasLength(3));
           // Fill-only contract: AI-committed durationMinutes is preserved;
           // catalog enrichment only refines isIndoor when the chosen
           // exercise is incompatible with the AI's environment choice.
-          for (final session in plan.sessions) {
+          for (final session in generated.plan.sessions) {
             expect(session.durationMinutes, 10);
           }
         });

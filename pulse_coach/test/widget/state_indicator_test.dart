@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/state_indicator.dart';
@@ -103,14 +104,14 @@ void main() {
   });
 
   group('StateIndicator — copy logic (AC6)', () {
-    testWidgets('7.1-WIDGET-005: no transitionMessage shows static copy', (
+    testWidgets('7.1-WIDGET-005: no transitionKey shows static copy', (
       tester,
     ) async {
       await tester.pumpWidget(
         _wrap(
           const StateIndicator(
             state: BehavioralState.active,
-            transitionMessage: null,
+            transitionKey: null,
           ),
         ),
       );
@@ -118,7 +119,7 @@ void main() {
       expect(find.text('Pronto per il piano di oggi.'), findsOneWidget);
     });
 
-    testWidgets('7.1-WIDGET-006: transitionMessage replaces static copy', (
+    testWidgets('7.1-WIDGET-006: transitionKey resolves localized copy', (
       tester,
     ) async {
       const msg = 'Ci sei mancato. Ripartiamo leggeri — 5 minuti bastano oggi.';
@@ -126,7 +127,7 @@ void main() {
         _wrap(
           const StateIndicator(
             state: BehavioralState.atRisk,
-            transitionMessage: msg,
+            transitionKey: BehavioralTransitionKey.activeToAtRisk,
           ),
         ),
       );
@@ -137,6 +138,25 @@ void main() {
         findsNothing,
       );
     });
+
+    testWidgets(
+      '9.3-WIDGET-001: StateMessages resolves transition keys from l10n',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(const StateIndicator(state: BehavioralState.active)),
+        );
+        final context = tester.element(find.byType(StateIndicator));
+        final l10n = AppLocalizations.of(context)!;
+
+        final message = StateMessages.transitionMessageFor(
+          BehavioralTransitionKey.activeToAtRisk,
+          l10n,
+        );
+
+        expect(message, isNotNull);
+        expect(message, isNotEmpty);
+      },
+    );
   });
 
   group('StateIndicator — icon and typography (AC5, AC10)', () {

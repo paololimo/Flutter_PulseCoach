@@ -45,18 +45,26 @@ AiEngineOutput _runPipeline(AiEngineInput input) {
   final updatedSv = sv.copyWith(currentState: newState);
 
   // Step 3: safety rules (reuse the same machine instance from Step 1)
-  final constraints = const SafetyRules(BehavioralStateMachine()).apply(updatedSv);
+  final constraints = const SafetyRules(
+    BehavioralStateMachine(),
+  ).apply(updatedSv);
 
   // Step 4: bandit selection
   final engine = BanditEngine(epsilon: _decayedEpsilon(input.banditState));
-  final sessions = engine.selectSessions(updatedSv, constraints, input.banditState);
+  final sessions = engine.selectSessions(
+    updatedSv,
+    constraints,
+    input.banditState,
+  );
 
   // Step 5: generate per-session explanations (AC1-AC4 of Story 5.6)
   final explanations = const ExplanationGenerator().generate(
     stateVector: updatedSv,
     sessions: sessions,
   );
-  final sessionsWithExplanations = sessions.asMap().entries
+  final sessionsWithExplanations = sessions
+      .asMap()
+      .entries
       .map((e) => e.value.copyWith(explanation: explanations[e.key]))
       .toList();
 
@@ -67,7 +75,11 @@ AiEngineOutput _runPipeline(AiEngineInput input) {
     generatedAt: DateTime.now().toUtc(),
   );
 
-  return AiEngineOutput(plan: plan, newBehavioralState: newState);
+  return AiEngineOutput(
+    plan: plan,
+    newBehavioralState: newState,
+    transitionKey: transition.transitionKey,
+  );
 }
 
 /// Epsilon decays linearly from 0.3 (0 sessions) to 0.05 (50+ sessions).

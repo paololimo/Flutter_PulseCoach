@@ -1,6 +1,7 @@
 import 'package:pulse_coach/ai/bandit/bandit_state.dart' as ai_bandit;
 import 'package:pulse_coach/ai/bandit/state_vector.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 
 /// Bundled input sent across isolate boundary to the AI pipeline.
@@ -23,8 +24,13 @@ class AiEngineInput {
 class AiEngineOutput {
   final DailyPlan plan;
   final BehavioralState newBehavioralState;
+  final BehavioralTransitionKey? transitionKey;
 
-  const AiEngineOutput({required this.plan, required this.newBehavioralState});
+  const AiEngineOutput({
+    required this.plan,
+    required this.newBehavioralState,
+    this.transitionKey,
+  });
 }
 
 /// Contract for AI computation. Implemented by AiEngineIsolate in production,

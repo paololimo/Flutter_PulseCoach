@@ -9,6 +9,7 @@ import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
+import 'package:pulse_coach/features/session/domain/usecases/update_bandit_reward.dart';
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/rpe_input_widget.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
@@ -64,6 +65,7 @@ void main() {
   ) async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     getIt.registerSingleton<RpeFeedbackDao>(db!.rpeFeedbackDao);
+    getIt.registerSingleton<UpdateBanditReward>(UpdateBanditReward(db!));
 
     await tester.pumpWidget(_wrap(_router()));
     await tester.pump();
@@ -81,6 +83,7 @@ void main() {
     Object? summaryExtra;
     db = AppDatabase.forTesting(NativeDatabase.memory());
     getIt.registerSingleton<RpeFeedbackDao>(db!.rpeFeedbackDao);
+    getIt.registerSingleton<UpdateBanditReward>(UpdateBanditReward(db!));
 
     await tester.pumpWidget(
       _wrap(_router(onSummaryExtra: (extra) => summaryExtra = extra)),
@@ -102,7 +105,9 @@ void main() {
   testWidgets('9.1-PAGE-003: RpePage shows SnackBar on persistence error', (
     tester,
   ) async {
+    db = AppDatabase.forTesting(NativeDatabase.memory());
     getIt.registerSingleton<RpeFeedbackDao>(_ThrowingRpeFeedbackDao());
+    getIt.registerSingleton<UpdateBanditReward>(UpdateBanditReward(db!));
 
     await tester.pumpWidget(_wrap(_router()));
     await tester.tap(find.text('7'));

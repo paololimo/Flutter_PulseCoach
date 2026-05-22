@@ -8,12 +8,10 @@ import 'dart:async' as _i4;
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:pulse_coach/core/error/failures.dart' as _i5;
-import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
-    as _i6;
 import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart'
     as _i3;
 import 'package:pulse_coach/features/daily_plan/domain/usecases/regenerate_daily_plan.dart'
-    as _i7;
+    as _i6;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -44,40 +42,44 @@ class MockGenerateDailyPlan extends _i1.Mock implements _i3.GenerateDailyPlan {
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>> call() =>
+  _i4.Future<_i2.Either<_i5.Failure, _i3.GenerateDailyPlanResult>> call() =>
       (super.noSuchMethod(
             Invocation.method(#call, []),
             returnValue:
-                _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>.value(
-                  _FakeEither_0<_i5.Failure, _i6.DailyPlan>(
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i3.GenerateDailyPlanResult>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i3.GenerateDailyPlanResult>(
                     this,
                     Invocation.method(#call, []),
                   ),
                 ),
           )
-          as _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>);
+          as _i4.Future<_i2.Either<_i5.Failure, _i3.GenerateDailyPlanResult>>);
 }
 
 /// A class which mocks [RegenerateDailyPlan].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockRegenerateDailyPlan extends _i1.Mock
-    implements _i7.RegenerateDailyPlan {
+    implements _i6.RegenerateDailyPlan {
   MockRegenerateDailyPlan() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>> call() =>
+  _i4.Future<_i2.Either<_i5.Failure, _i3.GenerateDailyPlanResult>> call() =>
       (super.noSuchMethod(
             Invocation.method(#call, []),
             returnValue:
-                _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>.value(
-                  _FakeEither_0<_i5.Failure, _i6.DailyPlan>(
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i3.GenerateDailyPlanResult>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i3.GenerateDailyPlanResult>(
                     this,
                     Invocation.method(#call, []),
                   ),
                 ),
           )
-          as _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>);
+          as _i4.Future<_i2.Either<_i5.Failure, _i3.GenerateDailyPlanResult>>);
 }

@@ -32,6 +32,7 @@ import 'package:pulse_coach/features/progress/presentation/pages/progress_page.d
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
 import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
+import 'package:pulse_coach/features/session/domain/usecases/update_bandit_reward.dart';
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/session_summary_page.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/countdown_overlay.dart';
@@ -166,6 +167,7 @@ void main() {
     ) async {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       getIt.registerSingleton(db.rpeFeedbackDao);
+      getIt.registerSingleton(UpdateBanditReward(db));
       addTearDown(() async {
         await db.close();
         await getIt.reset();

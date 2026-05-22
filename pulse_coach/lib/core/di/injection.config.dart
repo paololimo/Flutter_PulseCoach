@@ -75,6 +75,8 @@ import 'package:pulse_coach/features/session/domain/usecases/get_health_data.dar
     as _i746;
 import 'package:pulse_coach/features/session/domain/usecases/get_sensor_context.dart'
     as _i984;
+import 'package:pulse_coach/features/session/domain/usecases/update_bandit_reward.dart'
+    as _i359;
 import 'package:pulse_coach/features/sessions_catalog/data/datasources/exercise_local_data_source.dart'
     as _i91;
 import 'package:pulse_coach/features/sessions_catalog/data/datasources/exercise_remote_data_source.dart'
@@ -134,6 +136,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i432.DailyPlanRepositoryImpl(gh<_i79.AppDatabase>()),
     );
     gh.factory<_i122.AiEngine>(() => _i157.AiEngineIsolate());
+    gh.factory<_i359.UpdateBanditReward>(
+      () => _i359.UpdateBanditReward(gh<_i79.AppDatabase>()),
+    );
     gh.singleton<_i227.BehavioralStateDao>(
       () => healthModule.behavioralStateDao(gh<_i79.AppDatabase>()),
     );

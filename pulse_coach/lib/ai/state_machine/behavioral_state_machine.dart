@@ -1,10 +1,11 @@
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_transition.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/ai/bandit/state_vector.dart';
 import 'package:pulse_coach/ai/safety/safety_constraints.dart';
 
 /// Deterministic state machine that evaluates StateVector and returns the next
-/// BehavioralState + an optional transition message.
+/// BehavioralState + an optional transition key.
 ///
 /// Evaluation order matters — higher-priority transitions are checked first:
 ///   1. active → atRisk     (disengagement, checked before active→fatigued)
@@ -32,8 +33,7 @@ class BehavioralStateMachine {
     if (current == BehavioralState.active && missed >= 2) {
       return const BehavioralTransition(
         newState: BehavioralState.atRisk,
-        transitionMessage:
-            'Ci sei mancato. Ripartiamo leggeri — 5 minuti bastano oggi.',
+        transitionKey: BehavioralTransitionKey.activeToAtRisk,
       );
     }
 
@@ -41,8 +41,7 @@ class BehavioralStateMachine {
     if (current == BehavioralState.fatigued && missed >= 2) {
       return const BehavioralTransition(
         newState: BehavioralState.atRisk,
-        transitionMessage:
-            'Il corpo chiede una pausa più lunga. Riprendiamo dolcemente.',
+        transitionKey: BehavioralTransitionKey.fatiguedToAtRisk,
       );
     }
 
@@ -50,8 +49,7 @@ class BehavioralStateMachine {
     if (current == BehavioralState.active && _lastNAvg(rpe, 2) > 8.0) {
       return const BehavioralTransition(
         newState: BehavioralState.fatigued,
-        transitionMessage:
-            'Hai spinto forte. Oggi alleggeriamo: sessione corta.',
+        transitionKey: BehavioralTransitionKey.activeToFatigued,
       );
     }
 
@@ -63,9 +61,11 @@ class BehavioralStateMachine {
         rpe.length >= 3 &&
         _lastNAvg(rpe, 3) <= 7.0 &&
         missed == 0) {
-      return const BehavioralTransition(
+      return BehavioralTransition(
         newState: BehavioralState.recovering,
-        transitionMessage: 'Stai tornando in ritmo. Continuiamo con calma.',
+        transitionKey: current == BehavioralState.atRisk
+            ? BehavioralTransitionKey.atRiskToRecovering
+            : BehavioralTransitionKey.fatiguedToRecovering,
       );
     }
 
@@ -78,8 +78,7 @@ class BehavioralStateMachine {
         _lastNAvg(rpe, 3) <= 6.5) {
       return const BehavioralTransition(
         newState: BehavioralState.active,
-        transitionMessage:
-            'Sei di nuovo in forma! Riprendiamoci il piano completo.',
+        transitionKey: BehavioralTransitionKey.recoveringToActive,
       );
     }
 
@@ -91,9 +90,7 @@ class BehavioralStateMachine {
         rpe.last >= 9) {
       return const BehavioralTransition(
         newState: BehavioralState.fatigued,
-        transitionMessage:
-            'Stiamo rientrando, ma l\'ultimo sforzo è stato intenso. '
-            'Torniamo a una sessione facile.',
+        transitionKey: BehavioralTransitionKey.recoveringToFatigued,
       );
     }
 

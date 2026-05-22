@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 /// Displays the current behavioral state label and plain-language explanation.
 ///
-/// When [transitionMessage] is provided, it replaces the static state copy.
+/// When [transitionKey] is provided, it resolves to localized transition copy.
 class StateIndicator extends StatelessWidget {
   final BehavioralState state;
-  final String? transitionMessage;
+  final BehavioralTransitionKey? transitionKey;
 
-  const StateIndicator({
-    super.key,
-    required this.state,
-    this.transitionMessage,
-  });
+  const StateIndicator({super.key, required this.state, this.transitionKey});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +25,8 @@ class StateIndicator extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final stateColor = StateMessages.colorFor(state, pulseTheme);
     final subCopy =
-        transitionMessage ?? StateMessages.staticCopyFor(state, l10n);
+        StateMessages.transitionMessageFor(transitionKey, l10n) ??
+        StateMessages.staticCopyFor(state, l10n);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -86,6 +84,26 @@ class StateMessages {
       case BehavioralState.recovering:
         return l10n.staticCopyRecovering;
     }
+  }
+
+  static String? transitionMessageFor(
+    BehavioralTransitionKey? key,
+    AppLocalizations l10n,
+  ) {
+    return switch (key) {
+      BehavioralTransitionKey.activeToAtRisk => l10n.transitionActiveAtRisk,
+      BehavioralTransitionKey.fatiguedToAtRisk => l10n.transitionFatiguedAtRisk,
+      BehavioralTransitionKey.activeToFatigued => l10n.transitionActiveFatigued,
+      BehavioralTransitionKey.atRiskToRecovering =>
+        l10n.transitionAtRiskRecovering,
+      BehavioralTransitionKey.fatiguedToRecovering =>
+        l10n.transitionFatiguedRecovering,
+      BehavioralTransitionKey.recoveringToActive =>
+        l10n.transitionRecoveringActive,
+      BehavioralTransitionKey.recoveringToFatigued =>
+        l10n.transitionRecoveringFatigued,
+      null => null,
+    };
   }
 
   static Color colorFor(BehavioralState state, PulseCoachTheme theme) {

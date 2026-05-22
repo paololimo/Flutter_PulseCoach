@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/core/database/app_database.dart' as db_models;
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
@@ -62,7 +63,9 @@ void main() {
     blocTest<DailyPlanBloc, DailyPlanState>(
       '5.5-UNIT-028: DailyPlanGenerateRequested → [loading, loaded] on success',
       build: () {
-        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
+        when(mockGenerate.call()).thenAnswer(
+          (_) async => Right(GenerateDailyPlanResult(plan: tPlan)),
+        );
         return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
@@ -84,7 +87,9 @@ void main() {
         );
       },
       build: () {
-        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
+        when(mockGenerate.call()).thenAnswer(
+          (_) async => Right(GenerateDailyPlanResult(plan: tPlan)),
+        );
         return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
@@ -93,6 +98,42 @@ void main() {
         DailyPlanState.loaded(
           plan: tPlan,
           behavioralState: BehavioralState.fatigued,
+        ),
+      ],
+    );
+
+    blocTest<DailyPlanBloc, DailyPlanState>(
+      '9.3-UNIT-010: DailyPlanGenerateRequested surfaces transitionKey from use case',
+      setUp: () async {
+        // Latest DB state is what populates `behavioralState`; the
+        // transitionKey itself is carried in the use-case result (no more
+        // pre/post DB inference — closed in Story 9.3 code review).
+        await db.behavioralStateDao.insertState(
+          db_models.BehavioralStateCompanion.insert(
+            currentState: 'Fatigued',
+            recordedAt: DateTime.utc(2026, 4, 29, 8, 0),
+            updatedAt: DateTime.utc(2026, 4, 29, 8, 0),
+          ),
+        );
+      },
+      build: () {
+        when(mockGenerate.call()).thenAnswer(
+          (_) async => Right(
+            GenerateDailyPlanResult(
+              plan: tPlan,
+              transitionKey: BehavioralTransitionKey.activeToFatigued,
+            ),
+          ),
+        );
+        return bloc();
+      },
+      act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
+      expect: () => [
+        const DailyPlanState.loading(),
+        DailyPlanState.loaded(
+          plan: tPlan,
+          behavioralState: BehavioralState.fatigued,
+          transitionKey: BehavioralTransitionKey.activeToFatigued,
         ),
       ],
     );
@@ -110,7 +151,9 @@ void main() {
         );
       },
       build: () {
-        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
+        when(mockGenerate.call()).thenAnswer(
+          (_) async => Right(GenerateDailyPlanResult(plan: tPlan)),
+        );
         return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
@@ -134,7 +177,9 @@ void main() {
         );
       },
       build: () {
-        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
+        when(mockGenerate.call()).thenAnswer(
+          (_) async => Right(GenerateDailyPlanResult(plan: tPlan)),
+        );
         return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
@@ -163,7 +208,9 @@ void main() {
     blocTest<DailyPlanBloc, DailyPlanState>(
       '5.5-UNIT-030: DailyPlanRegenerateRequested → [loading, loaded] on success',
       build: () {
-        when(mockRegenerate.call()).thenAnswer((_) async => Right(tPlan));
+        when(mockRegenerate.call()).thenAnswer(
+          (_) async => Right(GenerateDailyPlanResult(plan: tPlan)),
+        );
         return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanRegenerateRequested()),
@@ -187,7 +234,9 @@ void main() {
         );
       },
       build: () {
-        when(mockRegenerate.call()).thenAnswer((_) async => Right(tPlan));
+        when(mockRegenerate.call()).thenAnswer(
+          (_) async => Right(GenerateDailyPlanResult(plan: tPlan)),
+        );
         return bloc();
       },
       act: (bloc) => bloc.add(DailyPlanRegenerateRequested()),
@@ -238,7 +287,9 @@ void main() {
     blocTest<DailyPlanBloc, DailyPlanState>(
       '5.5-UNIT-032: DailyPlanGenerateRequested dispatched twice → use case invoked twice, two loaded emissions',
       build: () {
-        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
+        when(mockGenerate.call()).thenAnswer(
+          (_) async => Right(GenerateDailyPlanResult(plan: tPlan)),
+        );
         return bloc();
       },
       act: (bloc) async {
