@@ -22,16 +22,28 @@ class RPEInputWidget extends StatelessWidget {
   static const double _interButtonGap = 4;
   static const int _buttonCount = 10;
 
+  // Width a single row of 10 hit cells + 9 gaps would need at the 48dp floor.
+  // Real phones are ~360dp wide (minus page padding), well below this — so the
+  // single-row spec layout only fits on wider surfaces (tablets / landscape).
+  static const double _singleRowWidth =
+      _minHitDiameter * _buttonCount + _interButtonGap * (_buttonCount - 1);
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final available = constraints.maxWidth.isFinite
             ? constraints.maxWidth
-            : _maxHitDiameter * _buttonCount +
-                  _interButtonGap * (_buttonCount - 1);
-        const totalGap = _interButtonGap * (_buttonCount - 1);
-        final perButton = ((available - totalGap) / _buttonCount).clamp(
+            : _singleRowWidth;
+        // UX-DR9 asks for a single row of 10, but 10×48dp + gaps (516dp) cannot
+        // fit a typical phone without either clipping targets off-screen or
+        // shrinking them below the 48dp accessibility floor. When the surface
+        // is too narrow we degrade to two rows of five: every target keeps its
+        // ≥48dp hit area (NFR24) and all ten stay on-screen.
+        final fitsSingleRow = available >= _singleRowWidth;
+        final perRow = fitsSingleRow ? _buttonCount : _buttonCount ~/ 2;
+        final totalGap = _interButtonGap * (perRow - 1);
+        final perButton = ((available - totalGap) / perRow).clamp(
           _minHitDiameter,
           _maxHitDiameter,
         );
@@ -42,26 +54,44 @@ class RPEInputWidget extends StatelessWidget {
           _maxHitDiameter,
         );
 
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.max,
+        if (fitsSingleRow) {
+          return _buildRow(1, _buttonCount, perButton, visibleDiameter);
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            for (var value = 1; value <= _buttonCount; value++) ...[
-              if (value > 1) const SizedBox(width: _interButtonGap),
-              _RpeButton(
-                value: value,
-                selected: selectedRpe == value,
-                disabled: selectedRpe != null,
-                hitDiameter: perButton,
-                visibleDiameter: visibleDiameter,
-                semanticLabel:
-                    semanticLabelBuilder?.call(value) ?? 'RPE $value',
-                onTap: () => onRpeSelected(value),
-              ),
-            ],
+            _buildRow(1, perRow, perButton, visibleDiameter),
+            const SizedBox(height: _interButtonGap * 2),
+            _buildRow(perRow + 1, _buttonCount, perButton, visibleDiameter),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildRow(
+    int start,
+    int end,
+    double hitDiameter,
+    double visibleDiameter,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        for (var value = start; value <= end; value++) ...[
+          if (value > start) const SizedBox(width: _interButtonGap),
+          _RpeButton(
+            value: value,
+            selected: selectedRpe == value,
+            disabled: selectedRpe != null,
+            hitDiameter: hitDiameter,
+            visibleDiameter: visibleDiameter,
+            semanticLabel: semanticLabelBuilder?.call(value) ?? 'RPE $value',
+            onTap: () => onRpeSelected(value),
+          ),
+        ],
+      ],
     );
   }
 }
