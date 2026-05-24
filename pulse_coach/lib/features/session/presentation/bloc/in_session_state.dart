@@ -1,3 +1,4 @@
+import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 
 const Object _unset = Object();
@@ -10,6 +11,7 @@ class InSessionState {
   final bool isAbandoned;
   final int? liveHr;
   final int? lastHrAtEpochMs;
+  final Failure? persistenceError;
 
   const InSessionState({
     required this.steps,
@@ -19,6 +21,7 @@ class InSessionState {
     this.isAbandoned = false,
     this.liveHr,
     this.lastHrAtEpochMs,
+    this.persistenceError,
   });
 
   ExerciseStep get currentStep => steps[currentStepIndex];
@@ -31,6 +34,7 @@ class InSessionState {
     bool? isAbandoned,
     Object? liveHr = _unset,
     Object? lastHrAtEpochMs = _unset,
+    Object? persistenceError = _unset,
   }) => InSessionState(
     steps: steps,
     currentStepIndex: currentStepIndex ?? this.currentStepIndex,
@@ -41,5 +45,8 @@ class InSessionState {
     lastHrAtEpochMs: identical(lastHrAtEpochMs, _unset)
         ? this.lastHrAtEpochMs
         : lastHrAtEpochMs as int?,
+    persistenceError: identical(persistenceError, _unset)
+        ? this.persistenceError
+        : persistenceError as Failure?,
   );
 }

@@ -1,6 +1,6 @@
 import 'dart:async' show unawaited;
 
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:vibration/vibration.dart';
 
 /// Abstracts haptic feedback so InSessionCubit can be tested without
@@ -28,8 +28,13 @@ class VibrationHapticService implements HapticService {
   Future<void> _runInit() async {
     try {
       _supported = await Vibration.hasVibrator();
-    } catch (e) {
-      debugPrint('VibrationHapticService.init: hasVibrator failed: $e');
+    } catch (e, st) {
+      AppLogger.warning(
+        'hasVibrator failed',
+        name: 'VibrationHapticService',
+        error: e,
+        stackTrace: st,
+      );
       _supported = false;
     } finally {
       _initialized = true;
@@ -42,14 +47,22 @@ class VibrationHapticService implements HapticService {
 
     try {
       unawaited(
-        Vibration.vibrate(duration: 200).catchError((Object e) {
-          debugPrint(
-            'VibrationHapticService.stepTransition: vibrate failed: $e',
+        Vibration.vibrate(duration: 200).catchError((Object e, StackTrace st) {
+          AppLogger.warning(
+            'vibrate failed',
+            name: 'VibrationHapticService',
+            error: e,
+            stackTrace: st,
           );
         }),
       );
-    } catch (e) {
-      debugPrint('VibrationHapticService.stepTransition: vibrate failed: $e');
+    } catch (e, st) {
+      AppLogger.warning(
+        'vibrate failed',
+        name: 'VibrationHapticService',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 }

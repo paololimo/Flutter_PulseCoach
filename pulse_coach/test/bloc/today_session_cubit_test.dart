@@ -6,6 +6,7 @@ import 'package:mockito/mockito.dart';
 import 'package:pulse_coach/core/database/app_database.dart'
     show SessionLog, SessionLogsCompanion;
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
+import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 
 import 'today_session_cubit_test.mocks.dart';
@@ -339,9 +340,11 @@ void main() {
     );
 
     blocTest<TodaySessionCubit, TodaySessionState>(
-      '8.0-UNIT-008: insertLog throwing degrades silently — no state emit, no crash',
+      '10.0-CUBIT-003: completion DAO failure emits persistenceError and still completes',
       build: () {
-        when(sessionLogsDao.upsertCompletion(any)).thenThrow(StateError('disk full'));
+        when(
+          sessionLogsDao.upsertCompletion(any),
+        ).thenThrow(StateError('disk full'));
         return buildCubit();
       },
       seed: () => const TodaySessionState(heroIndex: 0, totalSessions: 3),
@@ -350,13 +353,19 @@ void main() {
         await cubit.markSessionCompleted();
       },
       expect: () => [
-        // Only the planLoaded emit; markSessionCompleted must NOT mutate
-        // state when the DAO threw.
         isA<TodaySessionState>().having(
           (state) => state.completedIndices,
           'completedIndices',
           isEmpty,
         ),
+        isA<TodaySessionState>()
+            .having((state) => state.completedIndices, 'completedIndices', {0})
+            .having((state) => state.heroIndex, 'heroIndex', 1)
+            .having(
+              (state) => state.persistenceError,
+              'persistenceError',
+              const ServerFailure('session_log_upsert_failed'),
+            ),
       ],
     );
 

@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:health/health.dart';
+import 'package:pulse_coach/core/logging/app_logger.dart';
 
 /// Abstracts live HR polling so InSessionCubit can be tested without
 /// platform-channel noise.
@@ -40,8 +40,13 @@ class HealthLiveHrService implements LiveHrService {
         permissions: [HealthDataAccess.READ],
       );
       _initialized = true;
-    } catch (e) {
-      debugPrint('HealthLiveHrService.init: $e');
+    } catch (e, st) {
+      AppLogger.warning(
+        'init failed',
+        name: 'HealthLiveHrService',
+        error: e,
+        stackTrace: st,
+      );
       _permissionsGranted = false;
       // Allow retry: do NOT latch _initialized=true on failure.
       _initFuture = null;
@@ -70,8 +75,13 @@ class HealthLiveHrService implements LiveHrService {
       final bpm = raw.round();
       if (bpm < _minBpm || bpm > _maxBpm) return null;
       return bpm;
-    } catch (e) {
-      debugPrint('HealthLiveHrService.fetchLiveHr: $e');
+    } catch (e, st) {
+      AppLogger.warning(
+        'fetchLiveHr failed',
+        name: 'HealthLiveHrService',
+        error: e,
+        stackTrace: st,
+      );
       return null;
     }
   }

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
 
 import 'package:dartz/dartz.dart';
 import 'package:drift/drift.dart' as drift;
@@ -13,6 +12,7 @@ import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state_machine.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
 
 class BanditRewardInput {
@@ -172,7 +172,7 @@ class UpdateBanditReward {
 
       return const Right(unit);
     } catch (e, st) {
-      developer.log(
+      AppLogger.error(
         'UpdateBanditReward failed',
         name: 'UpdateBanditReward',
         error: e,
@@ -194,11 +194,12 @@ class UpdateBanditReward {
         armWeights: weights,
         updatedAt: row.updatedAt,
       );
-    } catch (e) {
-      developer.log(
+    } catch (e, st) {
+      AppLogger.warning(
         'Corrupt BanditState JSON; cold start',
         name: 'UpdateBanditReward',
         error: e,
+        stackTrace: st,
       );
       return ai_bandit.initialBanditState();
     }
@@ -206,10 +207,9 @@ class UpdateBanditReward {
 
   double _validWeight(double? weight, String armKey) {
     if (weight != null && weight.isFinite && weight >= 0) return weight;
-    developer.log(
+    AppLogger.warning(
       'bandit_state: invalid weight coerced to 1.0 for arm=$armKey, raw=$weight',
       name: 'UpdateBanditReward',
-      level: 900,
     );
     return 1.0;
   }

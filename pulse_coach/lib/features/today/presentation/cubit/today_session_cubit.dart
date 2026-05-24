@@ -1,22 +1,28 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart' show Value;
-import 'package:flutter/foundation.dart' show debugPrint, setEquals;
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/database/app_database.dart'
     show SessionLog, SessionLogsCompanion;
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
+import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/logging/app_logger.dart';
+
+const Object _sentinel = Object();
 
 class TodaySessionState {
   final int heroIndex;
   final Set<int> completedIndices;
   final int totalSessions;
+  final Failure? persistenceError;
 
   const TodaySessionState({
     this.heroIndex = 0,
     this.completedIndices = const <int>{},
     this.totalSessions = 0,
+    this.persistenceError,
   });
 
   int get completedCount => completedIndices.length;
@@ -27,10 +33,14 @@ class TodaySessionState {
     int? heroIndex,
     Set<int>? completedIndices,
     int? totalSessions,
+    Object? persistenceError = _sentinel,
   }) => TodaySessionState(
     heroIndex: heroIndex ?? this.heroIndex,
     completedIndices: completedIndices ?? this.completedIndices,
     totalSessions: totalSessions ?? this.totalSessions,
+    persistenceError: identical(persistenceError, _sentinel)
+        ? this.persistenceError
+        : persistenceError as Failure?,
   );
 }
 
@@ -131,6 +141,7 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
 
     final planIdAtStart = _currentPlanId;
     final heroAtStart = state.heroIndex;
+    Failure? persistenceError;
 
     if (planIdAtStart != null) {
       final now = DateTime.now();
@@ -146,12 +157,17 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
             createdAt: Value(now),
           ),
         );
-      } catch (e) {
+      } catch (e, st) {
         // DB-locked / disk-full / FK constraint — degrade silently rather than
         // freeze the UI. The next planLoaded will reconcile from the source of
         // truth.
-        debugPrint('TodaySessionCubit: upsertCompletion failed: $e');
-        return;
+        AppLogger.error(
+          '_upsertCompletion DAO write failed',
+          name: 'TodaySessionCubit',
+          error: e,
+          stackTrace: st,
+        );
+        persistenceError = const ServerFailure('session_log_upsert_failed');
       }
       if (isClosed) return;
       // If a regenerate landed during the insert, do not mutate the new plan's
@@ -167,7 +183,13 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
       state.totalSessions,
       after: heroAtStart,
     );
-    emit(state.copyWith(completedIndices: newCompleted, heroIndex: nextHero));
+    emit(
+      state.copyWith(
+        completedIndices: newCompleted,
+        heroIndex: nextHero,
+        persistenceError: persistenceError,
+      ),
+    );
   }
 
   @override

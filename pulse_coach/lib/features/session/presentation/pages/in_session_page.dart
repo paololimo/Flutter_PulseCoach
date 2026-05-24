@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:health/health.dart';
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
@@ -155,14 +156,24 @@ class _InSessionPageState extends State<InSessionPage> {
         builder: (sheetContext) => _AbandonConfirmSheet(sheetContext),
       );
     } catch (e, st) {
-      debugPrint('InSessionPage: confirmation sheet failed: $e\n$st');
+      AppLogger.warning(
+        'confirmation sheet failed',
+        name: 'InSessionPage',
+        error: e,
+        stackTrace: st,
+      );
     }
 
     if (confirmed == true && mounted) {
       try {
         await _cubit?.abandon();
       } catch (e, st) {
-        debugPrint('InSessionPage: abandon failed: $e\n$st');
+        AppLogger.warning(
+          'abandon failed',
+          name: 'InSessionPage',
+          error: e,
+          stackTrace: st,
+        );
       }
     } else {
       // User cancelled (or sheet failed). Resume the countdown.

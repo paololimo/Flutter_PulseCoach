@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
 
 import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/database/daos/exercise_cache_dao.dart';
 import 'package:pulse_coach/core/error/exceptions.dart';
+import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:pulse_coach/features/sessions_catalog/data/models/exercise_model.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 
@@ -20,13 +20,13 @@ class ExerciseLocalDataSource {
   ) async {
     final normalizedType = sessionType.trim().toLowerCase();
     if (normalizedType != sessionType) {
-      developer.log(
+      AppLogger.debug(
         'sessionType "$sessionType" normalized to "$normalizedType"',
         name: 'ExerciseLocalDataSource',
       );
     }
     if (normalizedType.isEmpty) {
-      developer.log(
+      AppLogger.debug(
         'Empty sessionType passed - returning empty list',
         name: 'ExerciseLocalDataSource',
       );
@@ -51,18 +51,19 @@ class ExerciseLocalDataSource {
             CachedExerciseEntry(exercise: exercise, cachedAt: row.cachedAt),
           );
         }
-      } catch (e) {
+      } catch (e, st) {
         // Skip individual corrupt rows so one bad payload cannot poison the
         // entire cache for every session type.
-        developer.log(
+        AppLogger.error(
           'Skipping corrupt cache row ${row.exerciseId}',
           name: 'ExerciseLocalDataSource',
           error: e,
+          stackTrace: st,
         );
       }
     }
     if (entries.isEmpty) {
-      developer.log(
+      AppLogger.debug(
         'No cached exercises found for sessionType "$normalizedType"',
         name: 'ExerciseLocalDataSource',
       );
@@ -110,13 +111,13 @@ class ExerciseLocalDataSource {
   Future<List<Exercise>> loadFallbackExercisesByType(String sessionType) async {
     final normalizedType = sessionType.trim().toLowerCase();
     if (normalizedType != sessionType) {
-      developer.log(
+      AppLogger.debug(
         'sessionType "$sessionType" normalized to "$normalizedType"',
         name: 'ExerciseLocalDataSource',
       );
     }
     if (normalizedType.isEmpty) {
-      developer.log(
+      AppLogger.debug(
         'Empty sessionType passed - returning empty list',
         name: 'ExerciseLocalDataSource',
       );
@@ -148,7 +149,7 @@ class ExerciseLocalDataSource {
         final exercise = Exercise.fromJson(entry);
         if (exercise.sessionType == normalizedType) {
           if (!seen.add(exercise.id)) {
-            developer.log(
+            AppLogger.warning(
               'Duplicate fallback id "${exercise.id}" - skipping',
               name: 'ExerciseLocalDataSource',
             );
@@ -156,18 +157,19 @@ class ExerciseLocalDataSource {
           }
           exercises.add(exercise);
         }
-      } catch (e) {
+      } catch (e, st) {
         // Skip individual malformed fallback records so one bad entry cannot
         // wipe the entire degraded path.
-        developer.log(
+        AppLogger.error(
           'Skipping malformed fallback record',
           name: 'ExerciseLocalDataSource',
           error: e,
+          stackTrace: st,
         );
       }
     }
     if (exercises.isEmpty) {
-      developer.log(
+      AppLogger.debug(
         'No fallback exercises found for sessionType "$normalizedType"',
         name: 'ExerciseLocalDataSource',
       );

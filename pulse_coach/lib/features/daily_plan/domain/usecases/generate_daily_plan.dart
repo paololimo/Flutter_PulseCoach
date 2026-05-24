@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer' as developer;
 
 import 'package:dartz/dartz.dart';
 import 'package:drift/drift.dart' as drift;
@@ -13,6 +12,7 @@ import 'package:pulse_coach/ai/state_machine/behavioral_state.dart' as ai_state;
 import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
     as domain;
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
@@ -120,15 +120,16 @@ class GenerateDailyPlan {
           );
         },
       );
-    } on TimeoutException catch (e) {
-      developer.log(
+    } on TimeoutException catch (e, st) {
+      AppLogger.error(
         'AI pipeline timed out',
         name: 'GenerateDailyPlan',
         error: e,
+        stackTrace: st,
       );
       return Left(CacheFailure('AI pipeline timed out: ${e.message ?? ''}'));
     } catch (e, st) {
-      developer.log(
+      AppLogger.error(
         'GenerateDailyPlan failed',
         name: 'GenerateDailyPlan',
         error: e,
@@ -147,7 +148,7 @@ class GenerateDailyPlan {
       );
       final enriched = result.fold(
         (failure) {
-          developer.log(
+          AppLogger.warning(
             'Catalog enrichment skipped for ${session.sessionType}',
             name: 'GenerateDailyPlan',
             error: failure,
@@ -334,15 +335,15 @@ class GenerateDailyPlan {
         updatedAt: row.updatedAt,
       );
     } on FormatException catch (e) {
-      developer.log(
-        'Corrupt BanditState JSON — cold start',
+      AppLogger.warning(
+        'Corrupt BanditState JSON - cold start',
         name: 'GenerateDailyPlan',
         error: e,
       );
       return ai_bandit.initialBanditState();
     } on TypeError catch (e) {
-      developer.log(
-        'Malformed BanditState payload — cold start',
+      AppLogger.warning(
+        'Malformed BanditState payload - cold start',
         name: 'GenerateDailyPlan',
         error: e,
       );

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulse_coach/core/database/daos/daily_plans_dao.dart';
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/mini_summary_state.dart';
@@ -53,10 +53,15 @@ class MiniSummaryCubit extends Cubit<MiniSummaryState> {
         ),
       );
       _scheduleAutoDismiss();
-    } catch (e) {
+    } catch (e, st) {
       // Review patch #8: keep a stable, non-leaky failure message; raw
       // exception text goes to debug logs only.
-      debugPrint('MiniSummaryCubit: load failed: $e');
+      AppLogger.error(
+        'load failed',
+        name: 'MiniSummaryCubit',
+        error: e,
+        stackTrace: st,
+      );
       if (!isClosed) {
         emit(
           const MiniSummaryError(ServerFailure(_miniSummaryLoadFailedMessage)),

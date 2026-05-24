@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -6,6 +5,7 @@ import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_transition_key.dart';
 import 'package:pulse_coach/core/database/app_database.dart' show AppDatabase;
 import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/usecases/regenerate_daily_plan.dart';
@@ -142,9 +142,9 @@ class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
       _ => null,
     };
     if (parsed != null) return parsed;
-    debugPrint(
-      'DailyPlanBloc: unknown BehavioralState string "$stateStr" — '
-      'falling back to active.',
+    AppLogger.warning(
+      'Unknown BehavioralState string "$stateStr" - falling back to active',
+      name: 'DailyPlanBloc',
     );
     return BehavioralState.active;
   }

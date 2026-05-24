@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/database/app_database.dart'
     show SessionLogsCompanion;
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
+import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_cubit.dart';
 
@@ -30,6 +31,13 @@ class _FakeSessionLogsDao extends Fake implements SessionLogsDao {
   Future<int> upsertCompletion(SessionLogsCompanion entry) async {
     upsertedCompletions.add(entry);
     return 1;
+  }
+}
+
+class _ThrowingCompletionSessionLogsDao extends _FakeSessionLogsDao {
+  @override
+  Future<int> upsertCompletion(SessionLogsCompanion entry) async {
+    throw StateError('db error');
   }
 }
 
@@ -106,6 +114,55 @@ void main() {
       expect(cubit.state.isComplete, isTrue);
       await cubit.close();
     });
+
+    testWidgets(
+      '10.0-CUBIT-001: completion DAO failure emits persistenceError and isComplete',
+      (tester) async {
+        final dao = _ThrowingCompletionSessionLogsDao();
+        final cubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 42,
+        )..start();
+        final totalSeconds = _steps.fold<int>(
+          0,
+          (sum, step) => sum + step.durationSeconds + 1,
+        );
+
+        await tester.pump(Duration(seconds: totalSeconds));
+        await tester.pump();
+
+        expect(cubit.state.isComplete, isTrue);
+        expect(
+          cubit.state.persistenceError,
+          const ServerFailure('session_log_write_failed'),
+        );
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '10.0-CUBIT-002: completion DAO success leaves persistenceError null',
+      (tester) async {
+        final dao = _FakeSessionLogsDao();
+        final cubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 42,
+        )..start();
+        final totalSeconds = _steps.fold<int>(
+          0,
+          (sum, step) => sum + step.durationSeconds + 1,
+        );
+
+        await tester.pump(Duration(seconds: totalSeconds));
+        await tester.pump();
+
+        expect(cubit.state.isComplete, isTrue);
+        expect(cubit.state.persistenceError, isNull);
+        await cubit.close();
+      },
+    );
 
     testWidgets('8.2-CUBIT-007: timer renders 00:00 before advancing', (
       tester,
@@ -363,10 +420,7 @@ void main() {
         // (which would have been silently ignored by insertOrIgnore + UNIQUE
         // and left the abandoned row as the source of truth).
         expect(dao.upsertedCompletions, hasLength(1));
-        expect(
-          dao.upsertedCompletions.single.sessionIndex,
-          const Value(0),
-        );
+        expect(dao.upsertedCompletions.single.sessionIndex, const Value(0));
         await secondCubit.close();
       },
     );

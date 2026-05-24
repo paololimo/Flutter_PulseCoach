@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart' show Value;
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulse_coach/core/database/app_database.dart'
     show SessionLogsCompanion;
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
+import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.dart';
 import 'package:pulse_coach/features/session/presentation/utils/haptic_service.dart';
@@ -134,8 +135,22 @@ class InSessionCubit extends Cubit<InSessionState> {
             createdAt: Value(now),
           ),
         );
-      } catch (e) {
-        debugPrint('InSessionCubit: upsertCompletion failed: $e');
+      } catch (e, st) {
+        AppLogger.error(
+          'upsertCompletion failed',
+          name: 'InSessionCubit',
+          error: e,
+          stackTrace: st,
+        );
+        if (!isClosed) {
+          emit(
+            state.copyWith(
+              persistenceError: const ServerFailure('session_log_write_failed'),
+              isComplete: true,
+            ),
+          );
+        }
+        return;
       }
     }
     if (!isClosed) emit(state.copyWith(isComplete: true));
@@ -161,8 +176,13 @@ class InSessionCubit extends Cubit<InSessionState> {
           _hrTimer = null;
         }
       }
-    } catch (e) {
-      debugPrint('InSessionCubit: fetchLiveHr failed: $e');
+    } catch (e, st) {
+      AppLogger.warning(
+        'fetchLiveHr failed (optional - degrading gracefully)',
+        name: 'InSessionCubit',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -205,12 +225,17 @@ class InSessionCubit extends Cubit<InSessionState> {
           currentStepIndex: Value(currentStepIndex),
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
       // Clear the request flag so the user can retry abandoning from a future
       // entry point if the row needs to be written. The UI has already
       // navigated to RPE via the `isAbandoned` emit above.
       _abandonRequested = false;
-      debugPrint('InSessionCubit: _persistAbandon failed: $e');
+      AppLogger.error(
+        '_persistAbandon DAO write failed',
+        name: 'InSessionCubit',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
