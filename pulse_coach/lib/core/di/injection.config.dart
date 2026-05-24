@@ -57,6 +57,16 @@ import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cub
     as _i472;
 import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.dart'
     as _i901;
+import 'package:pulse_coach/features/progress/data/datasources/progress_local_data_source.dart'
+    as _i272;
+import 'package:pulse_coach/features/progress/data/repositories/progress_repository_impl.dart'
+    as _i1027;
+import 'package:pulse_coach/features/progress/domain/repositories/progress_repository.dart'
+    as _i73;
+import 'package:pulse_coach/features/progress/domain/usecases/get_session_history.dart'
+    as _i727;
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart'
+    as _i111;
 import 'package:pulse_coach/features/session/data/datasources/accelerometer_data_source.dart'
     as _i253;
 import 'package:pulse_coach/features/session/data/datasources/health_data_source.dart'
@@ -219,6 +229,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i280.SaveProfile>(),
       ),
     );
+    gh.lazySingleton<_i272.ProgressLocalDataSource>(
+      () => _i272.ProgressLocalDataSource(
+        gh<_i30.SessionLogsDao>(),
+        gh<_i562.DailyPlansDao>(),
+        gh<_i224.RpeFeedbackDao>(),
+      ),
+    );
     gh.factory<_i206.WeatherLocalDataSource>(
       () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
     );
@@ -241,6 +258,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i160.LocationService>(),
       ),
     );
+    gh.lazySingleton<_i73.ProgressRepository>(
+      () => _i1027.ProgressRepositoryImpl(gh<_i272.ProgressLocalDataSource>()),
+    );
+    gh.lazySingleton<_i727.GetSessionHistory>(
+      () => _i727.GetSessionHistory(gh<_i73.ProgressRepository>()),
+    );
     gh.lazySingleton<_i916.SessionsCatalogCubit>(
       () => _i916.SessionsCatalogCubit(gh<_i342.GetExercisesByType>()),
     );
@@ -255,6 +278,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.ExerciseRepository>(),
         gh<_i79.AppDatabase>(),
       ),
+    );
+    gh.factory<_i111.ProgressCubit>(
+      () => _i111.ProgressCubit(gh<_i727.GetSessionHistory>()),
     );
     gh.factory<_i664.GetWeatherContext>(
       () => _i664.GetWeatherContext(gh<_i748.WeatherRepository>()),

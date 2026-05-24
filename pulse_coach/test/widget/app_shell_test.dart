@@ -7,11 +7,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/database/app_database.dart' hide DailyPlan;
+import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
+import 'package:pulse_coach/features/progress/domain/entities/session_history_entry.dart';
+import 'package:pulse_coach/features/progress/domain/repositories/progress_repository.dart';
+import 'package:pulse_coach/features/progress/domain/usecases/get_session_history.dart';
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exercises_by_type.dart';
@@ -65,6 +70,16 @@ Widget buildTestShell({String initialLocation = '/today'}) {
 
 void main() {
   group('AppShell', () {
+    setUp(() {
+      getIt.registerFactory<ProgressCubit>(
+        () => ProgressCubit(GetSessionHistory(_ProgressRepositoryStub())),
+      );
+    });
+
+    tearDown(() async {
+      await getIt.reset();
+    });
+
     testWidgets('shows BottomNavigationBar with 3 items', (tester) async {
       await tester.pumpWidget(buildTestShell());
       await tester.pumpAndSettle();
@@ -195,4 +210,11 @@ class _ExerciseRepositoryStub implements ExerciseRepository {
 
   @override
   Future<Either<Failure, Unit>> syncCatalog() async => const Right(unit);
+}
+
+class _ProgressRepositoryStub implements ProgressRepository {
+  @override
+  Future<Either<Failure, List<SessionHistoryEntry>>> getSessionHistory() async {
+    return const Right(<SessionHistoryEntry>[]);
+  }
 }

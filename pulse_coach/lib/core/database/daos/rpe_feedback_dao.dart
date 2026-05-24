@@ -14,6 +14,14 @@ class RpeFeedbackDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertFeedback(RpeFeedbackCompanion entry) =>
       into(rpeFeedback).insert(entry);
 
+  /// Returns the RPE feedback row for [sessionLogId], or null when the user
+  /// did not rate this session (e.g. abandoned before the RPE screen).
+  Future<RpeFeedbackData?> getBySessionLogId(int sessionLogId) =>
+      (select(rpeFeedback)
+            ..where((t) => t.sessionLogId.equals(sessionLogId))
+            ..limit(1))
+          .getSingleOrNull();
+
   /// Idempotent on the natural key:
   ///   * if `sessionLogId` is set, dedupe by `session_log_id`
   ///   * otherwise dedupe by `(session_id, recorded_at)`.

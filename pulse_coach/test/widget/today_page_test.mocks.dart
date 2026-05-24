@@ -386,6 +386,16 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
           as _i6.Future<List<_i2.SessionLog>>);
 
   @override
+  _i6.Future<List<_i2.SessionLog>> getAllLogsOrderedByDate() =>
+      (super.noSuchMethod(
+            Invocation.method(#getAllLogsOrderedByDate, []),
+            returnValue: _i6.Future<List<_i2.SessionLog>>.value(
+              <_i2.SessionLog>[],
+            ),
+          )
+          as _i6.Future<List<_i2.SessionLog>>);
+
+  @override
   _i6.Future<_i2.SessionLog?> getLogFor(int? planId, int? sessionIndex) =>
       (super.noSuchMethod(
             Invocation.method(#getLogFor, [planId, sessionIndex]),

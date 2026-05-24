@@ -27,6 +27,17 @@ class SessionLogsDao extends DatabaseAccessor<AppDatabase>
   Future<List<SessionLog>> getLogsForPlan(int planId) =>
       (select(sessionLogs)..where((t) => t.dailyPlanId.equals(planId))).get();
 
+  /// Returns all session log rows across all plans, most recent first.
+  /// Used by the progress history feature (read-only; no plan filter).
+  /// The secondary `id` descending key makes the order deterministic when two
+  /// rows share an identical `completedAt`.
+  Future<List<SessionLog>> getAllLogsOrderedByDate() =>
+      (select(sessionLogs)..orderBy([
+            (t) => OrderingTerm.desc(t.completedAt),
+            (t) => OrderingTerm.desc(t.id),
+          ]))
+          .get();
+
   /// Returns the persisted log row for `(planId, sessionIndex)`, or null when
   /// none exists yet (e.g. the user reached `RpePage` without an upstream
   /// `session_logs` write).
