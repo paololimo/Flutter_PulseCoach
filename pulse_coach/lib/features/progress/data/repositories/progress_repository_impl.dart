@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:pulse_coach/features/progress/data/datasources/progress_local_data_source.dart';
+import 'package:pulse_coach/features/progress/domain/entities/progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/entities/session_history_entry.dart';
 import 'package:pulse_coach/features/progress/domain/repositories/progress_repository.dart';
 
@@ -25,6 +26,22 @@ class ProgressRepositoryImpl implements ProgressRepository {
         stackTrace: st,
       );
       return const Left(CacheFailure('progress_history_load_failed'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ProgressStats>> getProgressStats() async {
+    try {
+      final stats = await _dataSource.getProgressStats();
+      return Right(stats);
+    } catch (e, st) {
+      AppLogger.error(
+        'getProgressStats failed',
+        name: 'ProgressRepositoryImpl',
+        error: e,
+        stackTrace: st,
+      );
+      return const Left(CacheFailure('progress_stats_load_failed'));
     }
   }
 }

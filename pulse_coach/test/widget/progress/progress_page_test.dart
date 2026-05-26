@@ -8,26 +8,41 @@ import 'package:mockito/mockito.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/progress/domain/entities/progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/entities/session_history_entry.dart';
+import 'package:pulse_coach/features/progress/domain/usecases/get_progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/usecases/get_session_history.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart';
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
+import 'package:pulse_coach/features/progress/presentation/widgets/completion_rate_chart.dart';
+import 'package:pulse_coach/features/progress/presentation/widgets/minutes_per_week_chart.dart';
+import 'package:pulse_coach/features/progress/presentation/widgets/rpe_trend_chart.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/session_history_tile.dart';
+import 'package:pulse_coach/features/progress/presentation/widgets/session_type_breakdown_chart.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 import 'progress_page_test.mocks.dart';
 
-@GenerateMocks([GetSessionHistory])
+@GenerateMocks([GetSessionHistory, GetProgressStats])
 void main() {
   group('ProgressPage', () {
     late MockGetSessionHistory mockGetSessionHistory;
+    late MockGetProgressStats mockGetProgressStats;
 
     setUp(() async {
       await getIt.reset();
       mockGetSessionHistory = MockGetSessionHistory();
+      mockGetProgressStats = MockGetProgressStats();
+      when(
+        mockGetProgressStats(),
+      ).thenAnswer((_) async => const Right(_emptyStats));
       getIt.registerFactory<ProgressCubit>(
         () => ProgressCubit(mockGetSessionHistory),
+      );
+      getIt.registerFactory<ProgressStatsCubit>(
+        () => ProgressStatsCubit(mockGetProgressStats),
       );
     });
 
@@ -54,7 +69,7 @@ void main() {
       await pumpProgressPage(tester);
       await tester.pump();
 
-      expect(find.byType(ShimmerPlaceholder), findsNWidgets(3));
+      expect(find.byType(ShimmerPlaceholder), findsAtLeastNWidgets(3));
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
 
@@ -128,6 +143,120 @@ void main() {
       expect(opacity.opacity, lessThanOrEqualTo(0.5));
       expect(find.text('—'), findsOneWidget);
     });
+
+    testWidgets('10.2-WIDGET-006: charts tab shows insufficient data text', (
+      tester,
+    ) async {
+      when(
+        mockGetSessionHistory(),
+      ).thenAnswer((_) async => const Right(<SessionHistoryEntry>[]));
+      when(mockGetProgressStats()).thenAnswer(
+        (_) async => const Right(
+          ProgressStats(
+            completedCount: 2,
+            abandonedCount: 0,
+            minutesPerWeek: [],
+            rpeTrend: [],
+            sessionTypeCounts: {},
+          ),
+        ),
+      );
+
+      await pumpProgressPage(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Grafici'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Completa più sessioni per vedere i tuoi progressi'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('10.2-WIDGET-008: charts tab shows all four chart widgets', (
+      tester,
+    ) async {
+      when(
+        mockGetSessionHistory(),
+      ).thenAnswer((_) async => const Right(<SessionHistoryEntry>[]));
+      when(mockGetProgressStats()).thenAnswer(
+        (_) async => Right(
+          ProgressStats(
+            completedCount: 2,
+            abandonedCount: 1,
+            minutesPerWeek: const [
+              WeeklyMinutes(weekLabel: '25/05', totalMinutes: 45),
+            ],
+            rpeTrend: [
+              RpeDataPoint(completedAt: DateTime(2026, 5, 25), rpeValue: 6),
+            ],
+            sessionTypeCounts: const {'cardio': 2, 'mobility': 1},
+          ),
+        ),
+      );
+
+      await pumpProgressPage(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Grafici'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MinutesPerWeekChart), findsOneWidget);
+      expect(find.byType(CompletionRateChart), findsOneWidget);
+      expect(find.byType(RpeTrendChart), findsOneWidget);
+      await tester.drag(find.byType(ListView), const Offset(0, -700));
+      await tester.pumpAndSettle();
+      expect(find.byType(SessionTypeBreakdownChart), findsOneWidget);
+    });
+
+    testWidgets(
+      '10.2-WIDGET-009: RPE chart shows empty-state when rpeTrend is empty',
+      (tester) async {
+        when(
+          mockGetSessionHistory(),
+        ).thenAnswer((_) async => const Right(<SessionHistoryEntry>[]));
+        when(mockGetProgressStats()).thenAnswer(
+          (_) async => const Right(
+            ProgressStats(
+              completedCount: 3,
+              abandonedCount: 0,
+              minutesPerWeek: [
+                WeeklyMinutes(weekLabel: '25/05', totalMinutes: 45),
+              ],
+              rpeTrend: [],
+              sessionTypeCounts: {'cardio': 3},
+            ),
+          ),
+        );
+
+        await pumpProgressPage(tester);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Grafici'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Nessun dato RPE ancora disponibile'), findsOneWidget);
+        expect(find.byType(RpeTrendChart), findsNothing);
+      },
+    );
+
+    testWidgets('10.2-WIDGET-007: charts tab shows three shimmer rows', (
+      tester,
+    ) async {
+      final pending = Completer<Either<Failure, ProgressStats>>();
+      reset(mockGetProgressStats);
+      when(
+        mockGetSessionHistory(),
+      ).thenAnswer((_) async => const Right(<SessionHistoryEntry>[]));
+      when(mockGetProgressStats()).thenAnswer((_) => pending.future);
+
+      await pumpProgressPage(tester);
+      await tester.pump();
+      await tester.tap(find.byType(Tab).last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(ShimmerPlaceholder), findsNWidgets(3));
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
   });
 }
 
@@ -147,3 +276,11 @@ SessionHistoryEntry _entry({
     elapsedSeconds: elapsedSeconds,
   );
 }
+
+const _emptyStats = ProgressStats(
+  completedCount: 0,
+  abandonedCount: 0,
+  minutesPerWeek: [],
+  rpeTrend: [],
+  sessionTypeCounts: {},
+);

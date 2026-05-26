@@ -28,10 +28,13 @@ import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
+import 'package:pulse_coach/features/progress/domain/entities/progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/entities/session_history_entry.dart';
 import 'package:pulse_coach/features/progress/domain/repositories/progress_repository.dart';
+import 'package:pulse_coach/features/progress/domain/usecases/get_progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/usecases/get_session_history.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart';
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
 import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
@@ -82,6 +85,9 @@ void main() {
     ) async {
       getIt.registerFactory<ProgressCubit>(
         () => ProgressCubit(GetSessionHistory(_ProgressRepositoryStub())),
+      );
+      getIt.registerFactory<ProgressStatsCubit>(
+        () => ProgressStatsCubit(GetProgressStats(_ProgressRepositoryStub())),
       );
       addTearDown(getIt.reset);
 
@@ -353,5 +359,18 @@ class _ProgressRepositoryStub implements ProgressRepository {
   @override
   Future<Either<Failure, List<SessionHistoryEntry>>> getSessionHistory() async {
     return const Right(<SessionHistoryEntry>[]);
+  }
+
+  @override
+  Future<Either<Failure, ProgressStats>> getProgressStats() async {
+    return const Right(
+      ProgressStats(
+        completedCount: 0,
+        abandonedCount: 0,
+        minutesPerWeek: [],
+        rpeTrend: [],
+        sessionTypeCounts: {},
+      ),
+    );
   }
 }

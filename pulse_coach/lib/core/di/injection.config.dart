@@ -63,10 +63,14 @@ import 'package:pulse_coach/features/progress/data/repositories/progress_reposit
     as _i1027;
 import 'package:pulse_coach/features/progress/domain/repositories/progress_repository.dart'
     as _i73;
+import 'package:pulse_coach/features/progress/domain/usecases/get_progress_stats.dart'
+    as _i303;
 import 'package:pulse_coach/features/progress/domain/usecases/get_session_history.dart'
     as _i727;
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart'
     as _i111;
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_cubit.dart'
+    as _i56;
 import 'package:pulse_coach/features/session/data/datasources/accelerometer_data_source.dart'
     as _i253;
 import 'package:pulse_coach/features/session/data/datasources/health_data_source.dart'
@@ -261,6 +265,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i73.ProgressRepository>(
       () => _i1027.ProgressRepositoryImpl(gh<_i272.ProgressLocalDataSource>()),
     );
+    gh.lazySingleton<_i303.GetProgressStats>(
+      () => _i303.GetProgressStats(gh<_i73.ProgressRepository>()),
+    );
     gh.lazySingleton<_i727.GetSessionHistory>(
       () => _i727.GetSessionHistory(gh<_i73.ProgressRepository>()),
     );
@@ -297,6 +304,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i183.RegenerateDailyPlan>(),
         gh<_i79.AppDatabase>(),
       ),
+    );
+    gh.factory<_i56.ProgressStatsCubit>(
+      () => _i56.ProgressStatsCubit(gh<_i303.GetProgressStats>()),
     );
     return this;
   }

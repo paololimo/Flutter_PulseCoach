@@ -13,10 +13,13 @@ import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
+import 'package:pulse_coach/features/progress/domain/entities/progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/entities/session_history_entry.dart';
 import 'package:pulse_coach/features/progress/domain/repositories/progress_repository.dart';
+import 'package:pulse_coach/features/progress/domain/usecases/get_progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/usecases/get_session_history.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart';
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_cubit.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exercises_by_type.dart';
@@ -73,6 +76,9 @@ void main() {
     setUp(() {
       getIt.registerFactory<ProgressCubit>(
         () => ProgressCubit(GetSessionHistory(_ProgressRepositoryStub())),
+      );
+      getIt.registerFactory<ProgressStatsCubit>(
+        () => ProgressStatsCubit(GetProgressStats(_ProgressRepositoryStub())),
       );
     });
 
@@ -216,5 +222,18 @@ class _ProgressRepositoryStub implements ProgressRepository {
   @override
   Future<Either<Failure, List<SessionHistoryEntry>>> getSessionHistory() async {
     return const Right(<SessionHistoryEntry>[]);
+  }
+
+  @override
+  Future<Either<Failure, ProgressStats>> getProgressStats() async {
+    return const Right(
+      ProgressStats(
+        completedCount: 0,
+        abandonedCount: 0,
+        minutesPerWeek: [],
+        rpeTrend: [],
+        sessionTypeCounts: {},
+      ),
+    );
   }
 }
