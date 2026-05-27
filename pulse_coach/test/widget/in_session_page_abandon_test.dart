@@ -51,6 +51,13 @@ Future<void> _pumpPastCountdown(WidgetTester tester) async {
   await tester.pump();
 }
 
+Future<void> _pumpToNaturalCompletion(WidgetTester tester) async {
+  // A 1-minute PlannedSession still expands to three 60-second phases. Each
+  // phase spends one extra tick at 00:00 before advancing.
+  await tester.pump(const Duration(seconds: 183));
+  await tester.pump();
+}
+
 void main() {
   tearDown(() async {
     await getIt.reset();
@@ -113,6 +120,27 @@ void main() {
         expect(args.durationMinutes, 1);
         // P6 fix: intensity 3 falls in the low band (1..3) per
         // safety_constraints.dart, mirroring ContextualBandit._intensityValue.
+        expect(args.armKey, 'cardio_low');
+      },
+    );
+
+    testWidgets(
+      '8.2-VIEW-004: natural completion routes to RPE through state listener',
+      (tester) async {
+        Object? rpeExtra;
+        await tester.pumpWidget(
+          _wrap(_router(onRpeExtra: (extra) => rpeExtra = extra)),
+        );
+        await _pumpPastCountdown(tester);
+
+        await _pumpToNaturalCompletion(tester);
+
+        expect(find.text('RPE target'), findsOneWidget);
+        expect(rpeExtra, isA<RpeSubmitArgs>());
+        final args = rpeExtra! as RpeSubmitArgs;
+        expect(args.sessionIndex, 0);
+        expect(args.abandoned, isFalse);
+        expect(args.durationMinutes, 1);
         expect(args.armKey, 'cardio_low');
       },
     );
