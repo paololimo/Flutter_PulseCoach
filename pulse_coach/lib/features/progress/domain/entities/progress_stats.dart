@@ -42,5 +42,11 @@ abstract class ProgressStats with _$ProgressStats {
 
     /// Session type counts, e.g. {'mobility': 5, 'cardio': 3}.
     required Map<String, int> sessionTypeCounts,
+
+    /// Non-abandoned sessions completed in the current ISO week (Mon-Sun).
+    required int completedThisWeek,
+
+    /// Always 3 - the AI initial session-count cap (FR12).
+    required int weeklyTarget,
   }) = _ProgressStats;
 }

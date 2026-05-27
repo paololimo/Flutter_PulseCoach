@@ -12,6 +12,7 @@ import 'package:pulse_coach/features/progress/presentation/widgets/minutes_per_w
 import 'package:pulse_coach/features/progress/presentation/widgets/rpe_trend_chart.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/session_history_tile.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/session_type_breakdown_chart.dart';
+import 'package:pulse_coach/features/progress/presentation/widgets/weekly_goal_indicator.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 class ProgressPage extends StatelessWidget {
@@ -38,15 +39,32 @@ class _ProgressView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       children: [
-        TabBar(
+        BlocBuilder<ProgressStatsCubit, ProgressStatsState>(
+          builder: (context, state) {
+            if (state is ProgressStatsLoaded) {
+              return WeeklyGoalIndicator(
+                completedThisWeek: state.stats.completedThisWeek,
+                weeklyTarget: state.stats.weeklyTarget,
+              );
+            }
+
+            return const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: ShimmerPlaceholder(height: 56),
+            );
+          },
+        ),
+        const TabBar(
           tabs: [
             Tab(text: 'Cronologia'),
             Tab(text: 'Grafici'),
           ],
         ),
-        Expanded(child: TabBarView(children: [_HistoryTab(), _ChartsTab()])),
+        const Expanded(
+          child: TabBarView(children: [_HistoryTab(), _ChartsTab()]),
+        ),
       ],
     );
   }

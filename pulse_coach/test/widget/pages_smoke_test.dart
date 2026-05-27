@@ -370,6 +370,8 @@ class _ProgressRepositoryStub implements ProgressRepository {
         minutesPerWeek: [],
         rpeTrend: [],
         sessionTypeCounts: {},
+        completedThisWeek: 0,
+        weeklyTarget: 3,
       ),
     );
   }

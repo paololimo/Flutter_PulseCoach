@@ -20,6 +20,7 @@ import 'package:pulse_coach/features/progress/presentation/widgets/minutes_per_w
 import 'package:pulse_coach/features/progress/presentation/widgets/rpe_trend_chart.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/session_history_tile.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/session_type_breakdown_chart.dart';
+import 'package:pulse_coach/features/progress/presentation/widgets/weekly_goal_indicator.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
@@ -158,6 +159,8 @@ void main() {
             minutesPerWeek: [],
             rpeTrend: [],
             sessionTypeCounts: {},
+            completedThisWeek: 1,
+            weeklyTarget: 3,
           ),
         ),
       );
@@ -191,6 +194,8 @@ void main() {
               RpeDataPoint(completedAt: DateTime(2026, 5, 25), rpeValue: 6),
             ],
             sessionTypeCounts: const {'cardio': 2, 'mobility': 1},
+            completedThisWeek: 2,
+            weeklyTarget: 3,
           ),
         ),
       );
@@ -202,6 +207,8 @@ void main() {
 
       expect(find.byType(MinutesPerWeekChart), findsOneWidget);
       expect(find.byType(CompletionRateChart), findsOneWidget);
+      await tester.drag(find.byType(ListView), const Offset(0, -350));
+      await tester.pumpAndSettle();
       expect(find.byType(RpeTrendChart), findsOneWidget);
       await tester.drag(find.byType(ListView), const Offset(0, -700));
       await tester.pumpAndSettle();
@@ -224,6 +231,8 @@ void main() {
               ],
               rpeTrend: [],
               sessionTypeCounts: {'cardio': 3},
+              completedThisWeek: 3,
+              weeklyTarget: 3,
             ),
           ),
         );
@@ -231,6 +240,8 @@ void main() {
         await pumpProgressPage(tester);
         await tester.pumpAndSettle();
         await tester.tap(find.text('Grafici'));
+        await tester.pumpAndSettle();
+        await tester.drag(find.byType(ListView), const Offset(0, -350));
         await tester.pumpAndSettle();
 
         expect(find.text('Nessun dato RPE ancora disponibile'), findsOneWidget);
@@ -254,9 +265,45 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(ShimmerPlaceholder), findsNWidgets(3));
+      expect(find.byType(ShimmerPlaceholder), findsNWidgets(4));
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
+
+    testWidgets(
+      '10.3-WIDGET-006: weekly goal indicator stays visible above tabs',
+      (tester) async {
+        when(
+          mockGetSessionHistory(),
+        ).thenAnswer((_) async => const Right(<SessionHistoryEntry>[]));
+        when(mockGetProgressStats()).thenAnswer(
+          (_) async => const Right(
+            ProgressStats(
+              completedCount: 3,
+              abandonedCount: 0,
+              minutesPerWeek: [
+                WeeklyMinutes(weekLabel: '25/05', totalMinutes: 45),
+              ],
+              rpeTrend: [],
+              sessionTypeCounts: {'cardio': 3},
+              completedThisWeek: 2,
+              weeklyTarget: 3,
+            ),
+          ),
+        );
+
+        await pumpProgressPage(tester);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(WeeklyGoalIndicator), findsOneWidget);
+        expect(find.text('2 di 3 sessioni questa settimana'), findsOneWidget);
+
+        await tester.tap(find.text('Grafici'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(WeeklyGoalIndicator), findsOneWidget);
+        expect(find.text('2 di 3 sessioni questa settimana'), findsOneWidget);
+      },
+    );
   });
 }
 
@@ -283,4 +330,6 @@ const _emptyStats = ProgressStats(
   minutesPerWeek: [],
   rpeTrend: [],
   sessionTypeCounts: {},
+  completedThisWeek: 0,
+  weeklyTarget: 3,
 );

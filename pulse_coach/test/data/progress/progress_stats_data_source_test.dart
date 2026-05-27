@@ -102,6 +102,11 @@ void main() {
       return logId;
     }
 
+    DateTime mondayOf(DateTime date) {
+      final utc = date.toUtc();
+      return DateTime.utc(utc.year, utc.month, utc.day - (utc.weekday - 1));
+    }
+
     test(
       '10.2-DATA-001: returns empty ProgressStats when no session logs exist',
       () async {
@@ -112,6 +117,8 @@ void main() {
         expect(result.minutesPerWeek, isEmpty);
         expect(result.rpeTrend, isEmpty);
         expect(result.sessionTypeCounts, isEmpty);
+        expect(result.completedThisWeek, 0);
+        expect(result.weeklyTarget, 3);
       },
     );
 
@@ -215,6 +222,56 @@ void main() {
 
       expect(result.sessionTypeCounts['cardio'], 2);
       expect(result.sessionTypeCounts['mobility'], 1);
+    });
+
+    test(
+      '10.3-DATA-001: completedThisWeek counts only non-abandoned logs in current ISO week',
+      () async {
+        final weekStart = mondayOf(DateTime.now());
+        await seedSession(
+          sessionType: 'cardio',
+          completedAt: weekStart.add(const Duration(days: 1, hours: 8)),
+        );
+        await seedSession(
+          sessionType: 'mobility',
+          completedAt: weekStart
+              .subtract(const Duration(days: 7))
+              .add(const Duration(hours: 8)),
+        );
+        await seedSession(
+          sessionType: 'breathing',
+          completedAt: weekStart.add(const Duration(days: 2, hours: 8)),
+          abandoned: true,
+          elapsedSeconds: 180,
+        );
+
+        final result = await dataSource.getProgressStats();
+
+        expect(result.completedThisWeek, 1);
+      },
+    );
+
+    test(
+      '10.3-DATA-002: completedThisWeek is 0 when no sessions this week',
+      () async {
+        final weekStart = mondayOf(DateTime.now());
+        await seedSession(
+          sessionType: 'cardio',
+          completedAt: weekStart
+              .subtract(const Duration(days: 14))
+              .add(const Duration(hours: 8)),
+        );
+
+        final result = await dataSource.getProgressStats();
+
+        expect(result.completedThisWeek, 0);
+      },
+    );
+
+    test('10.3-DATA-003: weeklyTarget is always 3', () async {
+      final result = await dataSource.getProgressStats();
+
+      expect(result.weeklyTarget, 3);
     });
   });
 }

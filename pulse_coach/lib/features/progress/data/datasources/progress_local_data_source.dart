@@ -88,6 +88,8 @@ class ProgressLocalDataSource {
         minutesPerWeek: [],
         rpeTrend: [],
         sessionTypeCounts: {},
+        completedThisWeek: 0,
+        weeklyTarget: 3,
       );
     }
 
@@ -144,17 +146,27 @@ class ProgressLocalDataSource {
         )
         .toList();
 
+    final now = DateTime.now().toUtc();
+    final weekStart = _mondayOf(now);
+    final weekEnd = weekStart.add(const Duration(days: 7));
+    final completedThisWeek = completed.where((entry) {
+      final completedAt = entry.completedAt.toUtc();
+      return !completedAt.isBefore(weekStart) && completedAt.isBefore(weekEnd);
+    }).length;
+
     return ProgressStats(
       completedCount: completed.length,
       abandonedCount: abandoned.length,
       minutesPerWeek: minutesPerWeek,
       rpeTrend: rpePoints,
       sessionTypeCounts: typeCounts,
+      completedThisWeek: completedThisWeek,
+      weeklyTarget: 3,
     );
   }
 
   DateTime _mondayOf(DateTime date) {
-    final weekday = date.weekday;
-    return DateTime(date.year, date.month, date.day - (weekday - 1));
+    final utc = date.toUtc();
+    return DateTime.utc(utc.year, utc.month, utc.day - (utc.weekday - 1));
   }
 }

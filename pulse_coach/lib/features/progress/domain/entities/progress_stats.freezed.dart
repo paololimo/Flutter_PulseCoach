@@ -541,7 +541,9 @@ mixin _$ProgressStats {
  int get abandonedCount;/// Last <= 8 ISO weeks, oldest first.
  List<WeeklyMinutes> get minutesPerWeek;/// Last <= 20 sessions with RPE, oldest first.
  List<RpeDataPoint> get rpeTrend;/// Session type counts, e.g. {'mobility': 5, 'cardio': 3}.
- Map<String, int> get sessionTypeCounts;
+ Map<String, int> get sessionTypeCounts;/// Non-abandoned sessions completed in the current ISO week (Mon-Sun).
+ int get completedThisWeek;/// Always 3 - the AI initial session-count cap (FR12).
+ int get weeklyTarget;
 /// Create a copy of ProgressStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -552,16 +554,16 @@ $ProgressStatsCopyWith<ProgressStats> get copyWith => _$ProgressStatsCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProgressStats&&(identical(other.completedCount, completedCount) || other.completedCount == completedCount)&&(identical(other.abandonedCount, abandonedCount) || other.abandonedCount == abandonedCount)&&const DeepCollectionEquality().equals(other.minutesPerWeek, minutesPerWeek)&&const DeepCollectionEquality().equals(other.rpeTrend, rpeTrend)&&const DeepCollectionEquality().equals(other.sessionTypeCounts, sessionTypeCounts));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProgressStats&&(identical(other.completedCount, completedCount) || other.completedCount == completedCount)&&(identical(other.abandonedCount, abandonedCount) || other.abandonedCount == abandonedCount)&&const DeepCollectionEquality().equals(other.minutesPerWeek, minutesPerWeek)&&const DeepCollectionEquality().equals(other.rpeTrend, rpeTrend)&&const DeepCollectionEquality().equals(other.sessionTypeCounts, sessionTypeCounts)&&(identical(other.completedThisWeek, completedThisWeek) || other.completedThisWeek == completedThisWeek)&&(identical(other.weeklyTarget, weeklyTarget) || other.weeklyTarget == weeklyTarget));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,completedCount,abandonedCount,const DeepCollectionEquality().hash(minutesPerWeek),const DeepCollectionEquality().hash(rpeTrend),const DeepCollectionEquality().hash(sessionTypeCounts));
+int get hashCode => Object.hash(runtimeType,completedCount,abandonedCount,const DeepCollectionEquality().hash(minutesPerWeek),const DeepCollectionEquality().hash(rpeTrend),const DeepCollectionEquality().hash(sessionTypeCounts),completedThisWeek,weeklyTarget);
 
 @override
 String toString() {
-  return 'ProgressStats(completedCount: $completedCount, abandonedCount: $abandonedCount, minutesPerWeek: $minutesPerWeek, rpeTrend: $rpeTrend, sessionTypeCounts: $sessionTypeCounts)';
+  return 'ProgressStats(completedCount: $completedCount, abandonedCount: $abandonedCount, minutesPerWeek: $minutesPerWeek, rpeTrend: $rpeTrend, sessionTypeCounts: $sessionTypeCounts, completedThisWeek: $completedThisWeek, weeklyTarget: $weeklyTarget)';
 }
 
 
@@ -572,7 +574,7 @@ abstract mixin class $ProgressStatsCopyWith<$Res>  {
   factory $ProgressStatsCopyWith(ProgressStats value, $Res Function(ProgressStats) _then) = _$ProgressStatsCopyWithImpl;
 @useResult
 $Res call({
- int completedCount, int abandonedCount, List<WeeklyMinutes> minutesPerWeek, List<RpeDataPoint> rpeTrend, Map<String, int> sessionTypeCounts
+ int completedCount, int abandonedCount, List<WeeklyMinutes> minutesPerWeek, List<RpeDataPoint> rpeTrend, Map<String, int> sessionTypeCounts, int completedThisWeek, int weeklyTarget
 });
 
 
@@ -589,14 +591,16 @@ class _$ProgressStatsCopyWithImpl<$Res>
 
 /// Create a copy of ProgressStats
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? completedCount = null,Object? abandonedCount = null,Object? minutesPerWeek = null,Object? rpeTrend = null,Object? sessionTypeCounts = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? completedCount = null,Object? abandonedCount = null,Object? minutesPerWeek = null,Object? rpeTrend = null,Object? sessionTypeCounts = null,Object? completedThisWeek = null,Object? weeklyTarget = null,}) {
   return _then(_self.copyWith(
 completedCount: null == completedCount ? _self.completedCount : completedCount // ignore: cast_nullable_to_non_nullable
 as int,abandonedCount: null == abandonedCount ? _self.abandonedCount : abandonedCount // ignore: cast_nullable_to_non_nullable
 as int,minutesPerWeek: null == minutesPerWeek ? _self.minutesPerWeek : minutesPerWeek // ignore: cast_nullable_to_non_nullable
 as List<WeeklyMinutes>,rpeTrend: null == rpeTrend ? _self.rpeTrend : rpeTrend // ignore: cast_nullable_to_non_nullable
 as List<RpeDataPoint>,sessionTypeCounts: null == sessionTypeCounts ? _self.sessionTypeCounts : sessionTypeCounts // ignore: cast_nullable_to_non_nullable
-as Map<String, int>,
+as Map<String, int>,completedThisWeek: null == completedThisWeek ? _self.completedThisWeek : completedThisWeek // ignore: cast_nullable_to_non_nullable
+as int,weeklyTarget: null == weeklyTarget ? _self.weeklyTarget : weeklyTarget // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -681,10 +685,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int completedCount,  int abandonedCount,  List<WeeklyMinutes> minutesPerWeek,  List<RpeDataPoint> rpeTrend,  Map<String, int> sessionTypeCounts)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int completedCount,  int abandonedCount,  List<WeeklyMinutes> minutesPerWeek,  List<RpeDataPoint> rpeTrend,  Map<String, int> sessionTypeCounts,  int completedThisWeek,  int weeklyTarget)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProgressStats() when $default != null:
-return $default(_that.completedCount,_that.abandonedCount,_that.minutesPerWeek,_that.rpeTrend,_that.sessionTypeCounts);case _:
+return $default(_that.completedCount,_that.abandonedCount,_that.minutesPerWeek,_that.rpeTrend,_that.sessionTypeCounts,_that.completedThisWeek,_that.weeklyTarget);case _:
   return orElse();
 
 }
@@ -702,10 +706,10 @@ return $default(_that.completedCount,_that.abandonedCount,_that.minutesPerWeek,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int completedCount,  int abandonedCount,  List<WeeklyMinutes> minutesPerWeek,  List<RpeDataPoint> rpeTrend,  Map<String, int> sessionTypeCounts)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int completedCount,  int abandonedCount,  List<WeeklyMinutes> minutesPerWeek,  List<RpeDataPoint> rpeTrend,  Map<String, int> sessionTypeCounts,  int completedThisWeek,  int weeklyTarget)  $default,) {final _that = this;
 switch (_that) {
 case _ProgressStats():
-return $default(_that.completedCount,_that.abandonedCount,_that.minutesPerWeek,_that.rpeTrend,_that.sessionTypeCounts);case _:
+return $default(_that.completedCount,_that.abandonedCount,_that.minutesPerWeek,_that.rpeTrend,_that.sessionTypeCounts,_that.completedThisWeek,_that.weeklyTarget);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -722,10 +726,10 @@ return $default(_that.completedCount,_that.abandonedCount,_that.minutesPerWeek,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int completedCount,  int abandonedCount,  List<WeeklyMinutes> minutesPerWeek,  List<RpeDataPoint> rpeTrend,  Map<String, int> sessionTypeCounts)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int completedCount,  int abandonedCount,  List<WeeklyMinutes> minutesPerWeek,  List<RpeDataPoint> rpeTrend,  Map<String, int> sessionTypeCounts,  int completedThisWeek,  int weeklyTarget)?  $default,) {final _that = this;
 switch (_that) {
 case _ProgressStats() when $default != null:
-return $default(_that.completedCount,_that.abandonedCount,_that.minutesPerWeek,_that.rpeTrend,_that.sessionTypeCounts);case _:
+return $default(_that.completedCount,_that.abandonedCount,_that.minutesPerWeek,_that.rpeTrend,_that.sessionTypeCounts,_that.completedThisWeek,_that.weeklyTarget);case _:
   return null;
 
 }
@@ -737,7 +741,7 @@ return $default(_that.completedCount,_that.abandonedCount,_that.minutesPerWeek,_
 
 
 class _ProgressStats implements ProgressStats {
-  const _ProgressStats({required this.completedCount, required this.abandonedCount, required final  List<WeeklyMinutes> minutesPerWeek, required final  List<RpeDataPoint> rpeTrend, required final  Map<String, int> sessionTypeCounts}): _minutesPerWeek = minutesPerWeek,_rpeTrend = rpeTrend,_sessionTypeCounts = sessionTypeCounts;
+  const _ProgressStats({required this.completedCount, required this.abandonedCount, required final  List<WeeklyMinutes> minutesPerWeek, required final  List<RpeDataPoint> rpeTrend, required final  Map<String, int> sessionTypeCounts, required this.completedThisWeek, required this.weeklyTarget}): _minutesPerWeek = minutesPerWeek,_rpeTrend = rpeTrend,_sessionTypeCounts = sessionTypeCounts;
   
 
 /// Completed (not abandoned) sessions.
@@ -771,6 +775,10 @@ class _ProgressStats implements ProgressStats {
   return EqualUnmodifiableMapView(_sessionTypeCounts);
 }
 
+/// Non-abandoned sessions completed in the current ISO week (Mon-Sun).
+@override final  int completedThisWeek;
+/// Always 3 - the AI initial session-count cap (FR12).
+@override final  int weeklyTarget;
 
 /// Create a copy of ProgressStats
 /// with the given fields replaced by the non-null parameter values.
@@ -782,16 +790,16 @@ _$ProgressStatsCopyWith<_ProgressStats> get copyWith => __$ProgressStatsCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProgressStats&&(identical(other.completedCount, completedCount) || other.completedCount == completedCount)&&(identical(other.abandonedCount, abandonedCount) || other.abandonedCount == abandonedCount)&&const DeepCollectionEquality().equals(other._minutesPerWeek, _minutesPerWeek)&&const DeepCollectionEquality().equals(other._rpeTrend, _rpeTrend)&&const DeepCollectionEquality().equals(other._sessionTypeCounts, _sessionTypeCounts));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProgressStats&&(identical(other.completedCount, completedCount) || other.completedCount == completedCount)&&(identical(other.abandonedCount, abandonedCount) || other.abandonedCount == abandonedCount)&&const DeepCollectionEquality().equals(other._minutesPerWeek, _minutesPerWeek)&&const DeepCollectionEquality().equals(other._rpeTrend, _rpeTrend)&&const DeepCollectionEquality().equals(other._sessionTypeCounts, _sessionTypeCounts)&&(identical(other.completedThisWeek, completedThisWeek) || other.completedThisWeek == completedThisWeek)&&(identical(other.weeklyTarget, weeklyTarget) || other.weeklyTarget == weeklyTarget));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,completedCount,abandonedCount,const DeepCollectionEquality().hash(_minutesPerWeek),const DeepCollectionEquality().hash(_rpeTrend),const DeepCollectionEquality().hash(_sessionTypeCounts));
+int get hashCode => Object.hash(runtimeType,completedCount,abandonedCount,const DeepCollectionEquality().hash(_minutesPerWeek),const DeepCollectionEquality().hash(_rpeTrend),const DeepCollectionEquality().hash(_sessionTypeCounts),completedThisWeek,weeklyTarget);
 
 @override
 String toString() {
-  return 'ProgressStats(completedCount: $completedCount, abandonedCount: $abandonedCount, minutesPerWeek: $minutesPerWeek, rpeTrend: $rpeTrend, sessionTypeCounts: $sessionTypeCounts)';
+  return 'ProgressStats(completedCount: $completedCount, abandonedCount: $abandonedCount, minutesPerWeek: $minutesPerWeek, rpeTrend: $rpeTrend, sessionTypeCounts: $sessionTypeCounts, completedThisWeek: $completedThisWeek, weeklyTarget: $weeklyTarget)';
 }
 
 
@@ -802,7 +810,7 @@ abstract mixin class _$ProgressStatsCopyWith<$Res> implements $ProgressStatsCopy
   factory _$ProgressStatsCopyWith(_ProgressStats value, $Res Function(_ProgressStats) _then) = __$ProgressStatsCopyWithImpl;
 @override @useResult
 $Res call({
- int completedCount, int abandonedCount, List<WeeklyMinutes> minutesPerWeek, List<RpeDataPoint> rpeTrend, Map<String, int> sessionTypeCounts
+ int completedCount, int abandonedCount, List<WeeklyMinutes> minutesPerWeek, List<RpeDataPoint> rpeTrend, Map<String, int> sessionTypeCounts, int completedThisWeek, int weeklyTarget
 });
 
 
@@ -819,14 +827,16 @@ class __$ProgressStatsCopyWithImpl<$Res>
 
 /// Create a copy of ProgressStats
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? completedCount = null,Object? abandonedCount = null,Object? minutesPerWeek = null,Object? rpeTrend = null,Object? sessionTypeCounts = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? completedCount = null,Object? abandonedCount = null,Object? minutesPerWeek = null,Object? rpeTrend = null,Object? sessionTypeCounts = null,Object? completedThisWeek = null,Object? weeklyTarget = null,}) {
   return _then(_ProgressStats(
 completedCount: null == completedCount ? _self.completedCount : completedCount // ignore: cast_nullable_to_non_nullable
 as int,abandonedCount: null == abandonedCount ? _self.abandonedCount : abandonedCount // ignore: cast_nullable_to_non_nullable
 as int,minutesPerWeek: null == minutesPerWeek ? _self._minutesPerWeek : minutesPerWeek // ignore: cast_nullable_to_non_nullable
 as List<WeeklyMinutes>,rpeTrend: null == rpeTrend ? _self._rpeTrend : rpeTrend // ignore: cast_nullable_to_non_nullable
 as List<RpeDataPoint>,sessionTypeCounts: null == sessionTypeCounts ? _self._sessionTypeCounts : sessionTypeCounts // ignore: cast_nullable_to_non_nullable
-as Map<String, int>,
+as Map<String, int>,completedThisWeek: null == completedThisWeek ? _self.completedThisWeek : completedThisWeek // ignore: cast_nullable_to_non_nullable
+as int,weeklyTarget: null == weeklyTarget ? _self.weeklyTarget : weeklyTarget // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

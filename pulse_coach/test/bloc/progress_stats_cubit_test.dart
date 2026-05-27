@@ -81,4 +81,6 @@ const _emptyStats = ProgressStats(
   minutesPerWeek: [],
   rpeTrend: [],
   sessionTypeCounts: {},
+  completedThisWeek: 0,
+  weeklyTarget: 3,
 );
