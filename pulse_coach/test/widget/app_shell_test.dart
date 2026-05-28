@@ -87,6 +87,8 @@ void main() {
     });
 
     testWidgets('shows BottomNavigationBar with 3 items', (tester) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(buildTestShell());
       await tester.pumpAndSettle();
       expect(find.byType(BottomNavigationBar), findsOneWidget);
@@ -96,6 +98,8 @@ void main() {
     });
 
     testWidgets('shows Drawer with Profile, Settings, Privacy', (tester) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(buildTestShell());
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DrawerButton));
@@ -108,6 +112,8 @@ void main() {
     testWidgets('Today tab is selected at initial location /today', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(buildTestShell(initialLocation: '/today'));
       await tester.pumpAndSettle();
       final bnb = tester.widget<BottomNavigationBar>(
@@ -117,6 +123,8 @@ void main() {
     });
 
     testWidgets('tapping Sessions tab navigates to /sessions', (tester) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(buildTestShell());
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sessioni'));
@@ -128,6 +136,8 @@ void main() {
     testWidgets('Sessions tab index is 0 at initial location /sessions', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(buildTestShell(initialLocation: '/sessions'));
       await tester.pumpAndSettle();
       final bnb = tester.widget<BottomNavigationBar>(
@@ -139,6 +149,8 @@ void main() {
     testWidgets('Progress tab index is 2 at initial location /progress', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(buildTestShell(initialLocation: '/progress'));
       await tester.pumpAndSettle();
       final bnb = tester.widget<BottomNavigationBar>(
@@ -146,8 +158,62 @@ void main() {
       );
       expect(bnb.currentIndex, 2);
     });
+
+    testWidgets(
+      '11.1-WIDGET-001: tablet width shows NavigationRail with 3 destinations',
+      (tester) async {
+        await setTabletSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildTestShell());
+        await tester.pumpAndSettle();
+        expect(find.byType(NavigationRail), findsOneWidget);
+        expect(find.byType(BottomNavigationBar), findsNothing);
+        expect(find.text('Oggi'), findsOneWidget);
+        expect(find.text('Sessioni'), findsOneWidget);
+        expect(find.text('Progressi'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '11.1-WIDGET-002: phone width shows BottomNavigationBar, no NavigationRail',
+      (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildTestShell());
+        await tester.pumpAndSettle();
+        expect(find.byType(BottomNavigationBar), findsOneWidget);
+        expect(find.byType(NavigationRail), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '11.1-WIDGET-003: selected tab index is preserved when surface resizes across 600dp',
+      (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildTestShell(initialLocation: '/progress'));
+        await tester.pumpAndSettle();
+        final bnb = tester.widget<BottomNavigationBar>(
+          find.byType(BottomNavigationBar),
+        );
+        expect(bnb.currentIndex, 2);
+
+        await tester.binding.setSurfaceSize(const Size(800, 1024));
+        await tester.pump();
+
+        expect(find.byType(NavigationRail), findsOneWidget);
+        final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+        expect(rail.selectedIndex, 2);
+      },
+    );
   });
 }
+
+Future<void> setPhoneSurface(WidgetTester tester) =>
+    tester.binding.setSurfaceSize(const Size(390, 844));
+
+Future<void> setTabletSurface(WidgetTester tester) =>
+    tester.binding.setSurfaceSize(const Size(800, 1024));
 
 TodaySessionCubit _todaySessionCubit(int totalSessions) {
   final db = AppDatabase.forTesting(NativeDatabase.memory());
