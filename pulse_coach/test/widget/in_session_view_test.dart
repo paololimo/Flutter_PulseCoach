@@ -191,5 +191,76 @@ void main() {
       await tester.pump();
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('11.3-WIDGET-001: landscape 640x360 renders without overflow', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(640, 360);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(_wrap(_view()));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('11.3-WIDGET-002: uses OrientationBuilder for rotation', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(_view()));
+      await tester.pump();
+
+      expect(find.byType(OrientationBuilder), findsOneWidget);
+    });
+
+    testWidgets('11.3-WIDGET-003: landscape shows timer in left column', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(640, 360);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(_wrap(_view(seconds: 90)));
+      await tester.pump();
+
+      expect(find.text('01:30'), findsOneWidget);
+    });
+
+    testWidgets(
+      '11.3-WIDGET-004: landscape shows instruction text in right column',
+      (tester) async {
+        tester.view.physicalSize = const Size(640, 360);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(_wrap(_view(step: 1)));
+        await tester.pump();
+
+        expect(find.text('Mantieni il ritmo.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '11.3-WIDGET-005: timer value is preserved when surface rotates landscape',
+      (tester) async {
+        tester.view.physicalSize = const Size(360, 640);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(_wrap(_view(seconds: 75)));
+        await tester.pump();
+        expect(find.text('01:15'), findsOneWidget);
+
+        tester.view.physicalSize = const Size(640, 360);
+        await tester.pump();
+
+        expect(find.text('01:15'), findsOneWidget);
+      },
+    );
   });
 }
