@@ -9,12 +9,15 @@ import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
+import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/session/domain/entities/session_start_args.dart';
+import 'package:pulse_coach/features/session/presentation/utils/session_step_generator.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/compact_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/completed_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/completion_ring.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/hero_session_card.dart';
+import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/state_indicator.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
@@ -102,6 +105,14 @@ class TodayPage extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        if (constraints.maxWidth >= 600) {
+          return _TabletTodayLayout(
+            plan: plan,
+            sessionState: sessionState,
+            loaded: loaded,
+          );
+        }
+
         return SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
@@ -249,6 +260,248 @@ class _HeroZone extends StatelessWidget {
         ),
       ),
       onRegenerate: onRegenerate,
+    );
+  }
+}
+
+class _TabletTodayLayout extends StatelessWidget {
+  final DailyPlan plan;
+  final TodaySessionState sessionState;
+  final DailyPlanLoaded loaded;
+
+  const _TabletTodayLayout({
+    required this.plan,
+    required this.sessionState,
+    required this.loaded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final sessions = plan.sessions;
+    final total = sessions.length;
+    final completedCount = sessionState.completedCount.clamp(0, total);
+    final heroIndex = total == 0
+        ? 0
+        : sessionState.heroIndex.clamp(0, total - 1);
+    final allDone = total == 0 || completedCount >= total;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          flex: 4,
+          child: _TabletLeftPanel(
+            plan: plan,
+            sessionState: sessionState,
+            loaded: loaded,
+            completedCount: completedCount,
+            total: total,
+            heroIndex: heroIndex,
+          ),
+        ),
+        const VerticalDivider(thickness: 1, width: 1),
+        Expanded(
+          flex: 6,
+          child: allDone
+              ? const Center(child: _AllDoneWidget())
+              : _TabletSessionDetailPanel(plan: plan, heroIndex: heroIndex),
+        ),
+      ],
+    );
+  }
+}
+
+class _TabletLeftPanel extends StatelessWidget {
+  final DailyPlan plan;
+  final TodaySessionState sessionState;
+  final DailyPlanLoaded loaded;
+  final int completedCount;
+  final int total;
+  final int heroIndex;
+
+  const _TabletLeftPanel({
+    required this.plan,
+    required this.sessionState,
+    required this.loaded,
+    required this.completedCount,
+    required this.total,
+    required this.heroIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final sessions = plan.sessions;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: StateIndicator(
+                  state: loaded.behavioralState,
+                  transitionKey: loaded.transitionKey,
+                ),
+              ),
+              const SizedBox(width: 12),
+              CompletionRing(completed: completedCount, total: total),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (var i = 0; i < total; i++) ...[
+            if (sessionState.isCompleted(i))
+              CompletedSessionCard(session: sessions[i])
+            else
+              CompactSessionCard(
+                session: sessions[i],
+                isSelected: i == heroIndex,
+                heroTag: 'session-tablet-${sessions[i].sessionType}-$i',
+                onTap: () => context.read<TodaySessionCubit>().swapHero(i),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TabletSessionDetailPanel extends StatelessWidget {
+  final DailyPlan plan;
+  final int heroIndex;
+
+  const _TabletSessionDetailPanel({
+    required this.plan,
+    required this.heroIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final session = plan.sessions[heroIndex];
+    final pulseTheme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
+    final accentColor = sessionAccentColor(session.sessionType, pulseTheme);
+    final displayName = sessionDisplayName(session.sessionType, l10n);
+    final steps = SessionStepGenerator.generate(session, l10n);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                sessionIcon(session.sessionType),
+                size: 36,
+                color: accentColor,
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Text(displayName, style: AppTextStyles.h2)),
+              IconButton(
+                icon: Icon(
+                  Icons.refresh,
+                  size: 20,
+                  semanticLabel: l10n.regenSemanticLabel,
+                ),
+                color: pulseTheme.onSurfaceVariant,
+                onPressed: () {
+                  final bloc = context.read<DailyPlanBloc>();
+                  if (bloc.state is DailyPlanLoaded) {
+                    bloc.add(DailyPlanRegenerateRequested());
+                  }
+                },
+                tooltip: l10n.regenTooltip,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                '${session.durationMinutes} min',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: pulseTheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                intensityLabel(session.intensity, l10n),
+                style: AppTextStyles.bodySmall.copyWith(color: accentColor),
+              ),
+            ],
+          ),
+          if (session.explanation.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              session.explanation,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: pulseTheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          for (final step in steps) ...[
+            _StepPreviewRow(step: step, accentColor: accentColor),
+            const SizedBox(height: 8),
+          ],
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => context.go(
+                AppRouter.sessionActive,
+                extra: SessionStartArgs(
+                  session: session,
+                  planId: context.read<TodaySessionCubit>().currentPlanId,
+                  sessionIndex: heroIndex,
+                ),
+              ),
+              child: Text(l10n.startSessionButton),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepPreviewRow extends StatelessWidget {
+  final ExerciseStep step;
+  final Color accentColor;
+
+  const _StepPreviewRow({required this.step, required this.accentColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final pulseTheme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final durationLabel = '${step.durationSeconds ~/ 60} min';
+
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            step.title,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+        Text(
+          durationLabel,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: pulseTheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

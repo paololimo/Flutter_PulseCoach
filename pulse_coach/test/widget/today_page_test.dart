@@ -111,10 +111,18 @@ void main() {
     );
   }
 
+  Future<void> setPhoneSurface(WidgetTester tester) =>
+      tester.binding.setSurfaceSize(const Size(390, 844));
+
+  Future<void> setTabletSurface(WidgetTester tester) =>
+      tester.binding.setSurfaceSize(const Size(800, 1024));
+
   group('TodayPage', () {
     testWidgets('7.3-PAGE-001: loading shows shimmer and no hero', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(wrap(planState: const DailyPlanState.loading()));
 
       expect(find.byType(ShimmerPlaceholder), findsWidgets);
@@ -124,6 +132,8 @@ void main() {
     testWidgets('7.3-PAGE-002: one loaded session shows hero only', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(planState: DailyPlanState.loaded(plan: _plan(1))),
       );
@@ -136,6 +146,8 @@ void main() {
     testWidgets('7.3-PAGE-003: three sessions show hero and two upcoming', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
       );
@@ -148,6 +160,8 @@ void main() {
     testWidgets('7.3-PAGE-004: loaded state shows StateIndicator', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(
           planState: DailyPlanState.loaded(
@@ -164,6 +178,8 @@ void main() {
     testWidgets('7.3-PAGE-005: loaded state shows CompletionRing', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
       );
@@ -175,6 +191,8 @@ void main() {
     testWidgets('7.4-PAGE-001: loaded state shows regenerate IconButton', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
       );
@@ -185,6 +203,8 @@ void main() {
     testWidgets(
       '7.4-PAGE-002: tapping regenerate dispatches DailyPlanRegenerateRequested',
       (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.pumpWidget(
           wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
         );
@@ -200,6 +220,8 @@ void main() {
     testWidgets('7.4-PAGE-003: loading state hides regenerate IconButton', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(wrap(planState: const DailyPlanState.loading()));
 
       expect(find.byIcon(Icons.refresh), findsNothing);
@@ -208,6 +230,8 @@ void main() {
     testWidgets('7.3-PAGE-006: never shows CircularProgressIndicator', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(wrap(planState: const DailyPlanState.loading()));
 
       expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -216,6 +240,8 @@ void main() {
     testWidgets('7.3-PAGE-007: all done shows completion state', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(
           planState: DailyPlanState.loaded(plan: _plan(3)),
@@ -238,6 +264,8 @@ void main() {
     testWidgets(
       '7.3-PAGE-011: tapping Start Session navigates to session view',
       (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.pumpWidget(
           wrapWithRouter(planState: DailyPlanState.loaded(plan: _plan(3))),
         );
@@ -253,6 +281,8 @@ void main() {
     );
 
     testWidgets('7.3-PAGE-008: error state shows warning UI', (tester) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(
           planState: const DailyPlanState.error(
@@ -266,6 +296,8 @@ void main() {
     });
 
     testWidgets('7.3-PAGE-009: initial state shows shimmer', (tester) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(wrap(planState: const DailyPlanState.initial()));
 
       expect(find.byType(ShimmerPlaceholder), findsWidgets);
@@ -274,6 +306,8 @@ void main() {
     testWidgets('7.3-PAGE-010: tapping compact card swaps hero in-page', (
       tester,
     ) async {
+      await setPhoneSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
       );
@@ -297,6 +331,102 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('11.2-WIDGET-001: tablet shows two-panel layout', (
+      tester,
+    ) async {
+      await setTabletSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
+      );
+
+      expect(find.byType(HeroSessionCard), findsNothing);
+      expect(find.byType(StateIndicator), findsOneWidget);
+      expect(find.byType(CompletionRing), findsOneWidget);
+      expect(find.byType(VerticalDivider), findsWidgets);
+    });
+
+    testWidgets('11.2-WIDGET-002: left panel shows all 3 sessions on tablet', (
+      tester,
+    ) async {
+      await setTabletSurface(tester);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
+      );
+
+      expect(find.byType(CompactSessionCard), findsNWidgets(3));
+    });
+
+    testWidgets(
+      '11.2-WIDGET-003: right panel shows full explanation on tablet',
+      (tester) async {
+        await setTabletSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
+        );
+
+        expect(find.text('Sciogli le spalle.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '11.2-WIDGET-004: right panel shows step preview rows on tablet',
+      (tester) async {
+        await setTabletSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          wrap(planState: DailyPlanState.loaded(plan: _plan(1))),
+        );
+
+        expect(find.text('Riscaldamento'), findsOneWidget);
+        expect(find.text('Defaticamento'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '11.2-WIDGET-005: tapping session in left panel updates right panel',
+      (tester) async {
+        await setTabletSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          wrap(planState: DailyPlanState.loaded(plan: _plan(3))),
+        );
+
+        expect(find.text('Sciogli le spalle.'), findsOneWidget);
+
+        await tester.tap(
+          find.widgetWithText(CompactSessionCard, 'Cardio').first,
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Ritmo leggero.'), findsOneWidget);
+        expect(find.text('Sciogli le spalle.'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '11.2-WIDGET-006: all-done state shows AllDoneWidget on tablet',
+      (tester) async {
+        await setTabletSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          wrap(
+            planState: DailyPlanState.loaded(plan: _plan(3)),
+            sessionState: const TodaySessionState(
+              heroIndex: 2,
+              completedIndices: {0, 1, 2},
+              totalSessions: 3,
+            ),
+          ),
+        );
+
+        expect(find.text('Ottimo lavoro!'), findsOneWidget);
+        expect(find.byType(CompactSessionCard), findsNothing);
+      },
+    );
   });
 }
 
