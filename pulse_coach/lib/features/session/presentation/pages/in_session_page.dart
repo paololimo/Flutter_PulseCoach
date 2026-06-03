@@ -15,6 +15,7 @@ import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.
 import 'package:pulse_coach/features/session/presentation/utils/haptic_service.dart';
 import 'package:pulse_coach/features/session/presentation/utils/live_hr_service.dart';
 import 'package:pulse_coach/features/session/presentation/utils/session_step_generator.dart';
+import 'package:pulse_coach/features/session/presentation/utils/wear_bridge_service.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/countdown_overlay.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/in_session_view.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
@@ -41,6 +42,7 @@ class _InSessionPageState extends State<InSessionPage> {
   HealthLiveHrService? _liveHrService;
   bool _countdownDone = false;
   InSessionCubit? _cubit;
+  WearBridgeService? _wearBridge;
 
   @override
   void initState() {
@@ -64,6 +66,7 @@ class _InSessionPageState extends State<InSessionPage> {
       hapticService: _hapticService,
       liveHrService: _liveHrService,
     )..start();
+    _wearBridge = WearBridgeService()..start(cubit.stream);
 
     setState(() {
       _cubit = cubit;
@@ -73,6 +76,7 @@ class _InSessionPageState extends State<InSessionPage> {
 
   @override
   void dispose() {
+    unawaited(_wearBridge?.stop());
     _cubit?.close();
     super.dispose();
   }

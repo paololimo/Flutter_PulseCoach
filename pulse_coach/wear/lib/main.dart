@@ -1,4 +1,8 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
+import 'package:pulse_coach_wear/communication/phone_bridge.dart';
+import 'package:pulse_coach_wear/session_display_page.dart';
 import 'package:wear_plus/wear_plus.dart';
 
 void main() {
@@ -24,12 +28,61 @@ class WearApp extends StatelessWidget {
                 ),
                 useMaterial3: true,
               ),
-              home: PulseCoachWearHome(
+              home: _WearRoot(
                 isAmbient: mode == WearMode.ambient,
                 shape: shape,
               ),
             );
           },
+        );
+      },
+    );
+  }
+}
+
+class _WearRoot extends StatefulWidget {
+  const _WearRoot({
+    required this.isAmbient,
+    required this.shape,
+  });
+
+  final bool isAmbient;
+  final WearShape shape;
+
+  @override
+  State<_WearRoot> createState() => _WearRootState();
+}
+
+class _WearRootState extends State<_WearRoot> {
+  late final PhoneBridge _phoneBridge;
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneBridge = PhoneBridge();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_phoneBridge.dispose());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<SessionWearState>(
+      stream: _phoneBridge.states,
+      builder: (context, snapshot) {
+        final state = snapshot.data;
+        if (state != null && !state.isEnded) {
+          return SessionDisplayPage(
+            bridge: _phoneBridge,
+            initialState: state,
+          );
+        }
+        return PulseCoachWearHome(
+          isAmbient: widget.isAmbient,
+          shape: widget.shape,
         );
       },
     );
