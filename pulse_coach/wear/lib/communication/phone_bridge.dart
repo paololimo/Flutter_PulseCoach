@@ -22,6 +22,10 @@ class SessionWearState {
     required this.secondsRemaining,
     required this.isEnded,
     this.heartRate,
+    this.isSummary = false,
+    this.summarySessionType,
+    this.summaryDurationMinutes = 0,
+    this.summaryAbandoned = false,
   });
 
   const SessionWearState.active({
@@ -38,10 +42,28 @@ class SessionWearState {
   const SessionWearState.ended()
     : this(stepName: '', secondsRemaining: 0, isEnded: true);
 
+  const SessionWearState.summary({
+    required String sessionType,
+    required int durationMinutes,
+    required bool abandoned,
+  }) : this(
+         stepName: '',
+         secondsRemaining: 0,
+         isEnded: false,
+         isSummary: true,
+         summarySessionType: sessionType,
+         summaryDurationMinutes: durationMinutes,
+         summaryAbandoned: abandoned,
+       );
+
   final String stepName;
   final int secondsRemaining;
   final int? heartRate;
   final bool isEnded;
+  final bool isSummary;
+  final String? summarySessionType;
+  final int summaryDurationMinutes;
+  final bool summaryAbandoned;
 }
 
 class PhoneBridge {
@@ -52,6 +74,7 @@ class PhoneBridge {
 
   static const sessionPath = '/pulsecoach/session';
   static const endPath = '/pulsecoach/session/end';
+  static const summaryPath = '/pulsecoach/session/summary';
   static const pathKey = '_path';
 
   final PhoneMessagingClient _client;
@@ -70,6 +93,11 @@ class PhoneBridge {
     }
     if (path == endPath) {
       _statesController.add(const SessionWearState.ended());
+      return;
+    }
+    if (path == summaryPath) {
+      final state = _parseSummaryState(message);
+      if (state != null) _statesController.add(state);
     }
   }
 
@@ -84,6 +112,23 @@ class PhoneBridge {
       stepName: step,
       secondsRemaining: secs,
       heartRate: hr,
+    );
+  }
+
+  SessionWearState? _parseSummaryState(Map<String, dynamic> message) {
+    final sessionType = message['sessionType'];
+    final durationMinutes = message['durationMinutes'];
+    final abandoned = message['abandoned'];
+    if (sessionType is! String ||
+        durationMinutes is! int ||
+        abandoned is! bool) {
+      return null;
+    }
+
+    return SessionWearState.summary(
+      sessionType: sessionType,
+      durationMinutes: durationMinutes,
+      abandoned: abandoned,
     );
   }
 

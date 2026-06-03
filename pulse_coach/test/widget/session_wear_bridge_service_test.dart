@@ -80,6 +80,74 @@ void main() {
     final controller = StreamController<InSessionState>();
     final service = WearBridgeService(client: client);
 
+    service.start(
+      controller.stream,
+      sessionType: 'mobility',
+      durationMinutes: 20,
+    );
+    controller.add(
+      const InSessionState(
+        steps: steps,
+        currentStepIndex: 0,
+        secondsRemaining: 0,
+        isComplete: true,
+      ),
+    );
+
+    await pumpEventQueue();
+
+    expect(client.messages, [
+      {
+        '_path': WearBridgeService.summaryPath,
+        'sessionType': 'mobility',
+        'durationMinutes': 20,
+        'abandoned': false,
+      },
+    ]);
+
+    await controller.close();
+    await service.dispose();
+  });
+
+  test('sends summary with abandoned=true when session is abandoned', () async {
+    final client = _RecordingWatchMessagingClient();
+    final controller = StreamController<InSessionState>();
+    final service = WearBridgeService(client: client);
+
+    service.start(
+      controller.stream,
+      sessionType: 'cardio',
+      durationMinutes: 15,
+    );
+    controller.add(
+      const InSessionState(
+        steps: steps,
+        currentStepIndex: 0,
+        secondsRemaining: 0,
+        isAbandoned: true,
+      ),
+    );
+
+    await pumpEventQueue();
+
+    expect(client.messages, [
+      {
+        '_path': WearBridgeService.summaryPath,
+        'sessionType': 'cardio',
+        'durationMinutes': 15,
+        'abandoned': true,
+      },
+    ]);
+
+    await controller.close();
+    await service.dispose();
+  });
+
+  test('sends end fallback when no session type is provided', () async {
+    final client = _RecordingWatchMessagingClient();
+    final controller = StreamController<InSessionState>();
+    final service = WearBridgeService(client: client);
+
     service.start(controller.stream);
     controller.add(
       const InSessionState(
@@ -98,6 +166,16 @@ void main() {
 
     await controller.close();
     await service.dispose();
+  });
+
+  test('sendEndMessage sends end payload without crashing', () async {
+    final client = _RecordingWatchMessagingClient();
+
+    await WearBridgeService.sendEndMessage(client: client);
+
+    expect(client.messages, [
+      {'_path': WearBridgeService.endPath, 'done': true},
+    ]);
   });
 
   test('swallows messaging exceptions for silent degradation', () async {

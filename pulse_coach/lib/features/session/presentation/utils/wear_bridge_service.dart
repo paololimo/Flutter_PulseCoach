@@ -25,14 +25,23 @@ class WearBridgeService {
 
   static const sessionPath = '/pulsecoach/session';
   static const endPath = '/pulsecoach/session/end';
+  static const summaryPath = '/pulsecoach/session/summary';
   static const pathKey = '_path';
 
   final WatchMessagingClient _client;
   StreamSubscription<InSessionState>? _subscription;
   bool _ended = false;
+  String? _sessionType;
+  int _durationMinutes = 0;
 
-  void start(Stream<InSessionState> stateStream) {
+  void start(
+    Stream<InSessionState> stateStream, {
+    String? sessionType,
+    int durationMinutes = 0,
+  }) {
     if (_subscription != null) return;
+    _sessionType = sessionType;
+    _durationMinutes = durationMinutes;
     _subscription = stateStream.listen(_handleState);
   }
 
@@ -48,8 +57,22 @@ class WearBridgeService {
   }
 
   void _handleState(InSessionState state) {
+    if (_ended) return;
     if (state.isComplete || state.isAbandoned) {
-      unawaited(stop());
+      _ended = true;
+      final sessionType = _sessionType;
+      if (sessionType != null) {
+        unawaited(
+          _sendToWatch({
+            pathKey: summaryPath,
+            'sessionType': sessionType,
+            'durationMinutes': _durationMinutes,
+            'abandoned': state.isAbandoned,
+          }),
+        );
+      } else {
+        unawaited(_sendToWatch({pathKey: endPath, 'done': true}));
+      }
       return;
     }
 
@@ -70,6 +93,15 @@ class WearBridgeService {
     if (_ended) return;
     _ended = true;
     await _sendToWatch({pathKey: endPath, 'done': true});
+  }
+
+  static Future<void> sendEndMessage({WatchMessagingClient? client}) async {
+    final messagingClient = client ?? WatchConnectivityMessagingClient();
+    try {
+      await messagingClient.sendMessage({pathKey: endPath, 'done': true});
+    } catch (_) {
+      // Silent degradation: the watch is optional and must not affect RPE UX.
+    }
   }
 
   Future<void> _sendToWatch(Map<String, dynamic> payload) async {

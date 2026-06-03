@@ -3,6 +3,7 @@ import 'dart:async' show unawaited;
 import 'package:flutter/material.dart';
 import 'package:pulse_coach_wear/communication/phone_bridge.dart';
 import 'package:pulse_coach_wear/session_display_page.dart';
+import 'package:pulse_coach_wear/summary_display_page.dart';
 import 'package:wear_plus/wear_plus.dart';
 
 void main() {
@@ -41,10 +42,7 @@ class WearApp extends StatelessWidget {
 }
 
 class _WearRoot extends StatefulWidget {
-  const _WearRoot({
-    required this.isAmbient,
-    required this.shape,
-  });
+  const _WearRoot({required this.isAmbient, required this.shape});
 
   final bool isAmbient;
   final WearShape shape;
@@ -74,11 +72,11 @@ class _WearRootState extends State<_WearRoot> {
       stream: _phoneBridge.states,
       builder: (context, snapshot) {
         final state = snapshot.data;
+        if (state != null && state.isSummary) {
+          return SummaryDisplayPage(initialState: state);
+        }
         if (state != null && !state.isEnded) {
-          return SessionDisplayPage(
-            bridge: _phoneBridge,
-            initialState: state,
-          );
+          return SessionDisplayPage(bridge: _phoneBridge, initialState: state);
         }
         return PulseCoachWearHome(
           isAmbient: widget.isAmbient,

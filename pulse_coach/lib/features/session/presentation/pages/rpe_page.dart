@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,6 +14,7 @@ import 'package:pulse_coach/features/session/domain/usecases/update_bandit_rewar
 import 'package:pulse_coach/features/session/presentation/bloc/post_rpe_adaptation_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_state.dart';
+import 'package:pulse_coach/features/session/presentation/utils/wear_bridge_service.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/rpe_input_widget.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
@@ -106,6 +109,7 @@ class _RpePageState extends State<RpePage> {
                             abandoned: args.abandoned,
                             planId: args.planId,
                           );
+                    unawaited(WearBridgeService.sendEndMessage());
                     context.go(AppRouter.sessionSummary, extra: summaryArgs);
                   },
                 ),

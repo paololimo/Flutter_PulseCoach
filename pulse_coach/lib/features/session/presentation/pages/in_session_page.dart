@@ -66,7 +66,12 @@ class _InSessionPageState extends State<InSessionPage> {
       hapticService: _hapticService,
       liveHrService: _liveHrService,
     )..start();
-    _wearBridge = WearBridgeService()..start(cubit.stream);
+    _wearBridge = WearBridgeService()
+      ..start(
+        cubit.stream,
+        sessionType: widget.session?.sessionType,
+        durationMinutes: widget.session?.durationMinutes ?? 0,
+      );
 
     setState(() {
       _cubit = cubit;

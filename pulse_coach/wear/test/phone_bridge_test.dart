@@ -63,6 +63,48 @@ void main() {
     await bridge.dispose();
     await controller.close();
   });
+
+  test('parses summary messages', () async {
+    final controller = StreamController<Map<String, dynamic>>();
+    final bridge = PhoneBridge(client: _FakePhoneMessagingClient(controller));
+
+    final states = <SessionWearState>[];
+    final subscription = bridge.states.listen(states.add);
+
+    controller.add({
+      '_path': PhoneBridge.summaryPath,
+      'sessionType': 'cardio',
+      'durationMinutes': 15,
+      'abandoned': false,
+    });
+    await pumpEventQueue();
+
+    expect(states.single.isSummary, isTrue);
+    expect(states.single.summarySessionType, 'cardio');
+    expect(states.single.summaryDurationMinutes, 15);
+    expect(states.single.summaryAbandoned, isFalse);
+
+    await subscription.cancel();
+    await bridge.dispose();
+    await controller.close();
+  });
+
+  test('ignores malformed summary messages without crashing', () async {
+    final controller = StreamController<Map<String, dynamic>>();
+    final bridge = PhoneBridge(client: _FakePhoneMessagingClient(controller));
+
+    final states = <SessionWearState>[];
+    final subscription = bridge.states.listen(states.add);
+
+    controller.add({'_path': PhoneBridge.summaryPath, 'sessionType': 4});
+    await pumpEventQueue();
+
+    expect(states, isEmpty);
+
+    await subscription.cancel();
+    await bridge.dispose();
+    await controller.close();
+  });
 }
 
 class _FakePhoneMessagingClient implements PhoneMessagingClient {
