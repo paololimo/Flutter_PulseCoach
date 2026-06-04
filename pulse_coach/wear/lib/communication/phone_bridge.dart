@@ -4,6 +4,10 @@ import 'package:watch_connectivity/watch_connectivity.dart';
 
 abstract interface class PhoneMessagingClient {
   Stream<Map<String, dynamic>> get messageStream;
+
+  Stream<Map<String, dynamic>> get contextStream;
+
+  Future<List<Map<String, dynamic>>> get receivedApplicationContexts;
 }
 
 class WatchConnectivityPhoneMessagingClient implements PhoneMessagingClient {
@@ -14,6 +18,13 @@ class WatchConnectivityPhoneMessagingClient implements PhoneMessagingClient {
 
   @override
   Stream<Map<String, dynamic>> get messageStream => _watch.messageStream;
+
+  @override
+  Stream<Map<String, dynamic>> get contextStream => _watch.contextStream;
+
+  @override
+  Future<List<Map<String, dynamic>>> get receivedApplicationContexts =>
+      _watch.receivedApplicationContexts;
 }
 
 class SessionWearState {
@@ -70,6 +81,8 @@ class PhoneBridge {
   PhoneBridge({PhoneMessagingClient? client})
     : _client = client ?? WatchConnectivityPhoneMessagingClient() {
     _subscription = _client.messageStream.listen(_handleMessage);
+    _contextSubscription = _client.contextStream.listen(_handleMessage);
+    unawaited(_emitReceivedApplicationContexts());
   }
 
   static const sessionPath = '/pulsecoach/session';
@@ -81,8 +94,19 @@ class PhoneBridge {
   final StreamController<SessionWearState> _statesController =
       StreamController<SessionWearState>.broadcast();
   StreamSubscription<Map<String, dynamic>>? _subscription;
+  StreamSubscription<Map<String, dynamic>>? _contextSubscription;
 
   Stream<SessionWearState> get states => _statesController.stream;
+
+  Future<void> _emitReceivedApplicationContexts() async {
+    try {
+      final contexts = await _client.receivedApplicationContexts;
+      if (contexts.isEmpty) return;
+      _handleMessage(contexts.last);
+    } catch (_) {
+      // Best-effort startup hydration; live message streams still work.
+    }
+  }
 
   void _handleMessage(Map<String, dynamic> message) {
     final path = message[pathKey];
@@ -135,6 +159,8 @@ class PhoneBridge {
   Future<void> dispose() async {
     await _subscription?.cancel();
     _subscription = null;
+    await _contextSubscription?.cancel();
+    _contextSubscription = null;
     await _statesController.close();
   }
 }

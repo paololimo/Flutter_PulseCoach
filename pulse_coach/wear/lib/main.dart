@@ -1,4 +1,4 @@
-import 'dart:async' show unawaited;
+import 'dart:async' show StreamSubscription, unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:pulse_coach_wear/communication/phone_bridge.dart';
@@ -29,10 +29,7 @@ class WearApp extends StatelessWidget {
                 ),
                 useMaterial3: true,
               ),
-              home: _WearRoot(
-                isAmbient: mode == WearMode.ambient,
-                shape: shape,
-              ),
+              home: WearRoot(isAmbient: mode == WearMode.ambient, shape: shape),
             );
           },
         );
@@ -41,49 +38,72 @@ class WearApp extends StatelessWidget {
   }
 }
 
-class _WearRoot extends StatefulWidget {
-  const _WearRoot({required this.isAmbient, required this.shape});
+class WearRoot extends StatefulWidget {
+  const WearRoot({
+    required this.isAmbient,
+    required this.shape,
+    this.bridge,
+    super.key,
+  });
 
   final bool isAmbient;
   final WearShape shape;
+  final PhoneBridge? bridge;
 
   @override
-  State<_WearRoot> createState() => _WearRootState();
+  State<WearRoot> createState() => _WearRootState();
 }
 
-class _WearRootState extends State<_WearRoot> {
+class _WearRootState extends State<WearRoot> {
   late final PhoneBridge _phoneBridge;
+  StreamSubscription<SessionWearState>? _statesSub;
+  SessionWearState? _state;
+  bool _sawSummary = false;
 
   @override
   void initState() {
     super.initState();
-    _phoneBridge = PhoneBridge();
+    _phoneBridge = widget.bridge ?? PhoneBridge();
+    _statesSub = _phoneBridge.states.listen(_onState);
   }
 
   @override
   void dispose() {
+    unawaited(_statesSub?.cancel());
     unawaited(_phoneBridge.dispose());
     super.dispose();
   }
 
+  void _onState(SessionWearState state) {
+    if (!mounted) return;
+    if (state.isEnded) {
+      setState(() {
+        _sawSummary = false;
+        _state = state;
+      });
+      return;
+    }
+    if (state.isSummary) {
+      setState(() {
+        _sawSummary = true;
+        _state = state;
+      });
+      return;
+    }
+    if (_sawSummary) return;
+    setState(() => _state = state);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<SessionWearState>(
-      stream: _phoneBridge.states,
-      builder: (context, snapshot) {
-        final state = snapshot.data;
-        if (state != null && state.isSummary) {
-          return SummaryDisplayPage(initialState: state);
-        }
-        if (state != null && !state.isEnded) {
-          return SessionDisplayPage(bridge: _phoneBridge, initialState: state);
-        }
-        return PulseCoachWearHome(
-          isAmbient: widget.isAmbient,
-          shape: widget.shape,
-        );
-      },
-    );
+    final state = _state;
+    if (state?.isSummary == true) {
+      return SummaryDisplayPage(initialState: state!);
+    }
+    if (state != null && !state.isEnded) {
+      return SessionDisplayPage(bridge: _phoneBridge, initialState: state);
+    }
+    return PulseCoachWearHome(isAmbient: widget.isAmbient, shape: widget.shape);
   }
 }
 

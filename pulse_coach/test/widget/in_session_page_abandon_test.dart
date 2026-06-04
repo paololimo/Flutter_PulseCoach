@@ -121,6 +121,8 @@ void main() {
         // P6 fix: intensity 3 falls in the low band (1..3) per
         // safety_constraints.dart, mirroring ContextualBandit._intensityValue.
         expect(args.armKey, 'cardio_low');
+
+        await tester.pump(const Duration(seconds: 60));
       },
     );
 
@@ -142,6 +144,8 @@ void main() {
         expect(args.abandoned, isFalse);
         expect(args.durationMinutes, 1);
         expect(args.armKey, 'cardio_low');
+
+        await tester.pump(const Duration(seconds: 60));
       },
     );
   });

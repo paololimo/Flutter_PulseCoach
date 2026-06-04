@@ -29,23 +29,30 @@ void main() {
     await controller.close();
   });
 
-  test('ignores unknown paths and malformed payloads without crashing', () async {
-    final controller = StreamController<Map<String, dynamic>>();
-    final bridge = PhoneBridge(client: _FakePhoneMessagingClient(controller));
+  test(
+    'ignores unknown paths and malformed payloads without crashing',
+    () async {
+      final controller = StreamController<Map<String, dynamic>>();
+      final bridge = PhoneBridge(client: _FakePhoneMessagingClient(controller));
 
-    final states = <SessionWearState>[];
-    final subscription = bridge.states.listen(states.add);
+      final states = <SessionWearState>[];
+      final subscription = bridge.states.listen(states.add);
 
-    controller.add({'_path': '/unknown', 'step': 'Ignored', 'secs': 1});
-    controller.add({'_path': PhoneBridge.sessionPath, 'step': 4, 'secs': 'bad'});
-    await pumpEventQueue();
+      controller.add({'_path': '/unknown', 'step': 'Ignored', 'secs': 1});
+      controller.add({
+        '_path': PhoneBridge.sessionPath,
+        'step': 4,
+        'secs': 'bad',
+      });
+      await pumpEventQueue();
 
-    expect(states, isEmpty);
+      expect(states, isEmpty);
 
-    await subscription.cancel();
-    await bridge.dispose();
-    await controller.close();
-  });
+      await subscription.cancel();
+      await bridge.dispose();
+      await controller.close();
+    },
+  );
 
   test('emits ended state for session end messages', () async {
     final controller = StreamController<Map<String, dynamic>>();
@@ -89,6 +96,36 @@ void main() {
     await controller.close();
   });
 
+  test('emits latest received application context on startup', () async {
+    final controller = StreamController<Map<String, dynamic>>();
+    final bridge = PhoneBridge(
+      client: _FakePhoneMessagingClient(
+        controller,
+        receivedApplicationContexts: [
+          {
+            '_path': PhoneBridge.summaryPath,
+            'sessionType': 'mobility',
+            'durationMinutes': 20,
+            'abandoned': true,
+          },
+        ],
+      ),
+    );
+
+    final states = <SessionWearState>[];
+    final subscription = bridge.states.listen(states.add);
+
+    await pumpEventQueue();
+
+    expect(states.single.isSummary, isTrue);
+    expect(states.single.summarySessionType, 'mobility');
+    expect(states.single.summaryAbandoned, isTrue);
+
+    await subscription.cancel();
+    await bridge.dispose();
+    await controller.close();
+  });
+
   test('ignores malformed summary messages without crashing', () async {
     final controller = StreamController<Map<String, dynamic>>();
     final bridge = PhoneBridge(client: _FakePhoneMessagingClient(controller));
@@ -108,10 +145,21 @@ void main() {
 }
 
 class _FakePhoneMessagingClient implements PhoneMessagingClient {
-  _FakePhoneMessagingClient(this._controller);
+  _FakePhoneMessagingClient(
+    this._controller, {
+    List<Map<String, dynamic>> receivedApplicationContexts = const [],
+  }) : _receivedApplicationContexts = receivedApplicationContexts;
 
   final StreamController<Map<String, dynamic>> _controller;
+  final List<Map<String, dynamic>> _receivedApplicationContexts;
 
   @override
   Stream<Map<String, dynamic>> get messageStream => _controller.stream;
+
+  @override
+  Stream<Map<String, dynamic>> get contextStream => const Stream.empty();
+
+  @override
+  Future<List<Map<String, dynamic>>> get receivedApplicationContexts async =>
+      _receivedApplicationContexts;
 }
