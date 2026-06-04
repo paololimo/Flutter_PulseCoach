@@ -404,4 +404,17 @@ void main() {
       },
     );
   });
+
+  group('Evaluation stability', () {
+    test('5.2-UNIT-027: unchanged input evaluates idempotently', () {
+      final sv = _sv(state: BehavioralState.active, missed: 2, rpe: [9, 9]);
+
+      final first = machine.evaluate(sv);
+      final second = machine.evaluate(sv);
+
+      expect(second.newState, equals(first.newState));
+      expect(second.transitionKey, equals(first.transitionKey));
+      expect(second.stateChanged, equals(first.stateChanged));
+    });
+  });
 }

@@ -438,6 +438,32 @@ void main() {
         );
       },
     );
+
+    testWidgets('7.2-WIDGET-026: semantic label avoids duplicate punctuation', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          HeroSessionCard(
+            session: _session(explanation: 'Ottimo per recuperare energia.'),
+          ),
+        ),
+      );
+
+      final semantics = tester.widgetList<Semantics>(find.byType(Semantics));
+      final labels = semantics
+          .map((widget) => widget.properties.label)
+          .whereType<String>();
+
+      expect(
+        labels,
+        contains(
+          'Prossima sessione: Mobilità, 5 min, '
+          'Ottimo per recuperare energia. Tocca per iniziare.',
+        ),
+      );
+      expect(labels.any((label) => label.contains('..')), isFalse);
+    });
   });
 
   group('CompactSessionCard extended coverage', () {

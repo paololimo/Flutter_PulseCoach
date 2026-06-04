@@ -33,16 +33,21 @@ class HeroSessionCard extends StatelessWidget {
     final displayName = sessionDisplayName(session.sessionType, l10n);
     final durationLabel = '${session.durationMinutes} min';
     final intensityText = intensityLabel(session.intensity, l10n);
-    final hasExplanation = session.explanation.isNotEmpty;
+    final explanation = session.explanation.trim();
+    final hasExplanation = explanation.isNotEmpty;
     final canStart = onStart != null;
 
     final summary = StringBuffer(
       l10n.heroCardSemanticPreamble(displayName, durationLabel),
     );
     if (hasExplanation) {
-      summary.write(', ${session.explanation}');
+      summary.write(', $explanation');
     }
-    summary.write('. ${l10n.heroCardSemanticCta}');
+    summary.write(
+      hasExplanation && _endsWithTerminalPunctuation(explanation)
+          ? ' ${l10n.heroCardSemanticCta}'
+          : '. ${l10n.heroCardSemanticCta}',
+    );
 
     return Semantics(
       label: summary.toString(),
@@ -151,3 +156,6 @@ class HeroSessionCard extends StatelessWidget {
     );
   }
 }
+
+bool _endsWithTerminalPunctuation(String value) =>
+    value.endsWith('.') || value.endsWith('!') || value.endsWith('?');
