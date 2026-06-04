@@ -1,12 +1,26 @@
 import 'dart:developer' as dev;
 
-import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
+import 'package:flutter/foundation.dart'
+    show kDebugMode, kReleaseMode, visibleForTesting;
+
+typedef AppLogSink =
+    void Function(
+      String message, {
+      required String name,
+      Object? error,
+      StackTrace? stackTrace,
+      required int level,
+    });
 
 /// Centralized structured logger for PulseCoach.
 ///
-/// Debug builds write to dart:developer. Release builds keep this sink no-op;
-/// callers must emit user-observable failure state independently.
+/// Debug/warning logs stay development-only. Error logs always write to
+/// dart:developer so release persistence failures are observable by any
+/// attached platform log collector.
 abstract final class AppLogger {
+  @visibleForTesting
+  static AppLogSink? debugSink;
+
   static void debug(
     String message, {
     String name = 'PulseCoach',
@@ -22,6 +36,13 @@ abstract final class AppLogger {
         level: 500,
       );
     }
+    debugSink?.call(
+      message,
+      name: name,
+      error: error,
+      stackTrace: stackTrace,
+      level: 500,
+    );
   }
 
   static void warning(
@@ -39,6 +60,13 @@ abstract final class AppLogger {
         level: 900,
       );
     }
+    debugSink?.call(
+      message,
+      name: name,
+      error: error,
+      stackTrace: stackTrace,
+      level: 900,
+    );
   }
 
   static void error(
@@ -47,14 +75,19 @@ abstract final class AppLogger {
     Object? error,
     StackTrace? stackTrace,
   }) {
-    if (!kReleaseMode) {
-      dev.log(
-        message,
-        name: name,
-        error: error,
-        stackTrace: stackTrace,
-        level: 1000,
-      );
-    }
+    dev.log(
+      message,
+      name: name,
+      error: error,
+      stackTrace: stackTrace,
+      level: 1000,
+    );
+    debugSink?.call(
+      message,
+      name: name,
+      error: error,
+      stackTrace: stackTrace,
+      level: 1000,
+    );
   }
 }

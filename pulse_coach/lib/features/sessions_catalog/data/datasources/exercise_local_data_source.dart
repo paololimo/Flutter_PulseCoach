@@ -41,6 +41,11 @@ class ExerciseLocalDataSource {
     }
 
     final entries = <CachedExerciseEntry>[];
+    // Aggregate corrupt-row diagnostics into a single error log after the loop
+    // so a corrupt cache cannot emit one release log line per bad row.
+    var corruptRowCount = 0;
+    Object? firstCorruptError;
+    StackTrace? firstCorruptStackTrace;
     for (final row in rows) {
       try {
         final exercise = ExerciseModel.fromPulseCoachJson(
@@ -54,13 +59,18 @@ class ExerciseLocalDataSource {
       } catch (e, st) {
         // Skip individual corrupt rows so one bad payload cannot poison the
         // entire cache for every session type.
-        AppLogger.error(
-          'Skipping corrupt cache row ${row.exerciseId}',
-          name: 'ExerciseLocalDataSource',
-          error: e,
-          stackTrace: st,
-        );
+        corruptRowCount++;
+        firstCorruptError ??= e;
+        firstCorruptStackTrace ??= st;
       }
+    }
+    if (corruptRowCount > 0) {
+      AppLogger.error(
+        'Skipped $corruptRowCount corrupt cache row(s)',
+        name: 'ExerciseLocalDataSource',
+        error: firstCorruptError,
+        stackTrace: firstCorruptStackTrace,
+      );
     }
     if (entries.isEmpty) {
       AppLogger.debug(
@@ -141,6 +151,12 @@ class ExerciseLocalDataSource {
 
     final exercises = <Exercise>[];
     final seen = <String>{};
+    // Aggregate malformed-record diagnostics into a single error log after the
+    // loop so a corrupt fallback file cannot emit one release log line per bad
+    // record.
+    var malformedCount = 0;
+    Object? firstMalformedError;
+    StackTrace? firstMalformedStackTrace;
     for (final entry in decoded) {
       if (entry is! Map<String, dynamic>) {
         continue;
@@ -160,13 +176,18 @@ class ExerciseLocalDataSource {
       } catch (e, st) {
         // Skip individual malformed fallback records so one bad entry cannot
         // wipe the entire degraded path.
-        AppLogger.error(
-          'Skipping malformed fallback record',
-          name: 'ExerciseLocalDataSource',
-          error: e,
-          stackTrace: st,
-        );
+        malformedCount++;
+        firstMalformedError ??= e;
+        firstMalformedStackTrace ??= st;
       }
+    }
+    if (malformedCount > 0) {
+      AppLogger.error(
+        'Skipped $malformedCount malformed fallback record(s)',
+        name: 'ExerciseLocalDataSource',
+        error: firstMalformedError,
+        stackTrace: firstMalformedStackTrace,
+      );
     }
     if (exercises.isEmpty) {
       AppLogger.debug(
