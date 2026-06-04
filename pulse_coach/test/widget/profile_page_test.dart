@@ -43,10 +43,7 @@ void main() {
   });
 
   Widget buildPage() {
-    return MaterialApp(
-      theme: AppTheme.darkTheme,
-      home: const ProfilePage(),
-    );
+    return MaterialApp(theme: AppTheme.darkTheme, home: const ProfilePage());
   }
 
   group('ProfilePage widget', () {
@@ -126,21 +123,46 @@ void main() {
       },
     );
 
+    testWidgets('[P1] 2.4-WIDGET-005: snackbar shown on ProfileError', (
+      tester,
+    ) async {
+      when(
+        mockGetProfile(),
+      ).thenAnswer((_) async => const Left(CacheFailure('Profile not found')));
+      await tester.pumpWidget(buildPage());
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.text('Profile not found'),
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets(
-      '[P1] 2.4-WIDGET-005: snackbar shown on ProfileError',
+      '[P2] 2.4-WIDGET-006: Primary Goal labels fit on 390dp phone surface',
       (tester) async {
-        when(mockGetProfile()).thenAnswer(
-          (_) async => const Left(CacheFailure('Profile not found')),
-        );
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        when(mockGetProfile()).thenAnswer((_) async => const Right(tProfile));
+
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
+
+        expect(find.text('Primary Goal'), findsOneWidget);
+        expect(find.text('Strength'), findsOneWidget);
         expect(
-          find.descendant(
-            of: find.byType(SnackBar),
-            matching: find.text('Profile not found'),
+          find.ancestor(
+            of: find.text('Strength'),
+            matching: find.byType(FittedBox),
           ),
           findsOneWidget,
         );
+        expect(tester.takeException(), isNull);
       },
     );
   });

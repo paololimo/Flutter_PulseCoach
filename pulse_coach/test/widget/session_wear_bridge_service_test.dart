@@ -200,6 +200,92 @@ void main() {
     await service.dispose();
   });
 
+  // 12.2-AC2 / 12.2-AC3: each InSessionState emission produces exactly one
+  // message on the same async turn, confirming <1s phone-side latency and
+  // that step transitions are captured immediately.
+  test(
+    '12.2-AC2/AC3-001: sends one message per state emission with correct secs '
+    'and step for each tick',
+    () async {
+      final client = _RecordingWatchMessagingClient();
+      final controller = StreamController<InSessionState>();
+      final service = WearBridgeService(client: client);
+
+      service.start(controller.stream);
+
+      // Tick 1: step 0, 30 seconds remaining
+      controller.add(
+        const InSessionState(
+          steps: steps,
+          currentStepIndex: 0,
+          secondsRemaining: 30,
+        ),
+      );
+      await pumpEventQueue();
+      expect(client.messages, hasLength(1));
+      expect(client.messages[0]['step'], 'Warm-up');
+      expect(client.messages[0]['secs'], 30);
+
+      // Tick 2: step 0, 29 seconds remaining (timer decrement)
+      controller.add(
+        const InSessionState(
+          steps: steps,
+          currentStepIndex: 0,
+          secondsRemaining: 29,
+        ),
+      );
+      await pumpEventQueue();
+      expect(client.messages, hasLength(2));
+      expect(client.messages[1]['secs'], 29);
+
+      // Tick 3: step transition to step 1 (12.2-AC3)
+      controller.add(
+        const InSessionState(
+          steps: steps,
+          currentStepIndex: 1,
+          secondsRemaining: 45,
+        ),
+      );
+      await pumpEventQueue();
+      expect(client.messages, hasLength(3));
+      expect(client.messages[2]['step'], 'Squat');
+      expect(client.messages[2]['secs'], 45);
+
+      await controller.close();
+      await service.dispose();
+    },
+  );
+
+  test(
+    '12.2-AC2-002: message is sent within same async turn as state emission',
+    () async {
+      final client = _RecordingWatchMessagingClient();
+      final controller = StreamController<InSessionState>();
+      final service = WearBridgeService(client: client);
+
+      service.start(controller.stream);
+
+      // Emit state and verify message is present after minimal flush
+      // (pumpEventQueue(times: 1) processes 1 event-loop turn).
+      // This confirms no artificial delay is introduced phone-side,
+      // satisfying the <1s sync requirement for 12.2-AC2/AC3.
+      controller.add(
+        const InSessionState(
+          steps: steps,
+          currentStepIndex: 0,
+          secondsRemaining: 60,
+        ),
+      );
+      await pumpEventQueue(times: 1);
+
+      expect(client.messages, hasLength(1));
+      expect(client.messages[0]['secs'], 60);
+
+      await controller.close();
+      await service.dispose();
+    },
+  );
+
   test(
     'reconnect poller re-sends terminal payload when watch becomes reachable',
     () {

@@ -44,6 +44,7 @@ void main() {
   Widget wrap({
     required DailyPlanState planState,
     TodaySessionState? sessionState,
+    Widget Function(Widget body)? bodyBuilder,
   }) {
     when(dailyPlanBloc.state).thenReturn(planState);
 
@@ -55,20 +56,20 @@ void main() {
     cubit.planLoaded(total, null).ignore();
     if (sessionState != null) cubit.seed(sessionState);
 
+    final body = MultiBlocProvider(
+      providers: [
+        BlocProvider<DailyPlanBloc>.value(value: dailyPlanBloc),
+        BlocProvider<TodaySessionCubit>.value(value: cubit),
+      ],
+      child: const TodayPage(),
+    );
+
     return MaterialApp(
       locale: const Locale('it'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.darkTheme,
-      home: Scaffold(
-        body: MultiBlocProvider(
-          providers: [
-            BlocProvider<DailyPlanBloc>.value(value: dailyPlanBloc),
-            BlocProvider<TodaySessionCubit>.value(value: cubit),
-          ],
-          child: const TodayPage(),
-        ),
-      ),
+      home: Scaffold(body: bodyBuilder?.call(body) ?? body),
     );
   }
 
@@ -425,6 +426,29 @@ void main() {
 
         expect(find.text('Ottimo lavoro!'), findsOneWidget);
         expect(find.byType(CompactSessionCard), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '11.3-WIDGET-006: phone landscape content width has no overflow',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(640, 360));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          wrap(
+            planState: DailyPlanState.loaded(plan: _plan(3)),
+            bodyBuilder: (body) => Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(width: 559, height: 304, child: body),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HeroSessionCard), findsOneWidget);
+        expect(find.byType(NavigationRail), findsNothing);
+        expect(tester.takeException(), isNull);
       },
     );
   });

@@ -102,6 +102,48 @@ void main() {
     expect(args.planId, 1);
   });
 
+  testWidgets(
+    '12.3-AC2-001: RpePage calls sendEndMessage after RPE submission',
+    (tester) async {
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+      getIt.registerSingleton<RpeFeedbackDao>(db!.rpeFeedbackDao);
+      getIt.registerSingleton<UpdateBanditReward>(UpdateBanditReward(db!));
+
+      var sendEndMessageCalled = false;
+
+      final router = GoRouter(
+        initialLocation: AppRouter.sessionRpe,
+        routes: [
+          GoRoute(
+            path: AppRouter.sessionRpe,
+            builder: (_, _) => RpePage(
+              args: _args,
+              sendEndMessageCallback: () async {
+                sendEndMessageCalled = true;
+              },
+            ),
+          ),
+          GoRoute(
+            path: AppRouter.sessionSummary,
+            builder: (_, _) => const Scaffold(body: Text('Summary target')),
+          ),
+          GoRoute(
+            path: AppRouter.today,
+            builder: (_, _) => const Scaffold(body: Text('Today target')),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(_wrap(router));
+      await tester.tap(find.text('6'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+
+      expect(sendEndMessageCalled, isTrue);
+      expect(find.text('Summary target'), findsOneWidget);
+    },
+  );
+
   testWidgets('9.1-PAGE-003: RpePage shows SnackBar on persistence error', (
     tester,
   ) async {

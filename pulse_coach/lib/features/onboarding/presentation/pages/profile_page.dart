@@ -45,6 +45,13 @@ class _ProfilePageState extends State<ProfilePage> {
     _cubit.updateProfile(updated);
   }
 
+  Widget _segmentLabel(String label) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(label, maxLines: 1, softWrap: false),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -61,9 +68,9 @@ class _ProfilePageState extends State<ProfilePage> {
             });
           }
           if (state is ProfileError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
@@ -105,11 +112,14 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildField(
                 context,
                 label: 'Fitness Level',
-                segments: const [
-                  ButtonSegment<String>(value: 'low', label: Text('Beginner')),
+                segments: [
+                  ButtonSegment<String>(
+                    value: 'low',
+                    label: _segmentLabel('Beginner'),
+                  ),
                   ButtonSegment<String>(
                     value: 'medium',
-                    label: Text('Intermediate'),
+                    label: _segmentLabel('Intermediate'),
                   ),
                 ],
                 selected: _fitnessLevel,
@@ -126,19 +136,22 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildField(
                 context,
                 label: 'Primary Goal',
-                segments: const [
-                  ButtonSegment<String>(value: 'cardio', label: Text('Cardio')),
+                segments: [
+                  ButtonSegment<String>(
+                    value: 'cardio',
+                    label: _segmentLabel('Cardio'),
+                  ),
                   ButtonSegment<String>(
                     value: 'strength',
-                    label: Text('Strength'),
+                    label: _segmentLabel('Strength'),
                   ),
                   ButtonSegment<String>(
                     value: 'mobility',
-                    label: Text('Mobility'),
+                    label: _segmentLabel('Mobility'),
                   ),
                   ButtonSegment<String>(
                     value: 'wellbeing',
-                    label: Text('Well-being'),
+                    label: _segmentLabel('Well-being'),
                   ),
                 ],
                 selected: _goal,
@@ -156,14 +169,14 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildField(
                 context,
                 label: 'Available Time',
-                segments: const [
+                segments: [
                   ButtonSegment<String>(
                     value: 'short',
-                    label: Text('2–5 min'),
+                    label: _segmentLabel('2–5 min'),
                   ),
                   ButtonSegment<String>(
                     value: 'long',
-                    label: Text('5–10 min'),
+                    label: _segmentLabel('5–10 min'),
                   ),
                 ],
                 selected: _availableTime,
@@ -180,19 +193,22 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildField(
                 context,
                 label: 'Physical Constraints',
-                segments: const [
-                  ButtonSegment<String>(value: 'none', label: Text('None')),
+                segments: [
+                  ButtonSegment<String>(
+                    value: 'none',
+                    label: _segmentLabel('None'),
+                  ),
                   ButtonSegment<String>(
                     value: 'knee',
-                    label: Text('Knee issues'),
+                    label: _segmentLabel('Knee issues'),
                   ),
                   ButtonSegment<String>(
                     value: 'back',
-                    label: Text('Back issues'),
+                    label: _segmentLabel('Back issues'),
                   ),
                   ButtonSegment<String>(
                     value: 'indoor',
-                    label: Text('Prefer indoor'),
+                    label: _segmentLabel('Prefer indoor'),
                   ),
                 ],
                 selected: _physicalConstraints,
@@ -225,10 +241,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.h3.copyWith(color: theme.onSurface),
-        ),
+        Text(label, style: AppTextStyles.h3.copyWith(color: theme.onSurface)),
         const SizedBox(height: AppSpacing.sm),
         SegmentedButton<String>(
           segments: segments,

@@ -21,7 +21,12 @@ import 'package:pulse_coach/l10n/app_localizations.dart';
 class RpePage extends StatefulWidget {
   final RpeSubmitArgs? args;
 
-  const RpePage({this.args, super.key});
+  /// Override for testing: replaces the [WearBridgeService.sendEndMessage]
+  /// call so tests can verify the wear notification is triggered.
+  @visibleForTesting
+  final Future<void> Function()? sendEndMessageCallback;
+
+  const RpePage({this.args, this.sendEndMessageCallback, super.key});
 
   @override
   State<RpePage> createState() => _RpePageState();
@@ -109,7 +114,11 @@ class _RpePageState extends State<RpePage> {
                             abandoned: args.abandoned,
                             planId: args.planId,
                           );
-                    unawaited(WearBridgeService.sendEndMessage());
+                    unawaited(
+                      (widget.sendEndMessageCallback ??
+                              WearBridgeService.sendEndMessage)
+                          .call(),
+                    );
                     context.go(AppRouter.sessionSummary, extra: summaryArgs);
                   },
                 ),

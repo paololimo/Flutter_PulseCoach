@@ -26,6 +26,12 @@ const _steps = [
   ),
 ];
 
+const _longTitle =
+    'Sequenza di mobilita controllata per spalle e colonna toracica';
+const _longInstruction =
+    'Mantieni il respiro regolare, lascia scendere le spalle e procedi con '
+    'movimenti lenti senza forzare il range articolare durante la fase centrale.';
+
 Widget _wrap(Widget child) => MaterialApp(
   locale: const Locale('it'),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -44,6 +50,21 @@ InSessionView _view({int step = 0, int seconds = 60, int? liveHr}) =>
       ),
       onAbandon: () {},
     );
+
+InSessionView _longContentView() => InSessionView(
+  sessionState: const InSessionState(
+    steps: [
+      ExerciseStep(
+        title: _longTitle,
+        instruction: _longInstruction,
+        durationSeconds: 90,
+      ),
+    ],
+    currentStepIndex: 0,
+    secondsRemaining: 90,
+  ),
+  onAbandon: () {},
+);
 
 void main() {
   group('InSessionView', () {
@@ -260,6 +281,28 @@ void main() {
         await tester.pump();
 
         expect(find.text('01:15'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '11.3-WIDGET-007: long landscape content uses truncation contracts without overflow',
+      (tester) async {
+        tester.view.physicalSize = const Size(640, 360);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(_wrap(_longContentView()));
+        await tester.pump();
+
+        final title = tester.widget<Text>(find.text(_longTitle));
+        final instruction = tester.widget<Text>(find.text(_longInstruction));
+
+        expect(title.maxLines, 2);
+        expect(title.overflow, TextOverflow.ellipsis);
+        expect(instruction.maxLines, 6);
+        expect(instruction.overflow, TextOverflow.ellipsis);
+        expect(tester.takeException(), isNull);
       },
     );
   });

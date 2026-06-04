@@ -206,6 +206,23 @@ void main() {
         expect(rail.selectedIndex, 2);
       },
     );
+
+    testWidgets(
+      '11.1-WIDGET-004: tablet lower breakpoint renders rail labels without overflow',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(600, 1024));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(buildTestShell());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(NavigationRail), findsOneWidget);
+        expect(find.text('Oggi'), findsOneWidget);
+        expect(find.text('Sessioni'), findsOneWidget);
+        expect(find.text('Progressi'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }
 
