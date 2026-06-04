@@ -136,6 +136,36 @@ void main() {
     },
   );
 
+  // 13.3-PERSIST-014 (added by Story 13.3 code review): drives the production
+  // `_isCacheValid` strict `<` boundary near its edge — a cache aged just under
+  // 24h must still be served (no remote). Complements 6.1-UNIT-007 (1h) by
+  // tightening the served-side margin toward the TTL. The exact-24h `<` vs `<=`
+  // case cannot be pinned because production reads its own `DateTime.now()`.
+  test(
+    '13.3-PERSIST-014: cache just under 24h TTL is served and skips remote',
+    () async {
+      final nearBoundaryCachedEntry = CachedExerciseEntry(
+        exercise: cachedExercise,
+        cachedAt: DateTime.now().toUtc().subtract(
+          const Duration(hours: 23, minutes: 59),
+        ),
+      );
+      when(
+        mockLocal.getCachedExercisesByType('mobility'),
+      ).thenAnswer((_) async => [nearBoundaryCachedEntry]);
+
+      final result = await sut.getExercisesByType('mobility');
+
+      expect(result.isRight(), isTrue);
+      result.fold((_) => fail('Expected Right'), (exercises) {
+        expect(exercises, hasLength(1));
+        expect(exercises.single, equals(cachedExercise));
+      });
+      verifyNever(mockRemote.fetchExercisesByType(any));
+      verifyNever(mockRemote.fetchAll());
+    },
+  );
+
   test(
     '6.1-UNIT-009: remote failure plus stale cache returns stale cache',
     () async {

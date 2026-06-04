@@ -262,6 +262,46 @@ void main() {
       },
     );
 
+    // ── 13.3-PERSIST-013 (added by Story 13.3 code review) ───────────────────
+    // Drives the production `_isCacheValid` strict `<` boundary near its edge:
+    // a cache aged just under 1h must still be served (no network). Complements
+    // 4.2-UNIT-001 (30min) by tightening the served-side margin toward the TTL.
+    // Note: the exact-1h `<` vs `<=` case cannot be pinned because production
+    // reads its own `DateTime.now()`; 59min is the tightest reliable served case.
+    test(
+      '13.3-PERSIST-013: cache just under 1h TTL → served from cache, fetchWeatherAndAqi NOT called',
+      () async {
+        final nearBoundaryCachedAt = DateTime.now().toUtc().subtract(
+          const Duration(minutes: 59),
+        );
+        final cachedContext = WeatherContext(
+          temperature: 12.0,
+          precipitationProbability: 20.0,
+          aqiValue: 25,
+          cachedAt: nearBoundaryCachedAt,
+        );
+        when(
+          mockLocation.getCityLevelCoordinates(),
+        ).thenAnswer((_) async => const Right((48.8, 2.3)));
+        when(
+          mockLocal.getCachedWeather(),
+        ).thenAnswer((_) async => cachedContext);
+
+        final result = await sut.getWeatherContext();
+
+        expect(result.isRight(), isTrue);
+        result.fold((_) => fail('Expected Right'), (context) {
+          expect(context.cachedAt, nearBoundaryCachedAt);
+        });
+        verifyNever(
+          mockRemote.fetchWeatherAndAqi(
+            latitude: anyNamed('latitude'),
+            longitude: anyNamed('longitude'),
+          ),
+        );
+      },
+    );
+
     // ── 4.2-UNIT-003 ─────────────────────────────────────────────────────────
     test(
       '4.2-UNIT-003: no cache, API reachable → fresh data fetched and returned, cacheWeather called once',
