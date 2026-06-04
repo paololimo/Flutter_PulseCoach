@@ -9,6 +9,7 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:connectivity_plus/connectivity_plus.dart' as _i895;
 import 'package:dio/dio.dart' as _i361;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:health/health.dart' as _i237;
@@ -24,9 +25,11 @@ import 'package:pulse_coach/core/database/daos/exercise_cache_dao.dart'
     as _i224;
 import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart' as _i224;
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart' as _i30;
+import 'package:pulse_coach/core/database/daos/sync_queue_dao.dart' as _i694;
 import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart' as _i194;
 import 'package:pulse_coach/core/di/health_module.dart' as _i294;
 import 'package:pulse_coach/core/di/network_module.dart' as _i731;
+import 'package:pulse_coach/core/sync/sync_manager.dart' as _i780;
 import 'package:pulse_coach/core/utils/geolocator_wrapper.dart' as _i973;
 import 'package:pulse_coach/core/utils/location_service.dart' as _i160;
 import 'package:pulse_coach/features/daily_plan/data/repositories/daily_plan_repository_impl.dart'
@@ -134,6 +137,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i79.AppDatabase>(() => _i79.AppDatabase());
     gh.singleton<_i237.Health>(() => healthModule.health);
+    gh.singleton<_i895.Connectivity>(() => networkModule.connectivity);
     gh.singleton<_i361.Dio>(() => networkModule.dio);
     gh.lazySingleton<_i291.ThemeCubit>(() => _i291.ThemeCubit());
     gh.lazySingleton<_i338.OnboardingRepository>(
@@ -174,6 +178,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i30.SessionLogsDao>(
       () => healthModule.sessionLogsDao(gh<_i79.AppDatabase>()),
     );
+    gh.singleton<_i694.SyncQueueDao>(
+      () => healthModule.syncQueueDao(gh<_i79.AppDatabase>()),
+    );
     gh.factory<_i635.ExerciseRemoteDataSource>(
       () => _i635.ExerciseRemoteDataSource(gh<_i361.Dio>()),
     );
@@ -182,6 +189,10 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i1.GetActivityLevel>(
       () => _i1.GetActivityLevel(gh<_i628.SensorRepository>()),
+    );
+    gh.singleton<_i780.SyncManager>(
+      () =>
+          _i780.SyncManager(gh<_i694.SyncQueueDao>(), gh<_i895.Connectivity>()),
     );
     gh.factory<_i1070.HealthRepository>(
       () => _i1067.HealthRepositoryImpl(
