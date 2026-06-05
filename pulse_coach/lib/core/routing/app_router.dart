@@ -15,6 +15,8 @@ import 'package:pulse_coach/features/session/presentation/pages/in_session_page.
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/session_summary_page.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_cubit.dart';
+import 'package:pulse_coach/features/settings/presentation/pages/device_settings_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/privacy_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
@@ -33,6 +35,7 @@ class AppRouter {
   static const String settings = '/settings';
   static const String profile = '/profile';
   static const String privacy = '/privacy';
+  static const String deviceSettings = '/device-settings';
 
   static final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -100,6 +103,13 @@ class AppRouter {
       GoRoute(
         path: settings,
         builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: deviceSettings,
+        builder: (context, state) => BlocProvider(
+          create: (_) => getIt<DeviceSettingsCubit>()..load(),
+          child: const DeviceSettingsPage(),
+        ),
       ),
       GoRoute(path: profile, builder: (context, state) => const ProfilePage()),
       GoRoute(path: privacy, builder: (context, state) => const PrivacyPage()),

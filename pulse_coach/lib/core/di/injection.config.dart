@@ -109,6 +109,8 @@ import 'package:pulse_coach/features/sessions_catalog/domain/usecases/sync_exerc
     as _i574;
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_cubit.dart'
     as _i916;
+import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_cubit.dart'
+    as _i168;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart'
@@ -262,6 +264,16 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i206.WeatherLocalDataSource>(
       () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
+    );
+    gh.factory<_i168.DeviceSettingsCubit>(
+      () => _i168.DeviceSettingsCubit(
+        gh<_i311.HealthDataSource>(),
+        gh<_i694.SyncQueueDao>(),
+        gh<_i194.WeatherCacheDao>(),
+        gh<_i224.ExerciseCacheDao>(),
+        gh<_i780.SyncManager>(),
+        gh<_i895.Connectivity>(),
+      ),
     );
     gh.factory<_i342.GetExercisesByType>(
       () => _i342.GetExercisesByType(gh<_i207.ExerciseRepository>()),

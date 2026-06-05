@@ -168,6 +168,32 @@
   "settingsThemeDark": "Dark",
   "settingsThemeLight": "Light",
   "settingsThemeSystem": "System",
+  "deviceSettingsNavSection": "Device",
+  "deviceSettingsNavTile": "Device & Sync",
+  "deviceSettingsPageTitle": "Device & Sync Settings",
+  "deviceSettingsHealthSection": "Health API",
+  "deviceSettingsHealthGranted": "Permission granted",
+  "deviceSettingsHealthDenied": "Permission denied",
+  "deviceSettingsHealthUnknown": "Status unknown",
+  "deviceSettingsHealthReRequest": "Request permission",
+  "deviceSettingsWearSection": "WearOS",
+  "deviceSettingsWearConnected": "Connected",
+  "deviceSettingsWearDisconnected": "Not connected",
+  "deviceSettingsSyncSection": "Sync Queue",
+  "deviceSettingsSyncNone": "No items pending",
+  "deviceSettingsSyncPending": "{count, plural, one{{count} item pending} other{{count} items pending}}",
+  "@deviceSettingsSyncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceSettingsSyncNow": "Sync now",
+  "deviceSettingsCacheSection": "Cache",
+  "deviceSettingsCacheWeather": "Last weather update",
+  "deviceSettingsCacheExercise": "Last exercise update",
+  "deviceSettingsCacheNone": "Not available",
   "privacyPageTitle": "Privacy",
   "privacyOnDeviceTitle": "Data stays on your device",
   "privacyOnDeviceBody": "All personal and workout data is stored exclusively on your device. PulseCoach does not transmit data to external servers for personalisation.",

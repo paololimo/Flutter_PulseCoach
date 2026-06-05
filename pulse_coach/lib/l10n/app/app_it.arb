@@ -168,6 +168,32 @@
   "settingsThemeDark": "Scuro",
   "settingsThemeLight": "Chiaro",
   "settingsThemeSystem": "Sistema",
+  "deviceSettingsNavSection": "Dispositivo",
+  "deviceSettingsNavTile": "Dispositivo e Sync",
+  "deviceSettingsPageTitle": "Dispositivo e Sincronizzazione",
+  "deviceSettingsHealthSection": "API Salute",
+  "deviceSettingsHealthGranted": "Permesso concesso",
+  "deviceSettingsHealthDenied": "Permesso negato",
+  "deviceSettingsHealthUnknown": "Stato sconosciuto",
+  "deviceSettingsHealthReRequest": "Richiedi permesso",
+  "deviceSettingsWearSection": "WearOS",
+  "deviceSettingsWearConnected": "Connesso",
+  "deviceSettingsWearDisconnected": "Non connesso",
+  "deviceSettingsSyncSection": "Sincronizzazione",
+  "deviceSettingsSyncNone": "Nessun elemento in sospeso",
+  "deviceSettingsSyncPending": "{count, plural, one{{count} elemento in sospeso} other{{count} elementi in sospeso}}",
+  "@deviceSettingsSyncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceSettingsSyncNow": "Sincronizza ora",
+  "deviceSettingsCacheSection": "Cache",
+  "deviceSettingsCacheWeather": "Ultimo aggiornamento meteo",
+  "deviceSettingsCacheExercise": "Ultimo aggiornamento esercizi",
+  "deviceSettingsCacheNone": "Non disponibile",
   "privacyPageTitle": "Privacy",
   "privacyOnDeviceTitle": "Dati solo sul dispositivo",
   "privacyOnDeviceBody": "Tutti i dati personali e di allenamento sono conservati esclusivamente sul tuo dispositivo. PulseCoach non trasmette dati a server esterni per la personalizzazione.",

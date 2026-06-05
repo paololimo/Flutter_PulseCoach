@@ -66,4 +66,28 @@ class HealthDataSource {
       throw SensorException(e.toString());
     }
   }
+
+  /// Returns the current Health permission state without fetching data.
+  /// Returns null if the permission state is unknown or unavailable.
+  Future<bool?> checkPermissions() async {
+    try {
+      await _health.configure();
+      return _health.hasPermissions(_readTypes, permissions: _readPermissions);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Triggers the OS Health permission dialog and reports whether access was granted.
+  Future<bool> requestPermissions() async {
+    try {
+      await _health.configure();
+      return _health.requestAuthorization(
+        _readTypes,
+        permissions: _readPermissions,
+      );
+    } catch (_) {
+      return false;
+    }
+  }
 }

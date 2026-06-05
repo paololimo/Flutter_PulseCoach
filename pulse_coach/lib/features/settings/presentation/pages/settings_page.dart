@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
@@ -40,6 +42,18 @@ class SettingsPage extends StatelessWidget {
                 selected: {themeMode},
                 onSelectionChanged: (selected) =>
                     context.read<ThemeCubit>().setTheme(selected.first),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.deviceSettingsNavSection,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.deviceSettingsNavTile),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(AppRouter.deviceSettings),
               ),
             ],
           ),

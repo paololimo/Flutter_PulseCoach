@@ -154,6 +154,22 @@ class MockHealthDataSource extends _i1.Mock implements _i8.HealthDataSource {
             ),
           )
           as _i7.Future<_i2.HealthData>);
+
+  @override
+  _i7.Future<bool?> checkPermissions() =>
+      (super.noSuchMethod(
+            Invocation.method(#checkPermissions, []),
+            returnValue: _i7.Future<bool?>.value(),
+          )
+          as _i7.Future<bool?>);
+
+  @override
+  _i7.Future<bool> requestPermissions() =>
+      (super.noSuchMethod(
+            Invocation.method(#requestPermissions, []),
+            returnValue: _i7.Future<bool>.value(false),
+          )
+          as _i7.Future<bool>);
 }
 
 /// A class which mocks [BehavioralStateDao].
