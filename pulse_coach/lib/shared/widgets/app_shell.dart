@@ -195,12 +195,21 @@ class _AppDrawer extends StatelessWidget {
               context.go(AppRouter.privacy);
             },
           ),
-          if (kDebugMode)
+          if (kDebugMode) ...[
             ListTile(
               leading: const Icon(Icons.bug_report),
               title: Text(l10n.drawerDebug),
               onTap: () => Navigator.pop(context),
             ),
+            ListTile(
+              leading: const Icon(Icons.psychology),
+              title: Text(l10n.aiDecisionLogDrawerTile),
+              onTap: () {
+                Navigator.pop(context);
+                context.push(AppRouter.aiDecisionLog);
+              },
+            ),
+          ],
         ],
       ),
     );

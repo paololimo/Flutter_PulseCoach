@@ -62,6 +62,7 @@ dependencies:
   # Internationalisation / Date formatting
   intl: ^0.20.2
   watch_connectivity: ^0.2.8
+  equatable: ^2.0.8
 
 dev_dependencies:
   flutter_test:

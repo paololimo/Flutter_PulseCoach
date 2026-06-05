@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -15,7 +16,9 @@ import 'package:pulse_coach/features/session/presentation/pages/in_session_page.
 import 'package:pulse_coach/features/session/presentation/pages/rpe_page.dart';
 import 'package:pulse_coach/features/session/presentation/pages/session_summary_page.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/ai_decision_log_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_cubit.dart';
+import 'package:pulse_coach/features/settings/presentation/pages/ai_decision_log_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/device_settings_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/privacy_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
@@ -36,6 +39,7 @@ class AppRouter {
   static const String profile = '/profile';
   static const String privacy = '/privacy';
   static const String deviceSettings = '/device-settings';
+  static const String aiDecisionLog = '/ai-decision-log';
 
   static final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -110,6 +114,16 @@ class AppRouter {
           create: (_) => getIt<DeviceSettingsCubit>()..load(),
           child: const DeviceSettingsPage(),
         ),
+      ),
+      GoRoute(
+        path: aiDecisionLog,
+        builder: (context, state) {
+          if (!kDebugMode) return const SettingsPage();
+          return BlocProvider(
+            create: (_) => getIt<AiDecisionLogCubit>()..load(),
+            child: const AiDecisionLogPage(),
+          );
+        },
       ),
       GoRoute(path: profile, builder: (context, state) => const ProfilePage()),
       GoRoute(path: privacy, builder: (context, state) => const PrivacyPage()),

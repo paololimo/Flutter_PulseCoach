@@ -109,6 +109,10 @@ import 'package:pulse_coach/features/sessions_catalog/domain/usecases/sync_exerc
     as _i574;
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_cubit.dart'
     as _i916;
+import 'package:pulse_coach/features/settings/data/repositories/ai_decision_log_repository.dart'
+    as _i646;
+import 'package:pulse_coach/features/settings/presentation/bloc/ai_decision_log_cubit.dart'
+    as _i364;
 import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_cubit.dart'
     as _i168;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
@@ -195,6 +199,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i209.WeatherRemoteDataSource>(
       () => _i209.WeatherRemoteDataSource(gh<_i361.Dio>()),
     );
+    gh.factory<_i646.AiDecisionLogRepository>(
+      () => _i646.AiDecisionLogRepository(
+        gh<_i224.RpeFeedbackDao>(),
+        gh<_i30.SessionLogsDao>(),
+        gh<_i562.DailyPlansDao>(),
+      ),
+    );
     gh.factory<_i1.GetActivityLevel>(
       () => _i1.GetActivityLevel(gh<_i628.SensorRepository>()),
     );
@@ -261,6 +272,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i562.DailyPlansDao>(),
         gh<_i224.RpeFeedbackDao>(),
       ),
+    );
+    gh.factory<_i364.AiDecisionLogCubit>(
+      () => _i364.AiDecisionLogCubit(gh<_i646.AiDecisionLogRepository>()),
     );
     gh.factory<_i206.WeatherLocalDataSource>(
       () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
