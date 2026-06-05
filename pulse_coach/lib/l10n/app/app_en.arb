@@ -167,5 +167,14 @@
   "settingsThemeSection": "Theme",
   "settingsThemeDark": "Dark",
   "settingsThemeLight": "Light",
-  "settingsThemeSystem": "System"
+  "settingsThemeSystem": "System",
+  "privacyPageTitle": "Privacy",
+  "privacyOnDeviceTitle": "Data stays on your device",
+  "privacyOnDeviceBody": "All personal and workout data is stored exclusively on your device. PulseCoach does not transmit data to external servers for personalisation.",
+  "privacyHealthApiTitle": "Health API",
+  "privacyHealthApiBody": "PulseCoach can read heart rate and step count from the device Health API (HealthKit / Health Connect), if permission is granted. This data never leaves your device.",
+  "privacyLocationTitle": "Location",
+  "privacyLocationBody": "PulseCoach uses only city-level location (approximate coordinates) to fetch weather information. No precise GPS coordinates are stored or transmitted.",
+  "privacyGdprTitle": "GDPR Compliance",
+  "privacyGdprBody": "Biometric data is classified as sensitive data under GDPR Art. 9. PulseCoach processes it locally with your explicit consent and does not share it with third parties."
 }

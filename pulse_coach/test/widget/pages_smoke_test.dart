@@ -105,9 +105,7 @@ void main() {
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
-      getIt.registerLazySingleton<ThemeCubit>(
-        () => ThemeCubit(prefs),
-      );
+      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
       getIt.registerSingleton<AppDatabase>(
         AppDatabase.forTesting(NativeDatabase.memory()),
       );
@@ -278,12 +276,10 @@ void main() {
     testWidgets(
       '[P1] 1.7-WIDGET-010: PrivacyPage renders with correct AppBar title',
       (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(theme: AppTheme.darkTheme, home: const PrivacyPage()),
-        );
+        await tester.pumpWidget(_wrap(const PrivacyPage()));
         await tester.pump();
         expect(find.text('Privacy'), findsOneWidget);
-        expect(find.text('Privacy — Story 14.x'), findsOneWidget);
+        expect(find.text('Dati solo sul dispositivo'), findsOneWidget);
       },
     );
   });
