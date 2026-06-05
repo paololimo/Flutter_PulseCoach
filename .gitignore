@@ -95,6 +95,14 @@ GoogleService-Info.plist
 .firebase/
 firebase-debug.log
 
-# BMAD output is currently committed as project documentation.
-# Uncomment the next line only if generated BMAD documents should stay local.
-# _bmad-output/
+# Non-deliverable docs, process artifacts, and agent tooling.
+# The exam/release deliverable is the pulse_coach/ app only; the planning,
+# process, and agent-context material is delivered/explained separately.
+_bmad-output/
+docs/
+CLAUDE.md
+AGENTS.md
+.agent/
+
+# Delivery artifacts — source/release archives for v1 and later
+PulseCoach-v*.zip
