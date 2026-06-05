@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/data_export_cubit.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/data_export_state.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
@@ -14,10 +17,17 @@ void main() {
     Future<void> pumpSettingsPage(
       WidgetTester tester, {
       Map<String, Object> initialValues = const {},
+      DataExportCubit Function() exportCubitFactory =
+          _StubDataExportCubit.new,
     }) async {
       SharedPreferences.setMockInitialValues(initialValues);
       prefs = await SharedPreferences.getInstance();
       themeCubit = ThemeCubit(prefs);
+      getIt.registerFactory<DataExportCubit>(exportCubitFactory);
+      addTearDown(() async {
+        await themeCubit.close();
+        await getIt.reset();
+      });
 
       await tester.pumpWidget(
         MaterialApp(
@@ -64,5 +74,94 @@ void main() {
         expect(segmentedButton.selected, {ThemeMode.system});
       },
     );
+
+    testWidgets(
+      '14.5-WIDGET-001: renders data export settings entry',
+      (tester) async {
+        await pumpSettingsPage(tester);
+
+        expect(find.text('Dati'), findsOneWidget);
+        expect(find.text('Esporta dati'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '14.5-WIDGET-002: tapping export data opens format option sheet',
+      (tester) async {
+        await pumpSettingsPage(tester);
+
+        await tester.tap(find.text('Esporta dati'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Esporta dati'), findsNWidgets(2));
+        expect(find.text('JSON'), findsOneWidget);
+        expect(find.text('CSV'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '14.5-WIDGET-003: loading state replaces format buttons with a spinner',
+      (tester) async {
+        final cubit = _ControllableExportCubit();
+        await pumpSettingsPage(tester, exportCubitFactory: () => cubit);
+
+        await tester.tap(find.text('Esporta dati'));
+        await tester.pumpAndSettle();
+
+        cubit.emitExporting();
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.text('JSON'), findsNothing);
+        expect(find.text('CSV'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '14.5-WIDGET-004: error state shows localized SnackBar and restores buttons',
+      (tester) async {
+        final cubit = _ControllableExportCubit();
+        await pumpSettingsPage(tester, exportCubitFactory: () => cubit);
+
+        await tester.tap(find.text('Esporta dati'));
+        await tester.pumpAndSettle();
+
+        cubit.emitError();
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('Errore durante l\'esportazione'), findsOneWidget);
+        expect(find.text('JSON'), findsOneWidget);
+        expect(find.text('CSV'), findsOneWidget);
+      },
+    );
   });
+}
+
+class _StubDataExportCubit extends Cubit<DataExportState>
+    implements DataExportCubit {
+  _StubDataExportCubit() : super(const DataExportState());
+
+  @override
+  Future<void> exportCsv() async {}
+
+  @override
+  Future<void> exportJson() async {}
+}
+
+class _ControllableExportCubit extends Cubit<DataExportState>
+    implements DataExportCubit {
+  _ControllableExportCubit() : super(const DataExportState());
+
+  void emitExporting() => emit(const DataExportState(isExporting: true));
+
+  void emitError() =>
+      emit(const DataExportState(errorMessage: 'export_failed'));
+
+  @override
+  Future<void> exportCsv() async {}
+
+  @override
+  Future<void> exportJson() async {}
 }

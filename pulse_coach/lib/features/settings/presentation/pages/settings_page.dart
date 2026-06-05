@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/data_export_cubit.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/data_export_state.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
@@ -55,7 +58,81 @@ class SettingsPage extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push(AppRouter.deviceSettings),
               ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.dataExportNavSection,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.dataExportTile),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _showExportSheet(context),
+              ),
             ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+void _showExportSheet(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    builder: (_) => BlocProvider(
+      create: (_) => getIt<DataExportCubit>(),
+      child: const _ExportBottomSheet(),
+    ),
+  );
+}
+
+class _ExportBottomSheet extends StatelessWidget {
+  const _ExportBottomSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocConsumer<DataExportCubit, DataExportState>(
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.dataExportError)),
+          );
+        }
+      },
+      builder: (context, state) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.dataExportSheetTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 16),
+                if (state.isExporting)
+                  const Center(child: CircularProgressIndicator())
+                else ...[
+                  OutlinedButton(
+                    onPressed: () =>
+                        context.read<DataExportCubit>().exportJson(),
+                    child: Text(l10n.dataExportJson),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () =>
+                        context.read<DataExportCubit>().exportCsv(),
+                    child: Text(l10n.dataExportCsv),
+                  ),
+                ],
+              ],
+            ),
           ),
         );
       },
