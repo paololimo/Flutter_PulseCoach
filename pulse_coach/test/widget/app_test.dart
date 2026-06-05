@@ -12,10 +12,13 @@ import 'package:pulse_coach/features/onboarding/domain/usecases/save_profile.dar
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  setUp(() {
-    getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
     getIt.registerSingleton<AppDatabase>(
       AppDatabase.forTesting(NativeDatabase.memory()),
     );

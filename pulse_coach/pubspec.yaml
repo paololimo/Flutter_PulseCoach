@@ -17,6 +17,7 @@ dependencies:
 
   # State Management
   flutter_bloc: ^9.1.0
+  shared_preferences: ^2.3.0
 
   # Dependency Injection
   get_it: ^9.0.0

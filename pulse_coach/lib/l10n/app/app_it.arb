@@ -162,5 +162,10 @@
   "drawerSettings": "Impostazioni",
   "drawerPrivacy": "Privacy",
   "drawerDebug": "Debug",
-  "sessionsPageTitle": "Sessioni"
+  "sessionsPageTitle": "Sessioni",
+  "settingsPageTitle": "Impostazioni",
+  "settingsThemeSection": "Tema",
+  "settingsThemeDark": "Scuro",
+  "settingsThemeLight": "Chiaro",
+  "settingsThemeSystem": "Sistema"
 }

@@ -53,6 +53,7 @@ import 'package:pulse_coach/features/settings/presentation/pages/settings_page.d
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Widget _wrap(Widget page) => MaterialApp(
   locale: const Locale('it'),
@@ -101,8 +102,12 @@ void main() {
   });
 
   group('Onboarding pages — smoke tests', () {
-    setUp(() {
-      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      getIt.registerLazySingleton<ThemeCubit>(
+        () => ThemeCubit(prefs),
+      );
       getIt.registerSingleton<AppDatabase>(
         AppDatabase.forTesting(NativeDatabase.memory()),
       );
@@ -253,12 +258,20 @@ void main() {
     testWidgets(
       '[P1] 1.7-WIDGET-009: SettingsPage renders with correct AppBar title',
       (tester) async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
         await tester.pumpWidget(
-          MaterialApp(theme: AppTheme.darkTheme, home: const SettingsPage()),
+          _wrap(
+            BlocProvider(
+              create: (_) => ThemeCubit(prefs),
+              child: const SettingsPage(),
+            ),
+          ),
         );
         await tester.pump();
-        expect(find.text('Settings'), findsOneWidget);
-        expect(find.text('Settings — Story 14.x'), findsOneWidget);
+        expect(find.text('Impostazioni'), findsOneWidget);
+        expect(find.text('Tema'), findsOneWidget);
       },
     );
 

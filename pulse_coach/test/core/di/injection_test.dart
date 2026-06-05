@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUpAll(() {
@@ -11,6 +12,10 @@ void main() {
       const MethodChannel('plugins.flutter.io/path_provider'),
       (MethodCall methodCall) async => '/tmp/test_pulse_coach',
     );
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
   });
 
   tearDown(() async {

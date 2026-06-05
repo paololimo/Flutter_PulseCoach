@@ -29,6 +29,7 @@ import 'package:pulse_coach/core/database/daos/sync_queue_dao.dart' as _i694;
 import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart' as _i194;
 import 'package:pulse_coach/core/di/health_module.dart' as _i294;
 import 'package:pulse_coach/core/di/network_module.dart' as _i731;
+import 'package:pulse_coach/core/di/settings_module.dart' as _i389;
 import 'package:pulse_coach/core/sync/sync_manager.dart' as _i780;
 import 'package:pulse_coach/core/utils/geolocator_wrapper.dart' as _i973;
 import 'package:pulse_coach/core/utils/location_service.dart' as _i160;
@@ -122,16 +123,18 @@ import 'package:pulse_coach/features/weather/domain/repositories/weather_reposit
     as _i748;
 import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart'
     as _i664;
+import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
-  _i174.GetIt init({
+  Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
-  }) {
+  }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final healthModule = _$HealthModule();
     final networkModule = _$NetworkModule();
+    final settingsModule = _$SettingsModule();
     gh.factory<_i253.AccelerometerDataSource>(
       () => _i253.AccelerometerDataSource(),
     );
@@ -139,7 +142,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i237.Health>(() => healthModule.health);
     gh.singleton<_i895.Connectivity>(() => networkModule.connectivity);
     gh.singleton<_i361.Dio>(() => networkModule.dio);
-    gh.lazySingleton<_i291.ThemeCubit>(() => _i291.ThemeCubit());
+    await gh.singletonAsync<_i460.SharedPreferences>(
+      () => settingsModule.sharedPreferences,
+      preResolve: true,
+    );
     gh.lazySingleton<_i338.OnboardingRepository>(
       () => _i462.OnboardingRepositoryImpl(gh<_i79.AppDatabase>()),
     );
@@ -189,6 +195,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i1.GetActivityLevel>(
       () => _i1.GetActivityLevel(gh<_i628.SensorRepository>()),
+    );
+    gh.lazySingleton<_i291.ThemeCubit>(
+      () => _i291.ThemeCubit(gh<_i460.SharedPreferences>()),
     );
     gh.singleton<_i780.SyncManager>(
       () =>
@@ -326,3 +335,5 @@ extension GetItInjectableX on _i174.GetIt {
 class _$HealthModule extends _i294.HealthModule {}
 
 class _$NetworkModule extends _i731.NetworkModule {}
+
+class _$SettingsModule extends _i389.SettingsModule {}

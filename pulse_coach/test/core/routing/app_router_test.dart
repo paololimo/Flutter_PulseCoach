@@ -27,6 +27,12 @@ import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cub
 import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+Future<SharedPreferences> _testThemePrefs() async {
+  SharedPreferences.setMockInitialValues({});
+  return SharedPreferences.getInstance();
+}
 
 /// Registers the onboarding DI chain needed for OnboardingPage.
 /// Must be called AFTER AppDatabase is registered in getIt.
@@ -77,8 +83,9 @@ void main() {
   });
 
   group('AppRouter redirect — no user profile', () {
-    setUp(() {
-      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+    setUp(() async {
+      final prefs = await _testThemePrefs();
+      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
       getIt.registerSingleton<AppDatabase>(
         AppDatabase.forTesting(NativeDatabase.memory()),
       );
@@ -108,7 +115,8 @@ void main() {
 
   group('AppRouter redirect — disclaimer not accepted', () {
     setUp(() async {
-      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+      final prefs = await _testThemePrefs();
+      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       // Profile exists but disclaimerAccepted = false (default)
       await db.userProfileDao.insertProfile(
@@ -134,7 +142,8 @@ void main() {
 
   group('AppRouter redirect — disclaimer accepted, onboarding not complete', () {
     setUp(() async {
-      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+      final prefs = await _testThemePrefs();
+      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       await db.userProfileDao.insertProfile(
         UserProfileCompanion.insert(
@@ -256,7 +265,8 @@ void main() {
 
   group('AppRouter redirect — onboarding complete', () {
     setUp(() async {
-      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+      final prefs = await _testThemePrefs();
+      getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       await db.userProfileDao.insertProfile(
         UserProfileCompanion.insert(
