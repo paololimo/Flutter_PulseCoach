@@ -1,0 +1,2856 @@
+diff --git a/pulse_coach/lib/ai/bandit/bandit_state.dart b/pulse_coach/lib/ai/bandit/bandit_state.dart
+index a521c50..e4c0a42 100644
+--- a/pulse_coach/lib/ai/bandit/bandit_state.dart
++++ b/pulse_coach/lib/ai/bandit/bandit_state.dart
+@@ -29,3 +29,17 @@ const banditArmKeys = [
+   'cardio_low',   'cardio_medium',   'cardio_high',
+   'breathing_low','breathing_medium','breathing_high',
+ ];
++
++/// Cold-start factory — all 9 arms at 1.0 (uniform exploration, FR10).
++/// Enforces 9-arm invariant via [banditArmKeys]; can't drift out of sync.
++///
++/// [updatedAt] is set to UTC epoch (1970-01-01T00:00:00Z) as a sentinel
++/// meaning "never updated". Consumers MUST treat this value specially:
++///   - Do NOT render it as a real "last updated" date in the UI.
++///   - Use `state.updatedAt.isAtSameMomentAs(DateTime.utc(1970))` to detect
++///     cold-start, or check `state.updatedAt.year == 1970`.
++/// All real updates use UTC timestamps (see `RewardCalculator.updateWeight`).
++BanditState initialBanditState() => BanditState(
++  armWeights: {for (final key in banditArmKeys) key: 1.0},
++  updatedAt: DateTime.utc(1970),
++);
+diff --git a/pulse_coach/lib/ai/bandit/contextual_bandit.dart b/pulse_coach/lib/ai/bandit/contextual_bandit.dart
+new file mode 100644
+index 0000000..6875866
+--- /dev/null
++++ b/pulse_coach/lib/ai/bandit/contextual_bandit.dart
+@@ -0,0 +1,166 @@
++import 'dart:math';
++import 'package:pulse_coach/ai/bandit/bandit_state.dart';
++import 'package:pulse_coach/ai/bandit/reward_calculator.dart';
++import 'package:pulse_coach/ai/bandit/state_vector.dart';
++import 'package:pulse_coach/ai/safety/safety_constraints.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
++
++/// Epsilon-greedy contextual bandit for session selection.
++///
++/// Arms: 9 = 3 session types (mobility, cardio, breathing) × 3 intensities
++/// (low, medium, high). Arm key format: '{sessionType}_{intensity}'.
++///
++/// Algorithm:
++///   - With probability [epsilon]: explore (random arm from eligible set).
++///   - With probability 1 − [epsilon]: exploit (highest-weight eligible arm).
++/// Selection is without replacement (no duplicate sessionType×intensity per plan).
++///
++/// Safety contract: [selectSessions] never returns arms excluded by
++/// [SafetyConstraints]. The bandit cannot override the safety layer. (FR9)
++///
++/// Stateless w.r.t. learning — pass in [BanditState] from DB (Story 5.5).
++/// The caller (GenerateDailyPlan use case) is responsible for persisting
++/// the updated state from [updateReward].
++///
++/// ARCH7: No Flutter imports. Runs safely in a Dart Isolate via compute().
++class BanditEngine {
++  final Random _random;
++
++  /// Exploration rate. 0.0 = pure exploit. 1.0 = pure explore.
++  /// Default 0.2 — moderate exploration for new users.
++  /// Story 5.5 may pass a decayed epsilon based on session count.
++  final double epsilon;
++
++  final RewardCalculator _rewardCalc;
++
++  BanditEngine({
++    Random? random,
++    this.epsilon = 0.2,
++    RewardCalculator? rewardCalculator,
++  })  : assert(
++          epsilon >= 0.0 && epsilon <= 1.0 && !epsilon.isNaN,
++          'epsilon must be in [0,1], got $epsilon',
++        ),
++        _random = random ?? Random(),
++        _rewardCalc = rewardCalculator ?? const RewardCalculator();
++
++  /// Selects up to [constraints.maxSessionCount] sessions.
++  ///
++  /// Filters arms by [constraints] (maxIntensity, outdoorAllowed) BEFORE
++  /// applying epsilon-greedy selection — no safety constraint can be violated.
++  ///
++  /// [stateVector] is accepted for forward compatibility (contextual features
++  /// in a future story). It is NOT used for arm selection in Story 5.4.
++  ///
++  /// Returns empty list only when NO eligible arms exist after filtering.
++  List<PlannedSession> selectSessions(
++    StateVector stateVector,
++    SafetyConstraints constraints,
++    BanditState state,
++  ) {
++    final eligible = _eligibleArms(constraints, state.armWeights);
++    if (eligible.isEmpty) return [];
++
++    final count = constraints.maxSessionCount.clamp(0, eligible.length);
++    final remaining = List<String>.from(eligible.keys);
++    final selected = <String>[];
++
++    for (var i = 0; i < count && remaining.isNotEmpty; i++) {
++      final arm = _random.nextDouble() < epsilon
++          ? remaining[_random.nextInt(remaining.length)]
++          : _exploit(remaining, eligible);
++      selected.add(arm);
++      remaining.remove(arm);
++    }
++
++    return selected
++        .map((arm) => _toPlannedSession(arm, constraints))
++        .toList();
++  }
++
++  /// Updates arm weight after a session; delegates to [RewardCalculator].
++  ///
++  /// Returns updated [BanditState] — immutable, caller must persist it.
++  /// Bandit weights are NOT reset on state machine transitions (FR25) —
++  /// the caller simply re-passes the same accumulated [BanditState].
++  BanditState updateReward(BanditState state, String armKey, int rpe) {
++    return _rewardCalc.updateWeight(state, armKey, rpe);
++  }
++
++  // ─── Private helpers ───────────────────────────────────────────────────────
++
++  /// Returns arm keys and their weights that pass [constraints].
++  Map<String, double> _eligibleArms(
++    SafetyConstraints constraints,
++    Map<String, double> weights,
++  ) {
++    final result = <String, double>{};
++    for (final key in banditArmKeys) {
++      final intensityName = key.split('_').last; // 'low' | 'medium' | 'high'
++      if (constraints.maxIntensity != null) {
++        if (_intensityRankByName(intensityName) >
++            _intensityRank(constraints.maxIntensity!)) {
++          continue;
++        }
++      }
++      final w = weights[key];
++      assert(
++        w != null && w.isFinite,
++        'Corrupt BanditState: armWeights["$key"] missing or non-finite ($w)',
++      );
++      result[key] = (w != null && w.isFinite) ? w : 1.0;
++    }
++    return result;
++  }
++
++  /// Pure-exploit pick: highest weight; alphabetical tiebreak for determinism.
++  /// Uses strict `>` so equal weights fall through to the alphabetical branch
++  /// (with `>=` the tiebreak was dead code — accumulator always won).
++  String _exploit(List<String> candidates, Map<String, double> weights) {
++    return candidates.reduce((a, b) {
++      final wa = weights[a]!;
++      final wb = weights[b]!;
++      if (wa > wb) return a;
++      if (wb > wa) return b;
++      return a.compareTo(b) <= 0 ? a : b; // stable alphabetical tiebreak
++    });
++  }
++
++  PlannedSession _toPlannedSession(String armKey, SafetyConstraints constraints) {
++    final parts = armKey.split('_');
++    final sessionType = parts.first; // 'mobility' | 'cardio' | 'breathing'
++    final intensityName = parts.last;
++
++    // NOTE: `isIndoor` is a placeholder derived from the constraint flag, not
++    // the session's intrinsic nature. Story 6.x exercise catalog will own
++    // indoor/outdoor semantics per session type. See deferred-work.md.
++    return PlannedSession(
++      sessionType: sessionType,
++      intensity: _intensityValue(intensityName),
++      durationMinutes: 10, // Placeholder — Story 6.x populates from exercise catalog
++      isIndoor: !constraints.outdoorAllowed,
++    );
++  }
++
++  int _intensityRank(SessionIntensity i) => switch (i) {
++        SessionIntensity.low => 0,
++        SessionIntensity.medium => 1,
++        SessionIntensity.high => 2,
++      };
++
++  int _intensityRankByName(String name) => switch (name) {
++        'low' => 0,
++        'medium' => 1,
++        'high' => 2,
++        _ => throw ArgumentError('Unknown intensity name: "$name"'),
++      };
++
++  /// Maps arm intensity name to the PlannedSession intensity int value.
++  /// Ranges: low=1–3 (→3), medium=4–7 (→6), high=8–10 (→8). (safety_constraints.dart)
++  int _intensityValue(String name) => switch (name) {
++        'low' => 3,
++        'medium' => 6,
++        'high' => 8,
++        _ => throw ArgumentError('Unknown intensity name: "$name"'),
++      };
++}
+diff --git a/pulse_coach/lib/ai/bandit/reward_calculator.dart b/pulse_coach/lib/ai/bandit/reward_calculator.dart
+new file mode 100644
+index 0000000..d92e0ee
+--- /dev/null
++++ b/pulse_coach/lib/ai/bandit/reward_calculator.dart
+@@ -0,0 +1,68 @@
++import 'package:pulse_coach/ai/bandit/bandit_state.dart';
++
++/// Computes reward signals for RPE-based bandit weight updates.
++///
++/// Target RPE ≈ 6.5 (FR22). Reward is 1.0 at target, declines linearly
++/// to 0.0 at maximum deviation. RPE range: 1–10.
++///
++/// Arm weight update uses EMA: weight = (1 − α) × weight + α × reward.
++/// Learning rate α = 0.1 is conservative — adapts over ~10 sessions.
++/// Stateless — every call derives fresh values from inputs.
++class RewardCalculator {
++  const RewardCalculator();
++
++  static const double _targetRpe = 6.5;
++
++  /// Max deviation: max(|1 − 6.5|, |10 − 6.5|) = 5.5.
++  static const double _maxDeviation = 5.5;
++
++  static const double _defaultLearningRate = 0.1;
++
++  /// Returns reward in [0.0, 1.0].
++  /// reward = max(0, 1 − |rpe − 6.5| / 5.5)
++  /// RPE is integer-valued (1–10), so max attainable reward is ≈0.909
++  /// at RPE 6 or 7 — the theoretical 1.0 at RPE 6.5 is unreachable.
++  /// RPE 1 → 0.0 · RPE 10 → ≈0.36
++  double compute(int rpe) {
++    assert(rpe >= 1 && rpe <= 10, 'RPE must be in [1,10], got $rpe');
++    final deviation = (rpe - _targetRpe).abs();
++    return (1.0 - deviation / _maxDeviation).clamp(0.0, 1.0);
++  }
++
++  /// Updates [armKey] weight via EMA; all other arms are unchanged.
++  ///
++  /// Returns new [BanditState] — does NOT mutate input (immutable).
++  /// [armKey] must be one of [banditArmKeys]; unrecognised keys are a no-op.
++  /// [learningRate] must be in [0,1].
++  BanditState updateWeight(
++    BanditState state,
++    String armKey,
++    int rpe, {
++    double learningRate = _defaultLearningRate,
++  }) {
++    assert(
++      learningRate >= 0.0 && learningRate <= 1.0,
++      'learningRate must be in [0,1], got $learningRate',
++    );
++    if (!banditArmKeys.contains(armKey)) return state;
++
++    final reward = compute(rpe);
++    final updated = Map<String, double>.from(state.armWeights);
++    final current = updated[armKey];
++    assert(
++      current != null,
++      'Corrupt BanditState: armKey "$armKey" missing from armWeights',
++    );
++    assert(
++      current == null || current.isFinite,
++      'Corrupt BanditState: armWeights["$armKey"] is not finite ($current)',
++    );
++    final base = (current != null && current.isFinite) ? current : 1.0;
++    updated[armKey] = (1.0 - learningRate) * base + learningRate * reward;
++
++    return state.copyWith(
++      armWeights: updated,
++      updatedAt: DateTime.now().toUtc(),
++    );
++  }
++}
+diff --git a/pulse_coach/lib/ai/engine/ai_engine.dart b/pulse_coach/lib/ai/engine/ai_engine.dart
+new file mode 100644
+index 0000000..0ec550f
+--- /dev/null
++++ b/pulse_coach/lib/ai/engine/ai_engine.dart
+@@ -0,0 +1,41 @@
++import 'package:pulse_coach/ai/bandit/bandit_state.dart' as ai_bandit;
++import 'package:pulse_coach/ai/bandit/state_vector.dart';
++import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
++
++/// Bundled input sent across isolate boundary to the AI pipeline.
++///
++/// Both fields are JSON-serializable (freezed + @JsonSerializable) — safe for
++/// Flutter's compute() which uses SendPort under the hood.
++class AiEngineInput {
++  final StateVector stateVector;
++  final ai_bandit.BanditState banditState;
++
++  const AiEngineInput({
++    required this.stateVector,
++    required this.banditState,
++  });
++}
++
++/// Bundled result returned from the AI pipeline isolate.
++///
++/// [plan] is the generated DailyPlan with empty explanation placeholders.
++/// [newBehavioralState] is the state machine output — caller must persist it
++/// via BehavioralStateDao if it differs from the current stored state.
++class AiEngineOutput {
++  final DailyPlan plan;
++  final BehavioralState newBehavioralState;
++
++  const AiEngineOutput({
++    required this.plan,
++    required this.newBehavioralState,
++  });
++}
++
++/// Contract for AI computation. Implemented by [AiEngineIsolate] in production,
++/// mockable in tests.
++///
++/// ARCH7: No Flutter imports allowed in implementations. Pure Dart only.
++abstract class AiEngine {
++  Future<AiEngineOutput> call(AiEngineInput input);
++}
+diff --git a/pulse_coach/lib/ai/engine/ai_engine_isolate.dart b/pulse_coach/lib/ai/engine/ai_engine_isolate.dart
+new file mode 100644
+index 0000000..930d418
+--- /dev/null
++++ b/pulse_coach/lib/ai/engine/ai_engine_isolate.dart
+@@ -0,0 +1,75 @@
++import 'package:flutter/foundation.dart' show compute;
++import 'package:injectable/injectable.dart';
++import 'package:pulse_coach/ai/bandit/bandit_state.dart' as ai_bandit;
++import 'package:pulse_coach/ai/bandit/contextual_bandit.dart';
++import 'package:pulse_coach/ai/engine/ai_engine.dart';
++import 'package:pulse_coach/ai/safety/safety_rules.dart';
++import 'package:pulse_coach/ai/state_machine/behavioral_state_machine.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
++
++/// Production AI engine: runs the 4-step pipeline inside Flutter's compute().
++///
++/// compute() spawns a fresh Dart isolate, runs [_runPipeline] (top-level
++/// function required — no closures), and returns the result to the main isolate.
++/// The UI thread is never blocked. (ARCH7, NFR1, NFR2)
++@Injectable(as: AiEngine)
++class AiEngineIsolate implements AiEngine {
++  @override
++  Future<AiEngineOutput> call(AiEngineInput input) =>
++      compute(_runPipeline, input);
++}
++
++/// Top-level function — required by compute(). Runs in a separate Dart isolate.
++///
++/// Pipeline order (AC2):
++///   1. Evaluate BehavioralStateMachine
++///   2. Apply SafetyRules
++///   3. BanditEngine.selectSessions
++///   4. Build DailyPlan with empty explanation placeholders (Story 5.6 fills these)
++AiEngineOutput _runPipeline(AiEngineInput input) {
++  final sv = input.stateVector;
++
++  // Step 1: state machine
++  const machine = BehavioralStateMachine();
++  final transition = machine.evaluate(sv);
++  final newState = transition.newState;
++
++  // Step 2: rebuild StateVector with updated state for safety rule evaluation
++  final updatedSv = sv.copyWith(currentState: newState);
++
++  // Step 3: safety rules
++  final constraints = const SafetyRules(BehavioralStateMachine()).apply(updatedSv);
++
++  // Step 4: bandit selection
++  final engine = BanditEngine(epsilon: _decayedEpsilon(input.banditState));
++  final sessions = engine.selectSessions(updatedSv, constraints, input.banditState);
++
++  // Step 5: build DailyPlan (explanation = '' placeholder per PlannedSession doc)
++  final plan = DailyPlan(
++    planDate: _todayDate(),
++    sessions: sessions,
++    generatedAt: DateTime.now().toUtc(),
++  );
++
++  return AiEngineOutput(plan: plan, newBehavioralState: newState);
++}
++
++/// Epsilon decays linearly from 0.3 (0 sessions) to 0.05 (50+ sessions).
++/// Encourages exploration for new users, shifts to exploitation over time.
++double _decayedEpsilon(ai_bandit.BanditState state) {
++  final sessionCount = state.armWeights.values
++      .where((w) => w < 1.0)
++      .length; // updated arms proxy for session count
++  const min = 0.05;
++  const max = 0.3;
++  const decayOver = 50;
++  final ratio = (sessionCount / decayOver).clamp(0.0, 1.0);
++  return max - ratio * (max - min);
++}
++
++/// Returns today's date as 'YYYY-MM-DD'.
++/// Called inside isolate — no Flutter required.
++String _todayDate() {
++  final now = DateTime.now();
++  return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
++}
+diff --git a/pulse_coach/lib/core/di/health_module.dart b/pulse_coach/lib/core/di/health_module.dart
+index 0145fb5..808342e 100644
+--- a/pulse_coach/lib/core/di/health_module.dart
++++ b/pulse_coach/lib/core/di/health_module.dart
+@@ -1,7 +1,10 @@
+ import 'package:health/health.dart';
+ import 'package:injectable/injectable.dart';
+ import 'package:pulse_coach/core/database/app_database.dart';
++import 'package:pulse_coach/core/database/daos/bandit_state_dao.dart';
+ import 'package:pulse_coach/core/database/daos/behavioral_state_dao.dart';
++import 'package:pulse_coach/core/database/daos/daily_plans_dao.dart';
++import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart';
+ import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart';
+ 
+ @module
+@@ -14,4 +17,13 @@ abstract class HealthModule {
+ 
+   @singleton
+   WeatherCacheDao weatherCacheDao(AppDatabase db) => db.weatherCacheDao;
++
++  @singleton
++  BanditStateDao banditStateDao(AppDatabase db) => db.banditStateDao;
++
++  @singleton
++  DailyPlansDao dailyPlansDao(AppDatabase db) => db.dailyPlansDao;
++
++  @singleton
++  RpeFeedbackDao rpeFeedbackDao(AppDatabase db) => db.rpeFeedbackDao;
+ }
+diff --git a/pulse_coach/lib/core/di/injection.config.dart b/pulse_coach/lib/core/di/injection.config.dart
+index d85890f..97e20f3 100644
+--- a/pulse_coach/lib/core/di/injection.config.dart
++++ b/pulse_coach/lib/core/di/injection.config.dart
+@@ -13,14 +13,29 @@ import 'package:dio/dio.dart' as _i361;
+ import 'package:get_it/get_it.dart' as _i174;
+ import 'package:health/health.dart' as _i237;
+ import 'package:injectable/injectable.dart' as _i526;
++import 'package:pulse_coach/ai/engine/ai_engine.dart' as _i122;
++import 'package:pulse_coach/ai/engine/ai_engine_isolate.dart' as _i157;
+ import 'package:pulse_coach/core/database/app_database.dart' as _i79;
++import 'package:pulse_coach/core/database/daos/bandit_state_dao.dart' as _i10;
+ import 'package:pulse_coach/core/database/daos/behavioral_state_dao.dart'
+     as _i227;
++import 'package:pulse_coach/core/database/daos/daily_plans_dao.dart' as _i562;
++import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart' as _i224;
+ import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart' as _i194;
+ import 'package:pulse_coach/core/di/health_module.dart' as _i294;
+ import 'package:pulse_coach/core/di/network_module.dart' as _i731;
+ import 'package:pulse_coach/core/utils/geolocator_wrapper.dart' as _i973;
+ import 'package:pulse_coach/core/utils/location_service.dart' as _i160;
++import 'package:pulse_coach/features/daily_plan/data/repositories/daily_plan_repository_impl.dart'
++    as _i432;
++import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart'
++    as _i78;
++import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart'
++    as _i992;
++import 'package:pulse_coach/features/daily_plan/domain/usecases/regenerate_daily_plan.dart'
++    as _i183;
++import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart'
++    as _i372;
+ import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart'
+     as _i462;
+ import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart'
+@@ -96,12 +111,25 @@ extension GetItInjectableX on _i174.GetIt {
+     gh.factory<_i628.SensorRepository>(
+       () => _i700.SensorRepositoryImpl(gh<_i253.AccelerometerDataSource>()),
+     );
++    gh.factory<_i78.DailyPlanRepository>(
++      () => _i432.DailyPlanRepositoryImpl(gh<_i79.AppDatabase>()),
++    );
++    gh.factory<_i122.AiEngine>(() => _i157.AiEngineIsolate());
+     gh.singleton<_i227.BehavioralStateDao>(
+       () => healthModule.behavioralStateDao(gh<_i79.AppDatabase>()),
+     );
+     gh.singleton<_i194.WeatherCacheDao>(
+       () => healthModule.weatherCacheDao(gh<_i79.AppDatabase>()),
+     );
++    gh.singleton<_i10.BanditStateDao>(
++      () => healthModule.banditStateDao(gh<_i79.AppDatabase>()),
++    );
++    gh.singleton<_i562.DailyPlansDao>(
++      () => healthModule.dailyPlansDao(gh<_i79.AppDatabase>()),
++    );
++    gh.singleton<_i224.RpeFeedbackDao>(
++      () => healthModule.rpeFeedbackDao(gh<_i79.AppDatabase>()),
++    );
+     gh.factory<_i209.WeatherRemoteDataSource>(
+       () => _i209.WeatherRemoteDataSource(gh<_i361.Dio>()),
+     );
+@@ -162,9 +190,32 @@ extension GetItInjectableX on _i174.GetIt {
+         gh<_i160.LocationService>(),
+       ),
+     );
++    gh.factory<_i992.GenerateDailyPlan>(
++      () => _i992.GenerateDailyPlan(
++        gh<_i78.DailyPlanRepository>(),
++        gh<_i122.AiEngine>(),
++        gh<_i1070.HealthRepository>(),
++        gh<_i628.SensorRepository>(),
++        gh<_i748.WeatherRepository>(),
++        gh<_i338.OnboardingRepository>(),
++        gh<_i79.AppDatabase>(),
++      ),
++    );
+     gh.factory<_i664.GetWeatherContext>(
+       () => _i664.GetWeatherContext(gh<_i748.WeatherRepository>()),
+     );
++    gh.factory<_i183.RegenerateDailyPlan>(
++      () => _i183.RegenerateDailyPlan(
++        gh<_i78.DailyPlanRepository>(),
++        gh<_i992.GenerateDailyPlan>(),
++      ),
++    );
++    gh.factory<_i372.DailyPlanBloc>(
++      () => _i372.DailyPlanBloc(
++        gh<_i992.GenerateDailyPlan>(),
++        gh<_i183.RegenerateDailyPlan>(),
++      ),
++    );
+     return this;
+   }
+ }
+diff --git a/pulse_coach/lib/features/daily_plan/data/repositories/daily_plan_repository_impl.dart b/pulse_coach/lib/features/daily_plan/data/repositories/daily_plan_repository_impl.dart
+new file mode 100644
+index 0000000..a935d81
+--- /dev/null
++++ b/pulse_coach/lib/features/daily_plan/data/repositories/daily_plan_repository_impl.dart
+@@ -0,0 +1,71 @@
++import 'dart:convert';
++
++import 'package:dartz/dartz.dart';
++import 'package:drift/drift.dart';
++import 'package:injectable/injectable.dart';
++import 'package:pulse_coach/core/database/app_database.dart';
++import 'package:pulse_coach/core/error/failures.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
++    as domain;
++import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart';
++
++/// [domain.DailyPlan] = domain entity (lib/features/daily_plan/domain/entities/daily_plan.dart)
++/// [DailyPlan] unaliased = Drift data class generated from daily_plans_table.dart
++///   (same Dart name, different type — resolved via 'as domain' alias above)
++@Injectable(as: DailyPlanRepository)
++class DailyPlanRepositoryImpl implements DailyPlanRepository {
++  final AppDatabase _db;
++
++  DailyPlanRepositoryImpl(this._db);
++
++  @override
++  Future<Either<Failure, domain.DailyPlan?>> getPlanForDate(
++    String planDate,
++  ) async {
++    try {
++      final row = await _db.dailyPlansDao.getPlanForDate(planDate);
++      if (row == null) return const Right(null);
++      final entity = domain.DailyPlan.fromJson(
++        jsonDecode(row.planJson) as Map<String, dynamic>,
++      );
++      return Right(entity);
++    } catch (e) {
++      return Left(CacheFailure(e.toString()));
++    }
++  }
++
++  @override
++  Future<Either<Failure, void>> savePlan(domain.DailyPlan plan) async {
++    try {
++      // Delete existing plan for same date (DailyPlans.planDate has UNIQUE constraint)
++      // before inserting — avoids UniqueConstraintException from Drift.
++      final existing = await _db.dailyPlansDao.getPlanForDate(plan.planDate);
++      if (existing != null) {
++        await _db.dailyPlansDao.deletePlan(existing.id);
++      }
++      final now = DateTime.now().toUtc();
++      await _db.dailyPlansDao.insertPlan(
++        DailyPlansCompanion(
++          planDate: Value(plan.planDate),
++          planJson: Value(jsonEncode(plan.toJson())),
++          generatedAt: Value(plan.generatedAt),
++          createdAt: Value(now),
++        ),
++      );
++      return const Right(null);
++    } catch (e) {
++      return Left(CacheFailure(e.toString()));
++    }
++  }
++
++  @override
++  Future<Either<Failure, void>> deletePlanForDate(String planDate) async {
++    try {
++      final row = await _db.dailyPlansDao.getPlanForDate(planDate);
++      if (row != null) await _db.dailyPlansDao.deletePlan(row.id);
++      return const Right(null);
++    } catch (e) {
++      return Left(CacheFailure(e.toString()));
++    }
++  }
++}
+diff --git a/pulse_coach/lib/features/daily_plan/domain/repositories/daily_plan_repository.dart b/pulse_coach/lib/features/daily_plan/domain/repositories/daily_plan_repository.dart
+new file mode 100644
+index 0000000..7db87aa
+--- /dev/null
++++ b/pulse_coach/lib/features/daily_plan/domain/repositories/daily_plan_repository.dart
+@@ -0,0 +1,15 @@
++import 'package:dartz/dartz.dart';
++import 'package:pulse_coach/core/error/failures.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
++
++abstract class DailyPlanRepository {
++  /// Returns the plan for [planDate] ('YYYY-MM-DD'), or null if not cached.
++  Future<Either<Failure, DailyPlan?>> getPlanForDate(String planDate);
++
++  /// Persists [plan]. If a plan for the same [planDate] already exists,
++  /// replaces it (upsert semantics via delete + insert).
++  Future<Either<Failure, void>> savePlan(DailyPlan plan);
++
++  /// Deletes the plan for [planDate] if it exists. No-op if not found.
++  Future<Either<Failure, void>> deletePlanForDate(String planDate);
++}
+diff --git a/pulse_coach/lib/features/daily_plan/domain/usecases/generate_daily_plan.dart b/pulse_coach/lib/features/daily_plan/domain/usecases/generate_daily_plan.dart
+new file mode 100644
+index 0000000..78e1df2
+--- /dev/null
++++ b/pulse_coach/lib/features/daily_plan/domain/usecases/generate_daily_plan.dart
+@@ -0,0 +1,219 @@
++import 'dart:convert';
++
++import 'package:dartz/dartz.dart';
++import 'package:drift/drift.dart' as drift;
++import 'package:injectable/injectable.dart';
++import 'package:pulse_coach/ai/bandit/bandit_state.dart' as ai_bandit;
++import 'package:pulse_coach/ai/bandit/state_vector.dart';
++import 'package:pulse_coach/ai/engine/ai_engine.dart';
++import 'package:pulse_coach/ai/state_machine/behavioral_state.dart' as ai_state;
++import 'package:pulse_coach/core/database/app_database.dart';
++import 'package:pulse_coach/core/error/failures.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
++    as domain;
++import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart';
++import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
++import 'package:pulse_coach/features/session/domain/repositories/health_repository.dart';
++import 'package:pulse_coach/features/session/domain/repositories/sensor_repository.dart';
++import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart';
++
++@injectable
++class GenerateDailyPlan {
++  final DailyPlanRepository _planRepo;
++  final AiEngine _aiEngine;
++  final HealthRepository _healthRepo;
++  final SensorRepository _sensorRepo;
++  final WeatherRepository _weatherRepo;
++  final OnboardingRepository _onboardingRepo;
++  final AppDatabase _db;
++
++  GenerateDailyPlan(
++    this._planRepo,
++    this._aiEngine,
++    this._healthRepo,
++    this._sensorRepo,
++    this._weatherRepo,
++    this._onboardingRepo,
++    this._db,
++  );
++
++  Future<Either<Failure, domain.DailyPlan>> call() async {
++    // AC5: serve cached plan if it exists for today
++    final today = _todayDate();
++    final cached = await _planRepo.getPlanForDate(today);
++    final cachedPlan = cached.fold<domain.DailyPlan?>((_) => null, (p) => p);
++    if (cachedPlan != null) return Right(cachedPlan);
++
++    // Build StateVector — all sensor/weather failures degrade gracefully (AC7)
++    final sv = await _buildStateVector();
++    if (sv == null) return const Left(CacheFailure('User profile not found'));
++
++    // Load BanditState from DB — use initialBanditState() for new users (AC8)
++    final banditRow = await _db.banditStateDao.getLatestState();
++    final banditState = banditRow != null
++        ? _parseBanditState(banditRow)
++        : ai_bandit.initialBanditState();
++
++    // AC1: run AI pipeline in separate Dart Isolate
++    final output = await _aiEngine.call(
++      AiEngineInput(stateVector: sv, banditState: banditState),
++    );
++
++    // AC6: persist new BehavioralState if it changed
++    final currentStateRow = await _db.behavioralStateDao.getLatestState();
++    final currentState = _parseState(currentStateRow?.currentState);
++    if (output.newBehavioralState != currentState) {
++      final now = DateTime.now().toUtc();
++      await _db.behavioralStateDao.insertState(
++        BehavioralStateCompanion(
++          currentState: drift.Value(output.newBehavioralState.name),
++          recordedAt: drift.Value(now),
++          updatedAt: drift.Value(now),
++        ),
++      );
++    }
++
++    // AC3: persist plan
++    final saveResult = await _planRepo.savePlan(output.plan);
++    return saveResult.fold(
++      Left.new,
++      (_) => Right(output.plan),
++    );
++  }
++
++  // ─── Private helpers ────────────────────────────────────────────────────────
++
++  Future<StateVector?> _buildStateVector() async {
++    // Profile is required — use case fails if unavailable (not graceful)
++    final profileResult = await _onboardingRepo.getProfile();
++    final profile = profileResult.fold((_) => null, (r) => r);
++    if (profile == null) return null;
++
++    // Sensor data — null on failure (AC7)
++    double? restingHR;
++    int? stepCount;
++    final healthResult = await _healthRepo.fetchHealthData();
++    healthResult.fold(
++      (_) {}, // sensor failure → null fields
++      (data) {
++        restingHR = data.restingHr?.toDouble();
++        stepCount = data.stepCount;
++      },
++    );
++
++    // Activity level — null on failure (AC7)
++    final sensorResult = await _sensorRepo.fetchActivityLevel();
++    final activityLevel = sensorResult.fold((_) => null, (a) => a);
++
++    // Weather — indoor defaults on failure (AC7)
++    final weatherResult = await _weatherRepo.getWeatherContext();
++    final aqiLevel = weatherResult.fold(
++      (_) => AqiLevel.low, // indoor default on failure
++      (w) => w.isAqiHigh ? AqiLevel.high : AqiLevel.low,
++    );
++    final temperature = weatherResult.fold<double?>((_) => null, (w) => w.temperature);
++    final precipitation = weatherResult.fold<bool?>(
++      (_) => null,
++      (w) => w.precipitationProbability > 50.0,
++    );
++
++    // RPE history — last 10 in chronological order, validated 1–10 (AC7, defer from 5.2/5.3)
++    final rpeRows = await _db.rpeFeedbackDao.getLastN(10);
++    final rpeHistory = rpeRows
++        .map((r) => r.rpeValue)
++        .where((v) => v >= 1 && v <= 10)
++        .toList()
++        .reversed
++        .toList(); // getLastN returns most-recent-first; reverse to chronological
++
++    // Current behavioral state — Active for new users (AC8)
++    final stateRow = await _db.behavioralStateDao.getLatestState();
++    final currentState = _parseState(stateRow?.currentState);
++
++    // Session history — for streak and missedSessions
++    final sessions = await _db.sessionsDao.getAllSessions();
++    final streak = _calculateStreak(sessions);
++    final missedSessions = _calculateMissedSessions(sessions);
++
++    return StateVector(
++      restingHR: restingHR,
++      stepCount: stepCount,
++      activityLevel: activityLevel,
++      rpeHistory: rpeHistory,
++      missedSessions: missedSessions,
++      streak: streak,
++      aqiLevel: aqiLevel,
++      temperature: temperature,
++      precipitation: precipitation,
++      userProfile: profile,
++      currentState: currentState,
++    );
++  }
++
++  /// Converts Drift BanditStateData row to the AI domain BanditState.
++  ///
++  /// [BanditStateData] is the Drift data class (from bandit_state_table.dart).
++  /// [ai_bandit.BanditState] is the AI domain model (from bandit_state.dart).
++  /// The Drift TABLE class is also named BanditState — resolved via 'as ai_bandit' alias.
++  ai_bandit.BanditState _parseBanditState(BanditStateData row) {
++    try {
++      final decoded = (jsonDecode(row.armWeightsJson) as Map<String, dynamic>)
++          .map((k, v) => MapEntry(k, (v as num).toDouble()));
++      // Validate all 9 expected arms present; fill missing with 1.0
++      final weights = {
++        for (final key in ai_bandit.banditArmKeys)
++          key: decoded[key] ?? 1.0,
++      };
++      return ai_bandit.BanditState(
++        armWeights: weights,
++        updatedAt: row.updatedAt,
++      );
++    } catch (_) {
++      // Corrupt JSON → cold start (FR10)
++      return ai_bandit.initialBanditState();
++    }
++  }
++
++  ai_state.BehavioralState _parseState(String? stateStr) {
++    return switch (stateStr?.toLowerCase()) {
++      'recovering' => ai_state.BehavioralState.recovering,
++      'atrisk' => ai_state.BehavioralState.atRisk,
++      'fatigued' => ai_state.BehavioralState.fatigued,
++      _ => ai_state.BehavioralState.active, // null or 'active' or unknown → active
++    };
++  }
++
++  /// Consecutive calendar days ending today with ≥1 completed session.
++  int _calculateStreak(List<Session> sessions) {
++    final completed = sessions
++        .where((s) => s.completedAt != null && s.abandoned == false)
++        .map((s) => _dateStr(s.completedAt!))
++        .toSet();
++    var streak = 0;
++    var day = DateTime.now();
++    while (completed.contains(_dateStr(day))) {
++      streak++;
++      day = day.subtract(const Duration(days: 1));
++    }
++    return streak;
++  }
++
++  /// Days in the last 7 with no completed non-abandoned session (FR proxy for missedSessions).
++  int _calculateMissedSessions(List<Session> sessions) {
++    final completed = sessions
++        .where((s) => s.completedAt != null && s.abandoned == false)
++        .map((s) => _dateStr(s.completedAt!))
++        .toSet();
++    var missed = 0;
++    for (var i = 1; i <= 7; i++) {
++      final day = DateTime.now().subtract(Duration(days: i));
++      if (!completed.contains(_dateStr(day))) missed++;
++    }
++    return missed;
++  }
++
++  String _dateStr(DateTime dt) =>
++      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
++
++  String _todayDate() => _dateStr(DateTime.now());
++}
+diff --git a/pulse_coach/lib/features/daily_plan/domain/usecases/regenerate_daily_plan.dart b/pulse_coach/lib/features/daily_plan/domain/usecases/regenerate_daily_plan.dart
+new file mode 100644
+index 0000000..5e6f8e6
+--- /dev/null
++++ b/pulse_coach/lib/features/daily_plan/domain/usecases/regenerate_daily_plan.dart
+@@ -0,0 +1,30 @@
++import 'package:dartz/dartz.dart';
++import 'package:injectable/injectable.dart';
++import 'package:pulse_coach/core/error/failures.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
++import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart';
++import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart';
++
++/// Deletes today's cached plan then triggers full generation.
++///
++/// Used when the user explicitly requests regeneration (FR11) or when
++/// user profile changes (Story 2.4 defer).
++@injectable
++class RegenerateDailyPlan {
++  final DailyPlanRepository _planRepo;
++  final GenerateDailyPlan _generateDailyPlan;
++
++  RegenerateDailyPlan(this._planRepo, this._generateDailyPlan);
++
++  Future<Either<Failure, DailyPlan>> call() async {
++    final today = _todayDate();
++    // Delete cached plan — GenerateDailyPlan will then produce a fresh one
++    await _planRepo.deletePlanForDate(today);
++    return _generateDailyPlan.call();
++  }
++
++  String _todayDate() {
++    final now = DateTime.now();
++    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
++  }
++}
+diff --git a/pulse_coach/lib/features/daily_plan/presentation/bloc/daily_plan_bloc.dart b/pulse_coach/lib/features/daily_plan/presentation/bloc/daily_plan_bloc.dart
+new file mode 100644
+index 0000000..53393b7
+--- /dev/null
++++ b/pulse_coach/lib/features/daily_plan/presentation/bloc/daily_plan_bloc.dart
+@@ -0,0 +1,58 @@
++import 'package:flutter_bloc/flutter_bloc.dart';
++import 'package:freezed_annotation/freezed_annotation.dart';
++import 'package:injectable/injectable.dart';
++import 'package:pulse_coach/core/error/failures.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
++import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart';
++import 'package:pulse_coach/features/daily_plan/domain/usecases/regenerate_daily_plan.dart';
++
++part 'daily_plan_bloc.freezed.dart';
++part 'daily_plan_event.dart';
++
++// ─── State ────────────────────────────────────────────────────────────────────
++
++@freezed
++sealed class DailyPlanState with _$DailyPlanState {
++  const factory DailyPlanState.initial() = DailyPlanInitial;
++  const factory DailyPlanState.loading() = DailyPlanLoading;
++  const factory DailyPlanState.loaded({required DailyPlan plan}) = DailyPlanLoaded;
++  const factory DailyPlanState.error({required Failure failure}) = DailyPlanError;
++}
++
++// ─── Bloc ─────────────────────────────────────────────────────────────────────
++
++@injectable
++class DailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState> {
++  final GenerateDailyPlan _generateDailyPlan;
++  final RegenerateDailyPlan _regenerateDailyPlan;
++
++  DailyPlanBloc(this._generateDailyPlan, this._regenerateDailyPlan)
++      : super(const DailyPlanState.initial()) {
++    on<DailyPlanGenerateRequested>(_onGenerateRequested);
++    on<DailyPlanRegenerateRequested>(_onRegenerateRequested);
++  }
++
++  Future<void> _onGenerateRequested(
++    DailyPlanGenerateRequested event,
++    Emitter<DailyPlanState> emit,
++  ) async {
++    emit(const DailyPlanState.loading());
++    final result = await _generateDailyPlan.call();
++    result.fold(
++      (failure) => emit(DailyPlanState.error(failure: failure)),
++      (plan) => emit(DailyPlanState.loaded(plan: plan)),
++    );
++  }
++
++  Future<void> _onRegenerateRequested(
++    DailyPlanRegenerateRequested event,
++    Emitter<DailyPlanState> emit,
++  ) async {
++    emit(const DailyPlanState.loading());
++    final result = await _regenerateDailyPlan.call();
++    result.fold(
++      (failure) => emit(DailyPlanState.error(failure: failure)),
++      (plan) => emit(DailyPlanState.loaded(plan: plan)),
++    );
++  }
++}
+diff --git a/pulse_coach/lib/features/daily_plan/presentation/bloc/daily_plan_bloc.freezed.dart b/pulse_coach/lib/features/daily_plan/presentation/bloc/daily_plan_bloc.freezed.dart
+new file mode 100644
+index 0000000..e929768
+--- /dev/null
++++ b/pulse_coach/lib/features/daily_plan/presentation/bloc/daily_plan_bloc.freezed.dart
+@@ -0,0 +1,391 @@
++// GENERATED CODE - DO NOT MODIFY BY HAND
++// coverage:ignore-file
++// ignore_for_file: type=lint
++// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
++
++part of 'daily_plan_bloc.dart';
++
++// **************************************************************************
++// FreezedGenerator
++// **************************************************************************
++
++// dart format off
++T _$identity<T>(T value) => value;
++/// @nodoc
++mixin _$DailyPlanState {
++
++
++
++
++
++@override
++bool operator ==(Object other) {
++  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyPlanState);
++}
++
++
++@override
++int get hashCode => runtimeType.hashCode;
++
++@override
++String toString() {
++  return 'DailyPlanState()';
++}
++
++
++}
++
++/// @nodoc
++class $DailyPlanStateCopyWith<$Res>  {
++$DailyPlanStateCopyWith(DailyPlanState _, $Res Function(DailyPlanState) __);
++}
++
++
++/// Adds pattern-matching-related methods to [DailyPlanState].
++extension DailyPlanStatePatterns on DailyPlanState {
++/// A variant of `map` that fallback to returning `orElse`.
++///
++/// It is equivalent to doing:
++/// ```dart
++/// switch (sealedClass) {
++///   case final Subclass value:
++///     return ...;
++///   case _:
++///     return orElse();
++/// }
++/// ```
++
++@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DailyPlanInitial value)?  initial,TResult Function( DailyPlanLoading value)?  loading,TResult Function( DailyPlanLoaded value)?  loaded,TResult Function( DailyPlanError value)?  error,required TResult orElse(),}){
++final _that = this;
++switch (_that) {
++case DailyPlanInitial() when initial != null:
++return initial(_that);case DailyPlanLoading() when loading != null:
++return loading(_that);case DailyPlanLoaded() when loaded != null:
++return loaded(_that);case DailyPlanError() when error != null:
++return error(_that);case _:
++  return orElse();
++
++}
++}
++/// A `switch`-like method, using callbacks.
++///
++/// Callbacks receives the raw object, upcasted.
++/// It is equivalent to doing:
++/// ```dart
++/// switch (sealedClass) {
++///   case final Subclass value:
++///     return ...;
++///   case final Subclass2 value:
++///     return ...;
++/// }
++/// ```
++
++@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DailyPlanInitial value)  initial,required TResult Function( DailyPlanLoading value)  loading,required TResult Function( DailyPlanLoaded value)  loaded,required TResult Function( DailyPlanError value)  error,}){
++final _that = this;
++switch (_that) {
++case DailyPlanInitial():
++return initial(_that);case DailyPlanLoading():
++return loading(_that);case DailyPlanLoaded():
++return loaded(_that);case DailyPlanError():
++return error(_that);}
++}
++/// A variant of `map` that fallback to returning `null`.
++///
++/// It is equivalent to doing:
++/// ```dart
++/// switch (sealedClass) {
++///   case final Subclass value:
++///     return ...;
++///   case _:
++///     return null;
++/// }
++/// ```
++
++@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DailyPlanInitial value)?  initial,TResult? Function( DailyPlanLoading value)?  loading,TResult? Function( DailyPlanLoaded value)?  loaded,TResult? Function( DailyPlanError value)?  error,}){
++final _that = this;
++switch (_that) {
++case DailyPlanInitial() when initial != null:
++return initial(_that);case DailyPlanLoading() when loading != null:
++return loading(_that);case DailyPlanLoaded() when loaded != null:
++return loaded(_that);case DailyPlanError() when error != null:
++return error(_that);case _:
++  return null;
++
++}
++}
++/// A variant of `when` that fallback to an `orElse` callback.
++///
++/// It is equivalent to doing:
++/// ```dart
++/// switch (sealedClass) {
++///   case Subclass(:final field):
++///     return ...;
++///   case _:
++///     return orElse();
++/// }
++/// ```
++
++@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( DailyPlan plan)?  loaded,TResult Function( Failure failure)?  error,required TResult orElse(),}) {final _that = this;
++switch (_that) {
++case DailyPlanInitial() when initial != null:
++return initial();case DailyPlanLoading() when loading != null:
++return loading();case DailyPlanLoaded() when loaded != null:
++return loaded(_that.plan);case DailyPlanError() when error != null:
++return error(_that.failure);case _:
++  return orElse();
++
++}
++}
++/// A `switch`-like method, using callbacks.
++///
++/// As opposed to `map`, this offers destructuring.
++/// It is equivalent to doing:
++/// ```dart
++/// switch (sealedClass) {
++///   case Subclass(:final field):
++///     return ...;
++///   case Subclass2(:final field2):
++///     return ...;
++/// }
++/// ```
++
++@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( DailyPlan plan)  loaded,required TResult Function( Failure failure)  error,}) {final _that = this;
++switch (_that) {
++case DailyPlanInitial():
++return initial();case DailyPlanLoading():
++return loading();case DailyPlanLoaded():
++return loaded(_that.plan);case DailyPlanError():
++return error(_that.failure);}
++}
++/// A variant of `when` that fallback to returning `null`
++///
++/// It is equivalent to doing:
++/// ```dart
++/// switch (sealedClass) {
++///   case Subclass(:final field):
++///     return ...;
++///   case _:
++///     return null;
++/// }
++/// ```
++
++@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( DailyPlan plan)?  loaded,TResult? Function( Failure failure)?  error,}) {final _that = this;
++switch (_that) {
++case DailyPlanInitial() when initial != null:
++return initial();case DailyPlanLoading() when loading != null:
++return loading();case DailyPlanLoaded() when loaded != null:
++return loaded(_that.plan);case DailyPlanError() when error != null:
++return error(_that.failure);case _:
++  return null;
++
++}
++}
++
++}
++
++/// @nodoc
++
++
++class DailyPlanInitial implements DailyPlanState {
++  const DailyPlanInitial();
++  
++
++
++
++
++
++
++@override
++bool operator ==(Object other) {
++  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyPlanInitial);
++}
++
++
++@override
++int get hashCode => runtimeType.hashCode;
++
++@override
++String toString() {
++  return 'DailyPlanState.initial()';
++}
++
++
++}
++
++
++
++
++/// @nodoc
++
++
++class DailyPlanLoading implements DailyPlanState {
++  const DailyPlanLoading();
++  
++
++
++
++
++
++
++@override
++bool operator ==(Object other) {
++  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyPlanLoading);
++}
++
++
++@override
++int get hashCode => runtimeType.hashCode;
++
++@override
++String toString() {
++  return 'DailyPlanState.loading()';
++}
++
++
++}
++
++
++
++
++/// @nodoc
++
++
++class DailyPlanLoaded implements DailyPlanState {
++  const DailyPlanLoaded({required this.plan});
++  
++
++ final  DailyPlan plan;
++
++/// Create a copy of DailyPlanState
++/// with the given fields replaced by the non-null parameter values.
++@JsonKey(includeFromJson: false, includeToJson: false)
++@pragma('vm:prefer-inline')
++$DailyPlanLoadedCopyWith<DailyPlanLoaded> get copyWith => _$DailyPlanLoadedCopyWithImpl<DailyPlanLoaded>(this, _$identity);
++
++
++
++@override
++bool operator ==(Object other) {
++  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyPlanLoaded&&(identical(other.plan, plan) || other.plan == plan));
++}
++
++
++@override
++int get hashCode => Object.hash(runtimeType,plan);
++
++@override
++String toString() {
++  return 'DailyPlanState.loaded(plan: $plan)';
++}
++
++
++}
++
++/// @nodoc
++abstract mixin class $DailyPlanLoadedCopyWith<$Res> implements $DailyPlanStateCopyWith<$Res> {
++  factory $DailyPlanLoadedCopyWith(DailyPlanLoaded value, $Res Function(DailyPlanLoaded) _then) = _$DailyPlanLoadedCopyWithImpl;
++@useResult
++$Res call({
++ DailyPlan plan
++});
++
++
++$DailyPlanCopyWith<$Res> get plan;
++
++}
++/// @nodoc
++class _$DailyPlanLoadedCopyWithImpl<$Res>
++    implements $DailyPlanLoadedCopyWith<$Res> {
++  _$DailyPlanLoadedCopyWithImpl(this._self, this._then);
++
++  final DailyPlanLoaded _self;
++  final $Res Function(DailyPlanLoaded) _then;
++
++/// Create a copy of DailyPlanState
++/// with the given fields replaced by the non-null parameter values.
++@pragma('vm:prefer-inline') $Res call({Object? plan = null,}) {
++  return _then(DailyPlanLoaded(
++plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
++as DailyPlan,
++  ));
++}
++
++/// Create a copy of DailyPlanState
++/// with the given fields replaced by the non-null parameter values.
++@override
++@pragma('vm:prefer-inline')
++$DailyPlanCopyWith<$Res> get plan {
++  
++  return $DailyPlanCopyWith<$Res>(_self.plan, (value) {
++    return _then(_self.copyWith(plan: value));
++  });
++}
++}
++
++/// @nodoc
++
++
++class DailyPlanError implements DailyPlanState {
++  const DailyPlanError({required this.failure});
++  
++
++ final  Failure failure;
++
++/// Create a copy of DailyPlanState
++/// with the given fields replaced by the non-null parameter values.
++@JsonKey(includeFromJson: false, includeToJson: false)
++@pragma('vm:prefer-inline')
++$DailyPlanErrorCopyWith<DailyPlanError> get copyWith => _$DailyPlanErrorCopyWithImpl<DailyPlanError>(this, _$identity);
++
++
++
++@override
++bool operator ==(Object other) {
++  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyPlanError&&(identical(other.failure, failure) || other.failure == failure));
++}
++
++
++@override
++int get hashCode => Object.hash(runtimeType,failure);
++
++@override
++String toString() {
++  return 'DailyPlanState.error(failure: $failure)';
++}
++
++
++}
++
++/// @nodoc
++abstract mixin class $DailyPlanErrorCopyWith<$Res> implements $DailyPlanStateCopyWith<$Res> {
++  factory $DailyPlanErrorCopyWith(DailyPlanError value, $Res Function(DailyPlanError) _then) = _$DailyPlanErrorCopyWithImpl;
++@useResult
++$Res call({
++ Failure failure
++});
++
++
++
++
++}
++/// @nodoc
++class _$DailyPlanErrorCopyWithImpl<$Res>
++    implements $DailyPlanErrorCopyWith<$Res> {
++  _$DailyPlanErrorCopyWithImpl(this._self, this._then);
++
++  final DailyPlanError _self;
++  final $Res Function(DailyPlanError) _then;
++
++/// Create a copy of DailyPlanState
++/// with the given fields replaced by the non-null parameter values.
++@pragma('vm:prefer-inline') $Res call({Object? failure = null,}) {
++  return _then(DailyPlanError(
++failure: null == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
++as Failure,
++  ));
++}
++
++
++}
++
++// dart format on
+diff --git a/pulse_coach/lib/features/daily_plan/presentation/bloc/daily_plan_event.dart b/pulse_coach/lib/features/daily_plan/presentation/bloc/daily_plan_event.dart
+new file mode 100644
+index 0000000..16f4895
+--- /dev/null
++++ b/pulse_coach/lib/features/daily_plan/presentation/bloc/daily_plan_event.dart
+@@ -0,0 +1,11 @@
++part of 'daily_plan_bloc.dart';
++
++/// Events are sealed classes (Dart 3) — no @freezed needed for events.
++/// Names in past tense per architecture naming convention.
++sealed class DailyPlanEvent {}
++
++/// Dispatched on app open / Today screen init — checks cache then generates.
++class DailyPlanGenerateRequested extends DailyPlanEvent {}
++
++/// Dispatched when user taps regenerate (FR11) — bypasses cache.
++class DailyPlanRegenerateRequested extends DailyPlanEvent {}
+diff --git a/pulse_coach/test/bloc/daily_plan_bloc_test.dart b/pulse_coach/test/bloc/daily_plan_bloc_test.dart
+new file mode 100644
+index 0000000..f53c7d9
+--- /dev/null
++++ b/pulse_coach/test/bloc/daily_plan_bloc_test.dart
+@@ -0,0 +1,119 @@
++import 'package:bloc_test/bloc_test.dart';
++import 'package:dartz/dartz.dart';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:mockito/annotations.dart';
++import 'package:mockito/mockito.dart';
++import 'package:pulse_coach/core/error/failures.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
++import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart';
++import 'package:pulse_coach/features/daily_plan/domain/usecases/regenerate_daily_plan.dart';
++import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
++
++import 'daily_plan_bloc_test.mocks.dart';
++
++@GenerateMocks([GenerateDailyPlan, RegenerateDailyPlan])
++void main() {
++  late MockGenerateDailyPlan mockGenerate;
++  late MockRegenerateDailyPlan mockRegenerate;
++
++  final tPlan = DailyPlan(
++    planDate: '2026-04-29',
++    sessions: const [
++      PlannedSession(
++        sessionType: 'cardio',
++        intensity: 6,
++        durationMinutes: 10,
++        isIndoor: false,
++      ),
++    ],
++    generatedAt: DateTime.utc(2026, 4, 29, 8, 0),
++  );
++  const tFailure = CacheFailure('DB error');
++
++  setUp(() {
++    mockGenerate = MockGenerateDailyPlan();
++    mockRegenerate = MockRegenerateDailyPlan();
++  });
++
++  DailyPlanBloc _bloc() => DailyPlanBloc(mockGenerate, mockRegenerate);
++
++  group('DailyPlanBloc', () {
++    test('5.5-UNIT-027: initial state is DailyPlanInitial', () {
++      expect(_bloc().state, const DailyPlanState.initial());
++    });
++
++    blocTest<DailyPlanBloc, DailyPlanState>(
++      '5.5-UNIT-028: DailyPlanGenerateRequested → [loading, loaded] on success',
++      build: () {
++        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
++        return _bloc();
++      },
++      act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
++      expect: () => [
++        const DailyPlanState.loading(),
++        DailyPlanState.loaded(plan: tPlan),
++      ],
++    );
++
++    blocTest<DailyPlanBloc, DailyPlanState>(
++      '5.5-UNIT-029: DailyPlanGenerateRequested → [loading, error] on failure',
++      build: () {
++        when(mockGenerate.call()).thenAnswer((_) async => const Left(tFailure));
++        return _bloc();
++      },
++      act: (bloc) => bloc.add(DailyPlanGenerateRequested()),
++      expect: () => [
++        const DailyPlanState.loading(),
++        const DailyPlanState.error(failure: tFailure),
++      ],
++    );
++
++    blocTest<DailyPlanBloc, DailyPlanState>(
++      '5.5-UNIT-030: DailyPlanRegenerateRequested → [loading, loaded] on success',
++      build: () {
++        when(mockRegenerate.call()).thenAnswer((_) async => Right(tPlan));
++        return _bloc();
++      },
++      act: (bloc) => bloc.add(DailyPlanRegenerateRequested()),
++      expect: () => [
++        const DailyPlanState.loading(),
++        DailyPlanState.loaded(plan: tPlan),
++      ],
++    );
++
++    blocTest<DailyPlanBloc, DailyPlanState>(
++      '5.5-UNIT-031: DailyPlanRegenerateRequested → [loading, error] on failure',
++      build: () {
++        when(mockRegenerate.call())
++            .thenAnswer((_) async => const Left(tFailure));
++        return _bloc();
++      },
++      act: (bloc) => bloc.add(DailyPlanRegenerateRequested()),
++      expect: () => [
++        const DailyPlanState.loading(),
++        const DailyPlanState.error(failure: tFailure),
++      ],
++    );
++
++    blocTest<DailyPlanBloc, DailyPlanState>(
++      '5.5-UNIT-032: DailyPlanGenerateRequested twice → second call uses cached plan (from mock)',
++      build: () {
++        when(mockGenerate.call()).thenAnswer((_) async => Right(tPlan));
++        return _bloc();
++      },
++      act: (bloc) async {
++        bloc.add(DailyPlanGenerateRequested());
++        await Future<void>.delayed(const Duration(milliseconds: 10));
++        bloc.add(DailyPlanGenerateRequested());
++      },
++      expect: () => [
++        const DailyPlanState.loading(),
++        DailyPlanState.loaded(plan: tPlan),
++        const DailyPlanState.loading(),
++        DailyPlanState.loaded(plan: tPlan),
++      ],
++      verify: (_) => verify(mockGenerate.call()).called(2),
++    );
++  });
++}
+diff --git a/pulse_coach/test/bloc/daily_plan_bloc_test.mocks.dart b/pulse_coach/test/bloc/daily_plan_bloc_test.mocks.dart
+new file mode 100644
+index 0000000..a4cc1c5
+--- /dev/null
++++ b/pulse_coach/test/bloc/daily_plan_bloc_test.mocks.dart
+@@ -0,0 +1,83 @@
++// Mocks generated by Mockito 5.4.6 from annotations
++// in pulse_coach/test/bloc/daily_plan_bloc_test.dart.
++// Do not manually edit this file.
++
++// ignore_for_file: no_leading_underscores_for_library_prefixes
++import 'dart:async' as _i4;
++
++import 'package:dartz/dartz.dart' as _i2;
++import 'package:mockito/mockito.dart' as _i1;
++import 'package:pulse_coach/core/error/failures.dart' as _i5;
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
++    as _i6;
++import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart'
++    as _i3;
++import 'package:pulse_coach/features/daily_plan/domain/usecases/regenerate_daily_plan.dart'
++    as _i7;
++
++// ignore_for_file: type=lint
++// ignore_for_file: avoid_redundant_argument_values
++// ignore_for_file: avoid_setters_without_getters
++// ignore_for_file: comment_references
++// ignore_for_file: deprecated_member_use
++// ignore_for_file: deprecated_member_use_from_same_package
++// ignore_for_file: implementation_imports
++// ignore_for_file: invalid_use_of_visible_for_testing_member
++// ignore_for_file: must_be_immutable
++// ignore_for_file: prefer_const_constructors
++// ignore_for_file: unnecessary_parenthesis
++// ignore_for_file: camel_case_types
++// ignore_for_file: subtype_of_sealed_class
++// ignore_for_file: invalid_use_of_internal_member
++
++class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
++  _FakeEither_0(Object parent, Invocation parentInvocation)
++    : super(parent, parentInvocation);
++}
++
++/// A class which mocks [GenerateDailyPlan].
++///
++/// See the documentation for Mockito's code generation for more information.
++class MockGenerateDailyPlan extends _i1.Mock implements _i3.GenerateDailyPlan {
++  MockGenerateDailyPlan() {
++    _i1.throwOnMissingStub(this);
++  }
++
++  @override
++  _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>> call() =>
++      (super.noSuchMethod(
++            Invocation.method(#call, []),
++            returnValue:
++                _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>.value(
++                  _FakeEither_0<_i5.Failure, _i6.DailyPlan>(
++                    this,
++                    Invocation.method(#call, []),
++                  ),
++                ),
++          )
++          as _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>);
++}
++
++/// A class which mocks [RegenerateDailyPlan].
++///
++/// See the documentation for Mockito's code generation for more information.
++class MockRegenerateDailyPlan extends _i1.Mock
++    implements _i7.RegenerateDailyPlan {
++  MockRegenerateDailyPlan() {
++    _i1.throwOnMissingStub(this);
++  }
++
++  @override
++  _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>> call() =>
++      (super.noSuchMethod(
++            Invocation.method(#call, []),
++            returnValue:
++                _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>.value(
++                  _FakeEither_0<_i5.Failure, _i6.DailyPlan>(
++                    this,
++                    Invocation.method(#call, []),
++                  ),
++                ),
++          )
++          as _i4.Future<_i2.Either<_i5.Failure, _i6.DailyPlan>>);
++}
+diff --git a/pulse_coach/test/domain/ai/ai_engine_test.dart b/pulse_coach/test/domain/ai/ai_engine_test.dart
+new file mode 100644
+index 0000000..78ff9d5
+--- /dev/null
++++ b/pulse_coach/test/domain/ai/ai_engine_test.dart
+@@ -0,0 +1,139 @@
++import 'package:flutter_test/flutter_test.dart';
++import 'package:pulse_coach/ai/bandit/bandit_state.dart' as ai_bandit;
++import 'package:pulse_coach/ai/bandit/state_vector.dart';
++import 'package:pulse_coach/ai/engine/ai_engine.dart';
++import 'package:pulse_coach/ai/engine/ai_engine_isolate.dart';
++import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
++import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
++import 'package:pulse_coach/features/session/domain/entities/activity_level.dart';
++
++// Fixtures
++StateVector _sv({
++  BehavioralState state = BehavioralState.active,
++  List<int> rpeHistory = const [],
++  int missedSessions = 0,
++  int streak = 0,
++}) =>
++    StateVector(
++      restingHR: 65.0,
++      stepCount: 4000,
++      activityLevel: ActivityLevel.moderate,
++      rpeHistory: rpeHistory,
++      missedSessions: missedSessions,
++      streak: streak,
++      aqiLevel: AqiLevel.low,
++      temperature: 20.0,
++      precipitation: false,
++      userProfile: const UserProfile(
++        fitnessLevel: 'medium',
++        goal: 'cardio',
++        availableTime: 'short',
++        physicalConstraints: 'none',
++      ),
++      currentState: state,
++    );
++
++ai_bandit.BanditState _uniform() => ai_bandit.initialBanditState();
++
++void main() {
++  final engine = AiEngineIsolate();
++
++  group('AiEngineIsolate — isolate execution (AC1, ARCH7)', () {
++    test('5.5-UNIT-001: returns AiEngineOutput without blocking', () async {
++      final output = await engine.call(
++        AiEngineInput(stateVector: _sv(), banditState: _uniform()),
++      );
++      expect(output, isA<AiEngineOutput>());
++    });
++
++    test('5.5-UNIT-002: output.plan is a non-null DailyPlan', () async {
++      final output = await engine.call(
++        AiEngineInput(stateVector: _sv(), banditState: _uniform()),
++      );
++      expect(output.plan.sessions, isNotEmpty);
++    });
++
++    test('5.5-UNIT-003: output.plan.planDate is today in YYYY-MM-DD format', () async {
++      final output = await engine.call(
++        AiEngineInput(stateVector: _sv(), banditState: _uniform()),
++      );
++      final today = DateTime.now();
++      final expected =
++          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
++      expect(output.plan.planDate, equals(expected));
++    });
++
++    test('5.5-UNIT-004: output includes newBehavioralState (state machine evaluated)', () async {
++      final output = await engine.call(
++        AiEngineInput(stateVector: _sv(), banditState: _uniform()),
++      );
++      expect(output.newBehavioralState, isA<BehavioralState>());
++    });
++  });
++
++  group('AiEngineIsolate — pipeline correctness (AC2)', () {
++    test('5.5-UNIT-005: active state + no constraints → up to 3 sessions', () async {
++      final output = await engine.call(
++        AiEngineInput(stateVector: _sv(), banditState: _uniform()),
++      );
++      expect(output.plan.sessions.length, lessThanOrEqualTo(3));
++      expect(output.plan.sessions.length, greaterThanOrEqualTo(1));
++    });
++
++    test('5.5-UNIT-006: fatigued state → state machine transitions toward atRisk or recovering', () async {
++      final sv = _sv(state: BehavioralState.fatigued, missedSessions: 3);
++      final output = await engine.call(
++        AiEngineInput(stateVector: sv, banditState: _uniform()),
++      );
++      // fatigued + missed>=2 → atRisk (Rule 1 in BehavioralStateMachine)
++      expect(output.newBehavioralState, equals(BehavioralState.atRisk));
++    });
++
++    test('5.5-UNIT-007: high RPE history → safety rules cap intensity (FR9)', () async {
++      final sv = _sv(rpeHistory: [9, 9, 9, 9, 9]);
++      final output = await engine.call(
++        AiEngineInput(stateVector: sv, banditState: _uniform()),
++      );
++      // RPE avg > 8 → maxIntensity = medium → intensity ≤ 6
++      for (final session in output.plan.sessions) {
++        expect(session.intensity, lessThanOrEqualTo(6));
++      }
++    });
++
++    test('5.5-UNIT-008: high AQI → all sessions indoor', () async {
++      final sv = StateVector(
++        restingHR: null,
++        stepCount: null,
++        activityLevel: null,
++        rpeHistory: const [],
++        missedSessions: 0,
++        streak: 0,
++        aqiLevel: AqiLevel.high,
++        temperature: null,
++        precipitation: null,
++        userProfile: const UserProfile(
++          fitnessLevel: 'medium',
++          goal: 'cardio',
++          availableTime: 'short',
++          physicalConstraints: 'none',
++        ),
++        currentState: BehavioralState.active,
++      );
++      final output = await engine.call(
++        AiEngineInput(stateVector: sv, banditState: _uniform()),
++      );
++      for (final session in output.plan.sessions) {
++        expect(session.isIndoor, isTrue);
++      }
++    });
++
++    test('5.5-UNIT-009: all sessions have empty explanation placeholder (Story 5.6 scope)', () async {
++      final output = await engine.call(
++        AiEngineInput(stateVector: _sv(), banditState: _uniform()),
++      );
++      for (final session in output.plan.sessions) {
++        expect(session.explanation, equals(''));
++      }
++    });
++  });
++}
+diff --git a/pulse_coach/test/domain/ai/contextual_bandit_test.dart b/pulse_coach/test/domain/ai/contextual_bandit_test.dart
+new file mode 100644
+index 0000000..25c85b1
+--- /dev/null
++++ b/pulse_coach/test/domain/ai/contextual_bandit_test.dart
+@@ -0,0 +1,248 @@
++import 'dart:math';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:pulse_coach/ai/bandit/bandit_state.dart';
++import 'package:pulse_coach/ai/bandit/contextual_bandit.dart';
++import 'package:pulse_coach/ai/bandit/state_vector.dart';
++import 'package:pulse_coach/ai/safety/safety_constraints.dart';
++import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
++import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
++import 'package:pulse_coach/features/session/domain/entities/activity_level.dart';
++
++// ─── Fixtures ─────────────────────────────────────────────────────────────────
++
++StateVector _sv() => const StateVector(
++      restingHR: 65.0,
++      stepCount: 4000,
++      activityLevel: ActivityLevel.moderate,
++      rpeHistory: [],
++      missedSessions: 0,
++      streak: 0,
++      aqiLevel: AqiLevel.low,
++      temperature: 20.0,
++      precipitation: false,
++      userProfile: UserProfile(
++        fitnessLevel: 'medium',
++        goal: 'cardio',
++        availableTime: 'short',
++        physicalConstraints: 'none',
++      ),
++      currentState: BehavioralState.active,
++    );
++
++BanditState _uniformState() => initialBanditState();
++
++/// State with cardio_medium arm weight much higher — triggers pure exploitation.
++BanditState _dominantState() => BanditState(
++      armWeights: {
++        for (final key in banditArmKeys) key: key == 'cardio_medium' ? 5.0 : 1.0,
++      },
++      updatedAt: DateTime.utc(1970),
++    );
++
++void main() {
++  // ── initialBanditState ─────────────────────────────────────────────────────
++
++  group('initialBanditState (AC1 — cold start, FR10)', () {
++    test('5.4-UNIT-011: initial state has exactly 9 arms', () {
++      expect(initialBanditState().armWeights.length, equals(9));
++    });
++
++    test('5.4-UNIT-012: initial state all arms at 1.0 (uniform exploration)', () {
++      final weights = initialBanditState().armWeights;
++      for (final value in weights.values) {
++        expect(value, equals(1.0));
++      }
++    });
++
++    test('5.4-UNIT-013: initial state keys match banditArmKeys', () {
++      expect(
++        initialBanditState().armWeights.keys.toSet(),
++        equals(banditArmKeys.toSet()),
++      );
++    });
++  });
++
++  // ── selectSessions — count and coverage ───────────────────────────────────
++
++  group('BanditEngine.selectSessions — session count', () {
++    test('5.4-UNIT-014: noConstraints + uniform weights → 3 sessions returned', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      final sessions = engine.selectSessions(_sv(), noConstraints, _uniformState());
++      expect(sessions.length, equals(3));
++    });
++
++    test('5.4-UNIT-015: maxSessionCount=2 → at most 2 sessions returned', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      const constraints = SafetyConstraints(
++        maxIntensity: null,
++        maxSessionCount: 2,
++        outdoorAllowed: true,
++      );
++      final sessions = engine.selectSessions(_sv(), constraints, _uniformState());
++      expect(sessions.length, lessThanOrEqualTo(2));
++    });
++
++    test('5.4-UNIT-016: no eligible arms → returns empty list', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      // maxIntensity=low AND only 3 low arms → 3 eligible. This test uses
++      // a fabricated constraint combination that leaves 0 arms: not possible
++      // via SafetyConstraints alone since low always has 3 arms.
++      // Instead: verify behaviour when maxSessionCount=0.
++      const constraints = SafetyConstraints(
++        maxIntensity: null,
++        maxSessionCount: 0,
++        outdoorAllowed: true,
++      );
++      final sessions = engine.selectSessions(_sv(), constraints, _uniformState());
++      expect(sessions, isEmpty);
++    });
++
++    test('5.4-UNIT-017: no duplicate arms in a single plan', () {
++      final engine = BanditEngine(random: Random(42), epsilon: 1.0);
++      final sessions = engine.selectSessions(_sv(), noConstraints, _uniformState());
++      final arms = sessions.map((s) => '${s.sessionType}_${_intensityName(s.intensity)}');
++      expect(arms.toSet().length, equals(sessions.length));
++    });
++  });
++
++  // ── selectSessions — intensity filtering ──────────────────────────────────
++
++  group('BanditEngine.selectSessions — intensity constraint (SafetyConstraints)', () {
++    test('5.4-UNIT-018: maxIntensity=low → all sessions have intensity ≤ 3', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      const constraints = SafetyConstraints(
++        maxIntensity: SessionIntensity.low,
++        maxSessionCount: 3,
++        outdoorAllowed: true,
++      );
++      final sessions = engine.selectSessions(_sv(), constraints, _uniformState());
++      for (final s in sessions) {
++        expect(s.intensity, lessThanOrEqualTo(3),
++            reason: 'intensity ${s.intensity} exceeds low cap (≤3)');
++      }
++    });
++
++    test('5.4-UNIT-019: maxIntensity=medium → no high-intensity sessions', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      const constraints = SafetyConstraints(
++        maxIntensity: SessionIntensity.medium,
++        maxSessionCount: 3,
++        outdoorAllowed: true,
++      );
++      final sessions = engine.selectSessions(_sv(), constraints, _uniformState());
++      for (final s in sessions) {
++        expect(s.intensity, lessThanOrEqualTo(6),
++            reason: 'high-intensity session (intensity ${s.intensity}) slipped past medium cap');
++      }
++    });
++
++    test('5.4-UNIT-020: maxIntensity=low → exactly 3 eligible arms → 3 sessions', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      const constraints = SafetyConstraints(
++        maxIntensity: SessionIntensity.low,
++        maxSessionCount: 3,
++        outdoorAllowed: true,
++      );
++      final sessions = engine.selectSessions(_sv(), constraints, _uniformState());
++      // Only 3 low arms exist → all 3 returned
++      expect(sessions.length, equals(3));
++    });
++  });
++
++  // ── selectSessions — outdoor constraint ───────────────────────────────────
++
++  group('BanditEngine.selectSessions — outdoor constraint', () {
++    test('5.4-UNIT-021: outdoorAllowed=false → all sessions isIndoor=true', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      const constraints = SafetyConstraints(
++        maxIntensity: null,
++        maxSessionCount: 3,
++        outdoorAllowed: false,
++      );
++      final sessions = engine.selectSessions(_sv(), constraints, _uniformState());
++      for (final s in sessions) {
++        expect(s.isIndoor, isTrue,
++            reason: 'outdoor session returned despite outdoorAllowed=false');
++      }
++    });
++
++    test('5.4-UNIT-022: outdoorAllowed=true → sessions isIndoor=false', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      final sessions = engine.selectSessions(_sv(), noConstraints, _uniformState());
++      for (final s in sessions) {
++        expect(s.isIndoor, isFalse);
++      }
++    });
++  });
++
++  // ── selectSessions — exploit vs explore ───────────────────────────────────
++
++  group('BanditEngine.selectSessions — epsilon-greedy behaviour', () {
++    test('5.4-UNIT-023: epsilon=0.0 → always exploits; dominant arm selected first', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      final sessions = engine.selectSessions(_sv(), noConstraints, _dominantState());
++      // cardio_medium has weight 5.0 — must be first pick in exploit mode
++      expect(sessions.first.sessionType, equals('cardio'));
++      expect(sessions.first.intensity, equals(6)); // medium → 6
++    });
++
++    test('5.4-UNIT-024: epsilon=1.0 → pure explore; result in eligible set', () {
++      final engine = BanditEngine(random: Random(0), epsilon: 1.0);
++      final sessions = engine.selectSessions(_sv(), noConstraints, _uniformState());
++      final validArms = banditArmKeys.toSet();
++      for (final s in sessions) {
++        final armKey = '${s.sessionType}_${_intensityName(s.intensity)}';
++        expect(validArms, contains(armKey));
++      }
++    });
++  });
++
++  // ── selectSessions — PlannedSession fields ────────────────────────────────
++
++  group('BanditEngine.selectSessions — PlannedSession mapping', () {
++    test('5.4-UNIT-025: sessionType is one of the 3 known types', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      final sessions = engine.selectSessions(_sv(), noConstraints, _uniformState());
++      for (final s in sessions) {
++        expect(['mobility', 'cardio', 'breathing'], contains(s.sessionType));
++      }
++    });
++
++    test('5.4-UNIT-026: durationMinutes = 10 (Story 6.x placeholder)', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      final sessions = engine.selectSessions(_sv(), noConstraints, _uniformState());
++      for (final s in sessions) {
++        expect(s.durationMinutes, equals(10));
++      }
++    });
++  });
++
++  // ── updateReward — weight preservation (FR25) ─────────────────────────────
++
++  group('BanditEngine.updateReward — FR25 weight preservation', () {
++    test('5.4-UNIT-027: updateReward after state machine transition preserves other weights', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      final updated = engine.updateReward(_uniformState(), 'cardio_medium', 6);
++      // Only cardio_medium changes; all others stay at 1.0 (FR25 guarantee)
++      for (final key in banditArmKeys) {
++        if (key != 'cardio_medium') {
++          expect(updated.armWeights[key], equals(1.0),
++              reason: '$key should be preserved after reward update');
++        }
++      }
++    });
++
++    test('5.4-UNIT-028: updateReward with RPE=1 → arm weight decreases toward 0', () {
++      final engine = BanditEngine(epsilon: 0.0);
++      final updated = engine.updateReward(_uniformState(), 'mobility_high', 1);
++      expect(updated.armWeights['mobility_high']!, lessThan(1.0));
++    });
++  });
++}
++
++// Helper: reverse-map intensity int back to name for assertion readability.
++String _intensityName(int intensity) {
++  if (intensity <= 3) return 'low';
++  if (intensity <= 7) return 'medium';
++  return 'high';
++}
+diff --git a/pulse_coach/test/domain/ai/reward_calculator_test.dart b/pulse_coach/test/domain/ai/reward_calculator_test.dart
+new file mode 100644
+index 0000000..bfd4096
+--- /dev/null
++++ b/pulse_coach/test/domain/ai/reward_calculator_test.dart
+@@ -0,0 +1,72 @@
++import 'package:flutter_test/flutter_test.dart';
++import 'package:pulse_coach/ai/bandit/bandit_state.dart';
++import 'package:pulse_coach/ai/bandit/reward_calculator.dart';
++
++void main() {
++  const calc = RewardCalculator();
++
++  // ── Reward computation ─────────────────────────────────────────────────────
++
++  group('RewardCalculator.compute (FR22 — target RPE ≈ 6.5)', () {
++    test('5.4-UNIT-001: RPE 6 → high reward (near target from below)', () {
++      expect(calc.compute(6), closeTo(0.909, 0.001));
++    });
++
++    test('5.4-UNIT-002: RPE 7 → high reward (near target from above)', () {
++      expect(calc.compute(7), closeTo(0.909, 0.001));
++    });
++
++    test('5.4-UNIT-003: RPE 1 → reward = 0.0 (maximum deviation, low end)', () {
++      expect(calc.compute(1), closeTo(0.0, 0.001));
++    });
++
++    test('5.4-UNIT-004: RPE 10 → reward ≈ 0.364 (less deviation than RPE 1)', () {
++      // |10 - 6.5| = 3.5; 1 - 3.5/5.5 ≈ 0.364
++      expect(calc.compute(10), closeTo(0.364, 0.001));
++    });
++
++    test('5.4-UNIT-005: RPE 5 → moderate reward', () {
++      // |5 - 6.5| = 1.5; 1 - 1.5/5.5 ≈ 0.727
++      expect(calc.compute(5), closeTo(0.727, 0.001));
++    });
++
++    test('5.4-UNIT-006: RPE 8 → moderate reward', () {
++      // |8 - 6.5| = 1.5; same as RPE 5 by symmetry around 6.5
++      expect(calc.compute(8), closeTo(0.727, 0.001));
++    });
++  });
++
++  // ── Weight update ──────────────────────────────────────────────────────────
++
++  group('RewardCalculator.updateWeight (EMA with α=0.1)', () {
++    BanditState baseState() => initialBanditState();
++
++    test('5.4-UNIT-007: low RPE (1) → target arm weight decreases', () {
++      final updated = calc.updateWeight(baseState(), 'cardio_high', 1);
++      // weight = 0.9 * 1.0 + 0.1 * 0.0 = 0.9
++      expect(updated.armWeights['cardio_high'], closeTo(0.9, 0.001));
++    });
++
++    test('5.4-UNIT-008: RPE near target (7) → target arm weight near 1.0', () {
++      final updated = calc.updateWeight(baseState(), 'cardio_medium', 7);
++      // weight = 0.9 * 1.0 + 0.1 * 0.909 ≈ 0.991
++      expect(updated.armWeights['cardio_medium']!, greaterThan(0.98));
++    });
++
++    test('5.4-UNIT-009: updateWeight preserves all other arm weights', () {
++      final updated = calc.updateWeight(baseState(), 'mobility_low', 1);
++      for (final key in banditArmKeys) {
++        if (key != 'mobility_low') {
++          expect(updated.armWeights[key], equals(1.0),
++              reason: '$key should be unchanged');
++        }
++      }
++    });
++
++    test('5.4-UNIT-010: unknown arm key → state returned unchanged', () {
++      final state = baseState();
++      final updated = calc.updateWeight(state, 'unknown_arm', 6);
++      expect(updated.armWeights, equals(state.armWeights));
++    });
++  });
++}
+diff --git a/pulse_coach/test/features/daily_plan/daily_plan_repository_impl_test.dart b/pulse_coach/test/features/daily_plan/daily_plan_repository_impl_test.dart
+new file mode 100644
+index 0000000..9670449
+--- /dev/null
++++ b/pulse_coach/test/features/daily_plan/daily_plan_repository_impl_test.dart
+@@ -0,0 +1,180 @@
++import 'package:drift/native.dart';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:pulse_coach/core/database/app_database.dart';
++import 'package:pulse_coach/core/error/failures.dart';
++import 'package:pulse_coach/features/daily_plan/data/repositories/daily_plan_repository_impl.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
++    as domain;
++import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
++
++void main() {
++  late AppDatabase db;
++  late DailyPlanRepositoryImpl repo;
++
++  domain.DailyPlan _plan({String date = '2026-04-29'}) => domain.DailyPlan(
++        planDate: date,
++        sessions: const [
++          PlannedSession(
++            sessionType: 'cardio',
++            intensity: 6,
++            durationMinutes: 10,
++            isIndoor: false,
++          ),
++          PlannedSession(
++            sessionType: 'mobility',
++            intensity: 3,
++            durationMinutes: 10,
++            isIndoor: true,
++          ),
++        ],
++        generatedAt: DateTime.utc(2026, 4, 29, 8, 0, 0),
++      );
++
++  setUp(() {
++    db = AppDatabase.forTesting(NativeDatabase.memory());
++    repo = DailyPlanRepositoryImpl(db);
++  });
++
++  tearDown(() async {
++    await db.close();
++  });
++
++  group('DailyPlanRepositoryImpl', () {
++    test('5.5-UNIT-021: getPlanForDate returns null when no plan stored', () async {
++      final result = await repo.getPlanForDate('2026-04-29');
++
++      expect(result.isRight(), isTrue);
++      result.fold((_) => fail('Expected Right'), (plan) {
++        expect(plan, isNull);
++      });
++    });
++
++    test('5.5-UNIT-022: savePlan + getPlanForDate → correct domain entity returned', () async {
++      final plan = _plan();
++      await repo.savePlan(plan);
++
++      final result = await repo.getPlanForDate('2026-04-29');
++
++      expect(result.isRight(), isTrue);
++      result.fold((_) => fail('Expected Right'), (fetched) {
++        expect(fetched, isNotNull);
++        expect(fetched!.planDate, equals('2026-04-29'));
++        expect(fetched.sessions.length, equals(2));
++        expect(fetched.sessions.first.sessionType, equals('cardio'));
++      });
++    });
++
++    test('5.5-UNIT-023: savePlan twice for same date → second replaces first (no UniqueConstraintException)', () async {
++      final plan1 = domain.DailyPlan(
++        planDate: '2026-04-29',
++        sessions: const [
++          PlannedSession(
++            sessionType: 'cardio',
++            intensity: 6,
++            durationMinutes: 10,
++            isIndoor: false,
++          ),
++        ],
++        generatedAt: DateTime.utc(2026, 4, 29, 8, 0, 0),
++      );
++      final plan2 = domain.DailyPlan(
++        planDate: '2026-04-29',
++        sessions: const [
++          PlannedSession(
++            sessionType: 'breathing',
++            intensity: 3,
++            durationMinutes: 10,
++            isIndoor: true,
++          ),
++        ],
++        generatedAt: DateTime.utc(2026, 4, 29, 9, 0, 0),
++      );
++
++      await repo.savePlan(plan1);
++      await repo.savePlan(plan2); // must not throw
++
++      final result = await repo.getPlanForDate('2026-04-29');
++      expect(result.isRight(), isTrue);
++      result.fold((_) => fail('Expected Right'), (fetched) {
++        expect(fetched!.sessions.first.sessionType, equals('breathing'));
++      });
++    });
++
++    test('5.5-UNIT-024: deletePlanForDate → plan removed, getPlanForDate returns null', () async {
++      await repo.savePlan(_plan());
++      await repo.deletePlanForDate('2026-04-29');
++
++      final result = await repo.getPlanForDate('2026-04-29');
++      expect(result.isRight(), isTrue);
++      result.fold((_) => fail('Expected Right'), (plan) {
++        expect(plan, isNull);
++      });
++    });
++
++    test('5.5-UNIT-025: getPlanForDate with wrong date → null', () async {
++      await repo.savePlan(_plan(date: '2026-04-29'));
++
++      final result = await repo.getPlanForDate('2026-04-30');
++      expect(result.isRight(), isTrue);
++      result.fold((_) => fail('Expected Right'), (plan) {
++        expect(plan, isNull);
++      });
++    });
++
++    test('5.5-UNIT-026: JSON round-trip preserves List<PlannedSession> order and all fields', () async {
++      final original = domain.DailyPlan(
++        planDate: '2026-04-29',
++        sessions: const [
++          PlannedSession(
++            sessionType: 'mobility',
++            intensity: 3,
++            durationMinutes: 15,
++            isIndoor: true,
++            explanation: '',
++          ),
++          PlannedSession(
++            sessionType: 'cardio',
++            intensity: 8,
++            durationMinutes: 20,
++            isIndoor: false,
++            explanation: '',
++          ),
++          PlannedSession(
++            sessionType: 'breathing',
++            intensity: 1,
++            durationMinutes: 5,
++            isIndoor: true,
++            explanation: '',
++          ),
++        ],
++        generatedAt: DateTime.utc(2026, 4, 29, 10, 30, 0),
++      );
++
++      await repo.savePlan(original);
++      final result = await repo.getPlanForDate('2026-04-29');
++
++      expect(result.isRight(), isTrue);
++      result.fold((_) => fail('Expected Right'), (fetched) {
++        expect(fetched, isNotNull);
++        final f = fetched!;
++        expect(f.sessions.length, equals(3));
++
++        expect(f.sessions[0].sessionType, equals('mobility'));
++        expect(f.sessions[0].intensity, equals(3));
++        expect(f.sessions[0].durationMinutes, equals(15));
++        expect(f.sessions[0].isIndoor, isTrue);
++
++        expect(f.sessions[1].sessionType, equals('cardio'));
++        expect(f.sessions[1].intensity, equals(8));
++        expect(f.sessions[1].isIndoor, isFalse);
++
++        expect(f.sessions[2].sessionType, equals('breathing'));
++        expect(f.sessions[2].intensity, equals(1));
++      });
++    });
++  });
++
++  // Suppress unused import of Failure (used in fold patterns)
++  // ignore: unused_local_variable
++  const _unused = CacheFailure('unused');
++}
+diff --git a/pulse_coach/test/features/daily_plan/generate_daily_plan_test.dart b/pulse_coach/test/features/daily_plan/generate_daily_plan_test.dart
+new file mode 100644
+index 0000000..754ca1f
+--- /dev/null
++++ b/pulse_coach/test/features/daily_plan/generate_daily_plan_test.dart
+@@ -0,0 +1,316 @@
++import 'package:dartz/dartz.dart';
++import 'package:drift/native.dart';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:mockito/annotations.dart';
++import 'package:mockito/mockito.dart';
++import 'package:pulse_coach/ai/bandit/bandit_state.dart' as ai_bandit;
++import 'package:pulse_coach/ai/bandit/state_vector.dart';
++import 'package:pulse_coach/ai/engine/ai_engine.dart';
++import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
++import 'package:pulse_coach/core/database/app_database.dart';
++import 'package:pulse_coach/core/error/failures.dart';
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
++    as domain;
++import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
++import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart';
++import 'package:pulse_coach/features/daily_plan/domain/usecases/generate_daily_plan.dart';
++import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
++import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
++import 'package:pulse_coach/features/session/domain/entities/health_data.dart';
++import 'package:pulse_coach/features/session/domain/repositories/health_repository.dart';
++import 'package:pulse_coach/features/session/domain/repositories/sensor_repository.dart';
++import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart';
++import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart';
++
++import 'generate_daily_plan_test.mocks.dart';
++
++@GenerateMocks([
++  DailyPlanRepository,
++  AiEngine,
++  HealthRepository,
++  SensorRepository,
++  WeatherRepository,
++  OnboardingRepository,
++])
++void main() {
++  late MockDailyPlanRepository mockPlanRepo;
++  late MockAiEngine mockAiEngine;
++  late MockHealthRepository mockHealthRepo;
++  late MockSensorRepository mockSensorRepo;
++  late MockWeatherRepository mockWeatherRepo;
++  late MockOnboardingRepository mockOnboardingRepo;
++  late AppDatabase db;
++  late GenerateDailyPlan sut;
++
++  const tProfile = UserProfile(
++    fitnessLevel: 'medium',
++    goal: 'cardio',
++    availableTime: 'short',
++    physicalConstraints: 'none',
++  );
++
++  final tStateVector = StateVector(
++    restingHR: 65.0,
++    stepCount: 4000,
++    activityLevel: null,
++    rpeHistory: const [],
++    missedSessions: 7,
++    streak: 0,
++    aqiLevel: AqiLevel.low,
++    temperature: null,
++    precipitation: null,
++    userProfile: tProfile,
++    currentState: BehavioralState.active,
++  );
++
++  final tPlan = domain.DailyPlan(
++    planDate: _todayDate(),
++    sessions: const [
++      PlannedSession(
++        sessionType: 'cardio',
++        intensity: 6,
++        durationMinutes: 10,
++        isIndoor: false,
++      ),
++    ],
++    generatedAt: DateTime.now().toUtc(),
++  );
++
++  final tOutput = AiEngineOutput(
++    plan: tPlan,
++    newBehavioralState: BehavioralState.active,
++  );
++
++  setUp(() {
++    mockPlanRepo = MockDailyPlanRepository();
++    mockAiEngine = MockAiEngine();
++    mockHealthRepo = MockHealthRepository();
++    mockSensorRepo = MockSensorRepository();
++    mockWeatherRepo = MockWeatherRepository();
++    mockOnboardingRepo = MockOnboardingRepository();
++    db = AppDatabase.forTesting(NativeDatabase.memory());
++    sut = GenerateDailyPlan(
++      mockPlanRepo,
++      mockAiEngine,
++      mockHealthRepo,
++      mockSensorRepo,
++      mockWeatherRepo,
++      mockOnboardingRepo,
++      db,
++    );
++  });
++
++  tearDown(() async {
++    await db.close();
++  });
++
++  void _setupDefaultMocks() {
++    when(mockHealthRepo.fetchHealthData())
++        .thenAnswer((_) async => const Right(HealthData(restingHr: 65, stepCount: 4000)));
++    when(mockSensorRepo.fetchActivityLevel())
++        .thenAnswer((_) async => const Left(SensorFailure('unavailable')));
++    when(mockWeatherRepo.getWeatherContext())
++        .thenAnswer((_) async => const Left(ServerFailure('unavailable')));
++    when(mockOnboardingRepo.getProfile())
++        .thenAnswer((_) async => const Right(tProfile));
++    when(mockAiEngine.call(any)).thenAnswer((_) async => tOutput);
++    when(mockPlanRepo.savePlan(any))
++        .thenAnswer((_) async => const Right(null));
++  }
++
++  group('GenerateDailyPlan — cache hit (AC5)', () {
++    test('5.5-UNIT-010: cache hit → returns cached plan, AiEngine NOT invoked', () async {
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => Right(tPlan));
++
++      final result = await sut.call();
++
++      expect(result.isRight(), isTrue);
++      result.fold((_) => fail('Expected Right'), (plan) {
++        expect(plan.planDate, equals(tPlan.planDate));
++      });
++      verifyNever(mockAiEngine.call(any));
++    });
++  });
++
++  group('GenerateDailyPlan — cache miss (AC1, AC2, AC3)', () {
++    test('5.5-UNIT-011: cache miss → AiEngine IS invoked, plan saved', () async {
++      _setupDefaultMocks();
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++
++      final result = await sut.call();
++
++      expect(result.isRight(), isTrue);
++      verify(mockAiEngine.call(any)).called(1);
++      verify(mockPlanRepo.savePlan(any)).called(1);
++    });
++  });
++
++  group('GenerateDailyPlan — graceful degradation (AC7)', () {
++    test('5.5-UNIT-012: sensor failure → StateVector built with null HR/steps, plan generated', () async {
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++      when(mockHealthRepo.fetchHealthData())
++          .thenAnswer((_) async => const Left(SensorFailure('no health')));
++      when(mockSensorRepo.fetchActivityLevel())
++          .thenAnswer((_) async => const Left(SensorFailure('no sensor')));
++      when(mockWeatherRepo.getWeatherContext())
++          .thenAnswer((_) async => const Left(ServerFailure('no weather')));
++      when(mockOnboardingRepo.getProfile())
++          .thenAnswer((_) async => const Right(tProfile));
++      when(mockAiEngine.call(any)).thenAnswer((_) async => tOutput);
++      when(mockPlanRepo.savePlan(any))
++          .thenAnswer((_) async => const Right(null));
++
++      final result = await sut.call();
++      expect(result.isRight(), isTrue);
++    });
++
++    test('5.5-UNIT-013: weather failure → AqiLevel.low default, plan generated', () async {
++      _setupDefaultMocks();
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++      when(mockWeatherRepo.getWeatherContext())
++          .thenAnswer((_) async => const Left(ServerFailure('weather down')));
++
++      final result = await sut.call();
++      expect(result.isRight(), isTrue);
++
++      // Verify AiEngine was called (weather failure doesn't block pipeline)
++      verify(mockAiEngine.call(any)).called(1);
++    });
++  });
++
++  group('GenerateDailyPlan — new user cold-start (AC8)', () {
++    test('5.5-UNIT-014: new user (no RPE, no sessions, no state) → active state, plan generated', () async {
++      _setupDefaultMocks();
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++
++      final result = await sut.call();
++      expect(result.isRight(), isTrue);
++      verify(mockAiEngine.call(any)).called(1);
++    });
++
++    test('5.5-UNIT-015: new user → initialBanditState() used (no bandit row in DB)', () async {
++      _setupDefaultMocks();
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++
++      AiEngineInput? capturedInput;
++      when(mockAiEngine.call(any)).thenAnswer((inv) async {
++        capturedInput = inv.positionalArguments.first as AiEngineInput;
++        return tOutput;
++      });
++
++      await sut.call();
++
++      expect(capturedInput, isNotNull);
++      expect(
++        capturedInput!.banditState.updatedAt,
++        equals(DateTime.utc(1970)),
++      );
++    });
++  });
++
++  group('GenerateDailyPlan — behavioral state persistence (AC6)', () {
++    test('5.5-UNIT-016: state machine produces new state → behavioral_state row inserted', () async {
++      _setupDefaultMocks();
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++      when(mockAiEngine.call(any)).thenAnswer((_) async => AiEngineOutput(
++            plan: tPlan,
++            newBehavioralState: BehavioralState.recovering, // differs from active default
++          ));
++
++      await sut.call();
++
++      final rows = await db.behavioralStateDao.getLatestState();
++      expect(rows, isNotNull);
++      expect(rows!.currentState.toLowerCase(), equals('recovering'));
++    });
++
++    test('5.5-UNIT-017: state machine returns same state → no new behavioral_state row inserted', () async {
++      _setupDefaultMocks();
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++      // Engine returns active, which is the default for new users → no change
++      when(mockAiEngine.call(any)).thenAnswer((_) async => AiEngineOutput(
++            plan: tPlan,
++            newBehavioralState: BehavioralState.active, // same as default
++          ));
++
++      await sut.call();
++
++      // No behavioral_state row should be inserted (no state change)
++      final rows = await db.behavioralStateDao.getLatestState();
++      expect(rows, isNull);
++    });
++  });
++
++  group('GenerateDailyPlan — profile unavailable (AC7)', () {
++    test('5.5-UNIT-018: profile unavailable → returns Left(CacheFailure), plan NOT generated', () async {
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++      when(mockOnboardingRepo.getProfile())
++          .thenAnswer((_) async => const Left(CacheFailure('no profile')));
++
++      final result = await sut.call();
++
++      expect(result.isLeft(), isTrue);
++      result.fold(
++        (f) => expect(f, isA<CacheFailure>()),
++        (_) => fail('Expected Left'),
++      );
++      verifyNever(mockAiEngine.call(any));
++    });
++  });
++
++  group('GenerateDailyPlan — session metrics (AC8)', () {
++    test('5.5-UNIT-019: streak = 0 when no sessions', () async {
++      _setupDefaultMocks();
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++
++      AiEngineInput? capturedInput;
++      when(mockAiEngine.call(any)).thenAnswer((inv) async {
++        capturedInput = inv.positionalArguments.first as AiEngineInput;
++        return tOutput;
++      });
++
++      await sut.call();
++
++      expect(capturedInput!.stateVector.streak, equals(0));
++    });
++
++    test('5.5-UNIT-020: missedSessions = 7 when no sessions in last 7 days', () async {
++      _setupDefaultMocks();
++      when(mockPlanRepo.getPlanForDate(any))
++          .thenAnswer((_) async => const Right(null));
++
++      AiEngineInput? capturedInput;
++      when(mockAiEngine.call(any)).thenAnswer((inv) async {
++        capturedInput = inv.positionalArguments.first as AiEngineInput;
++        return tOutput;
++      });
++
++      await sut.call();
++
++      expect(capturedInput!.stateVector.missedSessions, equals(7));
++    });
++  });
++}
++
++String _todayDate() {
++  final now = DateTime.now();
++  return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
++}
++
++/// Fake WeatherContext for tests that need a successful weather response.
++WeatherContext _fakeWeather() => WeatherContext(
++      temperature: 20.0,
++      precipitationProbability: 20.0,
++      aqiValue: 50,
++      cachedAt: DateTime.now(),
++    );
+diff --git a/pulse_coach/test/features/daily_plan/generate_daily_plan_test.mocks.dart b/pulse_coach/test/features/daily_plan/generate_daily_plan_test.mocks.dart
+new file mode 100644
+index 0000000..fbadd80
+--- /dev/null
++++ b/pulse_coach/test/features/daily_plan/generate_daily_plan_test.mocks.dart
+@@ -0,0 +1,296 @@
++// Mocks generated by Mockito 5.4.6 from annotations
++// in pulse_coach/test/features/daily_plan/generate_daily_plan_test.dart.
++// Do not manually edit this file.
++
++// ignore_for_file: no_leading_underscores_for_library_prefixes
++import 'dart:async' as _i5;
++
++import 'package:dartz/dartz.dart' as _i2;
++import 'package:mockito/mockito.dart' as _i1;
++import 'package:pulse_coach/ai/engine/ai_engine.dart' as _i3;
++import 'package:pulse_coach/core/error/failures.dart' as _i6;
++import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
++    as _i7;
++import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart'
++    as _i4;
++import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart'
++    as _i15;
++import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart'
++    as _i14;
++import 'package:pulse_coach/features/session/domain/entities/activity_level.dart'
++    as _i11;
++import 'package:pulse_coach/features/session/domain/entities/health_data.dart'
++    as _i9;
++import 'package:pulse_coach/features/session/domain/repositories/health_repository.dart'
++    as _i8;
++import 'package:pulse_coach/features/session/domain/repositories/sensor_repository.dart'
++    as _i10;
++import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart'
++    as _i13;
++import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart'
++    as _i12;
++
++// ignore_for_file: type=lint
++// ignore_for_file: avoid_redundant_argument_values
++// ignore_for_file: avoid_setters_without_getters
++// ignore_for_file: comment_references
++// ignore_for_file: deprecated_member_use
++// ignore_for_file: deprecated_member_use_from_same_package
++// ignore_for_file: implementation_imports
++// ignore_for_file: invalid_use_of_visible_for_testing_member
++// ignore_for_file: must_be_immutable
++// ignore_for_file: prefer_const_constructors
++// ignore_for_file: unnecessary_parenthesis
++// ignore_for_file: camel_case_types
++// ignore_for_file: subtype_of_sealed_class
++// ignore_for_file: invalid_use_of_internal_member
++
++class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
++  _FakeEither_0(Object parent, Invocation parentInvocation)
++    : super(parent, parentInvocation);
++}
++
++class _FakeAiEngineOutput_1 extends _i1.SmartFake
++    implements _i3.AiEngineOutput {
++  _FakeAiEngineOutput_1(Object parent, Invocation parentInvocation)
++    : super(parent, parentInvocation);
++}
++
++/// A class which mocks [DailyPlanRepository].
++///
++/// See the documentation for Mockito's code generation for more information.
++class MockDailyPlanRepository extends _i1.Mock
++    implements _i4.DailyPlanRepository {
++  MockDailyPlanRepository() {
++    _i1.throwOnMissingStub(this);
++  }
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, _i7.DailyPlan?>> getPlanForDate(
++    String? planDate,
++  ) =>
++      (super.noSuchMethod(
++            Invocation.method(#getPlanForDate, [planDate]),
++            returnValue:
++                _i5.Future<_i2.Either<_i6.Failure, _i7.DailyPlan?>>.value(
++                  _FakeEither_0<_i6.Failure, _i7.DailyPlan?>(
++                    this,
++                    Invocation.method(#getPlanForDate, [planDate]),
++                  ),
++                ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, _i7.DailyPlan?>>);
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, void>> savePlan(_i7.DailyPlan? plan) =>
++      (super.noSuchMethod(
++            Invocation.method(#savePlan, [plan]),
++            returnValue: _i5.Future<_i2.Either<_i6.Failure, void>>.value(
++              _FakeEither_0<_i6.Failure, void>(
++                this,
++                Invocation.method(#savePlan, [plan]),
++              ),
++            ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, void>>);
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, void>> deletePlanForDate(
++    String? planDate,
++  ) =>
++      (super.noSuchMethod(
++            Invocation.method(#deletePlanForDate, [planDate]),
++            returnValue: _i5.Future<_i2.Either<_i6.Failure, void>>.value(
++              _FakeEither_0<_i6.Failure, void>(
++                this,
++                Invocation.method(#deletePlanForDate, [planDate]),
++              ),
++            ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, void>>);
++}
++
++/// A class which mocks [AiEngine].
++///
++/// See the documentation for Mockito's code generation for more information.
++class MockAiEngine extends _i1.Mock implements _i3.AiEngine {
++  MockAiEngine() {
++    _i1.throwOnMissingStub(this);
++  }
++
++  @override
++  _i5.Future<_i3.AiEngineOutput> call(_i3.AiEngineInput? input) =>
++      (super.noSuchMethod(
++            Invocation.method(#call, [input]),
++            returnValue: _i5.Future<_i3.AiEngineOutput>.value(
++              _FakeAiEngineOutput_1(this, Invocation.method(#call, [input])),
++            ),
++          )
++          as _i5.Future<_i3.AiEngineOutput>);
++}
++
++/// A class which mocks [HealthRepository].
++///
++/// See the documentation for Mockito's code generation for more information.
++class MockHealthRepository extends _i1.Mock implements _i8.HealthRepository {
++  MockHealthRepository() {
++    _i1.throwOnMissingStub(this);
++  }
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, _i9.HealthData>> fetchHealthData() =>
++      (super.noSuchMethod(
++            Invocation.method(#fetchHealthData, []),
++            returnValue:
++                _i5.Future<_i2.Either<_i6.Failure, _i9.HealthData>>.value(
++                  _FakeEither_0<_i6.Failure, _i9.HealthData>(
++                    this,
++                    Invocation.method(#fetchHealthData, []),
++                  ),
++                ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, _i9.HealthData>>);
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, void>> saveHealthData(
++    _i9.HealthData? data,
++  ) =>
++      (super.noSuchMethod(
++            Invocation.method(#saveHealthData, [data]),
++            returnValue: _i5.Future<_i2.Either<_i6.Failure, void>>.value(
++              _FakeEither_0<_i6.Failure, void>(
++                this,
++                Invocation.method(#saveHealthData, [data]),
++              ),
++            ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, void>>);
++}
++
++/// A class which mocks [SensorRepository].
++///
++/// See the documentation for Mockito's code generation for more information.
++class MockSensorRepository extends _i1.Mock implements _i10.SensorRepository {
++  MockSensorRepository() {
++    _i1.throwOnMissingStub(this);
++  }
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, _i11.ActivityLevel>>
++  fetchActivityLevel() =>
++      (super.noSuchMethod(
++            Invocation.method(#fetchActivityLevel, []),
++            returnValue:
++                _i5.Future<_i2.Either<_i6.Failure, _i11.ActivityLevel>>.value(
++                  _FakeEither_0<_i6.Failure, _i11.ActivityLevel>(
++                    this,
++                    Invocation.method(#fetchActivityLevel, []),
++                  ),
++                ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, _i11.ActivityLevel>>);
++}
++
++/// A class which mocks [WeatherRepository].
++///
++/// See the documentation for Mockito's code generation for more information.
++class MockWeatherRepository extends _i1.Mock implements _i12.WeatherRepository {
++  MockWeatherRepository() {
++    _i1.throwOnMissingStub(this);
++  }
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, _i13.WeatherContext>>
++  getWeatherContext() =>
++      (super.noSuchMethod(
++            Invocation.method(#getWeatherContext, []),
++            returnValue:
++                _i5.Future<_i2.Either<_i6.Failure, _i13.WeatherContext>>.value(
++                  _FakeEither_0<_i6.Failure, _i13.WeatherContext>(
++                    this,
++                    Invocation.method(#getWeatherContext, []),
++                  ),
++                ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, _i13.WeatherContext>>);
++}
++
++/// A class which mocks [OnboardingRepository].
++///
++/// See the documentation for Mockito's code generation for more information.
++class MockOnboardingRepository extends _i1.Mock
++    implements _i14.OnboardingRepository {
++  MockOnboardingRepository() {
++    _i1.throwOnMissingStub(this);
++  }
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, void>> acceptDisclaimer() =>
++      (super.noSuchMethod(
++            Invocation.method(#acceptDisclaimer, []),
++            returnValue: _i5.Future<_i2.Either<_i6.Failure, void>>.value(
++              _FakeEither_0<_i6.Failure, void>(
++                this,
++                Invocation.method(#acceptDisclaimer, []),
++              ),
++            ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, void>>);
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, bool>> isDisclaimerAccepted() =>
++      (super.noSuchMethod(
++            Invocation.method(#isDisclaimerAccepted, []),
++            returnValue: _i5.Future<_i2.Either<_i6.Failure, bool>>.value(
++              _FakeEither_0<_i6.Failure, bool>(
++                this,
++                Invocation.method(#isDisclaimerAccepted, []),
++              ),
++            ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, bool>>);
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, void>> saveProfile(
++    _i15.UserProfile? profile,
++  ) =>
++      (super.noSuchMethod(
++            Invocation.method(#saveProfile, [profile]),
++            returnValue: _i5.Future<_i2.Either<_i6.Failure, void>>.value(
++              _FakeEither_0<_i6.Failure, void>(
++                this,
++                Invocation.method(#saveProfile, [profile]),
++              ),
++            ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, void>>);
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, _i15.UserProfile>> getProfile() =>
++      (super.noSuchMethod(
++            Invocation.method(#getProfile, []),
++            returnValue:
++                _i5.Future<_i2.Either<_i6.Failure, _i15.UserProfile>>.value(
++                  _FakeEither_0<_i6.Failure, _i15.UserProfile>(
++                    this,
++                    Invocation.method(#getProfile, []),
++                  ),
++                ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, _i15.UserProfile>>);
++
++  @override
++  _i5.Future<_i2.Either<_i6.Failure, void>> updateProfile(
++    _i15.UserProfile? profile,
++  ) =>
++      (super.noSuchMethod(
++            Invocation.method(#updateProfile, [profile]),
++            returnValue: _i5.Future<_i2.Either<_i6.Failure, void>>.value(
++              _FakeEither_0<_i6.Failure, void>(
++                this,
++                Invocation.method(#updateProfile, [profile]),
++              ),
++            ),
++          )
++          as _i5.Future<_i2.Either<_i6.Failure, void>>);
++}

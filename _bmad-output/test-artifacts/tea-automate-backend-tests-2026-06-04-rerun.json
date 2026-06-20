@@ -1,0 +1,61 @@
+{
+  "subagentType": "backend",
+  "testsGenerated": [
+    {
+      "file": "pulse_coach/test/core/database/daos/daily_plans_dao_test.dart",
+      "content": "Create a Flutter data/integration test using AppDatabase.forTesting(NativeDatabase.memory()). Insert daily_plans rows before, at start, inside, at end, and after a YYYY-MM-DD date window. Assert DailyPlansDao.getPlansInDateRange(start, end) returns only start/inside/end rows and preserves expected dates. Close the database in tearDown.",
+      "description": "DailyPlansDao date-range SQL includes boundaries and excludes rows outside the missed-session window.",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 1,
+        "P2": 0,
+        "P3": 0
+      }
+    },
+    {
+      "file": "pulse_coach/test/domain/ai/behavioral_state_machine_test.dart",
+      "content": "Append a pure unit test for BehavioralStateMachine.evaluate() idempotency using an unchanged StateVector that triggers active->atRisk. Call evaluate twice and assert newState, transitionKey, and stateChanged are identical.",
+      "description": "BehavioralStateMachine returns stable transition output for unchanged inputs.",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 0,
+        "P2": 1,
+        "P3": 0
+      }
+    },
+    {
+      "file": "pulse_coach/test/widget/session_card_test.dart",
+      "content": "Append a widget test for HeroSessionCard semantic label when session.explanation already ends with punctuation. Assert the label contains one sentence boundary before 'Tocca per iniziare' and does not contain '..'.",
+      "description": "HeroSessionCard accessible semantic copy avoids duplicate punctuation.",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 0,
+        "P2": 1,
+        "P3": 0
+      }
+    }
+  ],
+  "coverageSummary": {
+    "totalTests": 3,
+    "testLevels": [
+      "unit",
+      "integration",
+      "widget"
+    ],
+    "fixtureNeeds": [
+      "AppDatabase.forTesting with NativeDatabase.memory",
+      "existing StateVector helper",
+      "existing HeroSessionCard widget wrapper"
+    ]
+  },
+  "status": "complete",
+  "success": true,
+  "subagent": "backend-tests",
+  "knowledge_fragments_used": [
+    "test-levels-framework",
+    "test-priorities-matrix",
+    "data-factories",
+    "test-quality"
+  ],
+  "summary": "Generated a plan for 3 Flutter/mobile tests: 1 P1 DAO integration test, 1 P2 AI state-machine unit test, and 1 P2 widget semantics regression test."
+}

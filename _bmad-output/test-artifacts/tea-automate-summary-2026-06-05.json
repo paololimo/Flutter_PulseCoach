@@ -1,0 +1,38 @@
+{
+  "detected_stack": "flutter/mobile",
+  "total_tests": 2,
+  "api_tests": 0,
+  "e2e_tests": 0,
+  "backend_tests": 2,
+  "fixtures_created": 0,
+  "api_test_files": 0,
+  "e2e_test_files": 0,
+  "backend_test_files": 1,
+  "priority_coverage": {
+    "P0": 0,
+    "P1": 1,
+    "P2": 1,
+    "P3": 0
+  },
+  "knowledge_fragments_used": [
+    "test-levels-framework",
+    "test-priorities-matrix",
+    "data-factories",
+    "selective-testing",
+    "ci-burn-in",
+    "test-quality",
+    "overview",
+    "api-request",
+    "auth-session",
+    "recurse",
+    "playwright-cli"
+  ],
+  "subagent_execution": "SEQUENTIAL (API then Flutter/mobile backend-equivalent worker)",
+  "performance_gain": "baseline (no parallel speedup)",
+  "validation": {
+    "targeted_test": "PASS - 2/2",
+    "targeted_coverage": "AiDecisionLogRepository 25/25 lines (100.0%)",
+    "flutter_analyze": "PASS - No issues found",
+    "flutter_test": "PASS - 854/854"
+  }
+}

@@ -98,11 +98,10 @@ firebase-debug.log
 # Non-deliverable docs, process artifacts, and agent tooling.
 # The exam/release deliverable is the pulse_coach/ app only; the planning,
 # process, and agent-context material is delivered/explained separately.
-_bmad-output/
-docs/
-CLAUDE.md
-AGENTS.md
-.agent/
+# _bmad-output/
+# docs/
+# CLAUDE.md
+# AGENTS.md
 
 # Delivery artifacts — source/release archives for v1 and later
 PulseCoach-v*.zip

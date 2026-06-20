@@ -1,0 +1,49 @@
+{
+  "success": true,
+  "subagent": "backend",
+  "subagentType": "flutter-mobile",
+  "testsGenerated": [
+    {
+      "id": "10.1-REPO-001",
+      "file": "pulse_coach/test/data/repositories/progress_repository_impl_test.dart",
+      "priority": "P1"
+    },
+    {
+      "id": "10.1-REPO-002",
+      "file": "pulse_coach/test/data/repositories/progress_repository_impl_test.dart",
+      "priority": "P1"
+    },
+    {
+      "id": "10.2-REPO-001",
+      "file": "pulse_coach/test/data/repositories/progress_repository_impl_test.dart",
+      "priority": "P1"
+    },
+    {
+      "id": "10.2-REPO-002",
+      "file": "pulse_coach/test/data/repositories/progress_repository_impl_test.dart",
+      "priority": "P1"
+    },
+    {
+      "id": "6.1-UC-001",
+      "file": "pulse_coach/test/domain/usecases/sync_exercise_catalog_test.dart",
+      "priority": "P2"
+    },
+    {
+      "id": "6.1-UC-002",
+      "file": "pulse_coach/test/domain/usecases/sync_exercise_catalog_test.dart",
+      "priority": "P2"
+    }
+  ],
+  "coverageSummary": {
+    "totalTests": 6,
+    "fixtureNeeds": [],
+    "filesCreated": 2
+  },
+  "status": "generated",
+  "knowledge_fragments_used": [
+    "test-levels-framework.md",
+    "test-priorities-matrix.md",
+    "test-quality.md"
+  ],
+  "summary": "Generated Flutter repository/use-case tests for uncovered ProgressRepositoryImpl and SyncExerciseCatalog behavior."
+}

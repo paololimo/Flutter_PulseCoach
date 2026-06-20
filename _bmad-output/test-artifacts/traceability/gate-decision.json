@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "evaluated_at": "2026-06-05T00:00:00.000Z",
+  "repo": "Flutter_PulseCoach",
+  "target": {
+    "type": "epic",
+    "id": "14",
+    "label": "Epic 14 — Settings & Extras (Stories 14.1–14.5)"
+  },
+  "collection_status": "COLLECTED",
+  "gate_basis": "priority_thresholds",
+  "gate_status": "PASS",
+  "rationale": "P0 coverage is 100% (0 P0 ACs). P1 coverage is 100% (7/7, target 90%). Overall FULL coverage is 80% (16/20, minimum 80%). 4 PARTIAL ACs are all P2 with documented justification.",
+  "p0_status": "MET",
+  "p1_status": "MET",
+  "overall_status": "MET",
+  "critical_open": 0,
+  "links": {
+    "trace_report_path": "_bmad-output/test-artifacts/traceability-report-epic14.md",
+    "trace_report_url": "",
+    "artifact_url": "",
+    "journey_evidence_url": ""
+  }
+}

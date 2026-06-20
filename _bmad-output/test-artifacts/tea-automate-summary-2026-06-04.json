@@ -1,0 +1,27 @@
+{
+  "detected_stack": "flutter/mobile",
+  "total_tests": 4,
+  "api_tests": 0,
+  "e2e_tests": 0,
+  "backend_tests": 4,
+  "fixtures_created": 0,
+  "api_test_files": 0,
+  "e2e_test_files": 0,
+  "backend_test_files": 4,
+  "priority_coverage": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 3,
+    "P3": 1
+  },
+  "knowledge_fragments_used": [
+    "api-request",
+    "data-factories",
+    "recurse",
+    "test-levels-framework",
+    "test-priorities-matrix",
+    "test-quality"
+  ],
+  "subagent_execution": "SEQUENTIAL (Flutter/mobile adapted worker path)",
+  "performance_gain": "baseline (no parallel speedup)"
+}

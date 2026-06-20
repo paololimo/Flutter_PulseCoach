@@ -1,0 +1,50 @@
+{
+  "subagentType": "backend",
+  "testsGenerated": [
+    {
+      "file": "test/core/database/daos/session_logs_dao_test.dart",
+      "description": "SessionLogsDao real Drift query coverage for getLogFor and watchLogsForPlan",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 3,
+        "P2": 0,
+        "P3": 0
+      }
+    },
+    {
+      "file": "test/data/datasources/exercise_local_data_source_test.dart",
+      "description": "ExerciseLocalDataSource replaceCache behavior and CacheException wrapping",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 3,
+        "P2": 0,
+        "P3": 0
+      }
+    },
+    {
+      "file": "test/data/repositories/exercise_repository_impl_test.dart",
+      "description": "ExerciseRepositoryImpl cache degradation, empty remote fallback, syncCatalog success, dedupe, and failure mapping",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 7,
+        "P2": 0,
+        "P3": 0
+      }
+    }
+  ],
+  "coverageSummary": {
+    "totalTests": 13,
+    "testLevels": ["unit", "integration"],
+    "fixtureNeeds": []
+  },
+  "status": "complete",
+  "success": true,
+  "subagent": "backend-tests",
+  "knowledge_fragments_used": [
+    "test-levels-framework",
+    "test-priorities-matrix",
+    "data-factories",
+    "test-quality"
+  ],
+  "summary": "Generated 13 Flutter/Dart unit and Drift integration tests across DAO, local datasource, and repository targets."
+}

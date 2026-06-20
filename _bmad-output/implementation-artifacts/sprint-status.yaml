@@ -1,0 +1,229 @@
+# generated: 2026-03-27
+# last_updated: 2026-03-27
+# project: Flutter_PulseCoach
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-27
+last_updated: 2026-06-05 # Epic 14 retrospective done — v1 closed (14 epics, 50 stories)
+project: Flutter_PulseCoach
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+
+  # ─────────────────────────────────────────
+  # Epic 1: Foundation & Project Infrastructure
+  # ─────────────────────────────────────────
+  epic-1: done
+  1-1-project-initialization-and-repository-setup: done
+  1-2-core-dependencies-and-pubspec-setup: done
+  1-3-dependency-injection-setup: done
+  1-4-drift-database-setup-and-schema: done
+  1-5-core-error-handling-and-either-pattern: done
+  1-6-theme-system-and-design-tokens: done
+  1-7-app-shell-and-navigation-scaffold-phone: done
+  epic-1-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 2: Onboarding & Profile
+  # ─────────────────────────────────────────
+  epic-2: done
+  2-1-medical-disclaimer-screen: done
+  2-2-animated-onboarding-flow: done
+  2-3-profile-setup-screen: done
+  2-4-profile-view-and-edit: done
+  epic-2-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 3: Sensor Integration
+  # ─────────────────────────────────────────
+  epic-3: done
+  3-1-health-api-integration-hr-and-steps: done
+  3-2-accelerometer-activity-detection: done
+  3-3-rpe-only-fallback-mode: done
+  epic-3-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 4: Environmental Context
+  # ─────────────────────────────────────────
+  epic-4: done
+  4-1-open-meteo-api-integration: done
+  4-2-weather-cache-and-ttl-management: done
+  4-3-city-level-location-resolution: done
+  epic-4-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 5: AI Engine & Daily Planning
+  # ─────────────────────────────────────────
+  epic-5: done
+  5-1-domain-models-and-statevector: done
+  5-2-behavioral-state-machine: done
+  5-3-safety-rules-override-system: done
+  5-4-contextual-bandit-algorithm: done
+  5-5-daily-plan-generation-and-ai-isolation: done
+  5-6-ai-explanation-generation: done
+  epic-5-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 6: Exercise Catalog
+  # ─────────────────────────────────────────
+  epic-6: done
+  6-1-exercisedb-api-integration-and-cache: done
+  6-2-bundled-fallback-exercise-catalog: done
+  6-3-session-browsing-screen: done
+  epic-6-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 6.5: Foundation Hardening (Interstitial)
+  # ─────────────────────────────────────────
+  epic-6.5: done
+  6.5-1-analyzer-cleanup-and-appshell-tab-order: done
+  6.5-2-catalog-defense-in-depth-and-deferred-triage: done
+  6.5-3-process-action-item-ledger: done
+  6.5-4-dependency-major-version-upgrades: done
+  epic-6.5-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 7: Today Screen
+  # Pre-epic product decisions closed 2026-05-15. See:
+  #   - ai-state-graph-product-decisions-2026-05-15.md
+  #   - explanation-copy-product-decisions-2026-05-15.md
+  #   - story-7.1b-scope-2026-05-15.md (binding: same PR cluster as 7.1)
+  #   - failure-equality-bloc-regression-spec-2026-05-15.md (must merge before 7.1)
+  # Recommended sprint order: 7.0 → 7.1b (parallel) → 7.1 → 7.2 → 7.3 → 7.4
+  # ─────────────────────────────────────────
+  epic-7: done
+  7-0-failure-equality-bloc-regression: done
+  7-1-stateindicator-component: done
+  7-1b-missed-sessions-decay-and-reset: done
+  7-2-sessioncard-component: done
+  7-3-today-screen-layout-and-hero-progression: done
+  7-4-completionring-component-and-plan-regeneration: done
+  epic-7-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 7.5: i18n Migration (Interstitial)
+  # Added 2026-05-16 per Epic 7 retro decision (Paolo).
+  # Goal: wire flutter_localizations + gen_l10n, migrate all hardcoded
+  # Italian strings introduced in Epic 7 (today_page, completion_ring,
+  # completed_session_card, state_indicator, session_card_helpers,
+  # hero_session_card) and translate the residual "COMING UP" English label.
+  # Cap: 2 stories. Must complete before Epic 8 kickoff.
+  # ─────────────────────────────────────────
+  epic-7.5: done
+  7.5-1-wire-flutter-localizations-gen-l10n: done
+  7.5-2-migrate-epic7-italian-strings-to-arb: done
+  epic-7.5-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 8: In-Session Experience
+  # Added 2026-05-16 per Epic 7 retro decision (Paolo):
+  #   - Story 8.0 (SessionLog DAO) inserted before 8.1 and closes E7-F1.
+  #   - Pubspec `vibration` package must be added before Story 8.3.
+  # Epic 8 Kickoff Triage 2026-05-17 (Paolo + John):
+  #   - Deferred Items Budget rule rewritten in CLAUDE.md (Category A
+  #     deliverable-debt cap 5 + Category B ongoing-process uncapped).
+  #     See action-item-ledger.md "Epic 8 Kickoff Triage - 2026-05-17".
+  #   - E7-F1 closed `done` (Story 8.0/8.2 shipped + 8.2-CUBIT-007 regression).
+  #   - Option B closure: Story 8.5 is the only remaining queue item.
+  #     E7.5-T1 (dead ARB transition* keys) re-targeted to Epic 9.x rather
+  #     than padded into Epic 8.x as a non-thematic Story 8.6.
+  # ─────────────────────────────────────────
+  epic-8: done
+  8-0-sessionlog-dao-and-per-session-completion: done
+  8-1-countdownoverlay: done
+  8-2-insessionview-timer-and-step-display: done
+  8-3-haptic-feedback-on-step-transitions: done
+  8-4-live-heart-rate-display: done
+  8-5-session-abandon-flow: done
+  epic-8-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 9: Feedback & Adaptation Loop
+  # ─────────────────────────────────────────
+  epic-9: done
+  9-1-rpeinput-component: done
+  9-2-minisummary-and-completionring-animation: done
+  9-3-bandit-reward-update-and-state-machine-re-evaluation: done
+  epic-9-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 10: Progress & History
+  # ─────────────────────────────────────────
+  epic-10: done
+  10-0-centralized-logger-and-error-path-convergence: done
+  10-1-session-history-timeline: done
+  10-2-progress-charts: done
+  10-3-weekly-goal-progress: done
+  epic-10-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 11: Responsive Layout & Navigation
+  # ─────────────────────────────────────────
+  epic-11: done
+  11-1-responsive-scaffold-and-navigationrail-tablet: done
+  11-2-tablet-today-screen-master-detail: done
+  11-3-portrait-and-landscape-orientation-support: done
+  epic-11-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 12: WearOS Companion
+  # ─────────────────────────────────────────
+  epic-12: done
+  12-1-wearos-feasibility-spike: done
+  12-2-in-session-wearos-display: done
+  12-3-post-session-wearos-summary: done
+  12-4-wearos-disconnect-resilience: done
+  epic-12-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 13: Offline & Data Sync
+  # ─────────────────────────────────────────
+  epic-13: done
+  13-1-offline-first-core-features: done
+  13-2-deferred-sync-queue: done
+  13-3-data-persistence-guarantees: done
+  epic-13-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 14: Settings, Theme & Extras
+  # ─────────────────────────────────────────
+  epic-14: done
+  14-1-theme-toggle-dark-light-system: done
+  14-2-privacy-information-screen: done
+  14-3-device-and-sync-settings-screen: done
+  14-4-ai-decision-log-mvp-if-time: done
+  14-5-data-export-mvp-if-time: done
+  epic-14-retrospective: done

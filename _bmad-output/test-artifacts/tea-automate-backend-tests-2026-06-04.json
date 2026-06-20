@@ -1,0 +1,65 @@
+{
+  "subagentType": "backend",
+  "testsGenerated": [
+    {
+      "file": "pulse_coach/test/widget/app_shell_test.dart",
+      "content": "append 11.1-WIDGET-004 lower-breakpoint NavigationRail overflow regression",
+      "description": "Widget regression for tablet lower breakpoint NavigationRail labels at 600dp",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 0,
+        "P2": 1,
+        "P3": 0
+      }
+    },
+    {
+      "file": "pulse_coach/test/widget/today_page_test.dart",
+      "content": "append 11.3-WIDGET-006 phone-landscape TodayPage overflow regression",
+      "description": "Widget regression for Today page on 640x360 phone landscape surface",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 0,
+        "P2": 1,
+        "P3": 0
+      }
+    },
+    {
+      "file": "pulse_coach/test/widget/in_session_view_test.dart",
+      "content": "append 11.3-WIDGET-007 long-content landscape InSessionView overflow/truncation regression",
+      "description": "Widget regression for long title and instruction in landscape in-session view",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 0,
+        "P2": 0,
+        "P3": 1
+      }
+    },
+    {
+      "file": "pulse_coach/test/widget/profile_page_test.dart",
+      "content": "append 2.4-WIDGET-006 narrow phone ProfilePage segmented control layout regression",
+      "description": "Widget regression for Profile Primary Goal segmented control on 390dp phone surface",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 0,
+        "P2": 1,
+        "P3": 0
+      }
+    }
+  ],
+  "coverageSummary": {
+    "totalTests": 4,
+    "testLevels": [
+      "widget"
+    ],
+    "fixtureNeeds": []
+  },
+  "status": "complete",
+  "success": true,
+  "subagent": "backend-tests",
+  "knowledge_fragments_used": [
+    "test-levels-framework",
+    "test-priorities-matrix",
+    "test-quality"
+  ],
+  "summary": "Generated a Flutter/mobile widget coverage plan for 4 regression tests."
+}

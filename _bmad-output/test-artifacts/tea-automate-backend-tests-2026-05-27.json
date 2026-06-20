@@ -1,0 +1,48 @@
+{
+  "subagentType": "backend",
+  "testsGenerated": [
+    {
+      "file": "pulse_coach/test/widget/in_session_page_abandon_test.dart",
+      "content": "Add widget test 8.2-VIEW-004 inside InSessionPage abandon flow group: pump InSessionPage with PlannedSession, wait past countdown, pump through generated 3x60s steps plus 00:00 transition ticks, assert router reaches AppRouter.sessionRpe and RpeSubmitArgs has abandoned=false, sessionIndex=0, durationMinutes=1, armKey=cardio_low.",
+      "description": "Natural session completion routes to RPE via InSessionPage BlocListener.",
+      "priority_coverage": {
+        "P0": 1,
+        "P1": 0,
+        "P2": 0,
+        "P3": 0
+      }
+    },
+    {
+      "file": "pulse_coach/test/core/database/daos/rpe_feedback_dao_test.dart",
+      "content": "Add DAO integration tests 9.1-DAO-001..003 covering insertFeedbackIdempotent sessionLogId dedupe, legacy sessionId+recordedAt dedupe, and getBySessionLogId hit/null behavior.",
+      "description": "RPE feedback DAO idempotency and lookup coverage.",
+      "priority_coverage": {
+        "P0": 0,
+        "P1": 3,
+        "P2": 0,
+        "P3": 0
+      }
+    }
+  ],
+  "coverageSummary": {
+    "totalTests": 4,
+    "testLevels": [
+      "widget/page",
+      "dao-integration"
+    ],
+    "fixtureNeeds": [
+      "existing MaterialApp.router wrapper",
+      "in-memory Drift AppDatabase"
+    ]
+  },
+  "status": "complete",
+  "success": true,
+  "subagent": "backend-tests",
+  "knowledge_fragments_used": [
+    "test-levels-framework",
+    "test-priorities-matrix",
+    "data-factories",
+    "test-quality"
+  ],
+  "summary": "Generated plan for 4 Flutter/mobile tests: 1 P0 page-routing test and 3 P1 DAO integration tests."
+}

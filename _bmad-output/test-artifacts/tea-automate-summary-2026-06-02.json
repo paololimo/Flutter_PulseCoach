@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "detected_stack": "flutter/mobile",
+  "execution_mode": "sequential",
+  "api_tests": 0,
+  "backend_tests": 6,
+  "total_tests": 6,
+  "files_created": [
+    "pulse_coach/test/data/repositories/progress_repository_impl_test.dart",
+    "pulse_coach/test/domain/usecases/sync_exercise_catalog_test.dart"
+  ],
+  "validation": {
+    "targeted_tests": "6/6 passed",
+    "full_suite": "759/759 passed",
+    "analyze": "No issues found"
+  },
+  "coverage": {
+    "lib/features/progress/data/repositories/progress_repository_impl.dart": "100.0% (9/9)",
+    "lib/features/sessions_catalog/domain/usecases/sync_exercise_catalog.dart": "100.0% (2/2)"
+  }
+}
