@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-05 # Epic 14 retrospective done — v1 closed (14 epics, 50 stories)
+last_updated: 2026-06-20 # v2 epics 15–21 added to backlog (sprint-planning run)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -227,3 +227,74 @@ development_status:
   14-4-ai-decision-log-mvp-if-time: done
   14-5-data-export-mvp-if-time: done
   epic-14-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 15: Navigation Fix (v2.0)
+  # ─────────────────────────────────────────
+  epic-15: backlog
+  15-1-back-navigation-from-drawer-secondary-screens: backlog
+  epic-15-retrospective: optional
+
+  # ─────────────────────────────────────────
+  # Epic 16: Accounts & Authentication (v2.1)
+  # ─────────────────────────────────────────
+  epic-16: backlog
+  16-1-supabase-backend-initialization-and-cloud-client-setup: backlog
+  16-2-email-apple-google-sign-in-and-sign-out: backlog
+  16-3-e2e-encrypted-backup-and-restore: backlog
+  16-4-in-app-account-deletion-and-data-export: backlog
+  epic-16-retrospective: optional
+
+  # ─────────────────────────────────────────
+  # Epic 17: Pro Subscription & Feature Gating (v2.2)
+  # ─────────────────────────────────────────
+  epic-17: backlog
+  17-1-revenuecat-iap-integration-and-entitlement-gate: backlog
+  17-2-progress-history-free-pro-gating-with-grandfathering: backlog
+  17-3-pro-upsell-sheet-with-session-day-cooldown: backlog
+  17-4-subscription-purchase-restore-and-management: backlog
+  epic-17-retrospective: optional
+
+  # ─────────────────────────────────────────
+  # Epic 18: Social Graph & Friends (v2.3)
+  # Depends on Epic 16 (auth) and Epic 17 (EntitlementGate).
+  # ─────────────────────────────────────────
+  epic-18: backlog
+  18-1-username-handle-setup-and-visibility-tier-selector: backlog
+  18-2-friend-request-flow: backlog
+  18-3-activity-feed-with-light-reactions: backlog
+  18-4-friends-progress-comparison: backlog
+  epic-18-retrospective: optional
+
+  # ─────────────────────────────────────────
+  # Epic 19: Real-Time Session Transport (v2.4a)
+  # Prerequisite for Epic 20. Depends on Epic 16.
+  # ─────────────────────────────────────────
+  epic-19: backlog
+  19-1-realtime-gateway-and-supabase-broadcast-presence-channel: backlog
+  19-2-host-authority-step-advancement-and-presence-lobby: backlog
+  19-3-drop-out-tolerance-and-reconnect: backlog
+  epic-19-retrospective: optional
+
+  # ─────────────────────────────────────────
+  # Epic 20: Co-Located Shared Sessions (v2.4b)
+  # Depends on Epics 16, 17, 18, and 19.
+  # ─────────────────────────────────────────
+  epic-20: backlog
+  20-1-shared-session-creation-join-code-card-and-lobby-navigation: backlog
+  20-2-group-constraint-resolver-deterministic-group-plan-generation: backlog
+  20-3-co-location-join-flow-momentary-non-blocking-confirmation: backlog
+  20-4-synchronized-session-start-and-shared-in-session-view: backlog
+  20-5-per-participant-rpe-and-protective-state-social-suppression: backlog
+  epic-20-retrospective: optional
+
+  # ─────────────────────────────────────────
+  # Epic 21: Leaderboard & Scoring (v2.5)
+  # Final v2 epic. Depends on Epics 16–20.
+  # Ship only after counter-metric validation (AtRisk session starts + RPE distribution).
+  # ─────────────────────────────────────────
+  epic-21: backlog
+  21-1-points-system-and-solo-session-scoring: backlog
+  21-2-friends-only-leaderboard-and-rank-freeze: backlog
+  21-3-shared-session-point-bonus-and-counter-metric-monitoring: backlog
+  epic-21-retrospective: optional

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PulseCoach — Key Screens (v1 + v2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --surface:#0F1119; --container:#171B26; --container-high:#1E2333;
+    --primary:#7DD3C0; --secondary:#A78BDA; --tertiary:#E8C87A;
+    --on:#E2E4EA; --on-var:#9498A6; --error:#F28B82; --coral:#F0A1B0;
+    --gold:#E8C87A; --silver:#9498A6; --bronze:#F0A1B0;
+    --r-card:16px; --r-btn:12px; --r-chip:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#06070b;font-family:'Plus Jakarta Sans',sans-serif;color:var(--on);
+    padding:32px;display:flex;flex-wrap:wrap;gap:32px;justify-content:center;align-items:flex-start}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .phone{width:300px;min-height:620px;background:var(--surface);border-radius:36px;
+    padding:20px 16px 0;position:relative;box-shadow:0 0 0 9px #14161d,0 24px 60px rgba(0,0,0,.6);
+    display:flex;flex-direction:column}
+  .label{position:absolute;top:-26px;left:8px;font-size:12px;color:#6b7080;letter-spacing:.04em}
+  .tag{position:absolute;top:-26px;right:8px;font-size:10px;padding:2px 8px;border-radius:999px;
+    background:#1b2536;color:var(--primary);letter-spacing:.06em}
+  .tag.v2{background:#2a1f33;color:var(--secondary)}
+  /* shared bits */
+  .h1{font-weight:600;font-size:22px}
+  .statebar{display:flex;align-items:center;gap:8px;margin:6px 2px 16px}
+  .dot{width:9px;height:9px;border-radius:999px}
+  .small{font-size:12px;color:var(--on-var)}
+  .meta{font-size:11px;color:var(--on-var);letter-spacing:.02em}
+  .card{background:var(--container);border-radius:var(--r-card);padding:16px;margin-bottom:16px}
+  .hero{background:linear-gradient(160deg,#1b2a2b 0%,var(--container) 55%);border-radius:var(--r-card);
+    padding:16px;margin-bottom:16px;position:relative}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:3px 9px;border-radius:999px;
+    background:rgba(125,211,192,.14);color:var(--primary)}
+  .lottie{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:999px;
+    background:rgba(125,211,192,.18);display:flex;align-items:center;justify-content:center;font-size:15px}
+  .title{font-weight:600;font-size:18px;margin:12px 0 4px}
+  .explain{font-size:13px;line-height:1.45;color:var(--on-var);margin:10px 0 14px}
+  .btn{background:var(--primary);color:#06231d;border:none;border-radius:var(--r-btn);
+    width:100%;padding:13px;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--on-var);font-weight:500}
+  .seclabel{font-size:11px;letter-spacing:.14em;color:var(--on-var);margin:4px 2px 10px}
+  .compact{display:flex;align-items:center;gap:12px;background:var(--container);border-radius:var(--r-card);
+    padding:12px 14px;margin-bottom:10px}
+  .cdot{width:8px;height:8px;border-radius:999px;flex:0 0 auto}
+  .chev{margin-left:auto;color:var(--on-var)}
+  .nav{margin-top:auto;display:flex;justify-content:space-around;padding:12px 4px 16px;border-top:1px solid #20242f}
+  .nav div{font-size:11px;color:var(--on-var);text-align:center;display:flex;flex-direction:column;gap:3px;align-items:center}
+  .nav .on{color:var(--primary)}
+  .ico{font-size:17px}
+  .ring{width:34px;height:34px;border-radius:999px;background:
+    conic-gradient(var(--primary) 0 33%,#2a2f3d 33% 100%);display:flex;align-items:center;
+    justify-content:center;margin-left:auto}
+  .ring span{width:24px;height:24px;border-radius:999px;background:var(--surface);display:flex;
+    align-items:center;justify-content:center;font-size:10px}
+  /* in-session */
+  .timer{font-size:52px;text-align:center;margin:30px 0 6px}
+  .hr{position:absolute;top:18px;right:18px;color:var(--coral);font-size:14px}
+  .progress{height:4px;background:#262b38;border-radius:999px;margin:26px 0}
+  .progress i{display:block;height:100%;width:46%;background:var(--primary);border-radius:999px}
+  /* leaderboard */
+  .lbrow{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r-chip);margin-bottom:6px}
+  .lbrow.me{background:var(--container-high)}
+  .rank{width:18px;text-align:center;color:var(--on-var)}
+  .medal{font-size:15px;width:18px;text-align:center}
+  .av{width:30px;height:30px;border-radius:999px;background:#2b3142;display:flex;align-items:center;
+    justify-content:center;font-size:12px;color:var(--on-var)}
+  .pts{margin-left:auto;font-size:13px}
+  .react{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--on-var);
+    border:1px solid #2a2f3d;border-radius:999px;padding:4px 10px;margin-top:10px}
+  /* sheet */
+  .scrim{background:rgba(6,7,11,.7);border-radius:36px;flex:1;display:flex;align-items:flex-end}
+  .sheet{background:var(--container-high);border-radius:20px 20px 0 0;padding:22px 18px;width:100%}
+  .sheet h3{font-size:17px;font-weight:600;margin-bottom:6px}
+  /* lobby */
+  .chip{display:inline-flex;align-items:center;gap:7px;background:var(--container);border-radius:999px;
+    padding:6px 12px;margin:0 6px 8px 0;font-size:12px}
+  .ok{color:var(--primary)}
+</style>
+</head>
+<body>
+
+<!-- TODAY (v1) -->
+<div class="phone">
+  <div class="label">Today</div><div class="tag">v1</div>
+  <div style="display:flex;align-items:center"><div class="h1">Oggi</div>
+    <div class="ring"><span>1/3</span></div></div>
+  <div class="statebar"><div class="dot" style="background:var(--primary)"></div>
+    <div class="small">Attivo · Buon ritmo questa settimana</div></div>
+  <div class="hero">
+    <span class="badge">● Attivo</span>
+    <div class="lottie">🌿</div>
+    <div class="title">Mobilità mattutina</div>
+    <div class="meta">5 min · Indoor · Bassa</div>
+    <div class="explain">Sonno breve + HR a riposo elevata. Partiamo piano.</div>
+    <button class="btn">Inizia sessione</button>
+  </div>
+  <div class="seclabel">PROSSIME</div>
+  <div class="compact"><div class="cdot" style="background:var(--secondary)"></div>
+    <div><div style="font-size:14px">Respirazione</div><div class="meta">3 min · Breathing</div></div>
+    <div class="chev">›</div></div>
+  <div class="compact"><div class="cdot" style="background:var(--coral)"></div>
+    <div><div style="font-size:14px">Cardio serale</div><div class="meta">7 min · Indoor</div></div>
+    <div class="chev">›</div></div>
+  <div class="nav">
+    <div><span class="ico">▭</span>Sessions</div>
+    <div class="on"><span class="ico">☀</span>Today</div>
+    <div><span class="ico">◎</span>Social</div>
+    <div><span class="ico">▥</span>Progress</div>
+  </div>
+</div>
+
+<!-- IN-SESSION (v1) -->
+<div class="phone" style="justify-content:flex-start">
+  <div class="label">In-Session (overlay)</div><div class="tag">v1</div>
+  <div class="hr mono">♥ 112</div>
+  <div class="timer mono">02:14</div>
+  <div class="small" style="text-align:center">PASSO 2 DI 4</div>
+  <div class="title" style="text-align:center;margin-top:18px">Cerchi con le anche</div>
+  <div class="explain" style="text-align:center">Movimento lento e controllato. Respira.</div>
+  <div class="progress"><i></i></div>
+  <div style="flex:1"></div>
+  <button class="btn ghost" style="margin-bottom:22px">Termina sessione</button>
+</div>
+
+<!-- SOCIAL: LEADERBOARD + FEED (v2) -->
+<div class="phone">
+  <div class="label">Social — Leaderboard</div><div class="tag v2">v2</div>
+  <div class="h1" style="margin-bottom:14px">Social</div>
+  <div class="card" style="padding:14px">
+    <div class="seclabel" style="margin:0 0 8px">CLASSIFICA AMICI · QUESTA SETTIMANA</div>
+    <div class="lbrow"><div class="rank mono">1</div><div class="medal" title="oro">🥇</div><div class="av">G</div>
+      <div style="font-size:14px">Giulia</div><div class="pts mono">120</div></div>
+    <div class="lbrow me"><div class="rank mono">2</div><div class="medal" title="argento">🥈</div><div class="av">Tu</div>
+      <div style="font-size:14px">Tu</div><div class="pts mono">110</div></div>
+    <div class="lbrow"><div class="rank mono">3</div><div class="medal" title="bronzo">🥉</div><div class="av">M</div>
+      <div style="font-size:14px">Marco</div><div class="pts mono">90</div></div>
+    <div class="lbrow"><div class="rank mono">4</div><div class="medal"></div><div class="av">L</div>
+      <div style="font-size:14px">Luca</div><div class="pts mono">55</div></div>
+    <div class="meta" style="margin-top:8px">Le sessioni condivise valgono più di quelle in solo.</div>
+  </div>
+  <div class="seclabel">FEED</div>
+  <div class="card" style="padding:13px 14px;margin-bottom:0">
+    <div style="display:flex;gap:10px;align-items:center"><div class="av">G</div>
+      <div><div style="font-size:13px">Giulia · <span class="meta">2h fa</span></div>
+        <div class="meta">Respirazione · 4 min</div></div></div>
+    <div class="react">👏 Bravo</div>
+  </div>
+  <div class="nav">
+    <div><span class="ico">▭</span>Sessions</div>
+    <div><span class="ico">☀</span>Today</div>
+    <div class="on"><span class="ico">◎</span>Social</div>
+    <div><span class="ico">▥</span>Progress</div>
+  </div>
+</div>
+
+<!-- PRO UPSELL (v2) -->
+<div class="phone" style="padding:0">
+  <div class="label">Pro upsell (contestuale)</div><div class="tag v2">v2</div>
+  <div style="padding:20px 16px 0;opacity:.5">
+    <div class="h1">Progressi</div>
+    <div class="card" style="margin-top:16px"><div class="small">Ultima sessione</div>
+      <div class="title">Mobilità · 5 min</div></div>
+    <div class="card"><div class="small">Storico completo 🔒</div></div>
+  </div>
+  <div class="scrim">
+    <div class="sheet">
+      <h3>Lo storico completo è una funzione Pro.</h3>
+      <div class="small" style="margin-bottom:18px">Sblocca la cronologia e tutti i grafici. Il core resta gratuito.</div>
+      <button class="btn">Scopri Pro</button>
+      <button class="btn ghost" style="margin-top:8px">non ora</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARED SESSION LOBBY (v2) -->
+<div class="phone" style="justify-content:flex-start">
+  <div class="label">Sessione condivisa — Lobby</div><div class="tag v2">v2</div>
+  <div class="h1" style="margin-bottom:4px">Sessione condivisa</div>
+  <div class="small" style="margin-bottom:16px">Co-locati · pronti a iniziare</div>
+  <div style="margin-bottom:14px">
+    <span class="chip"><span class="av" style="width:22px;height:22px">M</span>Marco <span class="ok">●</span></span>
+    <span class="chip"><span class="av" style="width:22px;height:22px">G</span>Giulia <span class="ok">●</span></span>
+  </div>
+  <div class="card">
+    <div class="badge">Piano di gruppo</div>
+    <div class="title">Mobilità + Respiro</div>
+    <div class="meta">5 min · Bassa intensità</div>
+    <div class="explain">Adattata per tutti — intensità più bassa comoda, niente carico sul ginocchio.</div>
+  </div>
+  <div style="flex:1"></div>
+  <button class="btn" style="margin-bottom:22px">Inizia insieme</button>
+</div>
+
+</body>
+</html>

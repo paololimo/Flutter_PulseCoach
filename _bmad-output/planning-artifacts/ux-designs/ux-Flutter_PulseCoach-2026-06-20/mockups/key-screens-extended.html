@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PulseCoach — Key Screens Extended (Onboarding · Account · Progress · Tablet · Wear)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --surface:#0F1119; --container:#171B26; --container-high:#1E2333;
+    --primary:#7DD3C0; --on-primary:#06231D; --secondary:#A78BDA; --tertiary:#E8C87A;
+    --on:#E2E4EA; --on-var:#9498A6; --error:#F28B82; --coral:#F0A1B0;
+    --r-card:16px; --r-btn:12px; --r-chip:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#06070b;font-family:'Plus Jakarta Sans',sans-serif;color:var(--on);
+    padding:32px;display:flex;flex-wrap:wrap;gap:36px;justify-content:center;align-items:flex-start}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .phone{width:300px;min-height:620px;background:var(--surface);border-radius:36px;padding:20px 16px 0;
+    position:relative;box-shadow:0 0 0 9px #14161d,0 24px 60px rgba(0,0,0,.6);display:flex;flex-direction:column}
+  .label{position:absolute;top:-26px;left:8px;font-size:12px;color:#6b7080}
+  .tag{position:absolute;top:-26px;right:8px;font-size:10px;padding:2px 8px;border-radius:999px;background:#1b2536;color:var(--primary)}
+  .tag.v2{background:#2a1f33;color:var(--secondary)}
+  .h1{font-weight:600;font-size:22px}
+  .small{font-size:12px;color:var(--on-var)}
+  .meta{font-size:11px;color:var(--on-var)}
+  .card{background:var(--container);border-radius:var(--r-card);padding:16px;margin-bottom:14px}
+  .seclabel{font-size:11px;letter-spacing:.14em;color:var(--on-var);margin:4px 2px 10px}
+  .title{font-weight:600;font-size:17px}
+  .btn{background:var(--primary);color:var(--on-primary);border:none;border-radius:var(--r-btn);width:100%;
+    padding:13px;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer;margin-bottom:8px}
+  .btn.alt{background:var(--container-high);color:var(--on)}
+  .btn.ghost{background:transparent;color:var(--on-var);font-weight:500}
+  .btn.danger{background:transparent;color:var(--error);font-weight:600}
+  .seg{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .seg span{border:1px solid #2a2f3d;border-radius:var(--r-chip);padding:8px 12px;font-size:12px;color:var(--on-var)}
+  .seg span.sel{background:var(--container-high);color:var(--on);border-color:#3a4250}
+  .dot{width:9px;height:9px;border-radius:999px;display:inline-block}
+  .row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #20242f}
+  .row .chev{margin-left:auto;color:var(--on-var)}
+  .pill{font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(125,211,192,.14);color:var(--primary)}
+  .lock{font-size:11px;color:var(--on-var)}
+  .toggle{margin-left:auto;width:38px;height:22px;border-radius:999px;background:var(--primary);position:relative}
+  .toggle:after{content:"";position:absolute;width:18px;height:18px;border-radius:999px;background:#06231d;top:2px;right:2px}
+  .toggle.off{background:#2a2f3d}
+  .toggle.off:after{left:2px;right:auto;background:var(--on-var)}
+  .nav{margin-top:auto;display:flex;justify-content:space-around;padding:12px 4px 16px;border-top:1px solid #20242f}
+  .nav div{font-size:11px;color:var(--on-var);display:flex;flex-direction:column;gap:3px;align-items:center}
+  .nav .on{color:var(--primary)}
+  .ico{font-size:17px}
+  .bar{height:7px;border-radius:999px;background:#262b38;margin:6px 0 2px}
+  .bar i{display:block;height:100%;border-radius:999px;background:var(--primary)}
+  /* tablet */
+  .tablet{width:560px;min-height:420px;background:var(--surface);border-radius:24px;padding:0;display:flex;
+    box-shadow:0 0 0 9px #14161d,0 24px 60px rgba(0,0,0,.6);overflow:hidden;position:relative}
+  .rail{width:84px;background:var(--container);padding:18px 0;display:flex;flex-direction:column;gap:22px;align-items:center}
+  .rail div{font-size:10px;color:var(--on-var);display:flex;flex-direction:column;gap:4px;align-items:center}
+  .rail .on{color:var(--primary)}
+  .tcols{flex:1;display:flex;padding:18px;gap:16px}
+  .tleft{flex:0 0 58%}.tright{flex:1}
+  .hero{background:linear-gradient(160deg,#1b2a2b,var(--container) 60%);border-radius:var(--r-card);padding:16px;height:100%}
+  /* wear */
+  .wear{width:200px;height:200px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 9px #14161d,0 18px 40px rgba(0,0,0,.6);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px;position:relative}
+  .wear .lbl2{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:12px;color:#6b7080;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING (v1) -->
+<div class="phone" style="justify-content:flex-start"><div class="label">Onboarding 2 — privacy + disclaimer</div><div class="tag">v1</div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:14px">
+    <div style="font-size:40px">🔒</div>
+    <div class="h1">I tuoi dati restano tuoi</div>
+    <div class="small" style="line-height:1.5">Tutto sul dispositivo. Nessun account richiesto. La personalizzazione AI gira in locale.</div>
+    <div class="card" style="text-align:left;display:flex;gap:10px;align-items:flex-start">
+      <div style="color:var(--primary)">☑</div>
+      <div class="small">Ho capito che PulseCoach non è un dispositivo medico e non sostituisce un parere professionale.</div>
+    </div>
+  </div>
+  <button class="btn" style="margin-bottom:22px">Continua</button>
+</div>
+
+<!-- PROFILE (v1) -->
+<div class="phone" style="justify-content:flex-start"><div class="label">Profilo (4 campi)</div><div class="tag">v1</div>
+  <div class="h1" style="margin:8px 0 16px">Pronti in 60 secondi</div>
+  <div class="seclabel">LIVELLO</div><div class="seg"><span class="sel">Principiante</span><span>Intermedio</span></div>
+  <div class="seclabel">OBIETTIVO</div><div class="seg"><span>Cardio</span><span class="sel">Mobilità</span><span>Forza</span><span>Benessere</span></div>
+  <div class="seclabel">TEMPO / SESSIONE</div><div class="seg"><span class="sel">2–5 min</span><span>5–10 min</span></div>
+  <div class="seclabel">VINCOLI</div><div class="seg"><span class="sel">Nessuno</span><span>Ginocchio</span><span>Schiena</span><span>Solo indoor</span></div>
+  <div style="flex:1"></div>
+  <button class="btn" style="margin-bottom:22px">Crea il mio piano</button>
+</div>
+
+<!-- PROGRESS FREE vs PRO (v2) -->
+<div class="phone"><div class="label">Progress — Free</div><div class="tag v2">v2</div>
+  <div class="h1" style="margin-bottom:14px">Progressi</div>
+  <div class="card"><div class="small">Ultima sessione</div><div class="title">Mobilità · 5 min</div>
+    <div class="meta" style="margin-top:4px">RPE 4 · oggi</div></div>
+  <div class="card"><div class="small">Obiettivo settimanale</div>
+    <div class="bar"><i style="width:60%"></i></div><div class="meta">3 / 5 sessioni</div></div>
+  <div class="card" style="display:flex;align-items:center"><div><div class="title" style="font-size:15px">Storico completo</div>
+    <div class="lock">🔒 Funzione Pro</div></div><span class="pill" style="margin-left:auto">Pro</span></div>
+  <div class="card" style="display:flex;align-items:center"><div><div class="title" style="font-size:15px">Amici & confronto</div>
+    <div class="lock">🔒 Funzione Pro</div></div><span class="pill" style="margin-left:auto">Pro</span></div>
+  <div class="nav"><div><span class="ico">▭</span>Sessions</div><div><span class="ico">☀</span>Today</div>
+    <div><span class="ico">◎</span>Social</div><div class="on"><span class="ico">▥</span>Progress</div></div>
+</div>
+
+<div class="phone"><div class="label">Progress — Pro (sbloccato)</div><div class="tag v2">v2</div>
+  <div class="h1" style="margin-bottom:14px">Progressi</div>
+  <div class="card"><div class="small">Minuti / settimana</div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:60px;margin-top:8px">
+      <i style="flex:1;background:var(--primary);height:40%;border-radius:4px"></i>
+      <i style="flex:1;background:var(--primary);height:70%;border-radius:4px"></i>
+      <i style="flex:1;background:var(--primary);height:55%;border-radius:4px"></i>
+      <i style="flex:1;background:var(--primary);height:85%;border-radius:4px"></i>
+    </div></div>
+  <div class="card"><div class="small">Trend RPE</div><div class="title" style="font-size:15px">≈ 6.3 — in banda</div></div>
+  <div class="card"><div class="small">Tasso completamento · tipo sessione</div>
+    <div class="meta" style="margin-top:6px">Storico completo disponibile</div></div>
+  <div class="nav"><div><span class="ico">▭</span>Sessions</div><div><span class="ico">☀</span>Today</div>
+    <div><span class="ico">◎</span>Social</div><div class="on"><span class="ico">▥</span>Progress</div></div>
+</div>
+
+<!-- SIGN IN (v2) -->
+<div class="phone" style="justify-content:flex-start"><div class="label">SignInSheet</div><div class="tag v2">v2</div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px">
+    <div class="h1">Accedi (opzionale)</div>
+    <div class="small" style="margin-bottom:18px">Serve solo per backup, social e Pro. L'app resta completa senza account.</div>
+    <button class="btn alt"> Continua con Apple</button>
+    <button class="btn alt">G  Continua con Google</button>
+    <button class="btn alt">✉  Email</button>
+    <button class="btn ghost" style="margin-top:6px">Continua senza account</button>
+  </div>
+</div>
+
+<!-- ACCOUNT / BACKUP (v2) -->
+<div class="phone" style="justify-content:flex-start"><div class="label">Account & Backup</div><div class="tag v2">v2</div>
+  <div class="row" style="border:none;padding-top:0"><span class="chev" style="margin-left:0">‹</span><div class="h1" style="font-size:18px">Account</div></div>
+  <div class="card" style="display:flex;align-items:center;gap:12px">
+    <div style="width:36px;height:36px;border-radius:999px;background:#2b3142;display:flex;align-items:center;justify-content:center">P</div>
+    <div><div class="title" style="font-size:15px">paolo</div><div class="meta">limonta.paolo@icloud.com</div></div></div>
+  <div class="row"><div><div style="font-size:14px">Backup cifrato E2E</div><div class="meta">Chiave detenuta da te · biometria mai leggibile sul server</div></div><div class="toggle"></div></div>
+  <div class="row"><div style="font-size:14px">Ripristina su questo dispositivo</div><div class="chev">›</div></div>
+  <div class="row"><div style="font-size:14px">Esporta i miei dati (JSON)</div><div class="chev">›</div></div>
+  <div class="row"><div style="font-size:14px">Visibilità profilo</div><div class="meta" style="margin-left:auto">Privato</div></div>
+  <div style="flex:1"></div>
+  <button class="btn danger" style="margin-bottom:6px">Elimina account e dati</button>
+  <div class="meta" style="text-align:center;margin-bottom:18px">Rimozione immediata · purge ≤ 30 giorni</div>
+</div>
+
+<!-- TABLET TODAY master-detail (v1/v2) -->
+<div class="tablet"><div class="label" style="top:-26px">Tablet — Today (master-detail)</div><div class="tag" style="top:-26px">resp.</div>
+  <div class="rail">
+    <div><span class="ico">▭</span>Sessions</div>
+    <div class="on"><span class="ico">☀</span>Today</div>
+    <div><span class="ico">◎</span>Social</div>
+    <div><span class="ico">▥</span>Progress</div>
+  </div>
+  <div class="tcols">
+    <div class="tleft"><div class="hero">
+      <span class="pill">● Attivo</span>
+      <div class="title" style="font-size:20px;margin:12px 0 4px">Mobilità mattutina</div>
+      <div class="meta">5 min · Indoor · Bassa</div>
+      <div class="small" style="margin:12px 0">Sonno breve + HR a riposo elevata. Partiamo piano.</div>
+      <button class="btn" style="width:auto;padding:12px 22px">Inizia sessione</button>
+    </div></div>
+    <div class="tright">
+      <div style="display:flex;align-items:center;margin-bottom:10px"><div class="seclabel" style="margin:0">PROSSIME</div>
+        <div style="margin-left:auto;width:30px;height:30px;border-radius:999px;background:conic-gradient(var(--primary) 0 33%,#2a2f3d 33%);display:flex;align-items:center;justify-content:center"><span style="width:21px;height:21px;border-radius:999px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:9px">1/3</span></div></div>
+      <div class="card" style="padding:12px"><div style="font-size:13px">Respirazione</div><div class="meta">3 min</div></div>
+      <div class="card" style="padding:12px;margin-bottom:0"><div style="font-size:13px">Cardio serale</div><div class="meta">7 min</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- WEAR session -->
+<div class="wear"><div class="lbl2">WearOS — sessione attiva</div>
+  <div style="color:var(--coral);font-size:13px;margin-bottom:6px">♥ 112</div>
+  <div class="mono" style="font-size:34px">02:14</div>
+  <div style="font-size:14px;margin-top:8px">Cerchi con le anche</div>
+</div>
+
+<!-- WEAR shared mirror -->
+<div class="wear"><div class="lbl2">WearOS — shared (mirror owner)</div>
+  <span class="pill" style="margin-bottom:8px">di gruppo</span>
+  <div class="mono" style="font-size:30px">01:40</div>
+  <div style="font-size:13px;margin-top:6px">Box breathing</div>
+  <div class="meta" style="margin-top:6px">Marco &amp; Giulia</div>
+</div>
+
+</body>
+</html>

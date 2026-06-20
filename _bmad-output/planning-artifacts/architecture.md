@@ -3,12 +3,22 @@ stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 lastStep: 8
 status: 'complete'
 completedAt: '2026-03-27'
+v2Rework:
+  startedAt: '2026-06-20'
+  completedAt: '2026-06-20'
+  stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
+  status: 'complete'
+  backendPlatform: 'Supabase (EU region)'
 inputDocuments:
   - "_bmad-output/planning-artifacts/product-brief-Flutter_PulseCoach.md"
   - "_bmad-output/planning-artifacts/product-brief-Flutter_PulseCoach-distillate.md"
   - "_bmad-output/planning-artifacts/prd.md"
   - "_bmad-output/planning-artifacts/prd-validation-report.md"
   - "_bmad-output/planning-artifacts/ux-design-specification.md"
+  - "_bmad-output/planning-artifacts/addendum.md"
+  - "_bmad-output/planning-artifacts/.decision-log.md"
+  - "_bmad-output/planning-artifacts/ux-designs/ux-Flutter_PulseCoach-2026-06-20/DESIGN.md"
+  - "_bmad-output/planning-artifacts/ux-designs/ux-Flutter_PulseCoach-2026-06-20/EXPERIENCE.md"
   - "docs/REQUIREMENTS.md"
   - "docs/FLUTTER.md"
 workflowType: 'architecture'
@@ -89,6 +99,61 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 6. **Privacy Boundary** — No biometric data crosses the device boundary. Location is city-level only. This constraint shapes every data flow touching health or sensor data.
 
 7. **AI Decision Traceability** — Every recommendation must produce a structured explanation. The AI stack must expose decision context for both UX display and debug/export features.
+
+---
+
+### Requirements Overview — v2 Additions (Accounts, Subscriptions & Social)
+
+> v2 lifts the defining v1 constraint ("no cloud backend"). Cloud is **optional and additive** — the v1 free, offline, account-free experience is preserved as the free tier and must never regress.
+
+**v2 Functional Requirements (FR53–FR77):**
+
+| Category | FRs | Architectural Impact |
+|---|---|---|
+| Navigation Fix | FR53 | Pure presentation/routing: explicit return affordance from drawer secondaries to primaries. No backend. Ship-first (v2.0) |
+| Accounts & Auth | FR54–FR57 | New auth subsystem: email+password, Sign in with Apple, Google (OIDC), secure token storage. Optional account; app fully usable without it. E2E-encrypted, user-keyed backup/restore of profile + history + personalization state |
+| Subscriptions (Pro) | FR58–FR62 | IAP integration (App/Play Store billing), entitlement/gating layer, restore/cancel, grandfathering requiring pre-/post-v2 user discrimination, free/Pro Progress boundary |
+| Social — Friends | FR63–FR67 | Cloud social graph: unique handle, friend requests, activity feed, comparison. Privacy-by-default (private until opt-in) |
+| Social — Shared Live Sessions | FR68–FR73, FR77 | Real-time multi-participant transport (net-new N-way relay, ~1s sync), join-code/QR pairing, momentary co-location check, deterministic group-adaptation rules on the on-device engine, per-participant RPE. In-app account deletion (store-blocking) |
+| Social — Leaderboard & Scoring | FR74–FR76 | Server-maintained friends leaderboard, shared-session point bonus, ranking-only exposure |
+
+**v2 Non-Functional Requirements (NFR27–NFR37):**
+
+| Category | Key NFRs | Architectural Driver |
+|---|---|---|
+| Auth & Account Security | NFR27, NFR28 | Hashed passwords, OAuth/OIDC, TLS, secure token storage; on-device personalization preserved, no cross-user training |
+| Privacy & Compliance (cloud) | NFR29, NFR30, NFR33, NFR35, NFR36, NFR37 | Visibility tiers, GDPR export + erasure cascade (≤30d), momentary non-stored co-location, unbundled per-purpose consent, EU data residency, minimum age (≈16) |
+| Real-Time & Reliability | NFR31, NFR34 | ~1s sync across participants, drop-out tolerance; social degrades gracefully — v1 core stays fully offline-first regardless of account/sub state |
+| Store & Billing | NFR32 | Platform IAP, Sign in with Apple parity, privacy nutrition labels |
+
+**Scale & Complexity — revised for v2:**
+
+- Primary domain: Cross-platform mobile **+ optional cloud backend** (client-server with real-time)
+- Complexity level: **High → Enterprise-leaning** (multi-tenant data, federated auth, payments, real-time, cross-border compliance)
+- New architectural components (v2): ~12–18 (auth subsystem, backend services, sync/backup, IAP/entitlements, social graph store, real-time relay, group-engine adapter, consent/erasure machinery)
+
+### Technical Constraints & Dependencies — v2 Additions
+
+| Constraint | Source | Impact |
+|---|---|---|
+| "No cloud backend" is reversed | v2 watershed | The single hardest-set v1 constraint is lifted; cloud is optional and additive, never required for the free core |
+| EU data residency for EU users | NFR36 | Backend provider/region choice constrained (open item — resolved in Core Decisions) |
+| Platform IAP mandatory for Pro | NFR32, store policy | No third-party payment rails for the digital subscription |
+| E2E encryption with user-held key | FR57, NFR28 | Backup is an opaque blob server-side; key management UX + recovery is a design problem |
+| ~1s real-time sync, N participants | NFR31 | Net-new relay — does NOT inherit the 1:1 phone↔watch bridge |
+| Grandfathering pre-/post-v2 installs | FR61 | System must durably mark install cohort |
+
+### Cross-Cutting Concerns — v2 Additions
+
+8. **Free/Pro/Account Gating** — three-way capability matrix (account-free free / signed-in free / Pro) threaded through routing, feature access, and UI. Must never degrade the v1 free path.
+
+9. **Cloud Privacy Boundary** — distinct from v1's device boundary: opt-in, own-account-scoped, per-purpose consent, biometric-derived state E2E-encrypted and never server-readable. Erasure must cascade across friends' feeds/leaderboard.
+
+10. **Real-Time Consistency** — synchronized session state across N devices with drop-out tolerance; new failure modes (partial sync, participant loss) the offline-first v1 never had.
+
+11. **Group-Constraint Adaptation** — the on-device AI engine must accept a group constraint (deterministic min/lowest/union/shortest rules, FR70) layered on existing per-user FR9 safety — reuse, not a parallel engine.
+
+12. **Store Compliance** — IAP, in-app account deletion, Sign in with Apple parity, privacy labels become hard gates for App Store publication (new for v2).
 
 ## Starter Template Evaluation
 
@@ -198,6 +263,25 @@ flutter create --platforms=android,ios --org com.pulsecoach pulse_coach
 
 **Note:** Project initialization using this command should be the first implementation story. Exact package versions will be pinned in `pubspec.yaml` at initialization time.
 
+---
+
+### Starter Template Evaluation — v2 Addendum
+
+**Client starter: unchanged.** The v1 selection (Option 3 — Manual Clean Architecture from `flutter create`) stands and is already implemented through Epic 5–14. v2's new UI surfaces (SignInSheet, ProUpsellSheet, social components) extend the existing feature-first structure — no new client starter is warranted.
+
+**Backend scaffold: deferred to Core Architectural Decisions.** v2 introduces a backend for the first time, but the scaffold/init command is a direct function of the platform choice, which is an open item resolved in the Core Decisions section. Candidate platforms and their corresponding scaffolds (evaluated there, with current versions verified at decision time):
+
+| Candidate backend platform | Scaffold / init path | Server code to own? |
+|---|---|---|
+| Firebase (BaaS, Google) | No server scaffold; SDK + Firebase console/CLI config | No (managed) |
+| Supabase (BaaS, Postgres OSS) | `supabase init` (CLI), EU region project | Minimal (edge functions, SQL/RLS) |
+| Serverpod (Dart server framework) | `serverpod create` | Yes (full Dart server) |
+| Custom (Node/Nest, etc.) | Framework CLI (`nest new`, …) | Yes (full server) |
+
+The selected platform's exact scaffold command and pinned versions are web-verified and recorded in the Core Architectural Decisions section once the choice is made.
+
+**Client-side v2 dependencies (new packages, versions to pin at decision time):** the auth/IAP/realtime client libraries (e.g. `sign_in_with_apple`, `google_sign_in`, an IAP plugin such as `in_app_purchase` or `purchases_flutter`, a realtime/websocket client, secure storage like `flutter_secure_storage`, and an E2E-crypto lib) are platform-dependent and selected alongside the backend platform in Core Decisions.
+
 ## Core Architectural Decisions
 
 ### Decision Priority Analysis
@@ -284,6 +368,101 @@ flutter create --platforms=android,ios --org com.pulsecoach pulse_coach
 - `dio` interceptors depend on drift cache tables being defined
 - Bloc states depend on `freezed` entity equality for proper rebuild behavior
 - `go_router` shell routes depend on responsive layout decision (NavigationBar vs NavigationRail)
+
+---
+
+### Core Architectural Decisions — v2 Additions (Cloud, Accounts & Social)
+
+> **Guiding principle:** v2 cloud is additive and optional. The v1 on-device stack (drift, on-device AI, offline-first) remains the source of truth for the free core. Supabase is the cloud backend; nothing below blocks the account-free free path.
+
+**v2 Critical Decisions (block v2 implementation):**
+- Backend platform: **Supabase** (managed BaaS, Postgres), EU region `eu-central-1` (Frankfurt) — NFR36
+- Auth: **Supabase Auth** (email/password, Sign in with Apple, Google OIDC) — NFR27, FR54–55
+- Cloud data model: **Postgres + Row-Level Security**; local **drift stays canonical** for v1 core, cloud is opt-in mirror/social store
+- Real-time transport: **Supabase Realtime Broadcast + Presence** for shared sessions — FR71/NFR31
+- E2E backup: **client-side encryption, user-held key**; opaque blob in Supabase Storage — FR57/NFR28
+- Billing: **platform IAP** via `purchases_flutter` (RevenueCat) for entitlements + grandfathering — FR58–62, NFR32
+
+**v2 Important Decisions:**
+- Group-adaptation: deterministic `GroupConstraint` layered on the existing on-device engine (reuse, not parallel) — FR70
+- GDPR machinery: FK `ON DELETE CASCADE` + Edge Function for erasure/export — NFR30
+- Consent: per-purpose records, unbundled, independently withdrawable — NFR35
+
+**v2 Deferred / Open:**
+- Exact Pro price/tiers (business); point formula + anti-abuse (design); WearOS participant-vs-mirror (`[ASSUMPTION]` mirror); self-host-in-EU migration (only if CLOUD Act posture must harden)
+
+#### Data Architecture — v2
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Cloud database | Supabase Postgres (EU region) | Relational model fits the social graph; RLS enforces privacy declaratively (NFR29) |
+| Source of truth | Local drift stays canonical for profile/sessions/AI state; cloud is an opt-in backup + social projection | Preserves offline-first v1 (NFR34); cloud never required for the free core |
+| Sync model | One-way opt-in backup/restore of own data (FR57) + purpose-scoped social writes (shared completions, leaderboard points). No silent cross-device live sync of personal history in v2 | Keeps scope bounded; avoids conflict-resolution complexity not required by PRD |
+| Social schema | `profiles`, `friendships`, `shared_sessions`, `session_participants`, `activity_feed`, `leaderboard_entries`, `consents` | Normalized; FKs enable cascade erasure (NFR30) |
+| Visibility enforcement | RLS policies = `private` (default) / `friends-only` / per-item; never friend-of-friend | NFR29 enforced at the DB, not the client |
+| Install cohort | Durable `installCohort` (pre-v2 / post-v2) in drift and mirrored to `profiles` on sign-in | Grandfathering (FR61) must survive reinstall for signed-in users |
+
+#### Authentication & Security — v2
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Auth provider | Supabase Auth | Email/password, Apple, Google in one provider; OIDC/OAuth handled (NFR27) |
+| Client packages | `sign_in_with_apple`, `google_sign_in`, `supabase_flutter` | Native sign-in sheets; Apple parity required by store (NFR32) |
+| Token storage | `flutter_secure_storage` (Keychain / Keystore) | Secure refresh-token persistence (NFR27) |
+| Account optionality | Auth gates only backup + social + Pro; v1 core never requires it | FR56, preserves NFR11 as the free tier |
+| E2E backup encryption | Client encrypts payload with a user-held key (passphrase-derived via Argon2/`cryptography` pkg) before upload; server stores ciphertext blob only | Biometric-derived AI state never server-readable (NFR28, resolves Art. 9 — FR57) |
+| Key recovery | User-held recovery phrase; lost key = lost backup (documented, by design) | No server-side key escrow → no readable-server path |
+
+#### API & Communication Patterns — v2
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Cloud access | `supabase_flutter` (PostgREST + RPC) behind v2 repositories returning `Either<Failure, T>` | Same dartz error contract as v1; cloud failures degrade gracefully (NFR34) |
+| Shared-session real-time | Supabase Realtime Broadcast (ephemeral step+timer events) + Presence (lobby/ready/drop-out) | ~1s sync, N participants, no persistence of live state (FR71/NFR31/NFR33) |
+| Session ownership | One participant is host; host advances steps, broadcast fans out; drop-out tolerated via Presence | NFR31 "a participant dropping out does not interrupt others" |
+| Co-location check | Momentary `geolocator` read at join → boolean only, not stored, soft/non-blocking | NFR33; reuses existing v1 `geolocator` dependency |
+| Server-side logic | Supabase Edge Functions: IAP receipt validation, erasure cascade, data export | Keep secrets/validation off-client |
+| IAP entitlements | `purchases_flutter` (RevenueCat) → entitlement cached locally; server validates receipts | Cross-platform IAP + grandfathering + restore (FR58–60) with less custom code; `in_app_purchase` is the no-dependency fallback |
+
+#### Frontend Architecture — v2
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| New feature modules | `features/auth/`, `features/subscription/`, `features/social/` (friends, feed, leaderboard, shared_session) under existing Clean Architecture | Consistent with v1 feature-first structure |
+| State management | Bloc for cloud/domain flows (`AuthBloc`, `SubscriptionBloc`, `SharedSessionBloc`, `FriendsBloc`); Cubit for UI-only (`VisibilityCubit`) | Same Bloc/Cubit split rule as v1 |
+| Gating | `EntitlementGate` (account-free free / signed-in free / Pro) consulted by router + widgets; contextual silent `ProUpsellSheet` on locked-feature tap | FR59/FR62; matches DESIGN "no persistent paywall" |
+| Navigation fix (FR53) | Drawer secondaries (Settings/Profile/Privacy/Debug) get an explicit return affordance to primaries via `go_router` | Pure routing; ship-first (v2.0) |
+| New UI components | SignInSheet, ProUpsellSheet, FriendRow, ActivityFeedCard, LeaderboardRow, SharedSessionLobby, JoinCodeCard, VisibilityTierSelector | Per DESIGN.md; reuse theme tokens, no new visual temperature |
+| Group engine adapter | `GroupConstraint` (min intensity cap / lowest level / union of exclusions / shortest duration) passed into the existing on-device engine; per-user FR9 safety still applies | FR70 deterministic, testable; reuse not rewrite |
+
+#### Infrastructure & Deployment — v2
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Hosting | Supabase managed project, EU region | NFR36 data residency |
+| Migrations | Supabase CLI (`supabase init`, SQL migrations in repo, RLS in version control) | Reviewable, reproducible schema + policies |
+| Secrets | Supabase keys via `--dart-define` / secure config (publishable `sb_publishable_*` + secret `sb_secret_*`); no secrets in git | Legacy anon/service keys deprecated end-2026; aligns with security rule |
+| CI/CD | Extend GitHub Actions: analyze + test + (new) Edge Function lint; client unaffected when offline | Build on existing pipeline |
+| Compliance gates | In-app account deletion (FR77), Sign in with Apple parity, privacy nutrition labels before store submit | Store-blocking (NFR32) |
+| Erasure/export | Edge Function: cascade delete across feeds/leaderboard/friendships (visible removal immediate, backend purge ≤30d) + portable JSON export | NFR30 |
+
+#### Decision Impact Analysis — v2
+
+**Implementation sequence (mirrors PRD phasing v2.0 → v2.5):**
+1. **v2.0** Navigation fix (FR53) — pure client, no backend
+2. **v2.1** Supabase project (EU) + Auth + `EntitlementGate` skeleton + E2E backup/restore + in-app account deletion (FR54–57, FR77)
+3. **v2.2** IAP/Pro + Progress free/Pro gating + grandfathering cohort (FR58–62)
+4. **v2.3** Social graph + RLS visibility tiers + feed/comparison (FR63–67, NFR29)
+5. **v2.4a** Realtime Broadcast/Presence transport (FR71)
+6. **v2.4b** Group engine adapter + co-location join (FR68–70, FR72–73)
+7. **v2.5** Leaderboard + scoring (FR74–76) — honor counter-metrics
+
+**Cross-component dependencies:**
+- RLS policies depend on the `friendships` model → must precede social reads
+- `EntitlementGate` depends on IAP + install-cohort → precedes Pro gating
+- Realtime transport (v2.4a) is a hard prerequisite for the group engine join (v2.4b)
+- E2E key management must exist before any backup write
+- On-device engine `GroupConstraint` interface is the only AI-layer change — keeps the bandit/state-machine otherwise untouched
 
 ## Implementation Patterns & Consistency Rules
 
@@ -542,6 +721,116 @@ Rule: never show error UI for expected degradation. Sensor unavailable, API offl
 | Flutter imports in domain/AI layer | Pure Dart only — `import 'package:flutter/...';` forbidden |
 | Manual `getIt.registerSingleton(...)` calls | `@singleton` annotation on class |
 | Spinner/CircularProgressIndicator for loading | Shimmer placeholder matching content layout |
+
+---
+
+### Implementation Patterns & Consistency Rules — v2 Additions
+
+> New conflict points introduced by cloud/auth/social/IAP/real-time code. The v1 patterns above still apply unchanged (feature-first folders, freezed states, `Either<Failure,T>`, shimmer loading, on-device AI isolation).
+
+#### Naming Patterns — v2
+
+**Supabase / Postgres naming:**
+
+| Element | Convention | Example |
+|---|---|---|
+| Tables | `snake_case`, plural | `profiles`, `friendships`, `session_participants` |
+| Columns | `snake_case` | `created_at`, `display_handle`, `visibility_tier` |
+| Primary key | `id` (uuid) | `id uuid default gen_random_uuid()` |
+| Foreign keys | `{singular}_id` | `owner_id`, `friend_id`, `shared_session_id` |
+| RLS policies | `{table}_{action}_{principal}` | `profiles_select_friends`, `feed_insert_owner` |
+| RPC / Edge Functions | `snake_case` verb phrase | `delete_account_cascade`, `validate_receipt`, `export_user_data` |
+| Realtime channel | `shared-session:{sessionId}` | kebab namespace + colon + uuid |
+| Broadcast event | `{noun}_{pastVerb}` | `step_advanced`, `participant_joined`, `session_ended` |
+
+**Client mapping rule (unchanged boundary):** Supabase JSON is `snake_case`; v2 DTOs map to camelCase domain entities at the repository boundary via `@JsonKey(name: 'snake_case')` + freezed — DTOs never leave the data layer (same rule as v1 ExerciseDB/Open-Meteo).
+
+#### Structure Patterns — v2
+
+New feature modules follow the exact v1 feature-first structure (`data/{datasources,models,repositories}`, `domain/{entities,repositories,usecases}`, `presentation/{bloc,pages,widgets}`):
+
+```
+lib/features/
+├── auth/            # sign-in, account, E2E backup/restore
+├── subscription/    # IAP, entitlements, Pro gating
+└── social/
+    ├── friends/
+    ├── feed/
+    ├── leaderboard/
+    └── shared_session/   # lobby, join, realtime sync
+```
+
+- Supabase client + cloud datasources live in `lib/core/cloud/` (`supabase_client.dart`, `realtime_gateway.dart`) — analogous to `lib/core/database/` for drift. Single Supabase client, registered `@singleton`.
+- Edge Functions / SQL migrations live outside Flutter, in `supabase/` at repo root (`supabase/functions/`, `supabase/migrations/`) — version-controlled, reviewed in CI.
+- Tests mirror as v1: `test/data/social/...`, `test/bloc/auth/...`; group-engine rules tested as pure-Dart in `test/domain/ai/group_constraint_test.dart` (deterministic, exhaustive — same discipline as v1 FR9 safety rules).
+
+#### Format Patterns — v2
+
+**New Failure types** (extend the v1 `Failure` hierarchy, same structural-equality rule):
+
+```dart
+class AuthFailure extends Failure { final String message; }
+class SubscriptionFailure extends Failure { final String message; }
+class SyncFailure extends Failure { final String message; }
+class RealtimeFailure extends Failure { final String message; }
+```
+
+- Cloud datasources throw (`AuthException`, `SupabaseException`) → repositories catch → `Either<Failure,T>` (identical layering to v1).
+- DateTime over the wire: ISO 8601 UTC strings (Supabase `timestamptz`); never integer timestamps in cloud JSON (drift-only convention stays local).
+- E2E backup payload: ciphertext is an opaque base64 blob + non-secret metadata (`schemaVersion`, `createdAt`); no plaintext personal field is ever in a cloud row for backup.
+
+#### Communication Patterns — v2
+
+- New Blocs follow the freezed-union rule (`initial/loading/loaded/error` minimum): `AuthState`, `SubscriptionState`, `FriendsState`, `SharedSessionState`. Events past-tense (`SignInRequested`, `FriendRequestAccepted`, `StepAdvanced`).
+- Real-time inbound: the `RealtimeGateway` exposes a Dart `Stream` of typed broadcast events; `SharedSessionBloc` subscribes (same pattern as v1 `SessionLogsDao.watchLogsForPlan` stream subscription). UI never touches the Supabase channel directly.
+- Host authority: only the host emits `step_advanced`; followers render received state — they never advance locally (prevents divergence, NFR31).
+
+#### Process Patterns — v2
+
+**Three-tier gating (the v2 cross-cutting rule):**
+
+```
+EntitlementGate.check(feature)
+  ├── account-free free  → v1 core always allowed
+  ├── signed-in free     → + backup/restore, set handle, view leaderboard ranking
+  └── Pro (active sub)   → + friends, feed, shared sessions, scoring, full Progress history
+                            (grandfathered pre-v2 installs → full Progress history free)
+```
+- Locked-feature tap → contextual silent `ProUpsellSheet` (never a persistent banner — DESIGN rule).
+
+**Cloud graceful degradation (extends the v1 pattern):**
+```
+Cloud op (auth/social/sync)
+  ├── Online + entitled → execute
+  ├── Offline → queue if it's an own-data write; otherwise show calm "non disponibile offline"
+  └── v1 core path NEVER blocked by cloud/account/sub state (NFR34)
+```
+
+**Consent-before-write:** every cloud personal-data write checks the relevant per-purpose `consents` record first (NFR35). No consent → no write, no silent fallback to sending data.
+
+**E2E rule:** personalization/biometric-derived state is encrypted client-side before any upload; the plaintext never reaches a Supabase row (NFR28). Agents must never add a "convenience" plaintext column for it.
+
+#### Enforcement Guidelines — v2 (additions)
+
+**All AI Agents MUST (v2):**
+9. Map Supabase `snake_case` JSON → camelCase domain at the repository boundary; never leak Supabase DTOs past `data/`.
+10. Enforce visibility via RLS at the DB; client checks are convenience only, never the security boundary (NFR29).
+11. Route all feature access through `EntitlementGate`; never hardcode a Pro check inline in a widget.
+12. Encrypt personal/biometric backup payloads client-side before upload; never persist them as plaintext cloud columns (NFR28).
+13. Keep the v1 free/offline path reachable with zero cloud calls; never make a cloud/account/sub call a prerequisite for core flows (NFR34).
+14. Test group-adaptation rules (FR70) as pure-Dart, exhaustively (min/lowest/union/shortest + per-user FR9 override).
+
+**v2 Anti-Patterns:**
+
+| Anti-Pattern | Correct Pattern |
+|---|---|
+| Client-side `if (isFriend)` as the only visibility guard | RLS policy at the DB; client is convenience |
+| Plaintext bandit/RPE state in a Supabase column | Client-side E2E ciphertext blob |
+| Follower advances session step locally | Only host emits `step_advanced`; followers render |
+| Inline `if (user.isPro)` scattered in widgets | Single `EntitlementGate` consulted by router + widgets |
+| Blocking the Today flow on a sign-in/sync call | v1 core runs with zero cloud dependency |
+| Storing precise GPS for co-location | Momentary boolean only, not persisted (NFR33) |
+| Cloud write without consent check | Check `consents` per purpose before any personal-data write |
 
 ## Project Structure & Boundaries
 
@@ -1003,6 +1292,143 @@ DailyPlanBloc re-evaluates → next hero
 
 ---
 
+### Project Structure & Boundaries — v2 Additions
+
+**New directories (extend the existing tree):**
+
+```
+pulse_coach/
+├── lib/
+│   ├── core/
+│   │   └── cloud/                          # NEW — Supabase boundary (mirrors core/database/)
+│   │       ├── supabase_client.dart        # @singleton; init with EU URL + publishable key
+│   │       ├── realtime_gateway.dart       # Broadcast/Presence → typed Dart Stream
+│   │       ├── entitlement_gate.dart        # account-free / signed-in / Pro resolver
+│   │       └── crypto/
+│   │           └── e2e_backup_codec.dart   # encrypt/decrypt user-keyed backup blob
+│   │
+│   ├── features/
+│   │   ├── auth/                            # NEW — FR54–57, FR77
+│   │   │   ├── data/{datasources,models,repositories}/
+│   │   │   ├── domain/{entities,repositories,usecases}/   # sign_in, sign_out, backup, restore, delete_account
+│   │   │   └── presentation/
+│   │   │       ├── bloc/ (auth_bloc, auth_event, auth_state)
+│   │   │       ├── pages/ (sign_in_page, account_page)
+│   │   │       └── widgets/ (sign_in_sheet, backup_settings)
+│   │   │
+│   │   ├── subscription/                    # NEW — FR58–62
+│   │   │   ├── data/ (revenuecat datasource, entitlement repo impl)
+│   │   │   ├── domain/ (entitlement, usecases: purchase, restore, check_entitlement)
+│   │   │   └── presentation/ (subscription_bloc, paywall_page, widgets/pro_upsell_sheet)
+│   │   │
+│   │   └── social/                          # NEW — FR63–76
+│   │       ├── friends/    (data/domain/presentation — friend_row, add_friend)
+│   │       ├── feed/       (activity_feed_card, comparison)
+│   │       ├── leaderboard/(leaderboard_row, scoring)
+│   │       └── shared_session/
+│   │           ├── data/ (realtime datasource, shared_session repo impl)
+│   │           ├── domain/ (group_constraint, usecases: create/join/advance)
+│   │           └── presentation/ (shared_session_bloc, lobby_page, widgets/join_code_card, visibility_tier_selector)
+│   │
+│   └── ai/
+│       └── safety/
+│           └── group_constraint_resolver.dart   # NEW — FR70 deterministic group rules (pure Dart)
+│
+├── supabase/                                # NEW — backend artifacts, outside Flutter
+│   ├── config.toml
+│   ├── migrations/                          # SQL schema + RLS policies (version-controlled)
+│   │   ├── 0001_profiles_friendships.sql
+│   │   ├── 0002_shared_sessions.sql
+│   │   ├── 0003_leaderboard.sql
+│   │   └── 0004_consents.sql
+│   └── functions/                           # Edge Functions (Deno/TS)
+│       ├── validate_receipt/
+│       ├── delete_account_cascade/
+│       └── export_user_data/
+│
+├── test/
+│   ├── domain/ai/
+│   │   └── group_constraint_resolver_test.dart   # NEW — exhaustive FR70 (pure Dart)
+│   ├── data/
+│   │   ├── auth/ (auth_repository_impl_test, e2e_backup_codec_test)
+│   │   └── social/ (shared_session_repository_impl_test, friends_repository_impl_test)
+│   └── bloc/
+│       ├── auth_bloc_test.dart
+│       ├── subscription_bloc_test.dart
+│       └── shared_session_bloc_test.dart
+```
+
+**v2 Architectural Boundaries:**
+
+- New layer: CLOUD sits beside CORE — `lib/core/cloud/` is the only place that imports `supabase_flutter`. Repositories depend on cloud datasources, never on the Supabase client directly. Same dependency-inversion rule as drift.
+- Import rules (extend the v1 table):
+
+| From | Can Import | Cannot Import |
+|---|---|---|
+| Cloud (`core/cloud/`) | Dart/Flutter + `supabase_flutter` | Features, Domain, Data |
+| Features (auth/social/subscription) | Domain, Core (incl. Cloud gateway), Shared widgets | Data of other features, raw Supabase client |
+| AI `group_constraint_resolver` | Nothing (pure Dart) | Flutter, Supabase, Data |
+
+- Security boundary = RLS at Supabase, not the client. The client `EntitlementGate` and visibility checks are convenience/UX only.
+- External integration boundaries (additions):
+
+| Integration | Boundary File | Direction |
+|---|---|---|
+| Supabase Auth | `auth_remote_data_source.dart` | Bidirectional |
+| Supabase Postgres (social) | `*_remote_data_source.dart` (per social feature) | Bidirectional via PostgREST |
+| Supabase Realtime | `realtime_gateway.dart` | Bidirectional (broadcast/presence) |
+| RevenueCat / Store IAP | `subscription_remote_data_source.dart` | Bidirectional |
+| Supabase Storage (E2E backup) | `e2e_backup_codec.dart` + auth datasource | Outbound (ciphertext only) |
+
+**Requirements → Structure Mapping (v2):**
+
+| Feature | FRs Covered | Directory |
+|---|---|---|
+| Navigation fix | FR53 | `lib/core/routing/app_router.dart` |
+| Accounts & Auth & Backup | FR54–57, FR77 | `lib/features/auth/` + `core/cloud/crypto/` |
+| Subscriptions / Pro gating | FR58–62 | `lib/features/subscription/` + `core/cloud/entitlement_gate.dart` |
+| Friends & Feed | FR63–67 | `lib/features/social/{friends,feed}/` |
+| Shared live sessions | FR68–73 | `lib/features/social/shared_session/` + `core/cloud/realtime_gateway.dart` |
+| Group adaptation | FR70 | `lib/ai/safety/group_constraint_resolver.dart` |
+| Leaderboard & scoring | FR74–76 | `lib/features/social/leaderboard/` |
+| Privacy/consent/erasure | NFR29/30/35 | `supabase/migrations/` (RLS) + `supabase/functions/` |
+
+**Data Flow — Shared Live Session (v2):**
+
+```
+Host taps "Shared session"
+   │
+   ▼
+SharedSessionBloc ── CreateSharedSession → shared_sessions row + JoinCodeCard (code+QR)
+   │
+Friend scans QR → JoinSharedSession
+   │   └─ momentary geolocator check → boolean co-located (not stored)
+   ▼
+RealtimeGateway: channel `shared-session:{id}` (Presence = lobby)
+   │
+GroupConstraintResolver (pure Dart): min cap / lowest level / union exclusions / shortest duration
+   │   └─ each participant's FR9 safety still applies
+   ▼
+One shared plan + adaptation explanation → SharedSessionLobby
+   │
+Host taps Start → broadcast `step_advanced` ──▶ all followers render (host authority)
+   │
+Each participant completes → own RPE → feeds ONLY own on-device bandit
+   │
+   ▼
+leaderboard_entries (+ shared-session point bonus) — Edge Function scoring
+```
+
+**Development Workflow (additions):**
+
+| Command | Purpose |
+|---|---|
+| `supabase init` / `supabase start` | Local backend + EU project scaffold |
+| `supabase migration new <name>` | New SQL migration (schema + RLS) |
+| `supabase functions deploy <fn>` | Deploy Edge Function |
+
+---
+
 ## Step 7 — Validation Report
 
 ### Validation Checklist
@@ -1045,3 +1471,87 @@ DailyPlanBloc re-evaluates → next hero
 **Implementation readiness:** The architecture provides sufficient detail for a developer to begin implementation without ambiguity on structure, patterns, naming conventions, or data flow. Code templates for Bloc states, repository patterns, DI registration, and error handling are provided.
 
 **Overall validation result: ✅ PASS** — Architecture is complete, coherent, and implementation-ready.
+
+---
+
+### Step 7 — Validation Report (v2 Addendum)
+
+#### v2 Requirements Coverage
+
+| Req | Covered by | Status |
+|---|---|---|
+| FR53 nav fix | `app_router.dart` return affordance | ✅ |
+| FR54–55 auth | Supabase Auth + `features/auth/` | ✅ |
+| FR56 account-optional | `EntitlementGate` account-free tier; NFR11 preserved | ✅ |
+| FR57 E2E backup/restore | `e2e_backup_codec.dart` + Supabase Storage (ciphertext) | ✅ |
+| FR58–60 IAP/restore/cancel | `features/subscription/` + RevenueCat + store | ✅ |
+| FR61 free/Pro Progress + grandfathering | `EntitlementGate` + `installCohort` (drift + profile) | ✅ |
+| FR62 gating seam | Handle/leaderboard-view free; social create Pro | ✅ |
+| FR63 handle + privacy-by-default | `profiles` + RLS default `private` | ✅ |
+| FR64–67 friends/feed/compare | `social/{friends,feed}/` + RLS | ✅ |
+| FR68–69 create/join + co-location | `shared_session/` + `realtime_gateway` + momentary `geolocator` | ✅ |
+| FR70 group adaptation | `group_constraint_resolver.dart` (pure Dart, deterministic) | ✅ |
+| FR71 real-time sync | Broadcast/Presence, host authority | ✅ |
+| FR72 per-participant RPE | each feeds own on-device bandit | ✅ |
+| FR73 shared-session gating | `EntitlementGate` + friends + location + age | ✅ |
+| FR74–76 leaderboard/scoring | `social/leaderboard/` + scoring Edge Function | ✅ |
+| FR77 in-app account deletion | `delete_account` usecase + `delete_account_cascade` fn | ✅ |
+| NFR27 auth security | OAuth/OIDC + `flutter_secure_storage` + TLS | ✅ |
+| NFR28 on-device + E2E | engine stays local; ciphertext-only upload | ✅ |
+| NFR29 visibility tiers | RLS at DB | ✅ |
+| NFR30 export + erasure cascade | `export_user_data` + `delete_account_cascade` (≤30d) | ✅ |
+| NFR31 ~1s sync + drop-out | Broadcast + Presence tolerance | ✅ |
+| NFR32 store/billing | IAP + Apple parity + privacy labels | ✅ |
+| NFR33 momentary co-location | boolean only, not stored | ✅ |
+| NFR34 offline-first preserved | v1 core never blocked by cloud | ✅ |
+| NFR35 unbundled consent | `consents` table + consent-before-write | ✅ |
+| NFR36 EU residency | Supabase EU region | ✅ |
+| NFR37 minimum age | confirmed at registration (auth) | ⚠️ Partial — see gaps |
+
+#### Coherence Assessment (v1 ↔ v2)
+
+- No contradiction with shipped v1. Cloud is additive; the on-device engine, drift-as-source-of-truth, offline-first, and the `Either<Failure,T>`/freezed/feature-first patterns are all reused, not replaced. The only AI-layer change is the additive `GroupConstraint` interface.
+- NFR reconciliations honored. NFR11/NFR7/NFR17/NFR8 conflicts resolved exactly as the PRD decision-log specifies (free tier = account-free; biometrics E2E/on-device; backup for signed-in; co-location momentary).
+- Privacy thesis intact. RLS + per-purpose consent + E2E + EU region + counter-metrics keep the v1 differentiator under the new social surface.
+
+#### v2 Gaps Found
+
+| Priority | Gap | Disposition |
+|---|---|---|
+| Minor | NFR37 min-age placement not yet a concrete component | Add age-confirmation step in `auth` registration usecase; final per-market value is a business open item |
+| Minor | Offline write queue for own-data social writes referenced in patterns but not a structural file | Reuse/extend existing `sync_manager.dart` (`core/database/`) for v2 cloud write queue |
+| Open (non-blocking) | Point formula + anti-abuse (FR75) | Deferred to design (PRD addendum) |
+| Open (non-blocking) | Pro price/tiers | Business decision |
+| Open (non-blocking) | WearOS shared-session participant vs mirror (FR71 `[ASSUMPTION]`) | Defaulted to mirror; confirm later |
+| Accepted risk | CLOUD Act exposure (US-corp BaaS) | Mitigated by E2E (biometric state) + EU region + minimal PII; self-host-in-EU exit path documented |
+
+#### v2 Completeness Checklist
+
+- [x] v2 context analyzed, scale re-assessed (High → Enterprise-leaning)
+- [x] v2 constraints + cross-cutting concerns mapped
+- [x] Backend platform decided (Supabase, EU) with versions web-verified
+- [x] Auth / data / real-time / IAP / E2E / infra decisions documented
+- [x] v2 naming / structure / format / communication / process patterns defined
+- [x] v2 directory tree, boundaries, requirements→structure mapping complete
+- [x] v2 data flow (shared session, E2E backup, IAP) specified
+- [ ] All v2 NFRs fully placed structurally — NFR37 age + offline queue are minor open placements
+
+#### v2 Readiness Assessment
+
+**Overall Status (v2): READY WITH MINOR GAPS** — no critical/blocking gap; the two minor placements (NFR37 age confirmation, cloud write queue) are small and localized, and the remaining open items are explicitly business/design deferrals from the PRD, not architecture holes.
+
+**Confidence:** High.
+
+**Key strengths:** additive design preserves shipped v1; RLS maps privacy declaratively; on-device AI + E2E keeps the privacy thesis; phasing (v2.0→v2.5) is independently shippable.
+
+**Implementation handoff — first v2 priority:** v2.0 navigation fix (pure client), then v2.1 Supabase EU project init (`supabase init`) + Auth + `EntitlementGate` skeleton + E2E backup + in-app account deletion.
+
+---
+
+## v2 Rework — Completion Note (2026-06-20)
+
+This document was reworked on 2026-06-20 to integrate the **v2 — Accounts, Subscriptions & Social** scope (PRD `v2-final`, addendum, and the 2026-06-20 UX `DESIGN.md`/`EXPERIENCE.md`). The original v1 architecture (2026-03-27, implemented through Epic 5–14) is preserved unchanged; every v2 section is additive and reconciles with the shipped v1 rather than overwriting it.
+
+**v2 decisions of record:** Supabase (EU region) backend · Supabase Auth (email/Apple/Google) · Postgres + RLS for the social graph and visibility tiers · Realtime Broadcast/Presence for co-located shared sessions · client-side E2E-encrypted, user-keyed backup · platform IAP (RevenueCat) with grandfathering · deterministic `GroupConstraint` layered on the existing on-device engine.
+
+**Status:** READY WITH MINOR GAPS — no blocking gaps; open items are PRD-deferred business/design decisions (Pro price, point formula, WearOS mirror, final min-age).

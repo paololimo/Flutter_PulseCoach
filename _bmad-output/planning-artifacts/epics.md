@@ -3,10 +3,15 @@ stepsCompleted:
   - "step-01-validate-prerequisites"
   - "step-02-extract-requirements"
   - "step-03-create-epics-and-stories"
+  - "step-03-v2-extend-epics"
 inputDocuments:
   - "_bmad-output/planning-artifacts/prd.md"
   - "_bmad-output/planning-artifacts/architecture.md"
   - "_bmad-output/planning-artifacts/ux-design-specification.md"
+  - "_bmad-output/planning-artifacts/ux-designs/ux-Flutter_PulseCoach-2026-06-20/DESIGN.md"
+  - "_bmad-output/planning-artifacts/ux-designs/ux-Flutter_PulseCoach-2026-06-20/EXPERIENCE.md"
+  - "_bmad-output/planning-artifacts/addendum.md"
+v2ExtendedAt: "2026-06-20"
 ---
 
 # Flutter_PulseCoach - Epic Breakdown
@@ -72,6 +77,49 @@ FR50: User can access device and sync settings
 FR51: User can view an AI Decision Log showing bandit decision history (state vector → action → reward) [MVP-if-time]
 FR52: User can export session history and AI decisions as CSV/JSON [MVP-if-time]
 
+### v2 Functional Requirements (FR53–FR77)
+
+**v2.0 — Navigation Fix**
+FR53: Every secondary screen reached from the drawer (Settings, Profile, Privacy, Debug) provides an explicit affordance to return to the primary screens without restarting the app
+
+**v2.1 — Accounts & Authentication**
+FR54: User can create a cloud account using email + password, Sign in with Apple, or Google Sign-In
+FR55: User can sign in, sign out, and reset a forgotten password (email flow)
+FR56: The app remains fully usable without an account — the v1 free, offline, local-only experience is preserved
+FR57: When signed in, the user can opt in to back up and restore their profile, session history, and personalization state; the backup is end-to-end encrypted with a user-held key (biometric-derived state never readable server-side)
+
+**v2.2 — Subscriptions (Pro)**
+FR58: User can view subscription plans and purchase a Pro subscription via platform store billing (App Store / Play Store IAP)
+FR59: System gates Pro-only features behind an active subscription; the free tier retains the full v1 core
+FR60: User can restore purchases and manage or cancel the subscription via the platform store
+FR61: Free tier limits Progress to the most recent session + current weekly goal; Pro unlocks full historical timeline + all charts. Pre-v2 installs (grandfathered) retain full Progress history for free
+FR62: Social features (FR64–FR75) require an active Pro subscription; setting a username/handle (FR63) and viewing leaderboard ranking (FR76) are free
+
+**v2.3 — Social: Friends & Feed**
+FR63: User can set a unique username/handle and a shareable profile; privacy by default (private until explicit opt-in)
+FR64: User can add friends by username, QR code/invite link, or phone contacts (with permission)
+FR65: User can send, accept, decline friend requests, and remove friends
+FR66: User can share completed-session progress with friends and view a friends activity feed
+FR67: User can compare their progress against friends'
+
+**v2.4a — Real-Time Transport (prerequisite for v2.4b)**
+FR71: During a shared live session, all participants see a synchronized session state (current step + timer) in real time; WearOS mirrors the owning participant's synchronized view
+
+**v2.4b — Social: Co-Located Live Shared Sessions**
+FR68: User can create a shared live session and invite co-located friends via a join code / QR
+FR69: A friend joins a shared session by entering the join code / scanning the QR in person; the system uses device location as a soft, momentary, non-stored co-location confirmation (non-blocking — NFR33)
+FR70: System generates a single shared session plan safe for every participant via deterministic group rules: intensity ceiling = min of participants' caps; fitness level = lowest present; movement exclusion = union of constraints; duration = shortest preference; each participant's v1 FR9 safety rules still apply on top
+FR72: Each participant submits their own post-session RPE; each rating feeds only that participant's own on-device personalization
+FR73: Shared sessions require: (a) active Pro subscription, (b) registered account, (c) the other participants in the user's friends list, (d) location enabled, and (e) minimum age NFR37
+
+**v2.5 — Social: Leaderboard & Scoring**
+FR74: System awards points for completed sessions and maintains a friends leaderboard
+FR75: Shared (co-located) sessions award more points than solo sessions
+FR76: User can view the friends leaderboard ranking
+
+**v2.1 — In-App Account Deletion (store-blocking, ships with accounts)**
+FR77: User can delete their account and all associated server data from within the app (not only via a web flow); deletion is initiated in-app, confirmed, and cascades per NFR30
+
 ### NonFunctional Requirements
 
 NFR1: Daily plan generation completes in < 30 seconds from app open, including AI computation on a background thread isolated from the UI thread
@@ -99,7 +147,28 @@ NFR22: WearOS disconnection → phone continues independently; reconnects when a
 NFR23: All external APIs must fail fast, serve cache immediately, retry automatically
 NFR24: All interactive elements meet minimum touch target size (48×48dp)
 NFR25: Color contrast ratios meet WCAG 2.1 AA minimum in both light and dark mode
-NFR26: Full semantic accessibility (VoiceOver/TalkBack) deferred to Growth phase
+NFR26: Full semantic accessibility (VoiceOver/TalkBack) deferred to Growth phase — SUPERSEDED for v2: full VoiceOver/TalkBack coverage is a v2 store-launch requirement (UX-DR32)
+
+### v2 Non-Functional Requirements (NFR27–NFR37)
+
+**Authentication & Account Security**
+NFR27: Authentication uses industry-standard secure practices — passwords hashed (never stored plaintext), OAuth/OIDC for Apple and Google, secure token storage on device via `flutter_secure_storage`, transport over TLS
+NFR28: On-device personalization preserved — the adaptive AI continues to run on-device; any cloud sync of personal data is opt-in, scoped to the user's own account, used only for backup/restore and explicitly-shared social data, and never used for centralized cross-user training; biometric data is not required to leave the device
+
+**Privacy & Compliance (cloud)**
+NFR29: Social sharing is explicit and user-controlled via defined visibility tiers — private (default), friends-only, and per-item sharing; data is never visible friend-of-friend; the leaderboard shows only ranking + points to a user's own friends, not underlying session/biometric detail; each share is opt-in and revocable
+NFR30: GDPR for cloud data — the user can export their server data in portable JSON and delete their account (FR77); deletion cascades: profile, friendships, shared content, feed entries, and leaderboard entries removed from the server and from other users' views; visible removal immediate, full backend purge ≤30 days
+NFR33: Co-location confirmation uses location only momentarily at session start to confirm proximity; precise location is not stored, not continuously tracked, never exposed to other users (only a boolean "co-located" result is used), and the check is non-blocking (a friend can still join if the soft check is inconclusive)
+NFR35: Each cloud personal-data purpose (authentication, backup, social sharing, co-location check, leaderboard) has a distinct lawful basis and granular consent; consent is unbundled and independently withdrawable without deleting the account
+NFR36: Cloud data residency — server-side personal data for EU users is stored in Supabase EU region eu-central-1 (Frankfurt)
+NFR37: Accounts and the social suite have a minimum age of 16 (GDPR Art. 8 default, configurable per market); age is confirmed at registration; co-location and friend features are unavailable below the minimum age
+
+**Real-Time & Reliability**
+NFR31: Shared-session state stays synchronized across participants within ~1 second; a participant dropping out does not interrupt the others' session
+NFR34: Social/cloud features degrade gracefully when offline; the v1 core experience remains fully offline-first regardless of account or subscription state
+
+**Store & Billing Compliance**
+NFR32: Subscription billing complies with App Store and Play Store policies — platform IAP for the Pro subscription; Sign in with Apple offered alongside Google/email per Apple guidelines; required privacy disclosures provided
 
 ### Additional Requirements (Architecture)
 
@@ -119,6 +188,20 @@ ARCH13: WearOS: separate build target within same Flutter project; early feasibi
 ARCH14: Test campaign: 150-200 tests across domain (~60), data (~50), bloc (~40), widget (~30), integration (~20)
 ARCH15: Responsive breakpoint: 600dp. Phone: bottom `NavigationBar`. Tablet: `NavigationRail` + master-detail
 ARCH16: Theme: `ThemeData` + `ThemeExtension<PulseCoachTheme>` for custom design tokens; dark-first via `ColorScheme.fromSeed()` with `brightness: Brightness.dark`
+
+### v2 Additional Requirements (Architecture)
+
+ARCH17: Backend: Supabase managed BaaS (Postgres), EU region eu-central-1 (Frankfurt) — NFR36. Schema migrations via Supabase CLI (`supabase init`, SQL + RLS in version control under `supabase/migrations/`). Edge Functions (Deno/TS) in `supabase/functions/`: `validate_receipt`, `delete_account_cascade`, `export_user_data`
+ARCH18: Auth: Supabase Auth (email/password, Sign in with Apple, Google OIDC). Client packages: `sign_in_with_apple`, `google_sign_in`, `supabase_flutter`. Secure token storage via `flutter_secure_storage` (Keychain/Keystore). Account is optional; app fully usable without it (FR56)
+ARCH19: E2E backup: client-side encryption with user-held key (passphrase-derived via Argon2/`cryptography` pkg) before upload to Supabase Storage. Server stores ciphertext blob only — biometric-derived AI state never server-readable (NFR28, FR57). Lost key = lost backup (by design; documented)
+ARCH20: IAP entitlements: `purchases_flutter` (RevenueCat) for cross-platform IAP, entitlement caching, grandfathering, and restore. `in_app_purchase` as no-dependency fallback. `EntitlementGate` (account-free free / signed-in free / Pro) consulted by router and widgets; never hardcoded inline
+ARCH21: Real-time transport: Supabase Realtime Broadcast (ephemeral step+timer events) + Presence (lobby/ready/drop-out). Host-authority pattern: only the host emits `step_advanced`; followers render received state (prevents divergence). Drop-out tolerated via Presence — others' session continues uninterrupted (NFR31)
+ARCH22: Social Postgres schema: tables `profiles`, `friendships`, `shared_sessions`, `session_participants`, `activity_feed`, `leaderboard_entries`, `consents`. RLS policies enforce visibility (private default / friends-only / per-item) at the DB — client checks are convenience only, never the security boundary (NFR29)
+ARCH23: GDPR machinery: FK `ON DELETE CASCADE` + Edge Function `delete_account_cascade` for erasure; `export_user_data` Edge Function for portable JSON export. Consent records in `consents` table; each cloud personal-data write checks the relevant consent record first (NFR30, NFR35)
+ARCH24: GroupConstraintResolver (pure Dart, `lib/ai/safety/group_constraint_resolver.dart`): deterministic rules — intensity ceiling = min of participants' caps; fitness level = lowest present; movement exclusion = union of constraints; duration = shortest preference. Each participant's v1 FR9 safety rules still apply on top. Tested exhaustively as pure-Dart in `test/domain/ai/group_constraint_resolver_test.dart`
+ARCH25: New client feature modules: `lib/features/auth/`, `lib/features/subscription/`, `lib/features/social/{friends,feed,leaderboard,shared_session}/`. Cloud boundary layer: `lib/core/cloud/` (`supabase_client.dart`, `realtime_gateway.dart`, `entitlement_gate.dart`, `crypto/e2e_backup_codec.dart`). Backend artifacts outside Flutter: `supabase/migrations/`, `supabase/functions/`. Durable `installCohort` field in drift + mirrored to `profiles` on sign-in (grandfathering, FR61)
+ARCH26: New Failure types extending v1 hierarchy: `AuthFailure`, `SubscriptionFailure`, `SyncFailure`, `RealtimeFailure`. Same dartz `Either<Failure,T>` contract as v1. Cloud failures degrade gracefully — v1 core path NEVER blocked by cloud/account/sub state (NFR34)
+ARCH27: New Blocs follow the freezed-union rule (initial/loading/loaded/error minimum): `AuthBloc`, `SubscriptionBloc`, `SharedSessionBloc`, `FriendsBloc`. Cubit for UI-only: `VisibilityCubit`. RealtimeGateway exposes a typed Dart Stream; SharedSessionBloc subscribes — UI never touches the Supabase channel directly
 
 ### UX Design Requirements
 
@@ -143,6 +226,22 @@ UX-DR18: Animation constants: standard 250ms ease-in-out, micro 150ms ease-out, 
 UX-DR19: Progress screen: fl_chart animated charts (minutes/week, completion rate, RPE trend, session type breakdown). Animate on first render and on data update
 UX-DR20: Dark-mode-first with `ThemeMode.system`. Light mode via `ColorScheme.fromSeed()` from aqua green seed. Dark is default and primary demo mode
 
+### v2 UX Design Requirements (UX-DR21–UX-DR33)
+
+UX-DR21: 4-tab NavigationBar (v2 phone): Sessions · Today · Social · Progress. Today remains the default landing (home) at index 1. Social is the 4th destination added in v2. NavigationRail mirrors this on tablet. Nav bar hidden during InSessionView, CountdownOverlay, RPE, MiniSummary, and Onboarding
+UX-DR22: Light mode color scheme fully defined: Surface #F8FFFE, Surface Container #EEF6F4, Surface Container High #E1F0ED, On Surface #1A1C1E, On Surface Variant #42474E, Error #BA1A1A. Behavioral-state Fatigued vs Recovering differ only in opacity (never in hue alone) — the text label is mandatory as the disambiguator
+UX-DR23: Social accent tokens: accent-cardio #F0A1B0, medal-gold #E8C87A, medal-silver #9498A6, medal-bronze #F0A1B0. Medals always carry three redundant cues: rank number (primary) + shape-distinct glyph + text label ("1° oro / 2° argento / 3° bronzo") — never color alone (color-independence accessibility rule)
+UX-DR24: SignInSheet: optional sign-in bottom sheet (Apple/Google/email), always dismissible, never blocks the free core. Appears only at the point of need (backup, social, Pro) — never proactively
+UX-DR25: ProUpsellSheet: appears ONLY on tapping a locked Pro feature (never proactively). States one fact + offers `Scopri Pro` / `non ora`. After `non ora`, a cooldown suppresses the sheet for the rest of the session/day (no repeated nagging). No persistent lock badge or upsell indicator on Free screens
+UX-DR26: FriendRow component: add by username/QR/contacts. Send/accept/decline/remove. Touch target ≥ 48dp; text wraps (never truncates) at 2.0× text scale
+UX-DR27: ActivityFeedCard component: shows only explicitly-shared completions, no biometric detail. Light reactions (single encouragement tap). Zero push notifications for reactions; no aggregate counts shown as pressure; reactions never contribute to points. Each share is revocable
+UX-DR28: LeaderboardRow component: friends-only ranking + points. Rank number is primary cue; top-3 add a shape-distinct, labeled medal glyph. No overtaken alerts, no points-delta toast or animation anywhere. Rank frozen while viewer is in AtRisk/Recovering state (Protective-State Social Suppression, UX-DR31)
+UX-DR29: SharedSessionLobby and JoinCodeCard: SharedSessionLobby shows participants + group-adapted plan + one-line plain-language adaptation reason ("Adattata per tutti — intensità più bassa comoda, niente carico sul ginocchio."). JoinCodeCard shows join code + QR, refreshable, no expiry countdown pressure. Shared Start advances all devices simultaneously
+UX-DR30: VisibilityTierSelector: defaults to Privato. Friends-only / per-item are explicit opt-ins. Used in Profile / share contexts. Each share is independently revocable
+UX-DR31: Protective-State Social Suppression (non-negotiable behavioral rules): (1) rank/points frozen in AtRisk/Recovering — rest never reads as a lost position; (2) no shared-session nudges while in AtRisk/Recovering; (3) Today never shows leaderboard standing or "a friend passed you" — Social tab holds all of that; (4) per-day points cap prevents volume gaming; (5) reactions are receive-only acknowledgements (no score, no push notification, no aggregate pressure count)
+UX-DR32: Full VoiceOver/TalkBack coverage is a v2 store-launch requirement (no longer deferred). Every custom component wrapped in `Semantics` with explicit labels. Live regions for CountdownOverlay, in-session step transitions, AND group-pushed step advances in shared sessions (live region required for AT users silently left behind when group moves on). v2 social/Pro surfaces (SignInSheet, ProUpsellSheet, LeaderboardRow incl. medal rank, SharedSessionLobby) carry Semantics labels from the start. Decorative elements (Lottie, shimmer, ring arc) use `ExcludeSemantics`
+UX-DR33: Accessibility for v2 social components: LeaderboardRow/FriendRow/feed reaction tap/JoinCodeCard QR action all ≥ 48dp touch target; dense rows wrap (not truncate) at 2.0× text scale; color independence enforced throughout (medals: number + glyph + label; behavioral-state colors: always paired with text label)
+
 ### FR Coverage Map
 
 | Epic | Stories | FRs Covered | NFRs Covered | UX-DRs | ARCH |
@@ -161,6 +260,13 @@ UX-DR20: Dark-mode-first with `ThemeMode.system`. Light mode via `ColorScheme.fr
 | Epic 12: WearOS Companion | 12.1-12.4 | FR40-41 | NFR22 | — | ARCH13 |
 | Epic 13: Offline & Data Sync | 13.1-13.3 | FR45-47 | NFR13-16, NFR18, NFR23 | — | ARCH3, ARCH9 |
 | Epic 14: Settings & Extras | 14.1-14.5 | FR48-52 | NFR11, NFR26 | UX-DR20 | ARCH6 |
+| Epic 15: Navigation Fix (v2.0) | 15.1 | FR53 | — | — | ARCH25 |
+| Epic 16: Accounts & Auth (v2.1) | 16.1-16.4 | FR54-57, FR77 | NFR27-28, NFR30, NFR35-37 | UX-DR24 | ARCH17-19, ARCH23, ARCH25-26 |
+| Epic 17: Pro Subscription (v2.2) | 17.1-17.4 | FR58-62 | NFR32, NFR34 | UX-DR25 | ARCH20, ARCH25-27 |
+| Epic 18: Social Graph (v2.3) | 18.1-18.4 | FR63-67 | NFR29-30, NFR34-35 | UX-DR21, UX-DR26-28, UX-DR30-31 | ARCH22-23, ARCH25-27 |
+| Epic 19: Realtime Transport (v2.4a) | 19.1-19.3 | FR71 | NFR31, NFR34 | — | ARCH21, ARCH25, ARCH27 |
+| Epic 20: Shared Sessions (v2.4b) | 20.1-20.5 | FR68-70, FR72-73 | NFR31, NFR33-34 | UX-DR29, UX-DR31-33 | ARCH21, ARCH24-25, ARCH27 |
+| Epic 21: Leaderboard & Scoring (v2.5) | 21.1-21.3 | FR74-76 | NFR34 | UX-DR23, UX-DR28, UX-DR31 | ARCH22, ARCH25 |
 
 ---
 
@@ -181,6 +287,16 @@ UX-DR20: Dark-mode-first with `ThemeMode.system`. Light mode via `ColorScheme.fr
 - **Epic 12: WearOS Companion** — WearOS spike, in-session companion display, post-session summary, disconnect resilience
 - **Epic 13: Offline & Data Sync** — Offline-first core features, deferred sync queue, data persistence guarantees
 - **Epic 14: Settings, Theme & Extras** — Theme toggle, privacy screen, settings screen, AI Decision Log (MVP-if-time), CSV export (MVP-if-time)
+
+**— v2 Epics (post-v1 implementation) —**
+
+- **Epic 15: Navigation Fix (v2.0)** — Explicit back navigation from drawer secondary screens (Settings/Profile/Privacy/Debug) to primary shell; closes standing v1 UX defect FR53
+- **Epic 16: Accounts & Authentication (v2.1)** — Supabase EU backend init, email/Apple/Google sign-in, optional E2E-encrypted backup/restore, in-app account deletion (store-blocking FR77); all Pro/social features depend on this epic
+- **Epic 17: Pro Subscription & Feature Gating (v2.2)** — RevenueCat IAP, EntitlementGate (free/signed-in/Pro tiers), Progress history gating with pre-v2 grandfathering, ProUpsellSheet with cooldown
+- **Epic 18: Social Graph & Friends (v2.3)** — Username/handle, VisibilityTierSelector (private by default), friend requests, shared activity feed with light reactions, friends progress comparison; all social content requires Pro
+- **Epic 19: Real-Time Session Transport (v2.4a)** — Supabase Realtime Broadcast/Presence channel, RealtimeGateway Dart stream, host-authority step advancement, drop-out tolerance; prerequisite for Epic 20
+- **Epic 20: Co-Located Shared Sessions (v2.4b)** — JoinCodeCard/QR invite, GroupConstraintResolver (pure Dart deterministic rules), momentary co-location check, SharedSessionLobby, per-participant RPE, Protective-State Social Suppression enforcement
+- **Epic 21: Leaderboard & Scoring (v2.5)** — Points system, friends-only leaderboard with medal glyphs, shared-session point bonus, per-day points cap; rank frozen in AtRisk/Recovering state
 
 ---
 
@@ -1965,4 +2081,690 @@ So that I can analyze my data in external tools or maintain a personal record.
 
 ---
 
-*End of Epic Breakdown — 14 Epics, 50 Stories*
+## Epic 15: Navigation Fix (v2.0)
+
+**Goal:** Close the standing v1 UX defect where secondary drawer screens (Settings, Profile, Privacy, Debug) had no affordance to return to the primary shell (Today, Sessions, Progress) without restarting the app. This is a pure routing change — no backend, no new UI components. Ship first among v2 work.
+
+### Story 15.1: Back Navigation from Drawer Secondary Screens
+
+As a user,
+I want an explicit way to return to the main app screens from Settings, Profile, Privacy, and Debug,
+So that I can navigate back to Today, Sessions, or Progress without having to relaunch the app.
+
+**Acceptance Criteria:**
+
+**Given** the user opens the drawer and taps Settings
+**When** the Settings screen renders
+**Then** an AppBar back arrow (or equivalent top-left affordance) is visible that navigates back to the previously active primary tab (Today, Sessions, or Progress) without restarting the app (FR53)
+
+**Given** the user opens Profile from the drawer
+**When** the Profile screen renders
+**Then** the same back affordance is present and returns to the primary shell
+
+**Given** the user opens Privacy from the drawer
+**When** the Privacy screen renders
+**Then** the back affordance is present and returns to the primary shell
+
+**Given** the user opens Debug from the drawer (dev mode only)
+**When** the Debug screen renders
+**Then** the back affordance is present and returns to the primary shell
+
+**Given** the user is on a secondary drawer screen
+**When** they tap the system back button (Android) or swipe back (iOS)
+**Then** the behavior is consistent with the AppBar affordance — they return to the primary shell, not to an empty stack
+
+**Given** the navigation routing in `app_router.dart`
+**When** a secondary screen is pushed from the drawer
+**Then** it is pushed onto the go_router navigation stack as a sub-route of the shell route, preserving tab state on pop
+
+---
+
+## Epic 16: Accounts & Authentication (v2.1)
+
+**Goal:** Introduce optional cloud accounts via Supabase Auth (EU region), giving users the ability to sign in with email, Apple, or Google. Build the E2E-encrypted backup/restore mechanism and implement in-app account deletion (store-blocking FR77). All subsequent social and Pro features depend on this epic's `AuthBloc` and `EntitlementGate` skeleton.
+
+### Story 16.1: Supabase Backend Initialization & Cloud Client Setup
+
+As a developer,
+I want the Supabase EU project initialized with migrations, RLS scaffolding, and the Flutter client registered,
+So that all subsequent v2 stories can access the cloud backend through a single, properly configured client.
+
+**Acceptance Criteria:**
+
+**Given** the Supabase CLI is installed and configured
+**When** `supabase init` is run at the repo root
+**Then** a `supabase/` directory is created with `config.toml` targeting the EU region `eu-central-1` (Frankfurt) (ARCH17, NFR36)
+
+**Given** the Supabase project is initialized
+**When** the initial migration `0001_profiles_auth.sql` is applied
+**Then** the `profiles` table exists with columns: `id` (uuid PK, references `auth.users`), `display_handle` (nullable text, unique), `install_cohort` (enum: pre_v2, post_v2), `visibility_tier` (enum: private, friends_only), `created_at` (timestamptz)
+
+**Given** `supabase_flutter` is added to `pubspec.yaml`
+**When** the app initializes in `main.dart`
+**Then** `Supabase.initialize(url: ..., anonKey: ...)` is called once with the EU project credentials; the client is registered as a `@singleton` in `lib/core/cloud/supabase_client.dart` (ARCH25)
+
+**Given** the client is initialized
+**When** the app launches without any signed-in session
+**Then** the `Supabase.instance.client.auth.currentSession` is null and the app loads the v1 free core normally — no crash, no sign-in prompt (FR56, NFR34)
+
+**Given** a new Dart client dependency is introduced (`flutter_secure_storage`, `sign_in_with_apple`, `google_sign_in`)
+**When** `flutter pub get` and `dart run build_runner build` are run
+**Then** all packages resolve and injectable code generation completes without errors
+
+### Story 16.2: Email / Apple / Google Sign-In and Sign-Out
+
+As a user,
+I want to optionally create a cloud account and sign in with email, Apple, or Google,
+So that I can unlock backup, social, and Pro features without the account being required for the free core.
+
+**Acceptance Criteria:**
+
+**Given** the user taps an account-gated feature (backup, social, Pro)
+**When** the `SignInSheet` appears
+**Then** it is a dismissible bottom sheet offering three sign-in methods: Sign in with Apple, Sign in with Google, and Email/password — in that order per App Store guidelines (UX-DR24, NFR32)
+
+**Given** the user dismisses the `SignInSheet` with the close gesture
+**When** they return to the screen they came from
+**Then** the free core is fully functional — dismissal never blocks or degrades v1 features (FR56, NFR34)
+
+**Given** the user chooses Sign in with Apple
+**When** the native Apple ID sheet completes successfully
+**Then** a Supabase auth session is created; `AuthBloc` emits `authenticated` state with the user's UID; `flutter_secure_storage` persists the refresh token (NFR27)
+
+**Given** the user chooses Sign in with Google
+**When** the Google Sign-In flow completes
+**Then** a Supabase auth session is created and the same `authenticated` state is emitted
+
+**Given** the user signs in with email + password (new account)
+**When** the registration form is submitted
+**Then** Supabase sends a confirmation email; until confirmed, the user remains in `unconfirmed` state and cannot access backup/social/Pro; the free core remains accessible
+
+**Given** the user is signed in
+**When** they tap Sign Out in Settings → Account
+**Then** `AuthBloc` emits `unauthenticated`; the Supabase session is cleared from `flutter_secure_storage`; the free core continues to function using local drift data (NFR34)
+
+**Given** the sign-in call to Supabase fails (no connectivity)
+**When** `AuthBloc` receives the error
+**Then** it emits `error(AuthFailure('...'))`; the `SignInSheet` shows an inline error message and remains open; the free core is unaffected (ARCH26)
+
+### Story 16.3: E2E-Encrypted Backup and Restore
+
+As a signed-in user,
+I want to opt in to backing up my profile, session history, and personalization state to my cloud account,
+So that I can restore my data on reinstall or a new device, while keeping biometric-derived data private from the server.
+
+**Acceptance Criteria:**
+
+**Given** the user is signed in and navigates to Settings → Account → Backup
+**When** the backup screen renders
+**Then** backup is clearly presented as opt-in; a toggle enables cloud backup; the explanation states the data is encrypted with a key only the user holds (FR57, UX voice: plain language, not fine print)
+
+**Given** the user enables backup for the first time
+**When** the system generates an encryption key (passphrase-derived via Argon2 using `cryptography` pkg)
+**Then** a one-time recovery phrase is shown; the user must explicitly acknowledge before proceeding; the key is stored locally in `flutter_secure_storage` and never uploaded
+
+**Given** the backup key is established
+**When** the user taps "Back up now"
+**Then** the `e2e_backup_codec.dart` encrypts the drift export payload (profile + session history + bandit state) into a ciphertext blob; only the ciphertext blob + non-secret metadata (`schemaVersion`, `createdAt`) are uploaded to Supabase Storage — no plaintext personal field in any cloud row (NFR28, ARCH19)
+
+**Given** a signed-in user reinstalls the app on a new device
+**When** they sign in and navigate to Settings → Account → Restore
+**Then** they are prompted for their recovery phrase; the ciphertext is downloaded from Supabase Storage; `e2e_backup_codec.dart` decrypts and restores the drift database
+
+**Given** the user enters an incorrect recovery phrase
+**When** decryption is attempted
+**Then** the decryption fails gracefully with an inline error message; no partial data is written to drift; the user can retry or cancel
+
+**Given** backup is offline (no connectivity)
+**When** the user taps "Back up now"
+**Then** the operation is queued; a subtle inline note reads "Sto usando i dati salvati — sincronizzerò appena disponibile"; the free core is unaffected (NFR34)
+
+### Story 16.4: In-App Account Deletion and Data Export
+
+As a user,
+I want to delete my account and all associated server-side data from within the app,
+So that I can exercise my GDPR right to erasure without needing to navigate to an external web flow.
+
+**Acceptance Criteria:**
+
+**Given** the user navigates to Settings → Account → Delete Account
+**When** the delete account option renders
+**Then** a destructive-action confirmation dialog appears with a two-step confirmation: the destructive action name is shown, Cancel is the dominant/primary button, and the confirm-delete button is clearly secondary (EXPERIENCE.md destructive-action pattern) (FR77)
+
+**Given** the user confirms deletion
+**When** the `delete_account` use case is called
+**Then** the Supabase Edge Function `delete_account_cascade` is invoked; all server-side data (profile, friendships, shared content, feed entries, leaderboard entries) is deleted cascading from the FK structure; visible removal is immediate (NFR30)
+
+**Given** the deletion call succeeds
+**When** the cascade completes
+**Then** the local auth session is cleared; the user is returned to the v1 onboarding screen (treated as a fresh install); local drift data is NOT deleted (v1 local data belongs to the device, not the account)
+
+**Given** the deletion fails (connectivity issue)
+**When** `AuthBloc` receives the error
+**Then** the dialog shows an inline error; the account is NOT deleted; the user can retry; no partial deletion occurs
+
+**Given** the user is signed in and navigates to Settings → Account → Export Data
+**When** they tap "Esporta i miei dati"
+**Then** the Supabase Edge Function `export_user_data` is invoked; a portable JSON file containing all server-side personal data (profile, friendships, feed entries, leaderboard points) is returned and shared via the OS share sheet (NFR30)
+
+---
+
+## Epic 17: Pro Subscription & Feature Gating (v2.2)
+
+**Goal:** Introduce the Pro subscription tier via platform IAP (RevenueCat), implement the `EntitlementGate` that governs access to the three capability tiers (account-free free / signed-in free / Pro), apply the Progress history gate with pre-v2 grandfathering, and deliver the `ProUpsellSheet` with cooldown — the only place in the UI where the paywall speaks.
+
+### Story 17.1: RevenueCat IAP Integration and EntitlementGate
+
+As a developer,
+I want RevenueCat integrated for cross-platform IAP and an `EntitlementGate` available to all routes and widgets,
+So that Pro features can be gated consistently without inline `if (user.isPro)` checks scattered across the codebase.
+
+**Acceptance Criteria:**
+
+**Given** `purchases_flutter` is added to `pubspec.yaml`
+**When** the app initializes
+**Then** `Purchases.configure(...)` is called with the RevenueCat API key for the current platform; the singleton is registered in `lib/features/subscription/` (ARCH20)
+
+**Given** `EntitlementGate` is implemented in `lib/core/cloud/entitlement_gate.dart`
+**When** any widget or route calls `EntitlementGate.check(Feature.xxx)`
+**Then** it returns one of three tiers: `accountFree`, `signedInFree`, or `pro`; the result is derived from the current auth state + active RevenueCat entitlement (ARCH20, FR59, FR62)
+
+**Given** the app is in account-free mode (no sign-in)
+**When** `EntitlementGate.check` is called for any Pro feature
+**Then** the tier returns `accountFree`; no sign-in is required for v1 core features
+
+**Given** the entitlement check fails due to connectivity
+**When** `SubscriptionBloc` processes the error
+**Then** it emits `error(SubscriptionFailure('...'))`; the last-known cached entitlement is used; the v1 free core is unaffected (NFR34)
+
+**Given** an `@injectable` `SubscriptionBloc` is registered
+**When** the app launches
+**Then** the bloc initializes with the current entitlement state synchronously from RevenueCat's cache before the first frame renders — no loading flash on the gating UI
+
+### Story 17.2: Progress History Free/Pro Gating with Grandfathering
+
+As a pre-v2 user (grandfathered) or a Pro subscriber,
+I want full access to my Progress history and all charts,
+So that existing users are not retroactively paywalled for data they already had.
+
+**Acceptance Criteria:**
+
+**Given** a user who installed before v2 (installCohort = pre_v2)
+**When** they open the Progress screen
+**Then** the full session history timeline and all four animated charts are visible regardless of subscription state (FR61, ARCH25)
+
+**Given** a post-v2 user with a free (non-Pro) account
+**When** they open the Progress screen
+**Then** only the most recent session and the current weekly goal widget are visible; the history and charts are replaced by a single-line prompt: "Lo storico completo è una funzione Pro." with no persistent lock icon or badge elsewhere (FR59, FR61, UX-DR25)
+
+**Given** a post-v2 free user taps the "Lo storico completo è una funzione Pro." prompt area
+**When** the tap is registered
+**Then** the `ProUpsellSheet` appears (see Story 17.3)
+
+**Given** a post-v2 user purchases a Pro subscription
+**When** RevenueCat confirms the entitlement
+**Then** the full Progress history and charts appear in-place immediately — no celebration screen, no badge (UX voice: content is the reward, not the unlock)
+
+**Given** the `installCohort` must survive reinstall for signed-in users
+**When** a pre-v2 user signs in after reinstall
+**Then** the `installCohort` value from the `profiles` Supabase row is applied, restoring grandfathered status (FR61, ARCH25)
+
+### Story 17.3: ProUpsellSheet with Session-Day Cooldown
+
+As a free-tier user,
+I want the Pro upsell to appear only when I reach for a Pro feature and not again for the rest of the day,
+So that I can evaluate Pro at my own pace without being nagged.
+
+**Acceptance Criteria:**
+
+**Given** a free-tier user taps a Pro-gated capability (e.g. full Progress history, social content creation)
+**When** the tap is handled
+**Then** the `ProUpsellSheet` appears as a bottom sheet stating the single relevant fact and offering two buttons: `Scopri Pro` (primary) and `non ora` (secondary, dismiss) (UX-DR25)
+
+**Given** the `ProUpsellSheet` is visible
+**When** the user taps `non ora`
+**Then** the sheet dismisses; a cooldown timestamp is recorded locally; the `ProUpsellSheet` does NOT appear again for the remainder of the current session/day for any Pro-gated tap
+
+**Given** the cooldown is active
+**When** the user taps another Pro-gated feature
+**Then** the tap is silently ignored (no sheet, no error, no visual feedback on the lock) — the feature simply does not activate
+
+**Given** a new day begins (midnight, device time)
+**When** the user taps a Pro-gated feature
+**Then** the cooldown has reset; the `ProUpsellSheet` may appear once more per day
+
+**Given** the user is on the free Progress screen
+**When** the screen renders
+**Then** there is NO persistent lock icon, badge, or "🔒" glyph visible anywhere on Free screens — the paywall speaks only through the sheet, never through ambient pressure signals (UX-DR25)
+
+### Story 17.4: Subscription Purchase, Restore, and Management
+
+As a user,
+I want to purchase, restore, and manage my Pro subscription within the app,
+So that I can upgrade, cancel, or recover my subscription through standard store flows.
+
+**Acceptance Criteria:**
+
+**Given** the user taps `Scopri Pro` in the `ProUpsellSheet`
+**When** the paywall page renders (via `features/subscription/presentation/pages/paywall_page.dart`)
+**Then** the available Pro plan(s) are fetched from RevenueCat and displayed with price and billing period; no price is hardcoded (FR58)
+
+**Given** the user taps the purchase button on a Pro plan
+**When** the platform IAP sheet completes successfully
+**Then** RevenueCat confirms the entitlement; `SubscriptionBloc` emits `loaded(entitlement: pro)`; `EntitlementGate` updates; Pro features unlock in-place (FR58)
+
+**Given** a returning user has previously purchased Pro on another device
+**When** they tap "Ripristina acquisti"
+**Then** RevenueCat restores the entitlement from the platform store; `SubscriptionBloc` emits the updated entitlement; Pro features unlock (FR60)
+
+**Given** a Pro subscriber wants to cancel
+**When** they tap "Gestisci abbonamento" in Settings → Account
+**Then** the app opens the platform's subscription management page (App Store or Play Store) via a URL; no custom cancellation flow is implemented (FR60, NFR32)
+
+---
+
+## Epic 18: Social Graph & Friends (v2.3)
+
+**Goal:** Build the social graph layer: username/handle setup with privacy-by-default, the friend request flow, a friends-only activity feed showing explicitly-shared completions with light reactions, and a friends progress comparison view. All social content creation requires Pro. This epic depends on Epic 16 (auth) and Epic 17 (EntitlementGate).
+
+### Story 18.1: Username Handle Setup and VisibilityTierSelector
+
+As a signed-in user,
+I want to set a unique username/handle and control who can see my activity,
+So that I can participate in the social layer on my own terms with privacy as the default.
+
+**Acceptance Criteria:**
+
+**Given** the user signs in for the first time
+**When** prompted to set up their social profile
+**Then** they are invited to set a unique username/handle; this step is skippable (social handle is optional within free tier); the profile is set to `visibility_tier = private` by default (FR63, UX-DR30, NFR29)
+
+**Given** the user submits a username
+**When** the handle is validated against the `profiles` table
+**Then** if unique: the `display_handle` column is updated and the profile becomes reachable by that handle; if duplicate: an inline validation error is shown without leaving the screen
+
+**Given** the `VisibilityTierSelector` component renders in Profile settings
+**When** the user selects a visibility tier
+**Then** the available tiers are: `Privato` (default), `Solo amici`; the selection is persisted to `profiles.visibility_tier` via a Supabase PATCH; RLS immediately reflects the new policy (UX-DR30, NFR29)
+
+**Given** a profile is set to `Privato`
+**When** any other user's client queries the `profiles` table
+**Then** RLS returns no row for this user — privacy is enforced at the DB, not the client (ARCH22, NFR29)
+
+### Story 18.2: Friend Request Flow
+
+As a Pro user,
+I want to add friends by username, QR code, or phone contacts and manage pending requests,
+So that I can build a friends list to participate in the social features.
+
+**Acceptance Criteria:**
+
+**Given** the user opens the Social tab → Friends
+**When** the Friends screen renders
+**Then** they see: a search field (add by username), a "Mostra il mio QR" button, an "Importa dai contatti" option, a list of pending requests (sent + received), and their current friends list (FR64, FR65)
+
+**Given** the user searches for a username
+**When** a matching `display_handle` is found in `profiles` and the target's visibility allows discovery
+**Then** a `FriendRow` (UX-DR26) shows the handle with a "Aggiungi amico" button; tapping it inserts a `friendship` row with `status = pending` (FR64, ARCH22)
+
+**Given** the target user views their pending requests
+**When** they tap "Accetta"
+**Then** the `friendship.status` is updated to `accepted`; RLS now grants mutual friends-only data access; both users' friend lists update reactively (FR65)
+
+**Given** the target user taps "Rifiuta"
+**When** the refusal is processed
+**Then** the `friendship` row is deleted; neither party sees the request again; no notification is sent about the refusal
+
+**Given** a user taps "Rimuovi amico" on a current friend
+**When** the removal is confirmed
+**Then** the `friendship` row is deleted; the removed user no longer appears in each other's friend lists; shared feed data already posted remains visible until individually revoked (FR65)
+
+**Given** the user taps "Mostra il mio QR"
+**When** the QR screen renders
+**Then** a QR code encoding their `display_handle` is shown; scanning it on another device pre-fills the friend search
+
+### Story 18.3: Activity Feed with Light Reactions
+
+As a Pro user,
+I want to see completed sessions my friends have explicitly shared and send a light reaction,
+So that I can feel connected to friends' progress without biometric detail being exposed or pressure being created.
+
+**Acceptance Criteria:**
+
+**Given** a Pro user completes a session
+**When** the `MiniSummary` resolves
+**Then** an optional "Condividi con gli amici" toggle appears; it defaults to OFF; sharing must be an explicit user choice (FR66, NFR29)
+
+**Given** the user enables the share toggle
+**When** the session is saved
+**Then** an `activity_feed` row is inserted: `owner_id`, `session_type`, `duration_minutes`, `completed_at` — no RPE value, no HR, no other biometric field (NFR29, UX-DR27)
+
+**Given** a friend opens the Social tab → Feed
+**When** the feed renders
+**Then** shared entries appear as `ActivityFeedCard` components showing: friend's handle, session type icon, duration, and relative time — no biometric detail (UX-DR27)
+
+**Given** the viewer taps the single reaction tap target on a feed card
+**When** the reaction is registered
+**Then** the `activity_feed` row receives a `reactions` increment; a single-tap visual acknowledgement plays (e.g., the icon briefly scales); no push notification is sent to the poster; the aggregate reaction count is NOT shown as a visible number to anyone (UX-DR27, UX-DR31)
+
+**Given** the sharer navigates to their own shared entry and taps "Revoca condivisione"
+**When** the revocation is confirmed
+**Then** the `activity_feed` row is deleted; it disappears from all friends' feeds immediately (NFR29)
+
+### Story 18.4: Friends Progress Comparison
+
+As a Pro user,
+I want to compare my weekly progress metrics against friends who have opted in to comparison,
+So that I can see how I'm doing relative to my social circle without competitive pressure.
+
+**Acceptance Criteria:**
+
+**Given** a Pro user opens Progress → Confronto amici
+**When** the comparison view renders
+**Then** a list of friends who have `visibility_tier = friends_only` (or per-item sharing covering progress) is shown with their weekly metrics: sessions completed vs weekly goal and minutes of movement — no RPE, HR, or behavioral state exposed (FR67, NFR29)
+
+**Given** a friend has `visibility_tier = private`
+**When** the comparison view queries the `profiles` and `activity_feed` tables
+**Then** RLS returns no data for that friend — they do not appear in the comparison list (ARCH22, NFR29)
+
+**Given** the user's own data is displayed in the comparison view
+**When** the screen renders
+**Then** the user's own entry is visually distinguished (e.g., slightly highlighted) but uses the same layout as friends' entries — no "You're winning!" framing or overtaken alerting
+
+---
+
+## Epic 19: Real-Time Session Transport (v2.4a)
+
+**Goal:** Implement the Supabase Realtime Broadcast/Presence infrastructure as a standalone, testable layer before shared session logic is layered on top. This epic delivers the `RealtimeGateway` Dart stream, host-authority enforcement, and drop-out tolerance — prerequisites for Epic 20 (Co-Located Shared Sessions).
+
+### Story 19.1: RealtimeGateway and Supabase Broadcast/Presence Channel
+
+As a developer,
+I want a `RealtimeGateway` that exposes a typed Dart stream of broadcast events and presence state,
+So that `SharedSessionBloc` can subscribe without ever touching the Supabase channel directly.
+
+**Acceptance Criteria:**
+
+**Given** `RealtimeGateway` is implemented at `lib/core/cloud/realtime_gateway.dart`
+**When** `RealtimeGateway.joinChannel(sessionId)` is called
+**Then** a Supabase Realtime channel `shared-session:{sessionId}` is opened; the gateway exposes two typed Dart streams: `Stream<BroadcastEvent>` and `Stream<PresenceState>` (ARCH21, ARCH27)
+
+**Given** the gateway is connected to a channel
+**When** a broadcast event `step_advanced` is received
+**Then** the `BroadcastEvent.stepAdvanced(stepIndex: int, elapsedSeconds: int)` event is emitted on the typed stream; `SharedSessionBloc` receives it and updates state without accessing `RealtimeGateway` internals
+
+**Given** `RealtimeGateway` is registered as `@singleton`
+**When** `dart run build_runner build` is run
+**Then** injectable code generation registers the gateway; all dependents can inject it via the constructor
+
+**Given** the channel is open
+**When** `RealtimeGateway.leaveChannel()` is called
+**Then** the Supabase channel is cleanly unsubscribed; both Dart streams complete; no dangling subscriptions remain
+
+### Story 19.2: Host-Authority Step Advancement and Presence Lobby
+
+As the host of a shared session,
+I want to be the sole authority that advances steps, with all followers rendering my broadcast,
+So that all participants see a synchronized session state without divergence.
+
+**Acceptance Criteria:**
+
+**Given** the session is in progress and the current user is the host
+**When** the session timer advances to the next step
+**Then** only the host's `SharedSessionBloc` emits a `step_advanced` broadcast event via `RealtimeGateway`; follower clients never emit this event independently (ARCH21)
+
+**Given** a follower receives a `step_advanced` event
+**When** `SharedSessionBloc` processes the event
+**Then** it updates the session state to the received step index and elapsed time; the UI re-renders the new step immediately; any local timer drift is corrected to match the host's elapsed time
+
+**Given** a `PresenceState` event fires with all participants
+**When** the `SharedSessionLobby` renders
+**Then** all joined participants are listed with their display handles; a "Start" button is only active when ≥2 participants are in Presence (the host + at least one follower)
+
+**Given** the host taps "Start"
+**When** the `session_started` broadcast event fires
+**Then** all participants' `SharedSessionBloc` instances simultaneously emit `inSession` state; all clients transition to the synchronized `InSessionView` at step 0 (UX-DR29)
+
+**Given** a `Semantics(liveRegion: true)` is required for group-pushed step advances
+**When** `SharedSessionBloc` emits a `stepAdvanced` state
+**Then** the step name widget in `InSessionView` is wrapped in `Semantics(liveRegion: true, label: '...')` so screen readers announce the new step to AT users silently advanced by the group (UX-DR32, EXPERIENCE.md accessibility)
+
+### Story 19.3: Drop-Out Tolerance and Reconnect
+
+As a shared session participant,
+I want the session to continue uninterrupted if another participant drops out or loses connectivity,
+So that a network issue for one person does not ruin the session for everyone else.
+
+**Acceptance Criteria:**
+
+**Given** a follower loses connectivity mid-session
+**When** their Presence entry disappears from the channel
+**Then** the host's `SharedSessionBloc` emits a `participantDropped` state; the session continues without interruption for remaining participants; a subtle inline note appears: "[handle] si è disconnesso" (NFR31, UX-DR29)
+
+**Given** a dropped participant regains connectivity
+**When** they re-join the Presence channel
+**Then** their `SharedSessionBloc` receives the current step + elapsed time from the host's next `step_advanced` event and snaps to the correct position; they rejoin the session in progress
+
+**Given** the host loses connectivity
+**When** Presence confirms the host is gone
+**Then** leadership is transferred to the next participant in alphabetical join order; the new host takes authority for `step_advanced` emissions; no session interruption for followers
+
+**Given** all participants finish the session
+**When** the last `session_ended` broadcast fires
+**Then** `RealtimeGateway.leaveChannel()` is called; each participant's `SharedSessionBloc` transitions to the RPE input state independently
+
+---
+
+## Epic 20: Co-Located Shared Sessions (v2.4b)
+
+**Goal:** Build the complete shared session user experience on top of the Epic 19 real-time transport: join code/QR creation, the `GroupConstraintResolver`, momentary co-location confirmation, the `SharedSessionLobby`, synchronized start, and per-participant RPE with Protective-State Social Suppression enforcement. Depends on Epics 16, 17, 18, and 19.
+
+### Story 20.1: Shared Session Creation — JoinCodeCard and Lobby Navigation
+
+As a Pro user,
+I want to create a shared session and share a join code / QR so co-located friends can join,
+So that we can start a group session together in person.
+
+**Acceptance Criteria:**
+
+**Given** the user is a Pro subscriber with at least one friend in their friends list
+**When** they tap "Sessione condivisa" in the Social tab
+**Then** a `shared_sessions` row is inserted in Supabase; a random, human-readable 6-character join code is generated and stored (FR68, ARCH22)
+
+**Given** the session row is created
+**When** the `SharedSessionLobby` page renders
+**Then** the `JoinCodeCard` displays the join code in large JetBrains Mono typography and a QR code encoding it; a "Aggiorna codice" button allows refreshing without creating a new session (UX-DR29)
+
+**Given** the host is waiting in the lobby
+**When** no friend has joined after 5 minutes
+**Then** an inline message prompts "Nessuno ancora — condividi il codice" but the lobby remains open indefinitely with no expiry countdown (UX-DR29 "no expiry countdown pressure")
+
+**Given** the user taps "Annulla" in the lobby before anyone joins
+**When** the cancellation is confirmed
+**Then** the `shared_sessions` row is deleted; the Realtime channel is left; the user returns to the Social tab
+
+### Story 20.2: GroupConstraintResolver — Deterministic Group Plan Generation
+
+As a developer,
+I want a pure-Dart `GroupConstraintResolver` that deterministically computes the group plan constraints from all participants' profiles,
+So that the shared session plan is safe for everyone and its rules are fully testable.
+
+**Acceptance Criteria:**
+
+**Given** `GroupConstraintResolver` is implemented at `lib/ai/safety/group_constraint_resolver.dart`
+**When** it receives a `List<ParticipantProfile>` where each profile contains `safetyCapIntensity`, `fitnessLevel`, `movementExclusions`, `availableTimeMinutes`
+**Then** it returns a `GroupConstraint` with: `intensityCeiling = min(safetyCapIntensity for all)`, `fitnessLevel = lowest(fitnessLevel for all)`, `movementExclusions = union(movementExclusions for all)`, `durationMinutes = min(availableTimeMinutes for all)` (FR70, ARCH24)
+
+**Given** any participant's individual v1 FR9 safety rule would block the group plan
+**When** the `GroupConstraintResolver` runs after the deterministic group rules
+**Then** the group plan is further reduced to satisfy the most restrictive per-user safety override — the per-user FR9 rules are applied on top of, not instead of, the group rules (FR70)
+
+**Given** `group_constraint_resolver_test.dart` in `test/domain/ai/`
+**When** the test suite runs
+**Then** every combination of group rule (min cap, lowest level, union exclusions, shortest duration) is tested exhaustively with at least 4 edge cases: single participant, all-same profile, heterogeneous mixed group, and group with one AtRisk participant triggering intensity override (ARCH24)
+
+**Given** `GroupConstraintResolver` is pure Dart
+**When** any import is added to the file
+**Then** `flutter analyze` rejects any `import 'package:flutter/...'` — no Flutter dependency is permitted (same rule as v1 AI engine) (ARCH24)
+
+### Story 20.3: Co-Location Join Flow — Momentary Non-Blocking Confirmation
+
+As a friend joining a shared session,
+I want to join by entering the join code or scanning the QR and have my proximity confirmed non-intrusively,
+So that I can start the session without being blocked by a location gate.
+
+**Acceptance Criteria:**
+
+**Given** a friend opens the Social tab and taps "Unisciti a una sessione" (or scans the QR from `JoinCodeCard`)
+**When** the join code is submitted
+**Then** the `session_participants` row for this user is inserted; they enter the `SharedSessionLobby` Presence channel (FR68, FR69)
+
+**Given** the participant is in the lobby
+**When** a momentary co-location check is triggered
+**Then** `geolocator` reads the current position once (a single, non-continuous read); the boolean result ("co-located" if within ~100m of the host) is computed locally and NOT stored anywhere; only the boolean is used by the lobby to display a soft visual cue (FR69, NFR33)
+
+**Given** the co-location check is inconclusive (GPS unavailable, distance > threshold, or permission denied)
+**When** the check resolves
+**Then** the friend is NOT blocked from joining; the lobby proceeds normally; no error is shown to either participant; the soft check failing does not gate session start (FR69, NFR33)
+
+**Given** the session has already started (host tapped Start) and a friend tries to join late
+**When** they submit the join code
+**Then** they are informed the session is already in progress; they cannot join mid-session; they are offered to create their own session or wait for the next one
+
+### Story 20.4: Synchronized Session Start and Shared InSessionView
+
+As a shared session participant,
+I want all devices to show the same step and timer in real time when the session starts,
+So that the experience of exercising together is synchronized regardless of device.
+
+**Acceptance Criteria:**
+
+**Given** all expected participants are in the lobby (Presence) and the host taps "Inizia"
+**When** the `session_started` broadcast fires
+**Then** all participants' `SharedSessionBloc` instances simultaneously transition to `inSession` state; all clients render `InSessionView` at step 0 with the timer at 0:00 (FR71, UX-DR29)
+
+**Given** the host's timer advances to the next step
+**When** `SharedSessionBloc` emits `step_advanced` via `RealtimeGateway`
+**Then** all follower clients receive the event within ~1 second; their UI advances to the matching step without any user action; the timer snaps to the host's elapsed time (NFR31)
+
+**Given** the `InSessionView` is the shared variant
+**When** it renders
+**Then** a subtle participant count indicator shows how many users are in the session (e.g., "2 partecipanti"); otherwise the layout is identical to the v1 solo `InSessionView` — no additional complexity
+
+**Given** haptic feedback on step transition (v1 behavior)
+**When** a follower's `InSessionView` receives a `step_advanced` state
+**Then** `HapticFeedback.mediumImpact()` fires within 200ms of the state update, exactly as in solo sessions (NFR4)
+
+**Given** the session ends (last step completes)
+**When** the `session_ended` broadcast fires
+**Then** each participant's `SharedSessionBloc` transitions independently to the RPE input state; each device handles RPE collection autonomously (FR72)
+
+### Story 20.5: Per-Participant RPE and Protective-State Social Suppression
+
+As a shared session participant,
+I want to submit my own RPE after the session and have the social layer respect my recovery state,
+So that social pressure never overrides the v1 recovery-empathy promise.
+
+**Acceptance Criteria:**
+
+**Given** the shared session has ended
+**When** each participant reaches the RPE input screen
+**Then** the RPE prompt and interaction are identical to the v1 solo flow; there is no indication of what other participants rated; each rating is submitted independently and feeds only that user's on-device bandit (FR72)
+
+**Given** a participant is in `AtRisk` or `Recovering` behavioral state
+**When** they are in a shared session lobby or receive a shared session invitation
+**Then** the app does NOT proactively surface "start a shared session" CTAs on the Today screen; incoming join codes still function if they choose to join voluntarily, but the app never nudges (UX-DR31)
+
+**Given** a participant in `AtRisk`/`Recovering` completes a shared session
+**When** the session is saved and leaderboard points would normally be awarded
+**Then** points ARE awarded (the session happened and was safe); however rank movement is NOT surfaced to the user on the Today screen — any leaderboard update is silently applied in the Social tab only (UX-DR31)
+
+**Given** the group plan is generated for a participant currently in `AtRisk`
+**When** `GroupConstraintResolver` runs
+**Then** that participant's AtRisk safety cap (max low intensity, count=2 per FR24) is included in the group constraint computation — their protective state lowers the intensity ceiling for the entire group
+
+---
+
+## Epic 21: Leaderboard & Scoring (v2.5)
+
+**Goal:** Introduce the points system, friends-only leaderboard with medal glyphs, and shared-session point bonus with a per-day cap. Protective-State Social Suppression rules established in Epic 20 are enforced throughout. This is the final v2 epic — ship only after validating the counter-metrics (AtRisk-state session starts and group-session RPE distribution are not adversely affected by gamification).
+
+### Story 21.1: Points System and Solo Session Scoring
+
+As a user,
+I want to earn points for completing sessions so they appear on the leaderboard,
+So that I have a low-pressure record of my activity relative to friends.
+
+**Acceptance Criteria:**
+
+**Given** a user completes a session (solo)
+**When** the session is saved to drift
+**Then** a `leaderboard_entries` upsert is sent to Supabase awarding a base point value per session; the point formula uses: `base_points = duration_minutes * intensity_weight` where intensity_weight is: minimal=1, low=1.5, moderate=2 (FR74)
+
+**Given** a per-day points cap is enforced
+**When** a user has already reached the daily cap
+**Then** additional sessions on the same calendar day award 0 points; the cap prevents gaming by volume (UX-DR31, counter-metric guardrail)
+
+**Given** a points update is sent while offline
+**When** connectivity returns
+**Then** the pending `leaderboard_entries` write is replayed from the cloud write queue (extending `sync_manager.dart`, ARCH26); the leaderboard reflects the correct total retroactively
+
+**Given** any screen other than the Social tab
+**When** the screen renders
+**Then** no points total, points delta, or rank number is visible — scoring lives exclusively in the Social tab (UX-DR31, Today never shows leaderboard standing)
+
+### Story 21.2: Friends-Only Leaderboard and Rank Freeze
+
+As a user,
+I want to see a friends leaderboard with medal glyphs for the top three and have my rank frozen while I'm in a protective state,
+So that resting never reads as losing ground.
+
+**Acceptance Criteria:**
+
+**Given** the user opens Social → Classifica
+**When** the leaderboard renders
+**Then** it shows only mutual friends (+ the user themselves) ranked by total points; non-friends are never visible (FR76, NFR29, RLS enforced at DB)
+
+**Given** the top-3 positions are rendered
+**When** each `LeaderboardRow` renders
+**Then** the top 3 each display three redundant cues: (1) prominent rank number, (2) shape-distinct medal glyph (star/circle/diamond or equivalent distinct shapes), and (3) a text label ("1° oro", "2° argento", "3° bronzo") — never color alone (UX-DR23, UX-DR28, UX-DR33)
+
+**Given** the user is in `AtRisk` or `Recovering` state
+**When** the leaderboard data is loaded
+**Then** the user's rank row is frozen at the rank they held when they entered the protective state; any rank changes (going up or down) are not applied until they return to `Active` or `Fatigued` (UX-DR28, UX-DR31)
+
+**Given** a friend overtakes the user on the leaderboard
+**When** the leaderboard updates
+**Then** no toast, no push notification, no animation, and no "sei stato superato da [handle]" indicator is shown anywhere — overtaken alerts are explicitly banned (UX-DR31, EXPERIENCE.md)
+
+**Given** the leaderboard tab renders
+**When** a points-delta or movement animation would normally be shown
+**Then** no such animation runs — the leaderboard is a calm, static ranking view; no dynamism or score animation in this screen (UX-DR31)
+
+### Story 21.3: Shared-Session Point Bonus and Counter-Metric Monitoring
+
+As a user who completed a co-located shared session,
+I want the session to award more points than a solo session,
+So that the social incentive reinforces doing things together — within counter-metric guardrails.
+
+**Acceptance Criteria:**
+
+**Given** a shared session completes (all participants submitted RPE)
+**When** the scoring Edge Function runs server-side
+**Then** each participant receives `base_points * shared_session_multiplier` where the multiplier is a server-side constant (initial value: 1.5); the multiplier is applied in the Edge Function, never hardcoded client-side (FR75)
+
+**Given** the per-day points cap is active (Story 21.1)
+**When** a shared session bonus would exceed the daily cap
+**Then** points are capped at the daily limit regardless of the multiplier; the bonus cannot circumvent the volume-gaming protection
+
+**Given** the shared-session multiplier is in effect
+**When** a user in `AtRisk`/`Recovering` participates in a shared session
+**Then** their points are awarded normally (they chose to exercise and did so safely); rank is still frozen per Story 21.2 so the bonus produces no visible rank change while in protective state
+
+**Given** the leaderboard and scoring system is live
+**When** the PM reviews the counter-metrics dashboard weekly for the first month after launch
+**Then** the following conditions must hold to keep scoring live: (a) AtRisk-state session starts have NOT increased vs. the pre-leaderboard baseline, and (b) group-session RPE distribution has NOT shifted above the ≈6.5 target band. If either counter-metric regresses, the shared-session multiplier is reduced to 1.0 (same as solo) until investigated
+
+---
+
+*End of Epic Breakdown — 21 Epics (v1: 1–14, v1.5: 7.5, v2: 15–21)*
