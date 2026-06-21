@@ -16,6 +16,7 @@ import 'package:health/health.dart' as _i237;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:pulse_coach/ai/engine/ai_engine.dart' as _i122;
 import 'package:pulse_coach/ai/engine/ai_engine_isolate.dart' as _i157;
+import 'package:pulse_coach/core/cloud/supabase_client.dart' as _i42;
 import 'package:pulse_coach/core/database/app_database.dart' as _i79;
 import 'package:pulse_coach/core/database/daos/bandit_state_dao.dart' as _i10;
 import 'package:pulse_coach/core/database/daos/behavioral_state_dao.dart'
@@ -147,6 +148,9 @@ extension GetItInjectableX on _i174.GetIt {
     final settingsModule = _$SettingsModule();
     gh.factory<_i253.AccelerometerDataSource>(
       () => _i253.AccelerometerDataSource(),
+    );
+    gh.singleton<_i42.SupabaseClientProvider>(
+      () => _i42.SupabaseClientProvider(),
     );
     gh.singleton<_i79.AppDatabase>(() => _i79.AppDatabase());
     gh.singleton<_i237.Health>(() => healthModule.health);
