@@ -31,6 +31,63 @@ import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/app_shell.dart';
 
+class _StubToday extends StatelessWidget {
+  const _StubToday();
+  @override
+  Widget build(BuildContext context) => const Text('Oggi');
+}
+
+Widget buildShellWithSecondaryRoutes() {
+  final router = GoRouter(
+    initialLocation: '/today',
+    routes: [
+      ShellRoute(
+        builder: (context, state, child) => AppShell(child: child),
+        routes: [
+          GoRoute(path: '/today', builder: (_, _) => const _StubToday()),
+          GoRoute(path: '/sessions', builder: (_, _) => const Placeholder()),
+          GoRoute(path: '/progress', builder: (_, _) => const Placeholder()),
+        ],
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (_, _) => Scaffold(
+          appBar: AppBar(title: const Text('Settings Stub')),
+          body: const Text('settings-body'),
+        ),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (_, _) => Scaffold(
+          appBar: AppBar(title: const Text('Profile Stub')),
+          body: const Text('profile-body'),
+        ),
+      ),
+      GoRoute(
+        path: '/privacy',
+        builder: (_, _) => Scaffold(
+          appBar: AppBar(title: const Text('Privacy Stub')),
+          body: const Text('privacy-body'),
+        ),
+      ),
+      GoRoute(
+        path: '/ai-decision-log',
+        builder: (_, _) => Scaffold(
+          appBar: AppBar(title: const Text('AI Decision Log Stub')),
+          body: const Text('ai-decision-log-body'),
+        ),
+      ),
+    ],
+  );
+  return MaterialApp.router(
+    locale: const Locale('it'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    theme: AppTheme.darkTheme,
+    routerConfig: router,
+  );
+}
+
 Widget buildTestShell({String initialLocation = '/today'}) {
   final router = GoRouter(
     initialLocation: initialLocation,
@@ -221,6 +278,88 @@ void main() {
         expect(find.text('Sessioni'), findsOneWidget);
         expect(find.text('Progressi'), findsOneWidget);
         expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      '15.1-NAV-001: drawer Settings tile pushes settings route with back button',
+      (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildShellWithSecondaryRoutes());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(DrawerButton));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Impostazioni'));
+        await tester.pumpAndSettle();
+        expect(find.text('Settings Stub'), findsOneWidget);
+        expect(find.byType(BackButton), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '15.1-NAV-002: drawer Profile tile pushes profile route with back button',
+      (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildShellWithSecondaryRoutes());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(DrawerButton));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Profilo'));
+        await tester.pumpAndSettle();
+        expect(find.text('Profile Stub'), findsOneWidget);
+        expect(find.byType(BackButton), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '15.1-NAV-003: drawer Privacy tile pushes privacy route with back button',
+      (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildShellWithSecondaryRoutes());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(DrawerButton));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Privacy'));
+        await tester.pumpAndSettle();
+        expect(find.text('Privacy Stub'), findsOneWidget);
+        expect(find.byType(BackButton), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '15.1-NAV-004: popping settings route restores shell BottomNavigationBar',
+      (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildShellWithSecondaryRoutes());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(DrawerButton));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Impostazioni'));
+        await tester.pumpAndSettle();
+        expect(find.text('Settings Stub'), findsOneWidget);
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(find.byType(BottomNavigationBar), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '15.1-NAV-005: drawer AI Decision Log tile pushes route with back button',
+      (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildShellWithSecondaryRoutes());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(DrawerButton));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('AI Decision Log'));
+        await tester.pumpAndSettle();
+        expect(find.text('AI Decision Log Stub'), findsOneWidget);
+        expect(find.byType(BackButton), findsOneWidget);
       },
     );
   });

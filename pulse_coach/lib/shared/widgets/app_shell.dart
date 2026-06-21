@@ -176,7 +176,7 @@ class _AppDrawer extends StatelessWidget {
             title: Text(l10n.drawerProfile),
             onTap: () {
               Navigator.pop(context);
-              context.go(AppRouter.profile);
+              context.push(AppRouter.profile);
             },
           ),
           ListTile(
@@ -184,7 +184,7 @@ class _AppDrawer extends StatelessWidget {
             title: Text(l10n.drawerSettings),
             onTap: () {
               Navigator.pop(context);
-              context.go(AppRouter.settings);
+              context.push(AppRouter.settings);
             },
           ),
           ListTile(
@@ -192,7 +192,7 @@ class _AppDrawer extends StatelessWidget {
             title: Text(l10n.drawerPrivacy),
             onTap: () {
               Navigator.pop(context);
-              context.go(AppRouter.privacy);
+              context.push(AppRouter.privacy);
             },
           ),
           if (kDebugMode) ...[
