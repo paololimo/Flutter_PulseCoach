@@ -1,22 +1,22 @@
 {
   "schema_version": "0.1.0",
-  "evaluated_at": "2026-06-05T00:00:00.000Z",
+  "evaluated_at": "2026-06-21T00:00:00.000Z",
   "repo": "Flutter_PulseCoach",
   "target": {
-    "type": "epic",
-    "id": "14",
-    "label": "Epic 14 — Settings & Extras (Stories 14.1–14.5)"
+    "type": "story",
+    "id": "15.1",
+    "label": "Story 15.1 — Back Navigation from Drawer Secondary Screens"
   },
   "collection_status": "COLLECTED",
   "gate_basis": "priority_thresholds",
   "gate_status": "PASS",
-  "rationale": "P0 coverage is 100% (0 P0 ACs). P1 coverage is 100% (7/7, target 90%). Overall FULL coverage is 80% (16/20, minimum 80%). 4 PARTIAL ACs are all P2 with documented justification.",
+  "rationale": "P0 coverage is 100% (3/3: AC1 Settings, AC2 Profile, AC3 Privacy all FULL). No P1 requirements defined (effective P1 = 100%). Overall FULL coverage is 83% (5/6, minimum 80%). 1 PARTIAL AC (AC5 — system back gesture, P2) has documented low-risk justification: Navigator.pop() mechanism is proven by NAV-004/006/007; only platform event ingestion layer is untested at widget level.",
   "p0_status": "MET",
   "p1_status": "MET",
   "overall_status": "MET",
   "critical_open": 0,
   "links": {
-    "trace_report_path": "_bmad-output/test-artifacts/traceability-report-epic14.md",
+    "trace_report_path": "_bmad-output/test-artifacts/traceability/traceability-matrix.md",
     "trace_report_url": "",
     "artifact_url": "",
     "journey_evidence_url": ""
