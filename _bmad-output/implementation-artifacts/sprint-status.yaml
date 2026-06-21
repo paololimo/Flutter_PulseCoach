@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-21 # story 15.1 reviewed, done
+last_updated: 2026-06-21 # story 16.1 created, ready-for-dev
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -238,8 +238,8 @@ development_status:
   # ─────────────────────────────────────────
   # Epic 16: Accounts & Authentication (v2.1)
   # ─────────────────────────────────────────
-  epic-16: backlog
-  16-1-supabase-backend-initialization-and-cloud-client-setup: backlog
+  epic-16: in-progress
+  16-1-supabase-backend-initialization-and-cloud-client-setup: ready-for-dev
   16-2-email-apple-google-sign-in-and-sign-out: backlog
   16-3-e2e-encrypted-backup-and-restore: backlog
   16-4-in-app-account-deletion-and-data-export: backlog
