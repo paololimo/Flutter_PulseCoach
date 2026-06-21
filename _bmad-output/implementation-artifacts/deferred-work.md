@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 16-4-in-app-account-deletion-and-data-export (2026-06-21)
+
+- `delete_account_cascade` discards the `storage.remove` result entirely, swallowing all errors rather than only not-found [supabase/functions/delete_account_cascade/index.ts:19]. On a genuine storage failure the encrypted backup blob is orphaned. **[KEEP — Low: E2E-encrypted blob, key device-only, auth user (cascade root) still deleted. Block-on-error would contradict the spec author's explicit "ignore errors" decision and would let a transient storage outage block account deletion — needs a human design call before changing.]**
+- No automated test asserts `signOut()` runs only after a 200 from the Edge Function (the AC2/AC4 "no partial state" safety property lives in the datasource and is untested) [pulse_coach/lib/features/auth/data/datasources/auth_remote_data_source.dart:71]. **[KEEP — Low: Task 9 only specified bloc/cubit tests; add a datasource test if this path regresses.]**
+- New ARB keys `deleteAccountErrorGeneric`/`exportDataErrorGeneric` were added per the spec but are unused; SnackBars display the raw `Exception(...)` string instead [pulse_coach/lib/features/auth/presentation/pages/account_page.dart:34,45]. The `AuthError` listener is shared with sign-out, so the delete-specific generic copy cannot be cleanly wired there. **[KEEP — Low/cosmetic: raw-exception SnackBars are the app-wide convention; revisit as an app-wide error-copy pass, not a one-story fix.]**
+
 ## Deferred from: code review of 16-3-e2e-encrypted-backup-and-restore (2026-06-21)
 
 - `exportDriftSnapshot` loads all backup tables fully into memory, JSON-encodes, AES-encrypts, then base64-encodes (~1.33x twice) in one shot [pulse_coach/lib/features/auth/data/datasources/backup_local_data_source.dart:16-39]. No streaming/chunking or size bound. **[KEEP — spec mandates a full-snapshot design and the dataset is bounded (30-day daily plans); re-evaluate if Supabase object-size limits or OOM become a real risk for heavy users]**

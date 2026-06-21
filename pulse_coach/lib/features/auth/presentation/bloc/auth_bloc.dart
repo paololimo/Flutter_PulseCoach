@@ -7,6 +7,7 @@ import 'package:pulse_coach/features/auth/domain/usecases/get_signed_in_user_use
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_apple_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_email_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_google_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/delete_account_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_out_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_up_with_email_use_case.dart';
 
@@ -22,6 +23,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignInWithEmailUseCase _signInWithEmail;
   final SignUpWithEmailUseCase _signUpWithEmail;
   final SignOutUseCase _signOut;
+  final DeleteAccountUseCase _deleteAccount;
 
   AuthBloc(
     this._getSignedInUser,
@@ -30,6 +32,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     this._signInWithEmail,
     this._signUpWithEmail,
     this._signOut,
+    this._deleteAccount,
   ) : super(const AuthState.initial()) {
     on<AppStarted>(_onAppStarted);
     on<SignInWithAppleRequested>(_onSignInWithApple);
@@ -37,6 +40,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignInWithEmailRequested>(_onSignInWithEmail);
     on<SignUpWithEmailRequested>(_onSignUpWithEmail);
     on<SignOutRequested>(_onSignOut);
+    on<AccountDeletionRequested>(_onAccountDeletion);
   }
 
   Future<void> _onAppStarted(
@@ -121,6 +125,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthState.loading());
     final result = await _signOut.call();
+    result.fold(
+      (failure) => emit(AuthState.error(failure: failure)),
+      (_) => emit(const AuthState.unauthenticated()),
+    );
+  }
+
+  Future<void> _onAccountDeletion(
+    AccountDeletionRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthState.loading());
+    final result = await _deleteAccount.call();
     result.fold(
       (failure) => emit(AuthState.error(failure: failure)),
       (_) => emit(const AuthState.unauthenticated()),

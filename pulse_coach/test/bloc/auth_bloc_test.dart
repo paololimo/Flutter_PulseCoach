@@ -9,6 +9,7 @@ import 'package:pulse_coach/features/auth/domain/usecases/get_signed_in_user_use
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_apple_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_email_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_google_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/delete_account_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_out_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_up_with_email_use_case.dart';
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
@@ -22,6 +23,7 @@ import 'auth_bloc_test.mocks.dart';
   SignInWithEmailUseCase,
   SignUpWithEmailUseCase,
   SignOutUseCase,
+  DeleteAccountUseCase,
 ])
 void main() {
   late MockGetSignedInUserUseCase mockGetSignedInUser;
@@ -30,6 +32,7 @@ void main() {
   late MockSignInWithEmailUseCase mockSignInWithEmail;
   late MockSignUpWithEmailUseCase mockSignUpWithEmail;
   late MockSignOutUseCase mockSignOut;
+  late MockDeleteAccountUseCase mockDeleteAccount;
 
   const tUser = AuthUser(
     id: 'test-uid',
@@ -45,6 +48,7 @@ void main() {
     mockSignInWithEmail = MockSignInWithEmailUseCase();
     mockSignUpWithEmail = MockSignUpWithEmailUseCase();
     mockSignOut = MockSignOutUseCase();
+    mockDeleteAccount = MockDeleteAccountUseCase();
   });
 
   AuthBloc bloc() => AuthBloc(
@@ -54,6 +58,7 @@ void main() {
         mockSignInWithEmail,
         mockSignUpWithEmail,
         mockSignOut,
+        mockDeleteAccount,
       );
 
   group('AppStarted', () {

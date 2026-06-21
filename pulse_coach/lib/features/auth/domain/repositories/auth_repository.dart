@@ -18,4 +18,6 @@ abstract interface class AuthRepository {
 
   Future<Either<AuthFailure, Unit>> signOut();
   Future<AuthUser?> getSignedInUser();
+  Future<Either<AuthFailure, Unit>> deleteAccount();
+  Future<Either<AuthFailure, String>> exportData();
 }

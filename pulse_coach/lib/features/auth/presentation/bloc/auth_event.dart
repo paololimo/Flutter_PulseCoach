@@ -15,4 +15,5 @@ sealed class AuthEvent with _$AuthEvent {
     required String password,
   }) = SignUpWithEmailRequested;
   const factory AuthEvent.signOutRequested() = SignOutRequested;
+  const factory AuthEvent.accountDeletionRequested() = AccountDeletionRequested;
 }

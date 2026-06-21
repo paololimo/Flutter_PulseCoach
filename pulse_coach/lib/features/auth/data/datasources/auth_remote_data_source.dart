@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 // OAuthProvider and User are imported from the ARCH25 boundary file so this
@@ -65,6 +67,24 @@ class AuthRemoteDataSource {
   }
 
   Future<void> signOut() => _supabase.client.auth.signOut();
+
+  Future<void> deleteAccount() async {
+    final response =
+        await _supabase.client.functions.invoke('delete_account_cascade');
+    if (response.status != 200) {
+      throw Exception('delete_account_cascade failed: ${response.data}');
+    }
+    await _supabase.client.auth.signOut();
+  }
+
+  Future<String> exportData() async {
+    final response =
+        await _supabase.client.functions.invoke('export_user_data');
+    if (response.status != 200) {
+      throw Exception('export_user_data failed: ${response.data}');
+    }
+    return jsonEncode(response.data);
+  }
 
   AuthUser? getSignedInUser() {
     final user = _supabase.client.auth.currentUser;

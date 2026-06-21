@@ -53,10 +53,14 @@ import 'package:pulse_coach/features/auth/domain/repositories/backup_repository.
     as _i271;
 import 'package:pulse_coach/features/auth/domain/usecases/backup_now_use_case.dart'
     as _i544;
+import 'package:pulse_coach/features/auth/domain/usecases/delete_account_use_case.dart'
+    as _i623;
 import 'package:pulse_coach/features/auth/domain/usecases/disable_backup_use_case.dart'
     as _i609;
 import 'package:pulse_coach/features/auth/domain/usecases/enable_backup_use_case.dart'
     as _i285;
+import 'package:pulse_coach/features/auth/domain/usecases/export_data_use_case.dart'
+    as _i1032;
 import 'package:pulse_coach/features/auth/domain/usecases/get_signed_in_user_use_case.dart'
     as _i330;
 import 'package:pulse_coach/features/auth/domain/usecases/is_backup_enabled_use_case.dart'
@@ -77,6 +81,8 @@ import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart'
     as _i412;
 import 'package:pulse_coach/features/auth/presentation/bloc/backup_bloc.dart'
     as _i57;
+import 'package:pulse_coach/features/auth/presentation/bloc/export_data_cubit.dart'
+    as _i627;
 import 'package:pulse_coach/features/daily_plan/data/repositories/daily_plan_repository_impl.dart'
     as _i432;
 import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart'
@@ -414,6 +420,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i73.ProgressRepository>(
       () => _i1027.ProgressRepositoryImpl(gh<_i272.ProgressLocalDataSource>()),
     );
+    gh.factory<_i623.DeleteAccountUseCase>(
+      () => _i623.DeleteAccountUseCase(gh<_i213.AuthRepository>()),
+    );
+    gh.factory<_i1032.ExportDataUseCase>(
+      () => _i1032.ExportDataUseCase(gh<_i213.AuthRepository>()),
+    );
     gh.factory<_i330.GetSignedInUserUseCase>(
       () => _i330.GetSignedInUserUseCase(gh<_i213.AuthRepository>()),
     );
@@ -438,16 +450,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i727.GetSessionHistory>(
       () => _i727.GetSessionHistory(gh<_i73.ProgressRepository>()),
     );
-    gh.factory<_i412.AuthBloc>(
-      () => _i412.AuthBloc(
-        gh<_i330.GetSignedInUserUseCase>(),
-        gh<_i200.SignInWithAppleUseCase>(),
-        gh<_i56.SignInWithGoogleUseCase>(),
-        gh<_i114.SignInWithEmailUseCase>(),
-        gh<_i986.SignUpWithEmailUseCase>(),
-        gh<_i455.SignOutUseCase>(),
-      ),
-    );
     gh.lazySingleton<_i916.SessionsCatalogCubit>(
       () => _i916.SessionsCatalogCubit(gh<_i342.GetExercisesByType>()),
     );
@@ -469,15 +471,19 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i664.GetWeatherContext>(
       () => _i664.GetWeatherContext(gh<_i748.WeatherRepository>()),
     );
-    gh.factory<_i57.BackupBloc>(
-      () => _i57.BackupBloc(
-        gh<_i285.EnableBackupUseCase>(),
-        gh<_i609.DisableBackupUseCase>(),
-        gh<_i544.BackupNowUseCase>(),
-        gh<_i122.RestoreBackupUseCase>(),
-        gh<_i134.IsBackupEnabledUseCase>(),
-        gh<_i412.AuthBloc>(),
+    gh.factory<_i412.AuthBloc>(
+      () => _i412.AuthBloc(
+        gh<_i330.GetSignedInUserUseCase>(),
+        gh<_i200.SignInWithAppleUseCase>(),
+        gh<_i56.SignInWithGoogleUseCase>(),
+        gh<_i114.SignInWithEmailUseCase>(),
+        gh<_i986.SignUpWithEmailUseCase>(),
+        gh<_i455.SignOutUseCase>(),
+        gh<_i623.DeleteAccountUseCase>(),
       ),
+    );
+    gh.factory<_i627.ExportDataCubit>(
+      () => _i627.ExportDataCubit(gh<_i1032.ExportDataUseCase>()),
     );
     gh.factory<_i183.RegenerateDailyPlan>(
       () => _i183.RegenerateDailyPlan(
@@ -494,6 +500,16 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i56.ProgressStatsCubit>(
       () => _i56.ProgressStatsCubit(gh<_i303.GetProgressStats>()),
+    );
+    gh.factory<_i57.BackupBloc>(
+      () => _i57.BackupBloc(
+        gh<_i285.EnableBackupUseCase>(),
+        gh<_i609.DisableBackupUseCase>(),
+        gh<_i544.BackupNowUseCase>(),
+        gh<_i122.RestoreBackupUseCase>(),
+        gh<_i134.IsBackupEnabledUseCase>(),
+        gh<_i412.AuthBloc>(),
+      ),
     );
     return this;
   }

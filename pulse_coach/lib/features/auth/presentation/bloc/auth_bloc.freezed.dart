@@ -55,7 +55,7 @@ extension AuthEventPatterns on AuthEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AppStarted value)?  appStarted,TResult Function( SignInWithAppleRequested value)?  signInWithAppleRequested,TResult Function( SignInWithGoogleRequested value)?  signInWithGoogleRequested,TResult Function( SignInWithEmailRequested value)?  signInWithEmailRequested,TResult Function( SignUpWithEmailRequested value)?  signUpWithEmailRequested,TResult Function( SignOutRequested value)?  signOutRequested,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AppStarted value)?  appStarted,TResult Function( SignInWithAppleRequested value)?  signInWithAppleRequested,TResult Function( SignInWithGoogleRequested value)?  signInWithGoogleRequested,TResult Function( SignInWithEmailRequested value)?  signInWithEmailRequested,TResult Function( SignUpWithEmailRequested value)?  signUpWithEmailRequested,TResult Function( SignOutRequested value)?  signOutRequested,TResult Function( AccountDeletionRequested value)?  accountDeletionRequested,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case AppStarted() when appStarted != null:
@@ -64,7 +64,8 @@ return signInWithAppleRequested(_that);case SignInWithGoogleRequested() when sig
 return signInWithGoogleRequested(_that);case SignInWithEmailRequested() when signInWithEmailRequested != null:
 return signInWithEmailRequested(_that);case SignUpWithEmailRequested() when signUpWithEmailRequested != null:
 return signUpWithEmailRequested(_that);case SignOutRequested() when signOutRequested != null:
-return signOutRequested(_that);case _:
+return signOutRequested(_that);case AccountDeletionRequested() when accountDeletionRequested != null:
+return accountDeletionRequested(_that);case _:
   return orElse();
 
 }
@@ -82,7 +83,7 @@ return signOutRequested(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AppStarted value)  appStarted,required TResult Function( SignInWithAppleRequested value)  signInWithAppleRequested,required TResult Function( SignInWithGoogleRequested value)  signInWithGoogleRequested,required TResult Function( SignInWithEmailRequested value)  signInWithEmailRequested,required TResult Function( SignUpWithEmailRequested value)  signUpWithEmailRequested,required TResult Function( SignOutRequested value)  signOutRequested,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AppStarted value)  appStarted,required TResult Function( SignInWithAppleRequested value)  signInWithAppleRequested,required TResult Function( SignInWithGoogleRequested value)  signInWithGoogleRequested,required TResult Function( SignInWithEmailRequested value)  signInWithEmailRequested,required TResult Function( SignUpWithEmailRequested value)  signUpWithEmailRequested,required TResult Function( SignOutRequested value)  signOutRequested,required TResult Function( AccountDeletionRequested value)  accountDeletionRequested,}){
 final _that = this;
 switch (_that) {
 case AppStarted():
@@ -91,7 +92,8 @@ return signInWithAppleRequested(_that);case SignInWithGoogleRequested():
 return signInWithGoogleRequested(_that);case SignInWithEmailRequested():
 return signInWithEmailRequested(_that);case SignUpWithEmailRequested():
 return signUpWithEmailRequested(_that);case SignOutRequested():
-return signOutRequested(_that);}
+return signOutRequested(_that);case AccountDeletionRequested():
+return accountDeletionRequested(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -105,7 +107,7 @@ return signOutRequested(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AppStarted value)?  appStarted,TResult? Function( SignInWithAppleRequested value)?  signInWithAppleRequested,TResult? Function( SignInWithGoogleRequested value)?  signInWithGoogleRequested,TResult? Function( SignInWithEmailRequested value)?  signInWithEmailRequested,TResult? Function( SignUpWithEmailRequested value)?  signUpWithEmailRequested,TResult? Function( SignOutRequested value)?  signOutRequested,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AppStarted value)?  appStarted,TResult? Function( SignInWithAppleRequested value)?  signInWithAppleRequested,TResult? Function( SignInWithGoogleRequested value)?  signInWithGoogleRequested,TResult? Function( SignInWithEmailRequested value)?  signInWithEmailRequested,TResult? Function( SignUpWithEmailRequested value)?  signUpWithEmailRequested,TResult? Function( SignOutRequested value)?  signOutRequested,TResult? Function( AccountDeletionRequested value)?  accountDeletionRequested,}){
 final _that = this;
 switch (_that) {
 case AppStarted() when appStarted != null:
@@ -114,7 +116,8 @@ return signInWithAppleRequested(_that);case SignInWithGoogleRequested() when sig
 return signInWithGoogleRequested(_that);case SignInWithEmailRequested() when signInWithEmailRequested != null:
 return signInWithEmailRequested(_that);case SignUpWithEmailRequested() when signUpWithEmailRequested != null:
 return signUpWithEmailRequested(_that);case SignOutRequested() when signOutRequested != null:
-return signOutRequested(_that);case _:
+return signOutRequested(_that);case AccountDeletionRequested() when accountDeletionRequested != null:
+return accountDeletionRequested(_that);case _:
   return null;
 
 }
@@ -131,7 +134,7 @@ return signOutRequested(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  appStarted,TResult Function()?  signInWithAppleRequested,TResult Function()?  signInWithGoogleRequested,TResult Function( String email,  String password)?  signInWithEmailRequested,TResult Function( String email,  String password)?  signUpWithEmailRequested,TResult Function()?  signOutRequested,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  appStarted,TResult Function()?  signInWithAppleRequested,TResult Function()?  signInWithGoogleRequested,TResult Function( String email,  String password)?  signInWithEmailRequested,TResult Function( String email,  String password)?  signUpWithEmailRequested,TResult Function()?  signOutRequested,TResult Function()?  accountDeletionRequested,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AppStarted() when appStarted != null:
 return appStarted();case SignInWithAppleRequested() when signInWithAppleRequested != null:
@@ -139,7 +142,8 @@ return signInWithAppleRequested();case SignInWithGoogleRequested() when signInWi
 return signInWithGoogleRequested();case SignInWithEmailRequested() when signInWithEmailRequested != null:
 return signInWithEmailRequested(_that.email,_that.password);case SignUpWithEmailRequested() when signUpWithEmailRequested != null:
 return signUpWithEmailRequested(_that.email,_that.password);case SignOutRequested() when signOutRequested != null:
-return signOutRequested();case _:
+return signOutRequested();case AccountDeletionRequested() when accountDeletionRequested != null:
+return accountDeletionRequested();case _:
   return orElse();
 
 }
@@ -157,7 +161,7 @@ return signOutRequested();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  appStarted,required TResult Function()  signInWithAppleRequested,required TResult Function()  signInWithGoogleRequested,required TResult Function( String email,  String password)  signInWithEmailRequested,required TResult Function( String email,  String password)  signUpWithEmailRequested,required TResult Function()  signOutRequested,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  appStarted,required TResult Function()  signInWithAppleRequested,required TResult Function()  signInWithGoogleRequested,required TResult Function( String email,  String password)  signInWithEmailRequested,required TResult Function( String email,  String password)  signUpWithEmailRequested,required TResult Function()  signOutRequested,required TResult Function()  accountDeletionRequested,}) {final _that = this;
 switch (_that) {
 case AppStarted():
 return appStarted();case SignInWithAppleRequested():
@@ -165,7 +169,8 @@ return signInWithAppleRequested();case SignInWithGoogleRequested():
 return signInWithGoogleRequested();case SignInWithEmailRequested():
 return signInWithEmailRequested(_that.email,_that.password);case SignUpWithEmailRequested():
 return signUpWithEmailRequested(_that.email,_that.password);case SignOutRequested():
-return signOutRequested();}
+return signOutRequested();case AccountDeletionRequested():
+return accountDeletionRequested();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -179,7 +184,7 @@ return signOutRequested();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  appStarted,TResult? Function()?  signInWithAppleRequested,TResult? Function()?  signInWithGoogleRequested,TResult? Function( String email,  String password)?  signInWithEmailRequested,TResult? Function( String email,  String password)?  signUpWithEmailRequested,TResult? Function()?  signOutRequested,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  appStarted,TResult? Function()?  signInWithAppleRequested,TResult? Function()?  signInWithGoogleRequested,TResult? Function( String email,  String password)?  signInWithEmailRequested,TResult? Function( String email,  String password)?  signUpWithEmailRequested,TResult? Function()?  signOutRequested,TResult? Function()?  accountDeletionRequested,}) {final _that = this;
 switch (_that) {
 case AppStarted() when appStarted != null:
 return appStarted();case SignInWithAppleRequested() when signInWithAppleRequested != null:
@@ -187,7 +192,8 @@ return signInWithAppleRequested();case SignInWithGoogleRequested() when signInWi
 return signInWithGoogleRequested();case SignInWithEmailRequested() when signInWithEmailRequested != null:
 return signInWithEmailRequested(_that.email,_that.password);case SignUpWithEmailRequested() when signUpWithEmailRequested != null:
 return signUpWithEmailRequested(_that.email,_that.password);case SignOutRequested() when signOutRequested != null:
-return signOutRequested();case _:
+return signOutRequested();case AccountDeletionRequested() when accountDeletionRequested != null:
+return accountDeletionRequested();case _:
   return null;
 
 }
@@ -451,6 +457,38 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'AuthEvent.signOutRequested()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class AccountDeletionRequested implements AuthEvent {
+  const AccountDeletionRequested();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountDeletionRequested);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AuthEvent.accountDeletionRequested()';
 }
 
 

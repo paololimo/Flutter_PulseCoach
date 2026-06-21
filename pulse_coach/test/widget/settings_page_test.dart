@@ -10,6 +10,7 @@ import 'package:pulse_coach/features/auth/domain/usecases/get_signed_in_user_use
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_apple_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_email_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_google_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/delete_account_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_out_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_up_with_email_use_case.dart';
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
@@ -194,6 +195,7 @@ class _StubAuthBloc extends AuthBloc {
           SignInWithEmailUseCase(_StubAuthRepository()),
           SignUpWithEmailUseCase(_StubAuthRepository()),
           SignOutUseCase(_StubAuthRepository()),
+          DeleteAccountUseCase(_StubAuthRepository()),
         );
 }
 
@@ -226,4 +228,12 @@ class _StubAuthRepository implements AuthRepository {
 
   @override
   Future<AuthUser?> getSignedInUser() async => null;
+
+  @override
+  Future<Either<AuthFailure, Unit>> deleteAccount() async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<Either<AuthFailure, String>> exportData() async =>
+      const Left(AuthFailure('stub'));
 }

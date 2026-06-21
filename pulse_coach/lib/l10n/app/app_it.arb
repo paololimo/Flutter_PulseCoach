@@ -251,5 +251,14 @@
   "backupRestoreSuccess": "Ripristino completato con successo.",
   "backupErrorWrongPhrase": "Frase di recupero errata. Riprova.",
   "backupErrorGeneric": "Errore durante il backup. Riprova.",
-  "backupTileLabel": "Backup"
+  "backupTileLabel": "Backup",
+  "deleteAccountTileLabel": "Elimina account",
+  "deleteAccountDialogTitle": "Elimina account",
+  "deleteAccountDialogBody": "Questa azione è permanente. Tutti i tuoi dati cloud verranno eliminati. I dati locali rimarranno sul dispositivo.",
+  "deleteAccountConfirmButton": "Elimina",
+  "deleteAccountCancelButton": "Annulla",
+  "deleteAccountErrorGeneric": "Errore durante l'eliminazione dell'account. Riprova.",
+  "exportDataTileLabel": "Esporta i miei dati",
+  "exportDataShareSubject": "I miei dati PulseCoach",
+  "exportDataErrorGeneric": "Errore durante l'esportazione dei dati. Riprova."
 }

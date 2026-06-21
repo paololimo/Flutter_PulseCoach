@@ -251,5 +251,14 @@
   "backupRestoreSuccess": "Restore completed successfully.",
   "backupErrorWrongPhrase": "Wrong recovery phrase. Please try again.",
   "backupErrorGeneric": "Backup error. Please try again.",
-  "backupTileLabel": "Backup"
+  "backupTileLabel": "Backup",
+  "deleteAccountTileLabel": "Delete Account",
+  "deleteAccountDialogTitle": "Delete Account",
+  "deleteAccountDialogBody": "This action is permanent. All your cloud data will be deleted. Local data will remain on the device.",
+  "deleteAccountConfirmButton": "Delete",
+  "deleteAccountCancelButton": "Cancel",
+  "deleteAccountErrorGeneric": "Error deleting account. Please try again.",
+  "exportDataTileLabel": "Export My Data",
+  "exportDataShareSubject": "My PulseCoach Data",
+  "exportDataErrorGeneric": "Error exporting data. Please try again."
 }

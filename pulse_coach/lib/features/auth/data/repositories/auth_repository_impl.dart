@@ -75,4 +75,24 @@ class AuthRepositoryImpl implements AuthRepository {
       return null;
     }
   }
+
+  @override
+  Future<Either<AuthFailure, Unit>> deleteAccount() async {
+    try {
+      await _dataSource.deleteAccount();
+      return const Right(unit);
+    } catch (e) {
+      return Left(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<AuthFailure, String>> exportData() async {
+    try {
+      final json = await _dataSource.exportData();
+      return Right(json);
+    } catch (e) {
+      return Left(AuthFailure(e.toString()));
+    }
+  }
 }

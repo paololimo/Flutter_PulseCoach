@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:pulse_coach/features/auth/presentation/bloc/export_data_cubit.dart';
 import 'package:pulse_coach/features/auth/presentation/pages/account_page.dart';
 import 'package:pulse_coach/features/auth/presentation/pages/backup_page.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
@@ -134,8 +135,11 @@ class AppRouter {
       GoRoute(path: privacy, builder: (context, state) => const PrivacyPage()),
       GoRoute(
         path: account,
-        builder: (context, state) => BlocProvider.value(
-          value: context.read<AuthBloc>(),
+        builder: (context, state) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: context.read<AuthBloc>()),
+            BlocProvider(create: (_) => getIt<ExportDataCubit>()),
+          ],
           child: const AccountPage(),
         ),
         routes: [
