@@ -36,3 +36,9 @@ class LocationFailure extends Failure {
   final String message;
   const LocationFailure(this.message);
 }
+
+class AuthFailure extends Failure {
+  @override
+  final String message;
+  const AuthFailure(this.message);
+}

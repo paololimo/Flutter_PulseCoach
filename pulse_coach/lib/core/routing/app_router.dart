@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:pulse_coach/features/auth/presentation/pages/account_page.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
@@ -40,6 +42,7 @@ class AppRouter {
   static const String privacy = '/privacy';
   static const String deviceSettings = '/device-settings';
   static const String aiDecisionLog = '/ai-decision-log';
+  static const String account = '/account';
 
   static final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -127,6 +130,13 @@ class AppRouter {
       ),
       GoRoute(path: profile, builder: (context, state) => const ProfilePage()),
       GoRoute(path: privacy, builder: (context, state) => const PrivacyPage()),
+      GoRoute(
+        path: account,
+        builder: (context, state) => BlocProvider.value(
+          value: context.read<AuthBloc>(),
+          child: const AccountPage(),
+        ),
+      ),
     ],
   );
 

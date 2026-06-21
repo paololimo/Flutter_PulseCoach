@@ -34,6 +34,26 @@ import 'package:pulse_coach/core/di/settings_module.dart' as _i389;
 import 'package:pulse_coach/core/sync/sync_manager.dart' as _i780;
 import 'package:pulse_coach/core/utils/geolocator_wrapper.dart' as _i973;
 import 'package:pulse_coach/core/utils/location_service.dart' as _i160;
+import 'package:pulse_coach/features/auth/data/datasources/auth_remote_data_source.dart'
+    as _i284;
+import 'package:pulse_coach/features/auth/data/repositories/auth_repository_impl.dart'
+    as _i50;
+import 'package:pulse_coach/features/auth/domain/repositories/auth_repository.dart'
+    as _i213;
+import 'package:pulse_coach/features/auth/domain/usecases/get_signed_in_user_use_case.dart'
+    as _i330;
+import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_apple_use_case.dart'
+    as _i200;
+import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_email_use_case.dart'
+    as _i114;
+import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_google_use_case.dart'
+    as _i56;
+import 'package:pulse_coach/features/auth/domain/usecases/sign_out_use_case.dart'
+    as _i455;
+import 'package:pulse_coach/features/auth/domain/usecases/sign_up_with_email_use_case.dart'
+    as _i986;
+import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart'
+    as _i412;
 import 'package:pulse_coach/features/daily_plan/data/repositories/daily_plan_repository_impl.dart'
     as _i432;
 import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart'
@@ -224,6 +244,9 @@ extension GetItInjectableX on _i174.GetIt {
       () =>
           _i780.SyncManager(gh<_i694.SyncQueueDao>(), gh<_i895.Connectivity>()),
     );
+    gh.factory<_i284.AuthRemoteDataSource>(
+      () => _i284.AuthRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
+    );
     gh.factory<_i1070.HealthRepository>(
       () => _i1067.HealthRepositoryImpl(
         gh<_i311.HealthDataSource>(),
@@ -281,6 +304,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i224.RpeFeedbackDao>(),
       ),
     );
+    gh.factory<_i213.AuthRepository>(
+      () => _i50.AuthRepositoryImpl(gh<_i284.AuthRemoteDataSource>()),
+    );
     gh.factory<_i364.AiDecisionLogCubit>(
       () => _i364.AiDecisionLogCubit(gh<_i646.AiDecisionLogRepository>()),
     );
@@ -328,11 +354,39 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i73.ProgressRepository>(
       () => _i1027.ProgressRepositoryImpl(gh<_i272.ProgressLocalDataSource>()),
     );
+    gh.factory<_i330.GetSignedInUserUseCase>(
+      () => _i330.GetSignedInUserUseCase(gh<_i213.AuthRepository>()),
+    );
+    gh.factory<_i200.SignInWithAppleUseCase>(
+      () => _i200.SignInWithAppleUseCase(gh<_i213.AuthRepository>()),
+    );
+    gh.factory<_i114.SignInWithEmailUseCase>(
+      () => _i114.SignInWithEmailUseCase(gh<_i213.AuthRepository>()),
+    );
+    gh.factory<_i56.SignInWithGoogleUseCase>(
+      () => _i56.SignInWithGoogleUseCase(gh<_i213.AuthRepository>()),
+    );
+    gh.factory<_i455.SignOutUseCase>(
+      () => _i455.SignOutUseCase(gh<_i213.AuthRepository>()),
+    );
+    gh.factory<_i986.SignUpWithEmailUseCase>(
+      () => _i986.SignUpWithEmailUseCase(gh<_i213.AuthRepository>()),
+    );
     gh.lazySingleton<_i303.GetProgressStats>(
       () => _i303.GetProgressStats(gh<_i73.ProgressRepository>()),
     );
     gh.lazySingleton<_i727.GetSessionHistory>(
       () => _i727.GetSessionHistory(gh<_i73.ProgressRepository>()),
+    );
+    gh.factory<_i412.AuthBloc>(
+      () => _i412.AuthBloc(
+        gh<_i330.GetSignedInUserUseCase>(),
+        gh<_i200.SignInWithAppleUseCase>(),
+        gh<_i56.SignInWithGoogleUseCase>(),
+        gh<_i114.SignInWithEmailUseCase>(),
+        gh<_i986.SignUpWithEmailUseCase>(),
+        gh<_i455.SignOutUseCase>(),
+      ),
     );
     gh.lazySingleton<_i916.SessionsCatalogCubit>(
       () => _i916.SessionsCatalogCubit(gh<_i342.GetExercisesByType>()),

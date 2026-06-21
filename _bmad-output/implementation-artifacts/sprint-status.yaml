@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-21 # epic-15 retro done; story 16.1 review done
+last_updated: 2026-06-21 # epic-15 retro done; story 16.1 review done; story 16.2 done
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -240,7 +240,7 @@ development_status:
   # ─────────────────────────────────────────
   epic-16: in-progress
   16-1-supabase-backend-initialization-and-cloud-client-setup: done
-  16-2-email-apple-google-sign-in-and-sign-out: backlog
+  16-2-email-apple-google-sign-in-and-sign-out: done
   16-3-e2e-encrypted-backup-and-restore: backlog
   16-4-in-app-account-deletion-and-data-export: backlog
   epic-16-retrospective: optional

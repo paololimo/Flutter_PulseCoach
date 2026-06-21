@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:pulse_coach/app.dart';
+import 'package:pulse_coach/core/cloud/secure_local_storage.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/sync/sync_manager.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,6 +16,9 @@ Future<void> main() async {
     await Supabase.initialize(
       url: const String.fromEnvironment('SUPABASE_URL'),
       publishableKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+      authOptions: FlutterAuthClientOptions(
+        localStorage: SecureLocalStorage(),
+      ),
     );
   } catch (e) {
     // Empty --dart-define in dev/test environments is expected; log and continue.

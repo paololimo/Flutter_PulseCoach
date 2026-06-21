@@ -211,5 +211,22 @@
   "privacyLocationTitle": "Location",
   "privacyLocationBody": "PulseCoach uses only city-level location (approximate coordinates) to fetch weather information. No precise GPS coordinates are stored or transmitted.",
   "privacyGdprTitle": "GDPR Compliance",
-  "privacyGdprBody": "Biometric data is classified as sensitive data under GDPR Art. 9. PulseCoach processes it locally with your explicit consent and does not share it with third parties."
+  "privacyGdprBody": "Biometric data is classified as sensitive data under GDPR Art. 9. PulseCoach processes it locally with your explicit consent and does not share it with third parties.",
+  "accountSectionTitle": "Account",
+  "signInTileLabel": "Sign in to your account",
+  "signInSheetTitle": "Sign in",
+  "signInWithAppleLabel": "Sign in with Apple",
+  "signInWithGoogleLabel": "Sign in with Google",
+  "signInWithEmailLabel": "Sign in with Email",
+  "signUpPrompt": "Don't have an account? Sign up",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "signInAction": "Sign in",
+  "signUpAction": "Sign up",
+  "signOutAction": "Sign out",
+  "emailUnconfirmedMessage": "Check your email to confirm your account.",
+  "signInErrorGeneric": "Sign in failed. Please try again.",
+  "signInErrorNoConnectivity": "No connection. Please try again when online.",
+  "ageConfirmationLabel": "I am at least 16 years old",
+  "ageConfirmationRequired": "You must confirm you are at least 16 years old to register."
 }

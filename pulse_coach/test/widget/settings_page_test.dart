@@ -1,7 +1,18 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/features/auth/domain/entities/auth_user.dart';
+import 'package:pulse_coach/features/auth/domain/repositories/auth_repository.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/get_signed_in_user_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_apple_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_email_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_google_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_out_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_up_with_email_use_case.dart';
+import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/data_export_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/data_export_state.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
@@ -24,8 +35,10 @@ void main() {
       prefs = await SharedPreferences.getInstance();
       themeCubit = ThemeCubit(prefs);
       getIt.registerFactory<DataExportCubit>(exportCubitFactory);
+      final authBloc = _StubAuthBloc();
       addTearDown(() async {
         await themeCubit.close();
+        await authBloc.close();
         await getIt.reset();
       });
 
@@ -34,7 +47,13 @@ void main() {
           locale: const Locale('it'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: BlocProvider.value(value: themeCubit, child: const SettingsPage()),
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: themeCubit),
+              BlocProvider<AuthBloc>.value(value: authBloc),
+            ],
+            child: const SettingsPage(),
+          ),
         ),
       );
     }
@@ -164,4 +183,47 @@ class _ControllableExportCubit extends Cubit<DataExportState>
 
   @override
   Future<void> exportJson() async {}
+}
+
+class _StubAuthBloc extends AuthBloc {
+  _StubAuthBloc()
+      : super(
+          GetSignedInUserUseCase(_StubAuthRepository()),
+          SignInWithAppleUseCase(_StubAuthRepository()),
+          SignInWithGoogleUseCase(_StubAuthRepository()),
+          SignInWithEmailUseCase(_StubAuthRepository()),
+          SignUpWithEmailUseCase(_StubAuthRepository()),
+          SignOutUseCase(_StubAuthRepository()),
+        );
+}
+
+class _StubAuthRepository implements AuthRepository {
+  @override
+  Future<Either<AuthFailure, AuthUser>> signInWithApple() async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<Either<AuthFailure, AuthUser>> signInWithGoogle() async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<Either<AuthFailure, AuthUser>> signInWithEmail({
+    required String email,
+    required String password,
+  }) async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<Either<AuthFailure, AuthUser?>> signUp({
+    required String email,
+    required String password,
+  }) async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<Either<AuthFailure, Unit>> signOut() async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<AuthUser?> getSignedInUser() async => null;
 }

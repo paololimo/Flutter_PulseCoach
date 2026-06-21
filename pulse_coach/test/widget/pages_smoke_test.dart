@@ -26,6 +26,15 @@ import 'package:pulse_coach/features/onboarding/domain/usecases/update_profile.d
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:pulse_coach/features/auth/domain/entities/auth_user.dart';
+import 'package:pulse_coach/features/auth/domain/repositories/auth_repository.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/get_signed_in_user_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_apple_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_email_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_google_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_out_use_case.dart';
+import 'package:pulse_coach/features/auth/domain/usecases/sign_up_with_email_use_case.dart';
+import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
 import 'package:pulse_coach/features/progress/domain/entities/progress_stats.dart';
@@ -259,10 +268,15 @@ void main() {
         SharedPreferences.setMockInitialValues({});
         final prefs = await SharedPreferences.getInstance();
 
+        final authBloc = _StubAuthBloc();
+        addTearDown(() async => authBloc.close());
         await tester.pumpWidget(
           _wrap(
-            BlocProvider(
-              create: (_) => ThemeCubit(prefs),
+            MultiBlocProvider(
+              providers: [
+                BlocProvider(create: (_) => ThemeCubit(prefs)),
+                BlocProvider<AuthBloc>.value(value: authBloc),
+              ],
               child: const SettingsPage(),
             ),
           ),
@@ -384,4 +398,47 @@ class _ProgressRepositoryStub implements ProgressRepository {
       ),
     );
   }
+}
+
+class _StubAuthBloc extends AuthBloc {
+  _StubAuthBloc()
+      : super(
+          GetSignedInUserUseCase(_StubAuthRepository()),
+          SignInWithAppleUseCase(_StubAuthRepository()),
+          SignInWithGoogleUseCase(_StubAuthRepository()),
+          SignInWithEmailUseCase(_StubAuthRepository()),
+          SignUpWithEmailUseCase(_StubAuthRepository()),
+          SignOutUseCase(_StubAuthRepository()),
+        );
+}
+
+class _StubAuthRepository implements AuthRepository {
+  @override
+  Future<Either<AuthFailure, AuthUser>> signInWithApple() async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<Either<AuthFailure, AuthUser>> signInWithGoogle() async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<Either<AuthFailure, AuthUser>> signInWithEmail({
+    required String email,
+    required String password,
+  }) async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<Either<AuthFailure, AuthUser?>> signUp({
+    required String email,
+    required String password,
+  }) async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<Either<AuthFailure, Unit>> signOut() async =>
+      const Left(AuthFailure('stub'));
+
+  @override
+  Future<AuthUser?> getSignedInUser() async => null;
 }
