@@ -362,6 +362,66 @@ void main() {
         expect(find.byType(BackButton), findsOneWidget);
       },
     );
+
+    testWidgets(
+      '15.1-NAV-006: AC6 tab state preserved — Sessions tab stays selected after push+pop',
+      (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildShellWithSecondaryRoutes());
+        await tester.pumpAndSettle();
+        // Navigate to Sessions tab (index 0)
+        await tester.tap(find.text('Sessioni'));
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<BottomNavigationBar>(find.byType(BottomNavigationBar)).currentIndex,
+          0,
+        );
+        // Open drawer and push Settings
+        await tester.tap(find.byType(DrawerButton));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Impostazioni'));
+        await tester.pumpAndSettle();
+        expect(find.text('Settings Stub'), findsOneWidget);
+        // Pop back and verify Sessions tab index is still 0
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<BottomNavigationBar>(find.byType(BottomNavigationBar)).currentIndex,
+          0,
+        );
+      },
+    );
+
+    testWidgets(
+      '15.1-NAV-007: AC6 tab state preserved — Progress tab stays selected after push+pop',
+      (tester) async {
+        await setPhoneSurface(tester);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildShellWithSecondaryRoutes());
+        await tester.pumpAndSettle();
+        // Navigate to Progress tab (index 2)
+        await tester.tap(find.text('Progressi'));
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<BottomNavigationBar>(find.byType(BottomNavigationBar)).currentIndex,
+          2,
+        );
+        // Open drawer and push Profile
+        await tester.tap(find.byType(DrawerButton));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Profilo'));
+        await tester.pumpAndSettle();
+        expect(find.text('Profile Stub'), findsOneWidget);
+        // Pop back and verify Progress tab index is still 2
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<BottomNavigationBar>(find.byType(BottomNavigationBar)).currentIndex,
+          2,
+        );
+      },
+    );
   });
 }
 
