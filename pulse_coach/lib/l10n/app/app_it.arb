@@ -228,5 +228,28 @@
   "signInErrorGeneric": "Accesso non riuscito. Riprova.",
   "signInErrorNoConnectivity": "Nessuna connessione. Riprova quando sei online.",
   "ageConfirmationLabel": "Ho almeno 16 anni",
-  "ageConfirmationRequired": "Devi confermare di avere almeno 16 anni per registrarti."
+  "ageConfirmationRequired": "Devi confermare di avere almeno 16 anni per registrarti.",
+  "backupSectionTitle": "Backup",
+  "backupToggleLabel": "Backup su cloud",
+  "backupToggleDescription": "I tuoi dati vengono cifrati con una chiave che solo tu possiedi, prima di essere caricati.",
+  "backupRecoveryPhraseTitle": "Frase di recupero",
+  "backupRecoveryPhraseInstruction": "Salva questa frase in un posto sicuro. Senza di essa non potrai ripristinare i dati.",
+  "backupPhraseAcknowledgeButton": "Ho salvato la frase",
+  "backupNowButton": "Esegui backup",
+  "backupLastBackupLabel": "Ultimo backup: {date}",
+  "@backupLastBackupLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupQueuedMessage": "Sto usando i dati salvati — sincronizzerò appena disponibile.",
+  "backupRestoreTitle": "Ripristina",
+  "backupRestorePhraseHint": "Inserisci la frase di recupero",
+  "backupRestoreButton": "Ripristina",
+  "backupRestoreSuccess": "Ripristino completato con successo.",
+  "backupErrorWrongPhrase": "Frase di recupero errata. Riprova.",
+  "backupErrorGeneric": "Errore durante il backup. Riprova.",
+  "backupTileLabel": "Backup"
 }

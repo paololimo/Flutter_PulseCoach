@@ -6,6 +6,7 @@ import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/auth/presentation/pages/account_page.dart';
+import 'package:pulse_coach/features/auth/presentation/pages/backup_page.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
@@ -43,6 +44,7 @@ class AppRouter {
   static const String deviceSettings = '/device-settings';
   static const String aiDecisionLog = '/ai-decision-log';
   static const String account = '/account';
+  static const String backup = '/account/backup';
 
   static final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -136,6 +138,12 @@ class AppRouter {
           value: context.read<AuthBloc>(),
           child: const AccountPage(),
         ),
+        routes: [
+          GoRoute(
+            path: 'backup',
+            builder: (context, state) => const BackupPage(),
+          ),
+        ],
       ),
     ],
   );

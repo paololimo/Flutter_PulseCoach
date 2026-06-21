@@ -228,5 +228,28 @@
   "signInErrorGeneric": "Sign in failed. Please try again.",
   "signInErrorNoConnectivity": "No connection. Please try again when online.",
   "ageConfirmationLabel": "I am at least 16 years old",
-  "ageConfirmationRequired": "You must confirm you are at least 16 years old to register."
+  "ageConfirmationRequired": "You must confirm you are at least 16 years old to register.",
+  "backupSectionTitle": "Backup",
+  "backupToggleLabel": "Cloud backup",
+  "backupToggleDescription": "Your data is encrypted with a key only you hold, before being uploaded.",
+  "backupRecoveryPhraseTitle": "Recovery phrase",
+  "backupRecoveryPhraseInstruction": "Save this phrase in a safe place. Without it you cannot restore your data.",
+  "backupPhraseAcknowledgeButton": "I have saved the phrase",
+  "backupNowButton": "Backup now",
+  "backupLastBackupLabel": "Last backup: {date}",
+  "@backupLastBackupLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupQueuedMessage": "Using saved data — will sync when connection is available.",
+  "backupRestoreTitle": "Restore",
+  "backupRestorePhraseHint": "Enter your recovery phrase",
+  "backupRestoreButton": "Restore",
+  "backupRestoreSuccess": "Restore completed successfully.",
+  "backupErrorWrongPhrase": "Wrong recovery phrase. Please try again.",
+  "backupErrorGeneric": "Backup error. Please try again.",
+  "backupTileLabel": "Backup"
 }

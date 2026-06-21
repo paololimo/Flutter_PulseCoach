@@ -11,11 +11,13 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:connectivity_plus/connectivity_plus.dart' as _i895;
 import 'package:dio/dio.dart' as _i361;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:health/health.dart' as _i237;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:pulse_coach/ai/engine/ai_engine.dart' as _i122;
 import 'package:pulse_coach/ai/engine/ai_engine_isolate.dart' as _i157;
+import 'package:pulse_coach/core/cloud/crypto/e2e_backup_codec.dart' as _i684;
 import 'package:pulse_coach/core/cloud/supabase_client.dart' as _i42;
 import 'package:pulse_coach/core/database/app_database.dart' as _i79;
 import 'package:pulse_coach/core/database/daos/bandit_state_dao.dart' as _i10;
@@ -30,18 +32,37 @@ import 'package:pulse_coach/core/database/daos/sync_queue_dao.dart' as _i694;
 import 'package:pulse_coach/core/database/daos/weather_cache_dao.dart' as _i194;
 import 'package:pulse_coach/core/di/health_module.dart' as _i294;
 import 'package:pulse_coach/core/di/network_module.dart' as _i731;
+import 'package:pulse_coach/core/di/secure_storage_module.dart' as _i621;
 import 'package:pulse_coach/core/di/settings_module.dart' as _i389;
 import 'package:pulse_coach/core/sync/sync_manager.dart' as _i780;
 import 'package:pulse_coach/core/utils/geolocator_wrapper.dart' as _i973;
 import 'package:pulse_coach/core/utils/location_service.dart' as _i160;
 import 'package:pulse_coach/features/auth/data/datasources/auth_remote_data_source.dart'
     as _i284;
+import 'package:pulse_coach/features/auth/data/datasources/backup_local_data_source.dart'
+    as _i761;
+import 'package:pulse_coach/features/auth/data/datasources/backup_remote_data_source.dart'
+    as _i757;
 import 'package:pulse_coach/features/auth/data/repositories/auth_repository_impl.dart'
     as _i50;
+import 'package:pulse_coach/features/auth/data/repositories/backup_repository_impl.dart'
+    as _i44;
 import 'package:pulse_coach/features/auth/domain/repositories/auth_repository.dart'
     as _i213;
+import 'package:pulse_coach/features/auth/domain/repositories/backup_repository.dart'
+    as _i271;
+import 'package:pulse_coach/features/auth/domain/usecases/backup_now_use_case.dart'
+    as _i544;
+import 'package:pulse_coach/features/auth/domain/usecases/disable_backup_use_case.dart'
+    as _i609;
+import 'package:pulse_coach/features/auth/domain/usecases/enable_backup_use_case.dart'
+    as _i285;
 import 'package:pulse_coach/features/auth/domain/usecases/get_signed_in_user_use_case.dart'
     as _i330;
+import 'package:pulse_coach/features/auth/domain/usecases/is_backup_enabled_use_case.dart'
+    as _i134;
+import 'package:pulse_coach/features/auth/domain/usecases/restore_backup_use_case.dart'
+    as _i122;
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_apple_use_case.dart'
     as _i200;
 import 'package:pulse_coach/features/auth/domain/usecases/sign_in_with_email_use_case.dart'
@@ -54,6 +75,8 @@ import 'package:pulse_coach/features/auth/domain/usecases/sign_up_with_email_use
     as _i986;
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart'
     as _i412;
+import 'package:pulse_coach/features/auth/presentation/bloc/backup_bloc.dart'
+    as _i57;
 import 'package:pulse_coach/features/daily_plan/data/repositories/daily_plan_repository_impl.dart'
     as _i432;
 import 'package:pulse_coach/features/daily_plan/domain/repositories/daily_plan_repository.dart'
@@ -165,7 +188,9 @@ extension GetItInjectableX on _i174.GetIt {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final healthModule = _$HealthModule();
     final networkModule = _$NetworkModule();
+    final secureStorageModule = _$SecureStorageModule();
     final settingsModule = _$SettingsModule();
+    gh.factory<_i684.E2eBackupCodec>(() => _i684.E2eBackupCodec());
     gh.factory<_i253.AccelerometerDataSource>(
       () => _i253.AccelerometerDataSource(),
     );
@@ -176,6 +201,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i237.Health>(() => healthModule.health);
     gh.singleton<_i895.Connectivity>(() => networkModule.connectivity);
     gh.singleton<_i361.Dio>(() => networkModule.dio);
+    gh.singleton<_i558.FlutterSecureStorage>(
+      () => secureStorageModule.flutterSecureStorage,
+    );
     await gh.singletonAsync<_i460.SharedPreferences>(
       () => settingsModule.sharedPreferences,
       preResolve: true,
@@ -227,6 +255,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i209.WeatherRemoteDataSource>(
       () => _i209.WeatherRemoteDataSource(gh<_i361.Dio>()),
     );
+    gh.factory<_i761.BackupLocalDataSource>(
+      () => _i761.BackupLocalDataSource(
+        gh<_i79.AppDatabase>(),
+        gh<_i558.FlutterSecureStorage>(),
+      ),
+    );
     gh.factory<_i646.AiDecisionLogRepository>(
       () => _i646.AiDecisionLogRepository(
         gh<_i224.RpeFeedbackDao>(),
@@ -246,6 +280,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i284.AuthRemoteDataSource>(
       () => _i284.AuthRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
+    );
+    gh.factory<_i757.BackupRemoteDataSource>(
+      () => _i757.BackupRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
     );
     gh.factory<_i1070.HealthRepository>(
       () => _i1067.HealthRepositoryImpl(
@@ -279,6 +316,14 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i91.ExerciseLocalDataSource>(
       () => _i91.ExerciseLocalDataSource(gh<_i224.ExerciseCacheDao>()),
+    );
+    gh.factory<_i271.BackupRepository>(
+      () => _i44.BackupRepositoryImpl(
+        gh<_i757.BackupRemoteDataSource>(),
+        gh<_i761.BackupLocalDataSource>(),
+        gh<_i684.E2eBackupCodec>(),
+        gh<_i895.Connectivity>(),
+      ),
     );
     gh.factory<_i901.ProfileCubit>(
       () =>
@@ -315,6 +360,21 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i272.ProgressLocalDataSource>(),
         gh<_i646.AiDecisionLogRepository>(),
       ),
+    );
+    gh.factory<_i544.BackupNowUseCase>(
+      () => _i544.BackupNowUseCase(gh<_i271.BackupRepository>()),
+    );
+    gh.factory<_i609.DisableBackupUseCase>(
+      () => _i609.DisableBackupUseCase(gh<_i271.BackupRepository>()),
+    );
+    gh.factory<_i285.EnableBackupUseCase>(
+      () => _i285.EnableBackupUseCase(gh<_i271.BackupRepository>()),
+    );
+    gh.factory<_i134.IsBackupEnabledUseCase>(
+      () => _i134.IsBackupEnabledUseCase(gh<_i271.BackupRepository>()),
+    );
+    gh.factory<_i122.RestoreBackupUseCase>(
+      () => _i122.RestoreBackupUseCase(gh<_i271.BackupRepository>()),
     );
     gh.factory<_i206.WeatherLocalDataSource>(
       () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
@@ -409,6 +469,16 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i664.GetWeatherContext>(
       () => _i664.GetWeatherContext(gh<_i748.WeatherRepository>()),
     );
+    gh.factory<_i57.BackupBloc>(
+      () => _i57.BackupBloc(
+        gh<_i285.EnableBackupUseCase>(),
+        gh<_i609.DisableBackupUseCase>(),
+        gh<_i544.BackupNowUseCase>(),
+        gh<_i122.RestoreBackupUseCase>(),
+        gh<_i134.IsBackupEnabledUseCase>(),
+        gh<_i412.AuthBloc>(),
+      ),
+    );
     gh.factory<_i183.RegenerateDailyPlan>(
       () => _i183.RegenerateDailyPlan(
         gh<_i78.DailyPlanRepository>(),
@@ -432,5 +502,7 @@ extension GetItInjectableX on _i174.GetIt {
 class _$HealthModule extends _i294.HealthModule {}
 
 class _$NetworkModule extends _i731.NetworkModule {}
+
+class _$SecureStorageModule extends _i621.SecureStorageModule {}
 
 class _$SettingsModule extends _i389.SettingsModule {}

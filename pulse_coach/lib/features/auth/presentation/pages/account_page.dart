@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
@@ -27,6 +29,20 @@ class AccountPage extends StatelessWidget {
                     leading: const Icon(Icons.person),
                   ),
                 ),
+              if (email != null) ...[
+                const SizedBox(height: 8),
+                Semantics(
+                  label: l10n.backupTileLabel,
+                  button: true,
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.backupTileLabel),
+                    leading: const Icon(Icons.backup),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(AppRouter.backup),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               Semantics(
                 label: l10n.signOutAction,

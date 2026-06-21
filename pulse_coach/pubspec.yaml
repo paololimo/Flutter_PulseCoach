@@ -51,7 +51,9 @@ dependencies:
 
   # Cloud Backend (v2)
   supabase_flutter: ^2.9.0
+  storage_client: ^2.5.7
   flutter_secure_storage: ^9.2.0
+  cryptography: ^2.7.0
   sign_in_with_apple: ^6.1.0
   google_sign_in: ^6.2.0
 

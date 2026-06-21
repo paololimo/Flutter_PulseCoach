@@ -42,3 +42,13 @@ class AuthFailure extends Failure {
   final String message;
   const AuthFailure(this.message);
 }
+
+class BackupFailure extends Failure {
+  @override
+  final String message;
+  const BackupFailure(this.message);
+}
+
+class BackupDecryptionFailure extends BackupFailure {
+  const BackupDecryptionFailure(super.message);
+}

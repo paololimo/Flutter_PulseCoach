@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of 16-3-e2e-encrypted-backup-and-restore (2026-06-21)
+
+- `exportDriftSnapshot` loads all backup tables fully into memory, JSON-encodes, AES-encrypts, then base64-encodes (~1.33x twice) in one shot [pulse_coach/lib/features/auth/data/datasources/backup_local_data_source.dart:16-39]. No streaming/chunking or size bound. **[KEEP — spec mandates a full-snapshot design and the dataset is bounded (30-day daily plans); re-evaluate if Supabase object-size limits or OOM become a real risk for heavy users]**
+
 ## Deferred from: code review of 13-3-data-persistence-guarantees (2026-06-04)
 
 - Partial-v8 idempotency branch (`hasSessionLogId` already-present case in the `from < 8` rpe_feedback migration step) has zero coverage [pulse_coach/lib/core/database/app_database.dart]. PERSIST-006 exercises the table-exists-without-column path but not the already-migrated path. **[KEEP — out of this story's scope; re-evaluate when adding a dedicated partial-migration-edge test]**

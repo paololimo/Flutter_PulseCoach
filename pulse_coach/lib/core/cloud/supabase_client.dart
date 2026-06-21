@@ -9,6 +9,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 export 'package:supabase_flutter/supabase_flutter.dart' show OAuthProvider, User;
+export 'package:storage_client/storage_client.dart' show FileOptions;
 
 @singleton
 class SupabaseClientProvider {
