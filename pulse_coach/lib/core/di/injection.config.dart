@@ -176,6 +176,8 @@ import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart
     as _i291;
 import 'package:pulse_coach/features/subscription/data/repositories/entitlement_repository_impl.dart'
     as _i705;
+import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_service.dart'
+    as _i540;
 import 'package:pulse_coach/features/subscription/domain/repositories/entitlement_repository.dart'
     as _i811;
 import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart'
@@ -289,6 +291,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i1.GetActivityLevel>(
       () => _i1.GetActivityLevel(gh<_i628.SensorRepository>()),
+    );
+    gh.singleton<_i540.UpsellCooldownService>(
+      () => _i540.UpsellCooldownService(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i291.ThemeCubit>(
       () => _i291.ThemeCubit(gh<_i460.SharedPreferences>()),
