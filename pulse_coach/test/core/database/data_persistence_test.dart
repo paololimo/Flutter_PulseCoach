@@ -165,7 +165,7 @@ void main() {
 
   group('AppDatabase - migration data guarantees', () {
     test(
-      '13.3-PERSIST-006: v1 to v8 composite migration preserves live data',
+      '13.3-PERSIST-006: v1 to v9 composite migration preserves live data',
       () async {
         final raw = sqlite3.openInMemory();
         final now = DateTime.utc(2026, 6, 4, 14).millisecondsSinceEpoch;
@@ -193,13 +193,13 @@ void main() {
         addTearDown(migratedDb.close);
 
         // Prove the migration chain actually ran to completion: Drift bumps the
-        // DB's user_version to the declared schemaVersion (8) only after the full
-        // v1→v8 onUpgrade succeeds. Asserting it guards against a silently-skipped
+        // DB's user_version to the declared schemaVersion (9) only after the full
+        // v1→v9 onUpgrade succeeds. Asserting it guards against a silently-skipped
         // or partially-applied migration that the data-only checks below could miss.
         final versionRow = await migratedDb
             .customSelect('PRAGMA user_version')
             .getSingle();
-        expect(versionRow.data.values.single, 8);
+        expect(versionRow.data.values.single, 9);
 
         final sessions = await migratedDb.sessionsDao.getAllSessions();
         final banditState = await migratedDb.banditStateDao.getLatestState();

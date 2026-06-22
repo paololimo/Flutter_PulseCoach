@@ -49,6 +49,9 @@ dependencies:
   share_plus: ^10.0.0
   path_provider: ^2.1.0
 
+  # In-App Purchases (v2 — RevenueCat)
+  purchases_flutter: ^10.3.0
+
   # Cloud Backend (v2)
   supabase_flutter: ^2.9.0
   storage_client: ^2.5.7

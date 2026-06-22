@@ -5,6 +5,7 @@ import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class PulseCoachApp extends StatelessWidget {
@@ -19,6 +20,9 @@ class PulseCoachApp extends StatelessWidget {
               getIt<AuthBloc>()..add(const AuthEvent.appStarted()),
         ),
         BlocProvider(create: (_) => getIt<ThemeCubit>()),
+        // SubscriptionBloc self-dispatches SubscriptionCheckRequested on
+        // construction, resolving from RevenueCat local cache (AC5).
+        BlocProvider(create: (_) => getIt<SubscriptionBloc>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {

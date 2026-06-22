@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-22 # epic-16 retro done (on-device gate caught + fixed SignInSheet keyboard overflow; 932 tests green); 4 action items E16R-1..4
+last_updated: 2026-06-22 # story 17.1 done (RevenueCat IAP + EntitlementGate; code review passed); epic-17 in-progress
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -248,8 +248,8 @@ development_status:
   # ─────────────────────────────────────────
   # Epic 17: Pro Subscription & Feature Gating (v2.2)
   # ─────────────────────────────────────────
-  epic-17: backlog
-  17-1-revenuecat-iap-integration-and-entitlement-gate: backlog
+  epic-17: in-progress
+  17-1-revenuecat-iap-integration-and-entitlement-gate: done
   17-2-progress-history-free-pro-gating-with-grandfathering: backlog
   17-3-pro-upsell-sheet-with-session-day-cooldown: backlog
   17-4-subscription-purchase-restore-and-management: backlog

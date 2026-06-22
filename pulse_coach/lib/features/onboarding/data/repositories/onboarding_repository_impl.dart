@@ -19,6 +19,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
         await _db.userProfileDao.insertProfile(
           UserProfileCompanion.insert(
             disclaimerAccepted: const Value(true),
+            installCohort: const Value('post_v2'),
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           ),
@@ -105,6 +106,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
             availableTime: Value(profile.availableTime),
             physicalConstraints: Value(profile.physicalConstraints),
             onboardingCompleted: const Value(true),
+            installCohort: const Value('post_v2'),
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           ),

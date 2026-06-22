@@ -452,3 +452,9 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 ## Deferred from: code review of 14-5-data-export-mvp-if-time (2026-06-05)
 
 - Weekly summaries grouped by UTC-Monday, not local week (`pulse_coach/lib/features/settings/data/services/data_export_service.dart:123`). A session completed late Sunday local time (UTC+1/+2) buckets into the next UTC week. Deferred, pre-existing: `_mondayOf` is byte-identical to `ProgressLocalDataSource._mondayOf` (copied per spec), so the export is internally consistent with the rest of the app; switching to local-week boundaries is an app-wide decision, not this story's scope.
+
+## Deferred from: code review of story-17.1 (2026-06-22)
+
+- Double `Purchases.getCustomerInfo()` per check (datasource + `gate.refresh()`). Acceptable — RevenueCat local-cache read <5ms; revisit if it becomes hot. [entitlement_repository_impl.dart:16-21]
+- `unawaited(_gate.refresh())` race: `gate.check()` lags the bool returned to the bloc. No synchronous consumer of `check()` exists yet; revisit when gating UI lands. [entitlement_repository_impl.dart:20]
+- Non-onboarding profile inserts (restore/import) leave `install_cohort` NULL — neither `pre_v2` nor `post_v2`; column has no table-level default. Needs restore-path audit in a later subscription story. [user_profile_table.dart / onboarding_repository_impl.dart]

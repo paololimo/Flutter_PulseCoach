@@ -58,7 +58,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -112,6 +112,31 @@ class AppDatabase extends _$AppDatabase {
           );
           if (!hasSessionLogId) {
             await m.addColumn(rpeFeedback, rpeFeedback.sessionLogId);
+          }
+        }
+      }
+      if (from < 9) {
+        // Guard against minimal test databases that omit user_profile.
+        final userProfileExists = await customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'user_profile'",
+        ).get();
+        if (userProfileExists.isNotEmpty) {
+          // Survive a partial v9 (process killed mid-onUpgrade after addColumn
+          // but before user_version was bumped) by skipping the column add when
+          // it is already present — same guard as the v8 block above. Without
+          // it the second run throws "duplicate column name" and bricks open.
+          final columns = await customSelect(
+            'PRAGMA table_info(user_profile)',
+          ).get();
+          final hasInstallCohort = columns.any(
+            (row) => row.data['name'] == 'install_cohort',
+          );
+          if (!hasInstallCohort) {
+            await m.addColumn(userProfile, userProfile.installCohort);
+            await customStatement(
+              "UPDATE user_profile SET install_cohort = 'pre_v2'",
+            );
           }
         }
       }

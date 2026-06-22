@@ -52,3 +52,9 @@ class BackupFailure extends Failure {
 class BackupDecryptionFailure extends BackupFailure {
   const BackupDecryptionFailure(super.message);
 }
+
+class SubscriptionFailure extends Failure {
+  @override
+  final String message;
+  const SubscriptionFailure(this.message);
+}

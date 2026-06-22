@@ -18,6 +18,7 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:pulse_coach/ai/engine/ai_engine.dart' as _i122;
 import 'package:pulse_coach/ai/engine/ai_engine_isolate.dart' as _i157;
 import 'package:pulse_coach/core/cloud/crypto/e2e_backup_codec.dart' as _i684;
+import 'package:pulse_coach/core/cloud/entitlement_gate.dart' as _i499;
 import 'package:pulse_coach/core/cloud/supabase_client.dart' as _i42;
 import 'package:pulse_coach/core/database/app_database.dart' as _i79;
 import 'package:pulse_coach/core/database/daos/bandit_state_dao.dart' as _i10;
@@ -171,6 +172,14 @@ import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_
     as _i168;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
+import 'package:pulse_coach/features/subscription/data/repositories/entitlement_repository_impl.dart'
+    as _i705;
+import 'package:pulse_coach/features/subscription/domain/repositories/entitlement_repository.dart'
+    as _i811;
+import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart'
+    as _i303;
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart'
+    as _i844;
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart'
     as _i491;
 import 'package:pulse_coach/features/weather/data/datasources/weather_local_data_source.dart'
@@ -283,6 +292,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i780.SyncManager>(
       () =>
           _i780.SyncManager(gh<_i694.SyncQueueDao>(), gh<_i895.Connectivity>()),
+    );
+    gh.singleton<_i499.EntitlementGate>(
+      () => _i499.EntitlementGate(gh<_i42.SupabaseClientProvider>()),
     );
     gh.factory<_i284.AuthRemoteDataSource>(
       () => _i284.AuthRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
@@ -401,6 +413,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i574.SyncExerciseCatalog>(
       () => _i574.SyncExerciseCatalog(gh<_i207.ExerciseRepository>()),
     );
+    gh.factory<_i811.EntitlementRepository>(
+      () => _i705.EntitlementRepositoryImpl(gh<_i499.EntitlementGate>()),
+    );
     gh.factory<_i984.GetSensorContext>(
       () => _i984.GetSensorContext(
         gh<_i746.GetHealthData>(),
@@ -409,6 +424,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i705.DataExportCubit>(
       () => _i705.DataExportCubit(gh<_i748.DataExportService>()),
+    );
+    gh.factory<_i303.CheckEntitlementUseCase>(
+      () => _i303.CheckEntitlementUseCase(gh<_i811.EntitlementRepository>()),
     );
     gh.factory<_i748.WeatherRepository>(
       () => _i61.WeatherRepositoryImpl(
@@ -452,6 +470,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i916.SessionsCatalogCubit>(
       () => _i916.SessionsCatalogCubit(gh<_i342.GetExercisesByType>()),
+    );
+    gh.factory<_i844.SubscriptionBloc>(
+      () => _i844.SubscriptionBloc(gh<_i303.CheckEntitlementUseCase>()),
     );
     gh.factory<_i992.GenerateDailyPlan>(
       () => _i992.GenerateDailyPlan(

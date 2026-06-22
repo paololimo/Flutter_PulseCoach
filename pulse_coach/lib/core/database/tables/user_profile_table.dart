@@ -16,6 +16,7 @@ class UserProfile extends Table {
       boolean().withDefault(const Constant(false))();
   BoolColumn get disclaimerAccepted =>
       boolean().withDefault(const Constant(false))();
+  TextColumn get installCohort => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 }

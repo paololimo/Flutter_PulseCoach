@@ -998,6 +998,17 @@ class $UserProfileTable extends UserProfile
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _installCohortMeta = const VerificationMeta(
+    'installCohort',
+  );
+  @override
+  late final GeneratedColumn<String> installCohort = GeneratedColumn<String>(
+    'install_cohort',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1031,6 +1042,7 @@ class $UserProfileTable extends UserProfile
     physicalConstraints,
     onboardingCompleted,
     disclaimerAccepted,
+    installCohort,
     createdAt,
     updatedAt,
   ];
@@ -1121,6 +1133,15 @@ class $UserProfileTable extends UserProfile
         ),
       );
     }
+    if (data.containsKey('install_cohort')) {
+      context.handle(
+        _installCohortMeta,
+        installCohort.isAcceptableOrUnknown(
+          data['install_cohort']!,
+          _installCohortMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1182,6 +1203,10 @@ class $UserProfileTable extends UserProfile
         DriftSqlType.bool,
         data['${effectivePrefix}disclaimer_accepted'],
       )!,
+      installCohort: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}install_cohort'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1209,6 +1234,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
   final String? physicalConstraints;
   final bool onboardingCompleted;
   final bool disclaimerAccepted;
+  final String? installCohort;
   final DateTime createdAt;
   final DateTime updatedAt;
   const UserProfileData({
@@ -1221,6 +1247,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     this.physicalConstraints,
     required this.onboardingCompleted,
     required this.disclaimerAccepted,
+    this.installCohort,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1246,6 +1273,9 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     }
     map['onboarding_completed'] = Variable<bool>(onboardingCompleted);
     map['disclaimer_accepted'] = Variable<bool>(disclaimerAccepted);
+    if (!nullToAbsent || installCohort != null) {
+      map['install_cohort'] = Variable<String>(installCohort);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -1272,6 +1302,9 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
           : Value(physicalConstraints),
       onboardingCompleted: Value(onboardingCompleted),
       disclaimerAccepted: Value(disclaimerAccepted),
+      installCohort: installCohort == null && nullToAbsent
+          ? const Value.absent()
+          : Value(installCohort),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1302,6 +1335,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
         json['onboardingCompleted'],
       ),
       disclaimerAccepted: serializer.fromJson<bool>(json['disclaimerAccepted']),
+      installCohort: serializer.fromJson<String?>(json['installCohort']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1321,6 +1355,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       'physicalConstraints': serializer.toJson<String?>(physicalConstraints),
       'onboardingCompleted': serializer.toJson<bool>(onboardingCompleted),
       'disclaimerAccepted': serializer.toJson<bool>(disclaimerAccepted),
+      'installCohort': serializer.toJson<String?>(installCohort),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1336,6 +1371,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     Value<String?> physicalConstraints = const Value.absent(),
     bool? onboardingCompleted,
     bool? disclaimerAccepted,
+    Value<String?> installCohort = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => UserProfileData(
@@ -1356,6 +1392,9 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
         : this.physicalConstraints,
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
     disclaimerAccepted: disclaimerAccepted ?? this.disclaimerAccepted,
+    installCohort: installCohort.present
+        ? installCohort.value
+        : this.installCohort,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -1386,6 +1425,9 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       disclaimerAccepted: data.disclaimerAccepted.present
           ? data.disclaimerAccepted.value
           : this.disclaimerAccepted,
+      installCohort: data.installCohort.present
+          ? data.installCohort.value
+          : this.installCohort,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1403,6 +1445,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
           ..write('physicalConstraints: $physicalConstraints, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('disclaimerAccepted: $disclaimerAccepted, ')
+          ..write('installCohort: $installCohort, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1420,6 +1463,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     physicalConstraints,
     onboardingCompleted,
     disclaimerAccepted,
+    installCohort,
     createdAt,
     updatedAt,
   );
@@ -1436,6 +1480,7 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
           other.physicalConstraints == this.physicalConstraints &&
           other.onboardingCompleted == this.onboardingCompleted &&
           other.disclaimerAccepted == this.disclaimerAccepted &&
+          other.installCohort == this.installCohort &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1450,6 +1495,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
   final Value<String?> physicalConstraints;
   final Value<bool> onboardingCompleted;
   final Value<bool> disclaimerAccepted;
+  final Value<String?> installCohort;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const UserProfileCompanion({
@@ -1462,6 +1508,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     this.physicalConstraints = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
     this.disclaimerAccepted = const Value.absent(),
+    this.installCohort = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -1475,6 +1522,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     this.physicalConstraints = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
     this.disclaimerAccepted = const Value.absent(),
+    this.installCohort = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : createdAt = Value(createdAt),
@@ -1489,6 +1537,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     Expression<String>? physicalConstraints,
     Expression<bool>? onboardingCompleted,
     Expression<bool>? disclaimerAccepted,
+    Expression<String>? installCohort,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -1507,6 +1556,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
       if (onboardingCompleted != null)
         'onboarding_completed': onboardingCompleted,
       if (disclaimerAccepted != null) 'disclaimer_accepted': disclaimerAccepted,
+      if (installCohort != null) 'install_cohort': installCohort,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -1522,6 +1572,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     Value<String?>? physicalConstraints,
     Value<bool>? onboardingCompleted,
     Value<bool>? disclaimerAccepted,
+    Value<String?>? installCohort,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -1536,6 +1587,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
       physicalConstraints: physicalConstraints ?? this.physicalConstraints,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       disclaimerAccepted: disclaimerAccepted ?? this.disclaimerAccepted,
+      installCohort: installCohort ?? this.installCohort,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -1573,6 +1625,9 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     if (disclaimerAccepted.present) {
       map['disclaimer_accepted'] = Variable<bool>(disclaimerAccepted.value);
     }
+    if (installCohort.present) {
+      map['install_cohort'] = Variable<String>(installCohort.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1594,6 +1649,7 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
           ..write('physicalConstraints: $physicalConstraints, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('disclaimerAccepted: $disclaimerAccepted, ')
+          ..write('installCohort: $installCohort, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -5058,6 +5114,7 @@ typedef $$UserProfileTableCreateCompanionBuilder =
       Value<String?> physicalConstraints,
       Value<bool> onboardingCompleted,
       Value<bool> disclaimerAccepted,
+      Value<String?> installCohort,
       required DateTime createdAt,
       required DateTime updatedAt,
     });
@@ -5072,6 +5129,7 @@ typedef $$UserProfileTableUpdateCompanionBuilder =
       Value<String?> physicalConstraints,
       Value<bool> onboardingCompleted,
       Value<bool> disclaimerAccepted,
+      Value<String?> installCohort,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -5127,6 +5185,11 @@ class $$UserProfileTableFilterComposer
 
   ColumnFilters<bool> get disclaimerAccepted => $composableBuilder(
     column: $table.disclaimerAccepted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get installCohort => $composableBuilder(
+    column: $table.installCohort,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5195,6 +5258,11 @@ class $$UserProfileTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get installCohort => $composableBuilder(
+    column: $table.installCohort,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -5258,6 +5326,11 @@ class $$UserProfileTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get installCohort => $composableBuilder(
+    column: $table.installCohort,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -5305,6 +5378,7 @@ class $$UserProfileTableTableManager
                 Value<String?> physicalConstraints = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<bool> disclaimerAccepted = const Value.absent(),
+                Value<String?> installCohort = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => UserProfileCompanion(
@@ -5317,6 +5391,7 @@ class $$UserProfileTableTableManager
                 physicalConstraints: physicalConstraints,
                 onboardingCompleted: onboardingCompleted,
                 disclaimerAccepted: disclaimerAccepted,
+                installCohort: installCohort,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -5331,6 +5406,7 @@ class $$UserProfileTableTableManager
                 Value<String?> physicalConstraints = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<bool> disclaimerAccepted = const Value.absent(),
+                Value<String?> installCohort = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
               }) => UserProfileCompanion.insert(
@@ -5343,6 +5419,7 @@ class $$UserProfileTableTableManager
                 physicalConstraints: physicalConstraints,
                 onboardingCompleted: onboardingCompleted,
                 disclaimerAccepted: disclaimerAccepted,
+                installCohort: installCohort,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),

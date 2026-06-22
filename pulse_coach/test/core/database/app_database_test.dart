@@ -212,8 +212,8 @@ void main() {
       expect(db.migration.onUpgrade, isNotNull);
     });
 
-    test('schemaVersion is 8', () {
-      expect(db.schemaVersion, 8);
+    test('schemaVersion is 9', () {
+      expect(db.schemaVersion, 9);
     });
   });
 
@@ -612,6 +612,74 @@ void main() {
         expect(logs.single.currentStepIndex, isNull);
 
         await migratedDb.close();
+      },
+    );
+  });
+
+  group('AppDatabase - real migration v8 → v9 (AC6: installCohort)', () {
+    test(
+      '17.1-DB-001: migration v8 → v9 adds nullable install_cohort '
+      'and backfills existing rows with pre_v2',
+      () async {
+        final v8Raw = sqlite3.openInMemory();
+        final now = DateTime.utc(2026, 6, 22, 9).millisecondsSinceEpoch;
+        v8Raw.execute('''
+          CREATE TABLE IF NOT EXISTS user_profile (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            fitness_goal TEXT,
+            weekly_session_target INTEGER NOT NULL DEFAULT 3,
+            intensity_preference TEXT,
+            environment_preference TEXT,
+            available_time TEXT,
+            physical_constraints TEXT,
+            onboarding_completed INTEGER NOT NULL DEFAULT 0,
+            disclaimer_accepted INTEGER NOT NULL DEFAULT 0,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+          )
+        ''');
+        v8Raw.execute(
+          'INSERT INTO user_profile (onboarding_completed, disclaimer_accepted, '
+          'created_at, updated_at) VALUES (1, 1, ?, ?)',
+          [now, now],
+        );
+        v8Raw.execute('PRAGMA user_version = 8');
+
+        final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v8Raw));
+
+        final columns = await migratedDb
+            .customSelect('PRAGMA table_info(user_profile)')
+            .get();
+        expect(
+          columns.map((r) => r.data['name']),
+          contains('install_cohort'),
+          reason: 'v9 migration must add install_cohort column',
+        );
+
+        final profile = await migratedDb.userProfileDao.getProfile();
+        expect(profile, isNotNull);
+        expect(
+          profile!.installCohort,
+          'pre_v2',
+          reason: 'existing rows must be backfilled with pre_v2',
+        );
+
+        await migratedDb.close();
+      },
+    );
+
+    test(
+      '17.1-DB-002: fresh install (v9 onCreate) has install_cohort column',
+      () async {
+        final freshDb = AppDatabase.forTesting(NativeDatabase.memory());
+        final columns = await freshDb
+            .customSelect('PRAGMA table_info(user_profile)')
+            .get();
+        expect(
+          columns.map((r) => r.data['name']),
+          contains('install_cohort'),
+        );
+        await freshDb.close();
       },
     );
   });

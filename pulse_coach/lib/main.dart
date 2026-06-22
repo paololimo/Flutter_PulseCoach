@@ -1,10 +1,12 @@
 import 'dart:async' show unawaited;
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:pulse_coach/app.dart';
 import 'package:pulse_coach/core/cloud/secure_local_storage.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/sync/sync_manager.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -23,6 +25,24 @@ Future<void> main() async {
   } catch (e) {
     // Empty --dart-define in dev/test environments is expected; log and continue.
     debugPrint('Supabase init failed: $e — running in offline-only mode');
+  }
+
+  // RevenueCat must be configured before configureDependencies() because
+  // SubscriptionBloc constructor self-dispatches SubscriptionCheckRequested
+  // which calls Purchases.getCustomerInfo(). Empty key → observer mode (NFR34).
+  try {
+    final rcKey = Platform.isAndroid
+        ? const String.fromEnvironment(
+            'REVENUECAT_API_KEY_ANDROID',
+            defaultValue: '',
+          )
+        : const String.fromEnvironment(
+            'REVENUECAT_API_KEY_IOS',
+            defaultValue: '',
+          );
+    await Purchases.configure(PurchasesConfiguration(rcKey));
+  } catch (e) {
+    debugPrint('RevenueCat init failed: $e — running without subscription gating');
   }
 
   try {
