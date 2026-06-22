@@ -261,3 +261,31 @@ Ran during the Epic 11 retrospective (Paolo + Amelia, on John's behalf). This re
 **Outcome:** 6 items → **3 active standing rules** (`E6-P1`, `E7-P2`, `E7.5-P1`) + **1 consolidated fire-check** (`E9-K1`, now absorbing E9R-4/E10R-3 and the E7-P2 index-state pre-flight). **Retired:** `E7.5-P2` (structurally satisfied), `E9R-4` + `E10R-3` (merged into E9-K1). Next sunset review: **Epic 13 kickoff** (2-epic cadence; Epic 12 + Epic 13).
 
 **Category A snapshot (Epic 11 retro):** active `E6-T7`, `E6-T8`, `E10R-1`, `E10R-2` (4/5). New A-class, hardware-gated: `E11R-3` (tablet on-device verification — closes deferred 11.1 label-band + 11.2-AC4) and `E11R-PREP` (**DONE 2026-06-02** — Wear OS Large Round AVD created, API 36, `emulator-5554` boots and `flutter devices` recognizes it as a watch). `CR112-002` (hardcoded cardio accent) is a further A candidate. Triage at Epic 12 kickoff: `E11R-3` is blocked only on a tablet/large-screen target and may be parked with rationale rather than counted as active work, keeping the cap honest.
+
+---
+
+## Epic 17 Kickoff Triage — 2026-06-22 (Category A budget)
+
+Run by Amelia on John's behalf, ratified by Paolo, immediately after the Epic 16 retrospective. The Epic 16 retro flagged that 16.x deferrals plus carried items would breach the Category A cap of 5. Reconciling the ledger forward through the Epics 12–16 retros (which did not append Category A snapshots here) gives the pre-triage open set below.
+
+**Chain since Epic 11 (4/5):** Epic 13 retro closed `E10R-1` (release-build `persistenceError` observability, Story 13.1 AC5) → back under cap. Epic 14 retro accepted `E11R-3` (tablet visual) + `E7.5-T1` (dead ARB keys; also independently flipped `done` by Story 9.3) as **documented v1 known limitations** (E14R-3) and added `E14R-4a/b`. Epic 15 introduced no Category A debt. Epic 16 added `E16R-1`, `E16R-3`, and four low/cosmetic 16.x deferrals.
+
+**Pre-triage open Category A (≈11 — BREACH):** `E6-T7`, `E6-T8`, `E10R-2`, `E14R-4a`, `E14R-4b`, `E16R-1`, `E16R-3`, `16.4-D1`, `16.4-D2`, `16.2-D1`, `16.4-D3`. (Parked, hardware/env, not counted: `E11R-3` tablet, `E12R-4` ≥API30 emulator.)
+
+| Item | Disposition | Rationale |
+|---|---|---|
+| `E16R-3` v2 cloud/store config checklist | ✅ **CLOSE — done** | Deliverable produced this session: `v2-cloud-store-config-checklist.md`. |
+| `E14R-4b` 14.5 UTC-week bucketing | ✅ **CLOSE — merged into `E10R-2`** | Same defect class as E10R-2 (UTC vs local-week bucketing for the CET/CEST target user). One test item, not two. |
+| `16.4-D2` no `signOut()`-after-200 test | ✅ **CLOSE — merged into `E16R-1`** | Folds into the auth/backup datasource test-hardening item (`E16R-1` now = restore round-trip test **+** signOut-after-200 safety assertion). |
+| `E6-T8` memoize fallback JSON decode | ✅ **CLOSE — kill (won't-do)** | Premature optimization; no measured cold-start issue across 16 epics on the SM-A520F. Reopen only if profiling shows it. |
+| `E14R-4a` 14.4 decision-log N+3 query | ✅ **CLOSE — kill (won't-do)** | The AI Decision Log is a `kDebugMode`-only screen, never in the release path; query perf is irrelevant to users. |
+| `16.2-D1` `signInErrorNoConnectivity` unused | ✅ **CLOSE — kill (won't-do)** | Generic-error copy matches the app-wide convention; differentiating connectivity errors needs a new `connectivity_plus` dependency for a nice-to-have. No user signal. |
+| `16.4-D3` unused `*ErrorGeneric` ARB keys | ✅ **CLOSE — kill (won't-do)** | Cosmetic; SnackBars showing raw exception text matches existing convention. Unused keys are harmless. |
+| `E6-T7` ExerciseDB remote mapping revisit | ⚠️ **CLOSE — kill, Paolo-vetoable** | Product-decision item. Heuristic mapping shipped through 16 epics with no reported defect; bundled fallback covers offline; no v2 epic (17–21: subscription/social/realtime) touches exercise mapping, so the trigger will not fire in v2. Reopen if a mapping defect is reported. *(Flagged as your call — say the word to reopen.)* |
+| `16.4-D1` `delete_account_cascade` ignores `storage.remove` errors | ⚠️ **CLOSE — accept as-designed, Paolo-vetoable** | The spec author explicitly chose "ignore errors"; an orphaned backup blob is E2E-encrypted with a device-only key (unreadable) and the cascade root (auth user) is still deleted. Storage TTL/lifecycle can sweep. *(Flagged as your call — say the word to reopen.)* |
+| `E10R-2` non-UTC week bucketing regression test (now absorbing `E14R-4b`) | 🔵 **KEEP — active** | Legitimate correctness-adjacent test gap for the actual target timezone (CET/CEST). Schedule with the next Progress-touching work. |
+| `E16R-1` auth/backup datasource test hardening (restore round-trip **+** signOut-after-200) | 🔵 **KEEP — active** | The critical restore-integrity path (16.3 P1 fix) has no dedicated test; pairs with the 16.4 safety property. Schedule early in Epic 17 or as a standalone test task. |
+
+**Outcome:** 11 → **2 active** Category A (`E10R-2`, `E16R-1`) after `E16R-3` closed today. **2/5, well under cap.** Killed-with-rationale: `E6-T8`, `E14R-4a`, `16.2-D1`, `16.4-D3`, `E6-T7`*, `16.4-D1`* (* = flagged Paolo-vetoable). Merged: `E14R-4b`→`E10R-2`, `16.4-D2`→`E16R-1`. Parked (not counted): `E11R-3`, `E12R-4`. **Epic 17 sprint is cleared to open** (create-story for 17.1, which must build `EntitlementGate` first — see checklist §5).
+
+**Category B sunset review:** owed at Epic 13 kickoff per the 2-epic cadence; next due is **Epic 17 kickoff** if not run at 13/15 — to confirm and run separately (not part of this Category A triage). Carry to that review.
