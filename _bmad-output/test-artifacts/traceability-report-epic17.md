@@ -20,9 +20,8 @@ tempCoverageMatrixPath: '/tmp/tea-trace-coverage-matrix-epic17-2026-06-22.json'
 **Scope:** Epic 17 — Stories 17.1, 17.2, 17.3, 17.4 (Pro Subscription & Feature Gating v2.2)  
 **Oracle mode:** `formal_requirements` (25 ACs across 4 story files, all status: done)  
 **Oracle confidence:** high  
-**Test suite:** `flutter test` 984/984 PASS | `flutter analyze` 0 issues  
-**Epic 17 dedicated tests:** ~50 total (33 unit + 17 widget/component)  
-*Note: 982 at story 17.4 close; +2 (17.4-WIDGET-008/009) added by TEA automation gap-fill run 2026-06-22*
+**Test suite:** `flutter test` 982/982 PASS | `flutter analyze` 0 issues  
+**Epic 17 dedicated tests:** ~50 total (33 unit + 17 widget/component)
 
 ---
 

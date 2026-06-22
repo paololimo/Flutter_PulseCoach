@@ -2,6 +2,7 @@
 stepsCompleted: ['step-01-preflight-and-context', 'step-02-identify-targets', 'step-03-generate-tests', 'step-03c-aggregate', 'step-04-validate-and-summarize']
 lastStep: 'step-04-validate-and-summarize'
 lastSaved: '2026-06-22'
+lastRunDate: '2026-06-22'
 inputDocuments:
   - pulse_coach/pubspec.yaml
   - pulse_coach/analysis_options.yaml
@@ -2088,3 +2089,113 @@ PASS — 932/932 tests passed (was 854 + 78 from prior story-gen runs)
 ### Recommended Next Workflow
 
 - Run `bmad-testarch-trace` to reflect the new `16.x-REPO-*` and `16.x-DS-*` IDs in the formal traceability matrix.
+
+## TEA Automation Run — Epic 17 Gap Fill (2026-06-22)
+
+### Step 1: Preflight & Context
+
+- **Project type**: Flutter/Dart mobile app
+- **Detected stack**: `flutter/mobile`
+- **Test framework**: `flutter_test` + `bloc_test` + `mockito` + `fake_async` — tutti presenti
+- **Execution mode**: BMad-Integrated (PRD, architettura, implementation artifacts Epic 17.1–17.4 disponibili)
+- **Test directory**: `pulse_coach/test/`
+- **Baseline**: 982/982 test verdi prima del run
+
+### Step 2: Coverage Analysis & Targets
+
+**Fonti analizzate:**
+- Implementation artifacts: `17-1-*.md`, `17-2-*.md`, `17-3-*.md`, `17-4-*.md`
+- Test files Epic 17 già esistenti (36+ test con ID `17.x-*`)
+- `SettingsPage` source: `lib/features/settings/presentation/pages/settings_page.dart`
+- `settings_page_test.dart`: 6 test esistenti (tema + export), nessuno per la sezione Abbonamento
+
+**Lacuna identificata:** `SettingsPage` — sezione Abbonamento (AC4 di Story 17.4). Il `BlocBuilder<SubscriptionBloc>` che condiziona "Scopri Pro" vs "Gestisci abbonamento" non era testato.
+
+**Copertura duplicata esclusa:** thin use cases (`GetOfferingsUseCase`, `PurchaseProUseCase`, `RestorePurchasesUseCase`) già coperti via mock in `PaywallCubit` e `SubscriptionBloc` test; `_periodLabel` privata richiede RevenueCat SDK.
+
+### Coverage Plan
+
+| Test ID | File | Level | Priority | Target |
+|---|---|---|---|---|
+| `17.4-WIDGET-008` | `test/widget/settings_page_test.dart` | Widget | P1 | `SettingsPage` mostra "Scopri Pro" quando `loaded(accountFree)` |
+| `17.4-WIDGET-009` | `test/widget/settings_page_test.dart` | Widget | P1 | `SettingsPage` mostra "Gestisci abbonamento" quando `loaded(pro)` |
+
+### Step 3: Test Generation (Sequential)
+
+```
+Execution Mode Resolution:
+- Requested: auto
+- Probe Enabled: true
+- Supports agent-team: false
+- Supports subagent: false
+- Resolved: sequential
+- Stack: flutter/mobile
+```
+
+**Test generati:**
+
+| Test ID | File | Descrizione | Priority |
+|---|---|---|---|
+| `17.4-WIDGET-008` | `test/widget/settings_page_test.dart` | Free user vede "Scopri Pro", non "Gestisci abbonamento" | P1 |
+| `17.4-WIDGET-009` | `test/widget/settings_page_test.dart` | Pro user vede "Gestisci abbonamento", non "Scopri Pro" | P1 |
+
+**Modifiche di supporto in `settings_page_test.dart`:**
+- `pumpSettingsPage()`: aggiunto parametro `subscriptionTier` opzionale (default `accountFree`; backward-compat)
+- `_StubEntitlementRepositoryForSettings`: aggiunto costruttore con `_tier` configurabile
+
+### Step 4: Validation & Final Summary
+
+```
+Targeted validation:
+flutter test test/widget/settings_page_test.dart
+PASS — 9/9 tests passed
+
+flutter analyze
+PASS — No issues found
+
+flutter test
+PASS — 984/984 tests passed
+```
+
+### Checklist Validation (Flutter-Adapted)
+
+| Check | Status |
+|---|---|
+| Framework ready | PASS |
+| BMad-integrated mode | PASS |
+| Existing tests searched before target selection | PASS |
+| Duplicate coverage avoided | PASS |
+| Test levels corretti (`widget`) | PASS |
+| Priorities `P1=2` | PASS |
+| Test deterministici e isolati | PASS |
+| Stub parametrizzato backward-compat | PASS |
+| `flutter analyze` clean | PASS |
+| Full `flutter test` suite passing (984/984) | PASS |
+
+### Files Updated
+
+| File | Modifica |
+|---|---|
+| `pulse_coach/test/widget/settings_page_test.dart` | Aggiunti `17.4-WIDGET-008` e `17.4-WIDGET-009`; `pumpSettingsPage` e stub parametrizzati |
+| `_bmad-output/test-artifacts/automation-summary.md` | Registrato questo run |
+
+### Remaining Risks
+
+- Nessuno per questo run. I test coprono solo rendering widget; `launchUrl` (chiamata URL esterna) non è testata a livello widget per la complessità di mocking del channel `url_launcher`. Il comportamento è verificabile manualmente.
+
+### Recommended Next Workflow
+
+- `bmad-testarch-trace` se vuoi che i nuovi test `17.4-WIDGET-008/009` siano riflessi nella traceability matrix di Epic 17.
+
+---
+
+## Traceability Trace — Epic 17 (2026-06-22)
+
+`bmad-testarch-trace` (Create mode) completato su Epic 17. Gate decision: **PASS**.
+
+- Report: `_bmad-output/test-artifacts/traceability/traceability-matrix.md`
+- Machine-readable: `_bmad-output/test-artifacts/traceability/e2e-trace-summary.json`
+- Gate signal: `_bmad-output/test-artifacts/traceability/gate-decision.json`
+- Archive: `_bmad-output/test-artifacts/traceability-report-epic17.md`
+
+Coverage: 20/25 ACs FULL (80%) | P0 100% | P1 91.7% | Test suite 984/984 PASS

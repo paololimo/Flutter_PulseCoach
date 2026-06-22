@@ -38,13 +38,14 @@ void main() {
       Map<String, Object> initialValues = const {},
       DataExportCubit Function() exportCubitFactory =
           _StubDataExportCubit.new,
+      SubscriptionTier subscriptionTier = SubscriptionTier.accountFree,
     }) async {
       SharedPreferences.setMockInitialValues(initialValues);
       prefs = await SharedPreferences.getInstance();
       themeCubit = ThemeCubit(prefs);
       getIt.registerFactory<DataExportCubit>(exportCubitFactory);
       final authBloc = _StubAuthBloc();
-      final settingsRepo = _StubEntitlementRepositoryForSettings();
+      final settingsRepo = _StubEntitlementRepositoryForSettings(subscriptionTier);
       final subscriptionBloc = SubscriptionBloc(
         CheckEntitlementUseCase(settingsRepo),
         PurchaseProUseCase(settingsRepo),
@@ -154,6 +155,34 @@ void main() {
     );
 
     testWidgets(
+      '17.4-WIDGET-008: free user sees Scopri Pro tile, not Gestisci abbonamento',
+      (tester) async {
+        await pumpSettingsPage(
+          tester,
+          subscriptionTier: SubscriptionTier.accountFree,
+        );
+        await tester.pump(); // SubscriptionBloc processes self-dispatched checkRequested
+
+        expect(find.text('Scopri Pro'), findsOneWidget);
+        expect(find.text('Gestisci abbonamento'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '17.4-WIDGET-009: pro user sees Gestisci abbonamento tile, not Scopri Pro',
+      (tester) async {
+        await pumpSettingsPage(
+          tester,
+          subscriptionTier: SubscriptionTier.pro,
+        );
+        await tester.pump(); // SubscriptionBloc processes self-dispatched checkRequested
+
+        expect(find.text('Gestisci abbonamento'), findsOneWidget);
+        expect(find.text('Scopri Pro'), findsNothing);
+      },
+    );
+
+    testWidgets(
       '14.5-WIDGET-004: error state shows localized SnackBar and restores buttons',
       (tester) async {
         final cubit = _ControllableExportCubit();
@@ -254,8 +283,14 @@ class _StubAuthRepository implements AuthRepository {
 }
 
 class _StubEntitlementRepositoryForSettings implements EntitlementRepository {
+  _StubEntitlementRepositoryForSettings([
+    this._tier = SubscriptionTier.accountFree,
+  ]);
+
+  final SubscriptionTier _tier;
+
   @override
-  Future<SubscriptionTier> currentTier() async => SubscriptionTier.accountFree;
+  Future<SubscriptionTier> currentTier() async => _tier;
   @override
   Future<void> invalidateCache() async {}
   @override

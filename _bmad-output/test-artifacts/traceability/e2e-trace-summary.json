@@ -9,9 +9,9 @@
   "source_sha": "",
   "target": {
     "type": "epic",
-    "id": "16",
-    "label": "Epic 16 — Supabase Auth, E2E Backup, Account Deletion/Export",
-    "stories": ["16.1", "16.2", "16.3", "16.4"]
+    "id": "17",
+    "label": "Epic 17 — Pro Subscription & Feature Gating (v2.2)",
+    "stories": ["17.1", "17.2", "17.3", "17.4"]
   },
   "decision_mode": "deterministic",
   "evaluator": "Paolo",
@@ -20,96 +20,102 @@
     "resolution_mode": "formal_requirements",
     "confidence": "high",
     "sources": [
-      "_bmad-output/implementation-artifacts/16-1-supabase-backend-initialization-and-cloud-client-setup.md",
-      "_bmad-output/implementation-artifacts/16-2-email-apple-google-sign-in-and-sign-out.md",
-      "_bmad-output/implementation-artifacts/16-3-e2e-encrypted-backup-and-restore.md",
-      "_bmad-output/implementation-artifacts/16-4-in-app-account-deletion-and-data-export.md"
+      "_bmad-output/implementation-artifacts/17-1-revenuecat-iap-integration-and-entitlement-gate.md",
+      "_bmad-output/implementation-artifacts/17-2-progress-history-free-pro-gating-with-grandfathering.md",
+      "_bmad-output/implementation-artifacts/17-3-pro-upsell-sheet-with-session-day-cooldown.md",
+      "_bmad-output/implementation-artifacts/17-4-subscription-purchase-restore-and-management.md"
     ],
     "external_pointer_status": "not_used",
     "synthetic": false
   },
   "coverage": {
     "inventory": {
-      "covered": 19,
+      "covered": 20,
       "partial": 5,
-      "none": 4,
-      "waived": 2,
-      "total": 30,
-      "pct": 68
+      "none": 0,
+      "waived": 0,
+      "total": 25,
+      "pct": 80
     },
     "priority_breakdown": {
-      "P0": {"total": 12, "full": 12, "partial": 0, "none": 0, "waived": 0, "pct": 100},
-      "P1": {"total": 12, "full": 7, "partial": 5, "none": 0, "waived": 0, "pct": 58},
-      "P2": {"total": 6, "full": 0, "partial": 0, "none": 4, "waived": 2, "pct": 0}
+      "P0": { "total": 2, "covered": 2, "partial": 0, "none": 0, "pct": 100 },
+      "P1": { "total": 12, "covered": 11, "partial": 1, "none": 0, "pct": 92 },
+      "P2": { "total": 7, "covered": 3, "partial": 4, "none": 0, "pct": 43 },
+      "P3": { "total": 4, "covered": 4, "partial": 0, "none": 0, "pct": 100 }
     },
     "by_level": {
-      "e2e": {"tests": 0, "criteria_covered": 0},
-      "api": {"tests": 0, "criteria_covered": 0},
-      "component": {"tests": 4, "criteria_covered": 4},
-      "unit": {"tests": 48, "criteria_covered": 15},
-      "other": {"tests": 0, "criteria_covered": 0}
+      "e2e": { "tests": 0, "criteria_covered": 0 },
+      "api": { "tests": 0, "criteria_covered": 0 },
+      "component": { "tests": 17, "criteria_covered": 14 },
+      "unit": { "tests": 33, "criteria_covered": 20 },
+      "other": { "tests": 0, "criteria_covered": 0 }
     }
   },
   "tests": {
-    "files": 6,
-    "cases": 52,
+    "files": 12,
+    "cases": 50,
     "skipped_cases": 0,
     "fixme_cases": 0,
     "pending_cases": 0
   },
-  "test_suite_total": 932,
-  "test_suite_passing": 932,
-  "analyze_issues": 0,
-  "risk_summary": {
-    "critical_open": 0,
-    "high_open": 5,
-    "medium_open": 4,
-    "low_open": 0
-  },
-  "heuristics": {
-    "endpoint_gaps": 0,
-    "auth_negative_path_status": "covered",
-    "error_path_status": "partial",
-    "ui_journey_status": "not_covered",
-    "ui_state_status": "partial"
-  },
-  "blockers": [
-    {
-      "id": "P1-GAP-01",
-      "priority": "HIGH",
-      "description": "AuthBloc sign-in event handlers (AppStarted, SignInWithAppleRequested, SignInWithGoogleRequested, SignInWithEmailRequested, SignUpWithEmailRequested) have no dedicated blocTests",
-      "requirements": ["16.2-AC3", "16.2-AC4", "16.2-AC5", "16.2-AC6", "16.2-AC9"],
-      "remediation": "Add pulse_coach/test/bloc/auth/auth_bloc_sign_in_test.dart (~7 blocTests)"
-    }
-  ],
-  "gate_status": "FAIL",
+  "gate_status": "PASS",
   "gate_criteria": {
     "p0_coverage_required": "100%",
     "p0_coverage_actual": "100%",
     "p0_status": "MET",
     "p1_coverage_target": "90%",
     "p1_coverage_minimum": "80%",
-    "p1_coverage_actual": "58%",
-    "p1_status": "NOT_MET",
+    "p1_coverage_actual": "91.7%",
+    "p1_status": "MET",
     "overall_coverage_minimum": "80%",
-    "overall_coverage_actual": "68%",
-    "overall_status": "NOT_MET"
+    "overall_coverage_actual": "80%",
+    "overall_status": "MET"
   },
+  "risk_summary": {
+    "critical_open": 0,
+    "high_open": 0,
+    "medium_open": 1,
+    "low_open": 4
+  },
+  "heuristics": {
+    "endpoint_gaps": 0,
+    "auth_negative_path_status": "present",
+    "error_path_status": "present",
+    "ui_journey_status": "not_applicable",
+    "ui_state_status": "present"
+  },
+  "blockers": [],
   "recommendations": [
     {
-      "priority": "HIGH",
-      "action": "Add auth_bloc_sign_in_test.dart with 7 blocTests to close P1 gap and reopen gate",
-      "requirements": ["16.2-AC3", "16.2-AC4", "16.2-AC5", "16.2-AC6", "16.2-AC9"]
+      "priority": "MEDIUM",
+      "action": "Add url_launcher mock test in settings_page_test.dart: verify launchUrl called with App Store subscription management URL when Gestisci abbonamento is tapped",
+      "requirements": ["17.4-AC4"]
     },
     {
-      "priority": "MEDIUM",
-      "action": "Add widget tests for SignInSheet, BackupPage, AccountPage dialogs (P2 NONE ACs)",
-      "requirements": ["16.2-AC1", "16.3-AC1", "16.4-AC1", "16.4-AC3"]
+      "priority": "LOW",
+      "action": "Add explicit find.byIcon(Icons.lock).findsNothing assertion to 17.2-WIDGET-001",
+      "requirements": ["17.3-AC5"]
+    },
+    {
+      "priority": "LOW",
+      "action": "Add ProUpsellSheet.show() integration test from progress_page_test.dart banner tap (requires mock of cooldown service)",
+      "requirements": ["17.2-AC3"]
+    },
+    {
+      "priority": "LOW",
+      "action": "Accept 17.1-AC1 (boot-order) and 17.1-AC5 (no-flash) as structurally verified; document as known gap in action-item-ledger",
+      "requirements": ["17.1-AC1", "17.1-AC5"]
+    },
+    {
+      "priority": "LOW",
+      "action": "Run /bmad:tea:test-review to assess test quality across Epic 17 suite",
+      "requirements": []
     }
   ],
   "links": {
     "trace_report_path": "_bmad-output/test-artifacts/traceability/traceability-matrix.md",
-    "archive_path": "_bmad-output/test-artifacts/traceability-report-epic16.md",
-    "gate_decision_path": "_bmad-output/test-artifacts/traceability/gate-decision.json"
+    "trace_report_url": "",
+    "artifact_url": "",
+    "journey_evidence_url": ""
   }
 }

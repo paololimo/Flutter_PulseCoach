@@ -4,25 +4,20 @@
   "repo": "Flutter_PulseCoach",
   "target": {
     "type": "epic",
-    "id": "16",
-    "label": "Epic 16 — Supabase Auth, E2E Backup, Account Deletion/Export"
+    "id": "17",
+    "label": "Epic 17 — Pro Subscription & Feature Gating (v2.2)",
+    "stories": ["17.1", "17.2", "17.3", "17.4"]
   },
   "collection_status": "COLLECTED",
   "gate_basis": "priority_thresholds",
-  "gate_status": "FAIL",
-  "rationale": "P0 coverage is 100% (12/12 FULL). P1 coverage is 58% (7/12 FULL), below the 80% minimum threshold. 5 AuthBloc sign-in event handlers (AppStarted, SignInWithAppleRequested, SignInWithGoogleRequested, SignInWithEmailRequested, SignUpWithEmailRequested) have full data-layer coverage but no dedicated blocTest verifying state emission sequences.",
+  "gate_status": "PASS",
+  "rationale": "P0 coverage is 100%, P1 coverage is 91.7% (target: 90%), and overall coverage is 80% (minimum: 80%). All three gate thresholds are met. No P0 or P1 NONE gaps identified. Single P1 PARTIAL item (17.4-AC4: launchUrl invocation untested) is the highest-priority recommendation for follow-up.",
   "p0_status": "MET",
-  "p1_status": "NOT_MET",
-  "overall_status": "NOT_MET",
+  "p1_status": "MET",
+  "overall_status": "MET",
   "critical_open": 0,
-  "remediation": {
-    "file": "pulse_coach/test/bloc/auth/auth_bloc_sign_in_test.dart",
-    "tests_needed": 7,
-    "description": "blocTests for AppStarted (x2), SignInWithAppleRequested (x2), SignInWithGoogleRequested (x1), SignInWithEmailRequested (x1), SignUpWithEmailRequested (x1)",
-    "projected_p1_after": "100%"
-  },
   "links": {
     "trace_report_path": "_bmad-output/test-artifacts/traceability/traceability-matrix.md",
-    "archive_path": "_bmad-output/test-artifacts/traceability-report-epic16.md"
+    "archive_path": "_bmad-output/test-artifacts/traceability-report-epic17.md"
   }
 }

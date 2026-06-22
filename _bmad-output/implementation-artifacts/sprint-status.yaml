@@ -238,7 +238,7 @@ development_status:
   # ─────────────────────────────────────────
   # Epic 16: Accounts & Authentication (v2.1)
   # ─────────────────────────────────────────
-  epic-16: in-progress
+  epic-16: done
   16-1-supabase-backend-initialization-and-cloud-client-setup: done
   16-2-email-apple-google-sign-in-and-sign-out: done
   16-3-e2e-encrypted-backup-and-restore: done
@@ -248,7 +248,7 @@ development_status:
   # ─────────────────────────────────────────
   # Epic 17: Pro Subscription & Feature Gating (v2.2)
   # ─────────────────────────────────────────
-  epic-17: in-progress
+  epic-17: done
   17-1-revenuecat-iap-integration-and-entitlement-gate: done
   17-2-progress-history-free-pro-gating-with-grandfathering: done
   17-3-pro-upsell-sheet-with-session-day-cooldown: done
