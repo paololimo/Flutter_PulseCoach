@@ -1,24 +1,28 @@
 {
   "schema_version": "0.1.0",
-  "evaluated_at": "2026-06-21T00:00:00.000Z",
+  "evaluated_at": "2026-06-22T00:00:00.000Z",
   "repo": "Flutter_PulseCoach",
   "target": {
-    "type": "story",
-    "id": "15.1",
-    "label": "Story 15.1 — Back Navigation from Drawer Secondary Screens"
+    "type": "epic",
+    "id": "16",
+    "label": "Epic 16 — Supabase Auth, E2E Backup, Account Deletion/Export"
   },
   "collection_status": "COLLECTED",
   "gate_basis": "priority_thresholds",
-  "gate_status": "PASS",
-  "rationale": "P0 coverage is 100% (3/3: AC1 Settings, AC2 Profile, AC3 Privacy all FULL). No P1 requirements defined (effective P1 = 100%). Overall FULL coverage is 83% (5/6, minimum 80%). 1 PARTIAL AC (AC5 — system back gesture, P2) has documented low-risk justification: Navigator.pop() mechanism is proven by NAV-004/006/007; only platform event ingestion layer is untested at widget level.",
+  "gate_status": "FAIL",
+  "rationale": "P0 coverage is 100% (12/12 FULL). P1 coverage is 58% (7/12 FULL), below the 80% minimum threshold. 5 AuthBloc sign-in event handlers (AppStarted, SignInWithAppleRequested, SignInWithGoogleRequested, SignInWithEmailRequested, SignUpWithEmailRequested) have full data-layer coverage but no dedicated blocTest verifying state emission sequences.",
   "p0_status": "MET",
-  "p1_status": "MET",
-  "overall_status": "MET",
+  "p1_status": "NOT_MET",
+  "overall_status": "NOT_MET",
   "critical_open": 0,
+  "remediation": {
+    "file": "pulse_coach/test/bloc/auth/auth_bloc_sign_in_test.dart",
+    "tests_needed": 7,
+    "description": "blocTests for AppStarted (x2), SignInWithAppleRequested (x2), SignInWithGoogleRequested (x1), SignInWithEmailRequested (x1), SignUpWithEmailRequested (x1)",
+    "projected_p1_after": "100%"
+  },
   "links": {
     "trace_report_path": "_bmad-output/test-artifacts/traceability/traceability-matrix.md",
-    "trace_report_url": "",
-    "artifact_url": "",
-    "journey_evidence_url": ""
+    "archive_path": "_bmad-output/test-artifacts/traceability-report-epic16.md"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1.0",
-  "snapshot_at": "2026-06-21T00:00:00.000Z",
+  "snapshot_at": "2026-06-22T00:00:00.000Z",
   "repo": "Flutter_PulseCoach",
   "collection_mode": "contract_static",
   "collection_status": "COLLECTED",
@@ -8,9 +8,10 @@
   "gate_basis": "priority_thresholds",
   "source_sha": "",
   "target": {
-    "type": "story",
-    "id": "15.1",
-    "label": "Story 15.1 — Back Navigation from Drawer Secondary Screens"
+    "type": "epic",
+    "id": "16",
+    "label": "Epic 16 — Supabase Auth, E2E Backup, Account Deletion/Export",
+    "stories": ["16.1", "16.2", "16.3", "16.4"]
   },
   "decision_mode": "deterministic",
   "evaluator": "Paolo",
@@ -19,81 +20,96 @@
     "resolution_mode": "formal_requirements",
     "confidence": "high",
     "sources": [
-      "_bmad-output/implementation-artifacts/15-1-back-navigation-from-drawer-secondary-screens.md"
+      "_bmad-output/implementation-artifacts/16-1-supabase-backend-initialization-and-cloud-client-setup.md",
+      "_bmad-output/implementation-artifacts/16-2-email-apple-google-sign-in-and-sign-out.md",
+      "_bmad-output/implementation-artifacts/16-3-e2e-encrypted-backup-and-restore.md",
+      "_bmad-output/implementation-artifacts/16-4-in-app-account-deletion-and-data-export.md"
     ],
     "external_pointer_status": "not_used",
     "synthetic": false
   },
   "coverage": {
     "inventory": {
-      "covered": 5,
-      "total": 6,
-      "pct": 83
+      "covered": 19,
+      "partial": 5,
+      "none": 4,
+      "waived": 2,
+      "total": 30,
+      "pct": 68
     },
     "priority_breakdown": {
-      "P0": {"total": 3, "covered": 3, "pct": 100},
-      "P1": {"total": 0, "covered": 0, "pct": 100},
-      "P2": {"total": 3, "covered": 2, "pct": 67},
-      "P3": {"total": 0, "covered": 0, "pct": 100}
+      "P0": {"total": 12, "full": 12, "partial": 0, "none": 0, "waived": 0, "pct": 100},
+      "P1": {"total": 12, "full": 7, "partial": 5, "none": 0, "waived": 0, "pct": 58},
+      "P2": {"total": 6, "full": 0, "partial": 0, "none": 4, "waived": 2, "pct": 0}
     },
     "by_level": {
       "e2e": {"tests": 0, "criteria_covered": 0},
       "api": {"tests": 0, "criteria_covered": 0},
-      "component": {"tests": 7, "criteria_covered": 6},
-      "unit": {"tests": 0, "criteria_covered": 0},
+      "component": {"tests": 4, "criteria_covered": 4},
+      "unit": {"tests": 48, "criteria_covered": 15},
       "other": {"tests": 0, "criteria_covered": 0}
     }
   },
   "tests": {
-    "files": 1,
-    "cases": 7,
+    "files": 6,
+    "cases": 52,
     "skipped_cases": 0,
     "fixme_cases": 0,
     "pending_cases": 0
   },
+  "test_suite_total": 932,
+  "test_suite_passing": 932,
+  "analyze_issues": 0,
   "risk_summary": {
     "critical_open": 0,
-    "high_open": 0,
-    "medium_open": 1,
+    "high_open": 5,
+    "medium_open": 4,
     "low_open": 0
   },
   "heuristics": {
     "endpoint_gaps": 0,
-    "auth_negative_path_status": "not_applicable",
+    "auth_negative_path_status": "covered",
     "error_path_status": "partial",
-    "ui_journey_status": "not_applicable",
-    "ui_state_status": "not_applicable"
+    "ui_journey_status": "not_covered",
+    "ui_state_status": "partial"
   },
-  "blockers": [],
-  "gate_status": "PASS",
+  "blockers": [
+    {
+      "id": "P1-GAP-01",
+      "priority": "HIGH",
+      "description": "AuthBloc sign-in event handlers (AppStarted, SignInWithAppleRequested, SignInWithGoogleRequested, SignInWithEmailRequested, SignUpWithEmailRequested) have no dedicated blocTests",
+      "requirements": ["16.2-AC3", "16.2-AC4", "16.2-AC5", "16.2-AC6", "16.2-AC9"],
+      "remediation": "Add pulse_coach/test/bloc/auth/auth_bloc_sign_in_test.dart (~7 blocTests)"
+    }
+  ],
+  "gate_status": "FAIL",
   "gate_criteria": {
     "p0_coverage_required": "100%",
     "p0_coverage_actual": "100%",
     "p0_status": "MET",
     "p1_coverage_target": "90%",
     "p1_coverage_minimum": "80%",
-    "p1_coverage_actual": "100%",
-    "p1_status": "MET",
+    "p1_coverage_actual": "58%",
+    "p1_status": "NOT_MET",
     "overall_coverage_minimum": "80%",
-    "overall_coverage_actual": "83%",
-    "overall_status": "MET"
+    "overall_coverage_actual": "68%",
+    "overall_status": "NOT_MET"
   },
   "recommendations": [
     {
-      "priority": "MEDIUM",
-      "action": "Add Flutter integration test 15.1-INT-001 in integration_test/ for AC5 platform back-gesture event (Android hardware back / iOS edge swipe)",
-      "requirements": ["AC5"]
+      "priority": "HIGH",
+      "action": "Add auth_bloc_sign_in_test.dart with 7 blocTests to close P1 gap and reopen gate",
+      "requirements": ["16.2-AC3", "16.2-AC4", "16.2-AC5", "16.2-AC6", "16.2-AC9"]
     },
     {
-      "priority": "LOW",
-      "action": "Run /bmad:tea:test-review to assess cumulative test quality at Epic 16 close",
-      "requirements": []
+      "priority": "MEDIUM",
+      "action": "Add widget tests for SignInSheet, BackupPage, AccountPage dialogs (P2 NONE ACs)",
+      "requirements": ["16.2-AC1", "16.3-AC1", "16.4-AC1", "16.4-AC3"]
     }
   ],
   "links": {
     "trace_report_path": "_bmad-output/test-artifacts/traceability/traceability-matrix.md",
-    "trace_report_url": "",
-    "artifact_url": "",
-    "journey_evidence_url": ""
+    "archive_path": "_bmad-output/test-artifacts/traceability-report-epic16.md",
+    "gate_decision_path": "_bmad-output/test-artifacts/traceability/gate-decision.json"
   }
 }
