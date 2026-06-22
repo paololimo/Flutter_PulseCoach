@@ -18,6 +18,13 @@ import 'package:pulse_coach/features/settings/presentation/bloc/data_export_cubi
 import 'package:pulse_coach/features/settings/presentation/bloc/data_export_state.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/pro_offer.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
+import 'package:pulse_coach/features/subscription/domain/repositories/entitlement_repository.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/purchase_pro_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/restore_purchases_use_case.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,9 +44,16 @@ void main() {
       themeCubit = ThemeCubit(prefs);
       getIt.registerFactory<DataExportCubit>(exportCubitFactory);
       final authBloc = _StubAuthBloc();
+      final settingsRepo = _StubEntitlementRepositoryForSettings();
+      final subscriptionBloc = SubscriptionBloc(
+        CheckEntitlementUseCase(settingsRepo),
+        PurchaseProUseCase(settingsRepo),
+        RestorePurchasesUseCase(settingsRepo),
+      );
       addTearDown(() async {
         await themeCubit.close();
         await authBloc.close();
+        await subscriptionBloc.close();
         await getIt.reset();
       });
 
@@ -52,6 +66,7 @@ void main() {
             providers: [
               BlocProvider.value(value: themeCubit),
               BlocProvider<AuthBloc>.value(value: authBloc),
+              BlocProvider<SubscriptionBloc>.value(value: subscriptionBloc),
             ],
             child: const SettingsPage(),
           ),
@@ -236,4 +251,21 @@ class _StubAuthRepository implements AuthRepository {
   @override
   Future<Either<AuthFailure, String>> exportData() async =>
       const Left(AuthFailure('stub'));
+}
+
+class _StubEntitlementRepositoryForSettings implements EntitlementRepository {
+  @override
+  Future<SubscriptionTier> currentTier() async => SubscriptionTier.accountFree;
+  @override
+  Future<void> invalidateCache() async {}
+  @override
+  Future<Either<Failure, List<ProOffer>>> getOfferings() async =>
+      const Right([]);
+  @override
+  Future<Either<Failure, SubscriptionTier>> purchasePro(
+    String packageId,
+  ) async => const Right(SubscriptionTier.pro);
+  @override
+  Future<Either<Failure, SubscriptionTier>> restorePurchases() async =>
+      const Right(SubscriptionTier.pro);
 }

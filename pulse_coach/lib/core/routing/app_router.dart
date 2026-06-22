@@ -8,6 +8,8 @@ import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/auth/presentation/bloc/export_data_cubit.dart';
 import 'package:pulse_coach/features/auth/presentation/pages/account_page.dart';
 import 'package:pulse_coach/features/auth/presentation/pages/backup_page.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
+import 'package:pulse_coach/features/subscription/presentation/pages/paywall_page.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
@@ -46,6 +48,7 @@ class AppRouter {
   static const String aiDecisionLog = '/ai-decision-log';
   static const String account = '/account';
   static const String backup = '/account/backup';
+  static const String paywall = '/paywall';
 
   static final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -133,6 +136,15 @@ class AppRouter {
       ),
       GoRoute(path: profile, builder: (context, state) => const ProfilePage()),
       GoRoute(path: privacy, builder: (context, state) => const PrivacyPage()),
+      GoRoute(
+        path: paywall,
+        builder: (context, state) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: context.read<SubscriptionBloc>()),
+          ],
+          child: const PaywallPage(),
+        ),
+      ),
       GoRoute(
         path: account,
         builder: (context, state) => MultiBlocProvider(

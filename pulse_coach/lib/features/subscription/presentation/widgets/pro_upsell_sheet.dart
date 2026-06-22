@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_service.dart';
 
 class ProUpsellSheet extends StatelessWidget {
@@ -18,7 +20,11 @@ class ProUpsellSheet extends StatelessWidget {
       context: context,
       builder: (_) => const ProUpsellSheet._(),
     ).then((intent) {
-      if (intent != true) cooldown.recordDismissal();
+      if (intent != true) {
+        cooldown.recordDismissal();
+      } else if (context.mounted) {
+        context.push(AppRouter.paywall);
+      }
     });
   }
 

@@ -1,6 +1,7 @@
 // [17.3-WIDGET-001..005] ProUpsellSheet widget tests
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_service.dart';
@@ -16,6 +17,33 @@ void main() {
     setUp(() {
       mockCooldown = MockUpsellCooldownService();
     });
+
+    // Router-aware scaffold: needed by tests that tap "Scopri Pro",
+    // which triggers context.push(AppRouter.paywall).
+    Future<void> pumpScaffoldWithRouter(WidgetTester tester) async {
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (ctx, _) => Scaffold(
+              body: TextButton(
+                onPressed: () => ProUpsellSheet.show(
+                  ctx,
+                  cooldownOverride: mockCooldown,
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/paywall',
+            builder: (ctx, _) => const Scaffold(body: Text('paywall')),
+          ),
+        ],
+      );
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+    }
 
     Future<void> pumpScaffold(WidgetTester tester) async {
       await tester.pumpWidget(
@@ -82,7 +110,8 @@ void main() {
       '17.3-WIDGET-004: tapping Scopri Pro dismisses without recording cooldown',
       (tester) async {
         when(mockCooldown.isCoolingDown()).thenReturn(false);
-        await pumpScaffold(tester);
+        // Use router-aware scaffold: Scopri Pro now calls context.push(/paywall).
+        await pumpScaffoldWithRouter(tester);
 
         await tester.tap(find.text('open'));
         await tester.pumpAndSettle();

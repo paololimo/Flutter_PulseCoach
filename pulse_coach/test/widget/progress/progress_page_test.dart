@@ -25,6 +25,8 @@ import 'package:pulse_coach/features/progress/presentation/widgets/weekly_goal_i
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart';
 import 'package:pulse_coach/features/subscription/domain/usecases/get_install_cohort_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/purchase_pro_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/restore_purchases_use_case.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_gating_cubit.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
@@ -37,6 +39,8 @@ import 'progress_page_test.mocks.dart';
   GetProgressStats,
   GetInstallCohortUseCase,
   CheckEntitlementUseCase,
+  PurchaseProUseCase,
+  RestorePurchasesUseCase,
 ])
 void main() {
   group('ProgressPage', () {
@@ -44,6 +48,8 @@ void main() {
     late MockGetProgressStats mockGetProgressStats;
     late MockGetInstallCohortUseCase mockGetInstallCohort;
     late MockCheckEntitlementUseCase mockCheckEntitlement;
+    late MockPurchaseProUseCase mockPurchasePro;
+    late MockRestorePurchasesUseCase mockRestorePurchases;
 
     setUp(() async {
       await getIt.reset();
@@ -51,6 +57,10 @@ void main() {
       mockGetProgressStats = MockGetProgressStats();
       mockGetInstallCohort = MockGetInstallCohortUseCase();
       mockCheckEntitlement = MockCheckEntitlementUseCase();
+      mockPurchasePro = MockPurchaseProUseCase();
+      mockRestorePurchases = MockRestorePurchasesUseCase();
+
+      provideDummy<SubscriptionState>(const SubscriptionState.initial());
 
       when(
         mockGetProgressStats(),
@@ -84,7 +94,11 @@ void main() {
     Future<void> pumpProgressPage(WidgetTester tester) async {
       await tester.pumpWidget(
         BlocProvider<SubscriptionBloc>(
-          create: (_) => SubscriptionBloc(mockCheckEntitlement),
+          create: (_) => SubscriptionBloc(
+            mockCheckEntitlement,
+            mockPurchasePro,
+            mockRestorePurchases,
+          ),
           child: MaterialApp(
             theme: AppTheme.darkTheme,
             locale: const Locale('it'),
@@ -404,7 +418,11 @@ void main() {
         var tier = SubscriptionTier.signedInFree;
         when(mockCheckEntitlement()).thenAnswer((_) async => Right(tier));
 
-        final subscriptionBloc = SubscriptionBloc(mockCheckEntitlement);
+        final subscriptionBloc = SubscriptionBloc(
+          mockCheckEntitlement,
+          mockPurchasePro,
+          mockRestorePurchases,
+        );
         addTearDown(subscriptionBloc.close);
 
         await tester.pumpWidget(

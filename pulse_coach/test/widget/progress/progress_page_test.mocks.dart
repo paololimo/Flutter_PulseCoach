@@ -22,6 +22,10 @@ import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlem
     as _i10;
 import 'package:pulse_coach/features/subscription/domain/usecases/get_install_cohort_use_case.dart'
     as _i9;
+import 'package:pulse_coach/features/subscription/domain/usecases/purchase_pro_use_case.dart'
+    as _i12;
+import 'package:pulse_coach/features/subscription/domain/usecases/restore_purchases_use_case.dart'
+    as _i13;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -122,6 +126,60 @@ class MockGetInstallCohortUseCase extends _i1.Mock
 class MockCheckEntitlementUseCase extends _i1.Mock
     implements _i10.CheckEntitlementUseCase {
   MockCheckEntitlementUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i11.SubscriptionTier>> call() =>
+      (super.noSuchMethod(
+            Invocation.method(#call, []),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i11.SubscriptionTier>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i11.SubscriptionTier>(
+                    this,
+                    Invocation.method(#call, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i11.SubscriptionTier>>);
+}
+
+/// A class which mocks [PurchaseProUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockPurchaseProUseCase extends _i1.Mock
+    implements _i12.PurchaseProUseCase {
+  MockPurchaseProUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i11.SubscriptionTier>> call(
+    String? packageId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#call, [packageId]),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i11.SubscriptionTier>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i11.SubscriptionTier>(
+                    this,
+                    Invocation.method(#call, [packageId]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i11.SubscriptionTier>>);
+}
+
+/// A class which mocks [RestorePurchasesUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockRestorePurchasesUseCase extends _i1.Mock
+    implements _i13.RestorePurchasesUseCase {
+  MockRestorePurchasesUseCase() {
     _i1.throwOnMissingStub(this);
   }
 

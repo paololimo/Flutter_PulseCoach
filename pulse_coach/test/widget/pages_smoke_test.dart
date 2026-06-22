@@ -48,10 +48,13 @@ import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.d
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_gating_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/pro_offer.dart';
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/domain/repositories/entitlement_repository.dart';
 import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart';
 import 'package:pulse_coach/features/subscription/domain/usecases/get_install_cohort_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/purchase_pro_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/restore_purchases_use_case.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
 import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
@@ -73,9 +76,14 @@ import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Widget _wrap(Widget page) => BlocProvider<SubscriptionBloc>(
-  create: (_) => SubscriptionBloc(
-    CheckEntitlementUseCase(_SmokeEntitlementRepository()),
-  ),
+  create: (_) {
+    final repo = _SmokeEntitlementRepository();
+    return SubscriptionBloc(
+      CheckEntitlementUseCase(repo),
+      PurchaseProUseCase(repo),
+      RestorePurchasesUseCase(repo),
+    );
+  },
   child: MaterialApp(
     locale: const Locale('it'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -90,6 +98,16 @@ class _SmokeEntitlementRepository implements EntitlementRepository {
   Future<SubscriptionTier> currentTier() async => SubscriptionTier.pro;
   @override
   Future<void> invalidateCache() async {}
+  @override
+  Future<Either<Failure, List<ProOffer>>> getOfferings() async =>
+      const Right([]);
+  @override
+  Future<Either<Failure, SubscriptionTier>> purchasePro(
+    String packageId,
+  ) async => const Right(SubscriptionTier.pro);
+  @override
+  Future<Either<Failure, SubscriptionTier>> restorePurchases() async =>
+      const Right(SubscriptionTier.pro);
 }
 
 void main() {

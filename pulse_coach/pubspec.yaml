@@ -51,6 +51,7 @@ dependencies:
 
   # In-App Purchases (v2 — RevenueCat)
   purchases_flutter: ^10.3.0
+  url_launcher: ^6.3.0
 
   # Cloud Backend (v2)
   supabase_flutter: ^2.9.0

@@ -55,11 +55,13 @@ extension SubscriptionEventPatterns on SubscriptionEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SubscriptionCheckRequested value)?  checkRequested,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SubscriptionCheckRequested value)?  checkRequested,TResult Function( SubscriptionPurchaseRequested value)?  purchaseRequested,TResult Function( SubscriptionRestoreRequested value)?  restoreRequested,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case SubscriptionCheckRequested() when checkRequested != null:
-return checkRequested(_that);case _:
+return checkRequested(_that);case SubscriptionPurchaseRequested() when purchaseRequested != null:
+return purchaseRequested(_that);case SubscriptionRestoreRequested() when restoreRequested != null:
+return restoreRequested(_that);case _:
   return orElse();
 
 }
@@ -77,11 +79,13 @@ return checkRequested(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SubscriptionCheckRequested value)  checkRequested,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SubscriptionCheckRequested value)  checkRequested,required TResult Function( SubscriptionPurchaseRequested value)  purchaseRequested,required TResult Function( SubscriptionRestoreRequested value)  restoreRequested,}){
 final _that = this;
 switch (_that) {
 case SubscriptionCheckRequested():
-return checkRequested(_that);}
+return checkRequested(_that);case SubscriptionPurchaseRequested():
+return purchaseRequested(_that);case SubscriptionRestoreRequested():
+return restoreRequested(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -95,11 +99,13 @@ return checkRequested(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SubscriptionCheckRequested value)?  checkRequested,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SubscriptionCheckRequested value)?  checkRequested,TResult? Function( SubscriptionPurchaseRequested value)?  purchaseRequested,TResult? Function( SubscriptionRestoreRequested value)?  restoreRequested,}){
 final _that = this;
 switch (_that) {
 case SubscriptionCheckRequested() when checkRequested != null:
-return checkRequested(_that);case _:
+return checkRequested(_that);case SubscriptionPurchaseRequested() when purchaseRequested != null:
+return purchaseRequested(_that);case SubscriptionRestoreRequested() when restoreRequested != null:
+return restoreRequested(_that);case _:
   return null;
 
 }
@@ -116,10 +122,12 @@ return checkRequested(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  checkRequested,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  checkRequested,TResult Function( String packageId)?  purchaseRequested,TResult Function()?  restoreRequested,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SubscriptionCheckRequested() when checkRequested != null:
-return checkRequested();case _:
+return checkRequested();case SubscriptionPurchaseRequested() when purchaseRequested != null:
+return purchaseRequested(_that.packageId);case SubscriptionRestoreRequested() when restoreRequested != null:
+return restoreRequested();case _:
   return orElse();
 
 }
@@ -137,10 +145,12 @@ return checkRequested();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  checkRequested,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  checkRequested,required TResult Function( String packageId)  purchaseRequested,required TResult Function()  restoreRequested,}) {final _that = this;
 switch (_that) {
 case SubscriptionCheckRequested():
-return checkRequested();}
+return checkRequested();case SubscriptionPurchaseRequested():
+return purchaseRequested(_that.packageId);case SubscriptionRestoreRequested():
+return restoreRequested();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -154,10 +164,12 @@ return checkRequested();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  checkRequested,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  checkRequested,TResult? Function( String packageId)?  purchaseRequested,TResult? Function()?  restoreRequested,}) {final _that = this;
 switch (_that) {
 case SubscriptionCheckRequested() when checkRequested != null:
-return checkRequested();case _:
+return checkRequested();case SubscriptionPurchaseRequested() when purchaseRequested != null:
+return purchaseRequested(_that.packageId);case SubscriptionRestoreRequested() when restoreRequested != null:
+return restoreRequested();case _:
   return null;
 
 }
@@ -189,6 +201,104 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'SubscriptionEvent.checkRequested()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class SubscriptionPurchaseRequested implements SubscriptionEvent {
+  const SubscriptionPurchaseRequested({required this.packageId});
+  
+
+ final  String packageId;
+
+/// Create a copy of SubscriptionEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SubscriptionPurchaseRequestedCopyWith<SubscriptionPurchaseRequested> get copyWith => _$SubscriptionPurchaseRequestedCopyWithImpl<SubscriptionPurchaseRequested>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SubscriptionPurchaseRequested&&(identical(other.packageId, packageId) || other.packageId == packageId));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,packageId);
+
+@override
+String toString() {
+  return 'SubscriptionEvent.purchaseRequested(packageId: $packageId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SubscriptionPurchaseRequestedCopyWith<$Res> implements $SubscriptionEventCopyWith<$Res> {
+  factory $SubscriptionPurchaseRequestedCopyWith(SubscriptionPurchaseRequested value, $Res Function(SubscriptionPurchaseRequested) _then) = _$SubscriptionPurchaseRequestedCopyWithImpl;
+@useResult
+$Res call({
+ String packageId
+});
+
+
+
+
+}
+/// @nodoc
+class _$SubscriptionPurchaseRequestedCopyWithImpl<$Res>
+    implements $SubscriptionPurchaseRequestedCopyWith<$Res> {
+  _$SubscriptionPurchaseRequestedCopyWithImpl(this._self, this._then);
+
+  final SubscriptionPurchaseRequested _self;
+  final $Res Function(SubscriptionPurchaseRequested) _then;
+
+/// Create a copy of SubscriptionEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? packageId = null,}) {
+  return _then(SubscriptionPurchaseRequested(
+packageId: null == packageId ? _self.packageId : packageId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class SubscriptionRestoreRequested implements SubscriptionEvent {
+  const SubscriptionRestoreRequested();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SubscriptionRestoreRequested);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'SubscriptionEvent.restoreRequested()';
 }
 
 

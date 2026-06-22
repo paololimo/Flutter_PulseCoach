@@ -27,10 +27,13 @@ import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exerci
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/pro_offer.dart';
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/domain/repositories/entitlement_repository.dart';
 import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart';
 import 'package:pulse_coach/features/subscription/domain/usecases/get_install_cohort_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/purchase_pro_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/restore_purchases_use_case.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
@@ -51,6 +54,16 @@ class _StubEntitlementRepository implements EntitlementRepository {
   Future<SubscriptionTier> currentTier() async => SubscriptionTier.signedInFree;
   @override
   Future<void> invalidateCache() async {}
+  @override
+  Future<Either<Failure, List<ProOffer>>> getOfferings() async =>
+      const Right([]);
+  @override
+  Future<Either<Failure, SubscriptionTier>> purchasePro(
+    String packageId,
+  ) async => const Right(SubscriptionTier.pro);
+  @override
+  Future<Either<Failure, SubscriptionTier>> restorePurchases() async =>
+      const Right(SubscriptionTier.pro);
 }
 
 /// Stub onboarding repo: no profile (getInstallCohort returns null).
@@ -75,9 +88,14 @@ Widget _wrapWithRootBlocs(Widget child) {
   return MultiBlocProvider(
     providers: [
       BlocProvider<SubscriptionBloc>(
-        create: (_) => SubscriptionBloc(
-          CheckEntitlementUseCase(_StubEntitlementRepository()),
-        ),
+        create: (_) {
+          final repo = _StubEntitlementRepository();
+          return SubscriptionBloc(
+            CheckEntitlementUseCase(repo),
+            PurchaseProUseCase(repo),
+            RestorePurchasesUseCase(repo),
+          );
+        },
       ),
     ],
     child: child,
