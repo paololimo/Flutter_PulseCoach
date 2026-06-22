@@ -8,4 +8,5 @@ abstract class OnboardingRepository {
   Future<Either<Failure, void>> saveProfile(UserProfile profile);
   Future<Either<Failure, UserProfile>> getProfile();
   Future<Either<Failure, void>> updateProfile(UserProfile profile);
+  Future<Either<Failure, String?>> getInstallCohort();
 }

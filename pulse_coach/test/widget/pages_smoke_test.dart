@@ -17,6 +17,7 @@ import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart'
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart';
+import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
 import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaimer.dart';
 import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer_status.dart';
@@ -44,8 +45,14 @@ import 'package:pulse_coach/features/progress/domain/repositories/progress_repos
 import 'package:pulse_coach/features/progress/domain/usecases/get_progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/usecases/get_session_history.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart';
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_gating_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
+import 'package:pulse_coach/features/subscription/domain/repositories/entitlement_repository.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/get_install_cohort_use_case.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/features/session/presentation/pages/in_session_page.dart';
 import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
@@ -65,13 +72,25 @@ import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Widget _wrap(Widget page) => MaterialApp(
-  locale: const Locale('it'),
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
-  supportedLocales: AppLocalizations.supportedLocales,
-  theme: AppTheme.darkTheme,
-  home: Scaffold(body: page),
+Widget _wrap(Widget page) => BlocProvider<SubscriptionBloc>(
+  create: (_) => SubscriptionBloc(
+    CheckEntitlementUseCase(_SmokeEntitlementRepository()),
+  ),
+  child: MaterialApp(
+    locale: const Locale('it'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    theme: AppTheme.darkTheme,
+    home: Scaffold(body: page),
+  ),
 );
+
+class _SmokeEntitlementRepository implements EntitlementRepository {
+  @override
+  Future<SubscriptionTier> currentTier() async => SubscriptionTier.pro;
+  @override
+  Future<void> invalidateCache() async {}
+}
 
 void main() {
   group('Shell tab pages — smoke tests', () {
@@ -99,6 +118,11 @@ void main() {
       );
       getIt.registerFactory<ProgressStatsCubit>(
         () => ProgressStatsCubit(GetProgressStats(_ProgressRepositoryStub())),
+      );
+      getIt.registerFactory<ProgressGatingCubit>(
+        () => ProgressGatingCubit(
+          GetInstallCohortUseCase(_SmokeOnboardingRepository()),
+        ),
       );
       addTearDown(getIt.reset);
 
@@ -399,6 +423,26 @@ class _ProgressRepositoryStub implements ProgressRepository {
       ),
     );
   }
+}
+
+class _SmokeOnboardingRepository implements OnboardingRepository {
+  @override
+  Future<Either<Failure, void>> acceptDisclaimer() async => const Right(null);
+  @override
+  Future<Either<Failure, bool>> isDisclaimerAccepted() async =>
+      const Right(false);
+  @override
+  Future<Either<Failure, void>> saveProfile(UserProfile profile) async =>
+      const Right(null);
+  @override
+  Future<Either<Failure, UserProfile>> getProfile() async =>
+      const Left(CacheFailure('no profile'));
+  @override
+  Future<Either<Failure, void>> updateProfile(UserProfile profile) async =>
+      const Right(null);
+  @override
+  Future<Either<Failure, String?>> getInstallCohort() async =>
+      const Right('pre_v2');
 }
 
 class _StubAuthBloc extends AuthBloc {

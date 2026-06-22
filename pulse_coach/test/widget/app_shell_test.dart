@@ -19,6 +19,7 @@ import 'package:pulse_coach/features/progress/domain/repositories/progress_repos
 import 'package:pulse_coach/features/progress/domain/usecases/get_progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/usecases/get_session_history.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart';
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_gating_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_cubit.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/repositories/exercise_repository.dart';
@@ -26,6 +27,13 @@ import 'package:pulse_coach/features/sessions_catalog/domain/usecases/get_exerci
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
 import 'package:pulse_coach/features/sessions_catalog/presentation/pages/sessions_page.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
+import 'package:pulse_coach/features/subscription/domain/repositories/entitlement_repository.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/get_install_cohort_use_case.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
+import 'package:pulse_coach/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
@@ -35,6 +43,45 @@ class _StubToday extends StatelessWidget {
   const _StubToday();
   @override
   Widget build(BuildContext context) => const Text('Oggi');
+}
+
+/// Stub entitlement repo: always signedInFree (no RevenueCat needed in tests).
+class _StubEntitlementRepository implements EntitlementRepository {
+  @override
+  Future<SubscriptionTier> currentTier() async => SubscriptionTier.signedInFree;
+  @override
+  Future<void> invalidateCache() async {}
+}
+
+/// Stub onboarding repo: no profile (getInstallCohort returns null).
+class _StubOnboardingRepositoryForGating implements OnboardingRepository {
+  @override
+  Future<Either<Failure, void>> acceptDisclaimer() async => const Right(null);
+  @override
+  Future<Either<Failure, bool>> isDisclaimerAccepted() async => const Right(false);
+  @override
+  Future<Either<Failure, void>> saveProfile(UserProfile profile) async => const Right(null);
+  @override
+  Future<Either<Failure, UserProfile>> getProfile() async =>
+      const Left(CacheFailure('no profile'));
+  @override
+  Future<Either<Failure, void>> updateProfile(UserProfile profile) async =>
+      const Right(null);
+  @override
+  Future<Either<Failure, String?>> getInstallCohort() async => const Right(null);
+}
+
+Widget _wrapWithRootBlocs(Widget child) {
+  return MultiBlocProvider(
+    providers: [
+      BlocProvider<SubscriptionBloc>(
+        create: (_) => SubscriptionBloc(
+          CheckEntitlementUseCase(_StubEntitlementRepository()),
+        ),
+      ),
+    ],
+    child: child,
+  );
 }
 
 Widget buildShellWithSecondaryRoutes() {
@@ -79,12 +126,14 @@ Widget buildShellWithSecondaryRoutes() {
       ),
     ],
   );
-  return MaterialApp.router(
-    locale: const Locale('it'),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    theme: AppTheme.darkTheme,
-    routerConfig: router,
+  return _wrapWithRootBlocs(
+    MaterialApp.router(
+      locale: const Locale('it'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: AppTheme.darkTheme,
+      routerConfig: router,
+    ),
   );
 }
 
@@ -119,12 +168,14 @@ Widget buildTestShell({String initialLocation = '/today'}) {
       ),
     ],
   );
-  return MaterialApp.router(
-    locale: const Locale('it'),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    theme: AppTheme.darkTheme,
-    routerConfig: router,
+  return _wrapWithRootBlocs(
+    MaterialApp.router(
+      locale: const Locale('it'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: AppTheme.darkTheme,
+      routerConfig: router,
+    ),
   );
 }
 
@@ -136,6 +187,11 @@ void main() {
       );
       getIt.registerFactory<ProgressStatsCubit>(
         () => ProgressStatsCubit(GetProgressStats(_ProgressRepositoryStub())),
+      );
+      getIt.registerFactory<ProgressGatingCubit>(
+        () => ProgressGatingCubit(
+          GetInstallCohortUseCase(_StubOnboardingRepositoryForGating()),
+        ),
       );
     });
 

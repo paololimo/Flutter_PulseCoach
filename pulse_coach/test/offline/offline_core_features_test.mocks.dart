@@ -281,6 +281,19 @@ class MockOnboardingRepository extends _i1.Mock
             ),
           )
           as _i4.Future<_i3.Either<_i6.Failure, void>>);
+
+  @override
+  _i4.Future<_i3.Either<_i6.Failure, String?>> getInstallCohort() =>
+      (super.noSuchMethod(
+            Invocation.method(#getInstallCohort, []),
+            returnValue: _i4.Future<_i3.Either<_i6.Failure, String?>>.value(
+              _FakeEither_1<_i6.Failure, String?>(
+                this,
+                Invocation.method(#getInstallCohort, []),
+              ),
+            ),
+          )
+          as _i4.Future<_i3.Either<_i6.Failure, String?>>);
 }
 
 /// A class which mocks [SensorRepository].

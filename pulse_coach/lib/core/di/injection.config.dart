@@ -124,6 +124,8 @@ import 'package:pulse_coach/features/progress/domain/usecases/get_session_histor
     as _i727;
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart'
     as _i111;
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_gating_cubit.dart'
+    as _i439;
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_cubit.dart'
     as _i56;
 import 'package:pulse_coach/features/session/data/datasources/accelerometer_data_source.dart'
@@ -178,6 +180,8 @@ import 'package:pulse_coach/features/subscription/domain/repositories/entitlemen
     as _i811;
 import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart'
     as _i303;
+import 'package:pulse_coach/features/subscription/domain/usecases/get_install_cohort_use_case.dart'
+    as _i589;
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart'
     as _i844;
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart'
@@ -329,6 +333,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i926.UpdateProfile>(
       () => _i926.UpdateProfile(gh<_i338.OnboardingRepository>()),
     );
+    gh.factory<_i589.GetInstallCohortUseCase>(
+      () => _i589.GetInstallCohortUseCase(gh<_i338.OnboardingRepository>()),
+    );
     gh.factory<_i746.GetHealthData>(
       () => _i746.GetHealthData(gh<_i1070.HealthRepository>()),
     );
@@ -367,11 +374,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i224.RpeFeedbackDao>(),
       ),
     );
-    gh.factory<_i213.AuthRepository>(
-      () => _i50.AuthRepositoryImpl(gh<_i284.AuthRemoteDataSource>()),
-    );
     gh.factory<_i364.AiDecisionLogCubit>(
       () => _i364.AiDecisionLogCubit(gh<_i646.AiDecisionLogRepository>()),
+    );
+    gh.factory<_i213.AuthRepository>(
+      () => _i50.AuthRepositoryImpl(
+        gh<_i284.AuthRemoteDataSource>(),
+        gh<_i79.AppDatabase>(),
+        gh<_i42.SupabaseClientProvider>(),
+      ),
     );
     gh.factory<_i748.DataExportService>(
       () => _i748.DataExportService(
@@ -412,6 +423,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i574.SyncExerciseCatalog>(
       () => _i574.SyncExerciseCatalog(gh<_i207.ExerciseRepository>()),
+    );
+    gh.factory<_i439.ProgressGatingCubit>(
+      () => _i439.ProgressGatingCubit(gh<_i589.GetInstallCohortUseCase>()),
     );
     gh.factory<_i811.EntitlementRepository>(
       () => _i705.EntitlementRepositoryImpl(gh<_i499.EntitlementGate>()),

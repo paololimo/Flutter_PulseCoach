@@ -94,6 +94,16 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   }
 
   @override
+  Future<Either<Failure, String?>> getInstallCohort() async {
+    try {
+      final data = await _db.userProfileDao.getProfile();
+      return Right(data?.installCohort);
+    } catch (e) {
+      return const Left(CacheFailure('install_cohort_load_failed'));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> saveProfile(UserProfile profile) async {
     try {
       final existing = await _db.userProfileDao.getProfile();

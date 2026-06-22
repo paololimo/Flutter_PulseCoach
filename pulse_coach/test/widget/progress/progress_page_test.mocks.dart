@@ -16,6 +16,12 @@ import 'package:pulse_coach/features/progress/domain/usecases/get_progress_stats
     as _i7;
 import 'package:pulse_coach/features/progress/domain/usecases/get_session_history.dart'
     as _i3;
+import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart'
+    as _i11;
+import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart'
+    as _i10;
+import 'package:pulse_coach/features/subscription/domain/usecases/get_install_cohort_use_case.dart'
+    as _i9;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -85,4 +91,53 @@ class MockGetProgressStats extends _i1.Mock implements _i7.GetProgressStats {
                 ),
           )
           as _i4.Future<_i2.Either<_i5.Failure, _i8.ProgressStats>>);
+}
+
+/// A class which mocks [GetInstallCohortUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetInstallCohortUseCase extends _i1.Mock
+    implements _i9.GetInstallCohortUseCase {
+  MockGetInstallCohortUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, String?>> call() =>
+      (super.noSuchMethod(
+            Invocation.method(#call, []),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, String?>>.value(
+              _FakeEither_0<_i5.Failure, String?>(
+                this,
+                Invocation.method(#call, []),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, String?>>);
+}
+
+/// A class which mocks [CheckEntitlementUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockCheckEntitlementUseCase extends _i1.Mock
+    implements _i10.CheckEntitlementUseCase {
+  MockCheckEntitlementUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i11.SubscriptionTier>> call() =>
+      (super.noSuchMethod(
+            Invocation.method(#call, []),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i11.SubscriptionTier>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i11.SubscriptionTier>(
+                    this,
+                    Invocation.method(#call, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i11.SubscriptionTier>>);
 }

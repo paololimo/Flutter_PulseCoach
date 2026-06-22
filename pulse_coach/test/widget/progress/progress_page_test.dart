@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -21,29 +22,58 @@ import 'package:pulse_coach/features/progress/presentation/widgets/rpe_trend_cha
 import 'package:pulse_coach/features/progress/presentation/widgets/session_history_tile.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/session_type_breakdown_chart.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/weekly_goal_indicator.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/check_entitlement_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/usecases/get_install_cohort_use_case.dart';
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_gating_cubit.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 import 'progress_page_test.mocks.dart';
 
-@GenerateMocks([GetSessionHistory, GetProgressStats])
+@GenerateMocks([
+  GetSessionHistory,
+  GetProgressStats,
+  GetInstallCohortUseCase,
+  CheckEntitlementUseCase,
+])
 void main() {
   group('ProgressPage', () {
     late MockGetSessionHistory mockGetSessionHistory;
     late MockGetProgressStats mockGetProgressStats;
+    late MockGetInstallCohortUseCase mockGetInstallCohort;
+    late MockCheckEntitlementUseCase mockCheckEntitlement;
 
     setUp(() async {
       await getIt.reset();
       mockGetSessionHistory = MockGetSessionHistory();
       mockGetProgressStats = MockGetProgressStats();
+      mockGetInstallCohort = MockGetInstallCohortUseCase();
+      mockCheckEntitlement = MockCheckEntitlementUseCase();
+
       when(
         mockGetProgressStats(),
       ).thenAnswer((_) async => const Right(_emptyStats));
+
+      // Default: grandfathered user so full progress content is visible.
+      when(
+        mockGetInstallCohort(),
+      ).thenAnswer((_) async => const Right('pre_v2'));
+
+      // Default: pro tier so full content always shows.
+      when(
+        mockCheckEntitlement(),
+      ).thenAnswer((_) async => const Right(SubscriptionTier.pro));
+
       getIt.registerFactory<ProgressCubit>(
         () => ProgressCubit(mockGetSessionHistory),
       );
       getIt.registerFactory<ProgressStatsCubit>(
         () => ProgressStatsCubit(mockGetProgressStats),
+      );
+      getIt.registerFactory<ProgressGatingCubit>(
+        () => ProgressGatingCubit(mockGetInstallCohort),
       );
     });
 
@@ -53,12 +83,15 @@ void main() {
 
     Future<void> pumpProgressPage(WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          locale: const Locale('it'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const Scaffold(body: ProgressPage()),
+        BlocProvider<SubscriptionBloc>(
+          create: (_) => SubscriptionBloc(mockCheckEntitlement),
+          child: MaterialApp(
+            theme: AppTheme.darkTheme,
+            locale: const Locale('it'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: ProgressPage()),
+          ),
         ),
       );
     }
@@ -302,6 +335,110 @@ void main() {
 
         expect(find.byType(WeeklyGoalIndicator), findsOneWidget);
         expect(find.text('2 di 3 sessioni questa settimana'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '17.2-WIDGET-001: post_v2 free user sees locked banner instead of tabs',
+      (tester) async {
+        // Override defaults: post_v2 + free tier
+        when(
+          mockGetInstallCohort(),
+        ).thenAnswer((_) async => const Right('post_v2'));
+        when(
+          mockCheckEntitlement(),
+        ).thenAnswer((_) async => const Right(SubscriptionTier.signedInFree));
+        when(
+          mockGetSessionHistory(),
+        ).thenAnswer((_) async => const Right(<SessionHistoryEntry>[]));
+
+        await pumpProgressPage(tester);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Lo storico completo è una funzione Pro.'),
+          findsOneWidget,
+        );
+        expect(find.byType(TabBar), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '17.2-WIDGET-002: pre_v2 grandfathered user sees full tabs regardless of tier',
+      (tester) async {
+        // Override defaults: pre_v2 + free tier (grandfathered)
+        when(
+          mockGetInstallCohort(),
+        ).thenAnswer((_) async => const Right('pre_v2'));
+        when(
+          mockCheckEntitlement(),
+        ).thenAnswer(
+          (_) async => const Right(SubscriptionTier.signedInFree),
+        );
+        when(
+          mockGetSessionHistory(),
+        ).thenAnswer((_) async => const Right(<SessionHistoryEntry>[]));
+
+        await pumpProgressPage(tester);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(TabBar), findsOneWidget);
+        expect(
+          find.text('Lo storico completo è una funzione Pro.'),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      '17.2-WIDGET-003: AC4 — Pro unlock reveals full content in-place reactively',
+      (tester) async {
+        // post_v2 free user → starts on the locked banner.
+        when(
+          mockGetInstallCohort(),
+        ).thenAnswer((_) async => const Right('post_v2'));
+        when(
+          mockGetSessionHistory(),
+        ).thenAnswer((_) async => const Right(<SessionHistoryEntry>[]));
+
+        var tier = SubscriptionTier.signedInFree;
+        when(mockCheckEntitlement()).thenAnswer((_) async => Right(tier));
+
+        final subscriptionBloc = SubscriptionBloc(mockCheckEntitlement);
+        addTearDown(subscriptionBloc.close);
+
+        await tester.pumpWidget(
+          BlocProvider<SubscriptionBloc>.value(
+            value: subscriptionBloc,
+            child: MaterialApp(
+              theme: AppTheme.darkTheme,
+              locale: const Locale('it'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const Scaffold(body: ProgressPage()),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Locked: post_v2 + free.
+        expect(
+          find.text('Lo storico completo è una funzione Pro.'),
+          findsOneWidget,
+        );
+        expect(find.byType(TabBar), findsNothing);
+
+        // Purchase completes (Story 17.4) → tier flips to Pro; the root
+        // SubscriptionBloc re-emits loaded(pro) and the page rebuilds in-place.
+        tier = SubscriptionTier.pro;
+        subscriptionBloc.add(const SubscriptionEvent.checkRequested());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(TabBar), findsOneWidget);
+        expect(
+          find.text('Lo storico completo è una funzione Pro.'),
+          findsNothing,
+        );
       },
     );
   });

@@ -4,6 +4,8 @@ import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/features/progress/domain/entities/progress_stats.dart';
 import 'package:pulse_coach/features/progress/domain/entities/session_history_entry.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_cubit.dart';
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_gating_cubit.dart';
+import 'package:pulse_coach/features/progress/presentation/bloc/progress_gating_state.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_state.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_cubit.dart';
 import 'package:pulse_coach/features/progress/presentation/bloc/progress_stats_state.dart';
@@ -13,6 +15,9 @@ import 'package:pulse_coach/features/progress/presentation/widgets/rpe_trend_cha
 import 'package:pulse_coach/features/progress/presentation/widgets/session_history_tile.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/session_type_breakdown_chart.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/weekly_goal_indicator.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
+import 'package:pulse_coach/features/subscription/presentation/widgets/pro_upsell_sheet.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 class ProgressPage extends StatelessWidget {
@@ -28,8 +33,11 @@ class ProgressPage extends StatelessWidget {
         BlocProvider<ProgressStatsCubit>(
           create: (_) => getIt<ProgressStatsCubit>()..load(),
         ),
+        BlocProvider<ProgressGatingCubit>(
+          create: (_) => getIt<ProgressGatingCubit>()..load(),
+        ),
       ],
-      child: const DefaultTabController(length: 2, child: _ProgressView()),
+      child: const _ProgressView(),
     );
   }
 }
@@ -39,33 +47,117 @@ class _ProgressView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        BlocBuilder<ProgressStatsCubit, ProgressStatsState>(
-          builder: (context, state) {
-            if (state is ProgressStatsLoaded) {
-              return WeeklyGoalIndicator(
-                completedThisWeek: state.stats.completedThisWeek,
-                weeklyTarget: state.stats.weeklyTarget,
-              );
-            }
+    return BlocBuilder<ProgressGatingCubit, ProgressGatingState>(
+      builder: (context, gatingState) {
+        if (gatingState is ProgressGatingInitial) {
+          // Show shimmer while gating resolves — never flash locked content.
+          return const _ProgressLoadingShimmer();
+        }
 
-            return const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: ShimmerPlaceholder(height: 56),
+        final isGrandfathered = gatingState is ProgressGatingLoaded
+            ? gatingState.isGrandfathered
+            : false;
+
+        return BlocBuilder<SubscriptionBloc, SubscriptionState>(
+          builder: (context, subState) {
+            final tier = subState.whenOrNull(loaded: (t) => t);
+            final showFull =
+                isGrandfathered || tier == SubscriptionTier.pro;
+            // While entitlement is still resolving, don't flash the locked
+            // banner at a (possibly Pro) user — show shimmer until the
+            // SubscriptionBloc settles on loaded/error.
+            final subscriptionResolving = subState.maybeWhen(
+              initial: () => true,
+              loading: () => true,
+              orElse: () => false,
+            );
+
+            return Column(
+              children: [
+                BlocBuilder<ProgressStatsCubit, ProgressStatsState>(
+                  builder: (context, state) {
+                    if (state is ProgressStatsLoaded) {
+                      return WeeklyGoalIndicator(
+                        completedThisWeek: state.stats.completedThisWeek,
+                        weeklyTarget: state.stats.weeklyTarget,
+                      );
+                    }
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: ShimmerPlaceholder(height: 56),
+                    );
+                  },
+                ),
+                if (showFull)
+                  const Expanded(child: _FullProgressContent())
+                else if (subscriptionResolving)
+                  const _ProgressLoadingShimmer()
+                else
+                  _ProgressLockedBanner(
+                    onTap: () => ProUpsellSheet.show(context),
+                  ),
+              ],
             );
           },
+        );
+      },
+    );
+  }
+}
+
+class _FullProgressContent extends StatelessWidget {
+  const _FullProgressContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          TabBar(
+            tabs: [Tab(text: 'Cronologia'), Tab(text: 'Grafici')],
+          ),
+          Expanded(
+            child: TabBarView(children: [_HistoryTab(), _ChartsTab()]),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressLoadingShimmer extends StatelessWidget {
+  const _ProgressLoadingShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: ShimmerPlaceholder(height: 56),
+    );
+  }
+}
+
+class _ProgressLockedBanner extends StatelessWidget {
+  const _ProgressLockedBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Text(
+          'Lo storico completo è una funzione Pro.',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                decoration: TextDecoration.underline,
+              ),
+          textAlign: TextAlign.center,
         ),
-        const TabBar(
-          tabs: [
-            Tab(text: 'Cronologia'),
-            Tab(text: 'Grafici'),
-          ],
-        ),
-        const Expanded(
-          child: TabBarView(children: [_HistoryTab(), _ChartsTab()]),
-        ),
-      ],
+      ),
     );
   }
 }

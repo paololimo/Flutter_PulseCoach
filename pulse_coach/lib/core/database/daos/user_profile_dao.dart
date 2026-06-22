@@ -24,4 +24,8 @@ class UserProfileDao extends DatabaseAccessor<AppDatabase>
 
   Future<bool> updateProfile(UserProfileData data) =>
       update(userProfile).replace(data);
+
+  Future<void> updateInstallCohort(String cohort) =>
+      (update(userProfile)..where((_) => const Constant(true)))
+          .write(UserProfileCompanion(installCohort: Value(cohort)));
 }

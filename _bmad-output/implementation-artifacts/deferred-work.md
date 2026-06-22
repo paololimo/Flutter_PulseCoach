@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of story-17.2 (2026-06-22)
+
+- User-facing strings hardcoded as Italian literals bypass the gen_l10n/ARB pipeline — locked banner, ProUpsellSheet buttons/fact string, `Cronologia`/`Grafici` tab labels [pulse_coach/lib/features/progress/presentation/pages/progress_page.dart:108,143; pulse_coach/lib/features/subscription/presentation/widgets/pro_upsell_sheet.dart]. **[KEEP — matches pre-existing ProgressPage style; spec mandated literal copy; app is locale-locked to `it`. Fold into the standing i18n/ARB debt (E7.5-T1), not a one-story fix.]**
+- `ProgressGatingCubit` does not recover from a transient load error within a session — an entitled grandfathered user hitting a one-time DB read error is locked out until the cubit is rebuilt [pulse_coach/lib/features/progress/presentation/bloc/progress_gating_cubit.dart:18-20]. **[KEEP — Low: by-design "never grant on error" safe default; a single-row local read failing is low probability. Add a retry/refresh seam only if this regresses.]**
+- Test SYNC-003 asserts only `result isA<Right>`, not the swallow path's actual effect on the local DB / that the cloud write was skipped [pulse_coach/test/features/auth/auth_repository_impl_sync_test.dart]. **[KEEP — Low test-quality follow-up; the meaningful behavior (sign-in still succeeds when cloud throws) is covered.]**
+
 ## Deferred from: code review of 16-4-in-app-account-deletion-and-data-export (2026-06-21)
 
 - `delete_account_cascade` discards the `storage.remove` result entirely, swallowing all errors rather than only not-found [supabase/functions/delete_account_cascade/index.ts:19]. On a genuine storage failure the encrypted backup blob is orphaned. **[KEEP — Low: E2E-encrypted blob, key device-only, auth user (cascade root) still deleted. Block-on-error would contradict the spec author's explicit "ignore errors" decision and would let a transient storage outage block account deletion — needs a human design call before changing.]**

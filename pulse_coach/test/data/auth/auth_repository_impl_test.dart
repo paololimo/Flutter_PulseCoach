@@ -1,8 +1,11 @@
 // [16.1-REPO-001..009] AuthRepositoryImpl unit tests
 import 'package:dartz/dartz.dart';
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:pulse_coach/core/cloud/supabase_client.dart';
+import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:pulse_coach/features/auth/data/repositories/auth_repository_impl.dart';
@@ -10,9 +13,11 @@ import 'package:pulse_coach/features/auth/domain/entities/auth_user.dart';
 
 import 'auth_repository_impl_test.mocks.dart';
 
-@GenerateMocks([AuthRemoteDataSource])
+@GenerateMocks([AuthRemoteDataSource, SupabaseClientProvider])
 void main() {
   late MockAuthRemoteDataSource mockDataSource;
+  late MockSupabaseClientProvider mockSupabase;
+  late AppDatabase db;
   late AuthRepositoryImpl sut;
 
   const tUser = AuthUser(
@@ -23,7 +28,16 @@ void main() {
 
   setUp(() {
     mockDataSource = MockAuthRemoteDataSource();
-    sut = AuthRepositoryImpl(mockDataSource);
+    mockSupabase = MockSupabaseClientProvider();
+    db = AppDatabase.forTesting(NativeDatabase.memory());
+    sut = AuthRepositoryImpl(mockDataSource, db, mockSupabase);
+    // Disable cloud sync in these legacy tests (they predate _syncInstallCohort).
+    sut.cloudCohortReader = (_) async => null;
+    sut.cloudCohortWriter = (_, cohort) async {};
+  });
+
+  tearDown(() async {
+    await db.close();
   });
 
   // ── 16.1-REPO-001 ─────────────────────────────────────────────────────────
