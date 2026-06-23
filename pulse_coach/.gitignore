@@ -47,3 +47,10 @@ app.*.map.json
 # Generated Flutter localizations
 lib/l10n/app_localizations.dart
 lib/l10n/app_localizations_*.dart
+
+# Local --dart-define-from-file secrets (RevenueCat / Supabase / OAuth) — never commit values
+dart-defines.json
+dart-defines.*.json
+
+# RevenueCat REST API secret key (full account access) — never commit
+.rc-secret
