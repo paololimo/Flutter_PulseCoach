@@ -260,5 +260,17 @@
   "deleteAccountErrorGeneric": "Errore durante l'eliminazione dell'account. Riprova.",
   "exportDataTileLabel": "Esporta i miei dati",
   "exportDataShareSubject": "I miei dati PulseCoach",
-  "exportDataErrorGeneric": "Errore durante l'esportazione dei dati. Riprova."
+  "exportDataErrorGeneric": "Errore durante l'esportazione dei dati. Riprova.",
+  "navTabSocial": "Social",
+  "visibilityTierPrivate": "Privato",
+  "visibilityTierFriendsOnly": "Solo amici",
+  "handleSetupTitle": "Imposta il tuo nome utente",
+  "handleSetupPlaceholder": "es. paolol",
+  "handleSetupSave": "Salva",
+  "handleSetupSkip": "Salta per ora",
+  "handleDuplicateError": "Questo nome utente è già in uso.",
+  "handleUpdateSuccess": "Nome utente salvato.",
+  "handleInvalidError": "Usa 3–20 lettere minuscole, numeri o underscore.",
+  "socialGenericError": "Qualcosa è andato storto. Riprova.",
+  "profileVisibilityLabel": "Visibilità profilo"
 }

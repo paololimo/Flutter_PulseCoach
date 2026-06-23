@@ -174,6 +174,22 @@ import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_
     as _i168;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
+import 'package:pulse_coach/features/social/friends/data/datasources/social_profile_remote_data_source.dart'
+    as _i165;
+import 'package:pulse_coach/features/social/friends/data/repositories/social_profile_repository_impl.dart'
+    as _i810;
+import 'package:pulse_coach/features/social/friends/domain/repositories/social_profile_repository.dart'
+    as _i502;
+import 'package:pulse_coach/features/social/friends/domain/usecases/get_social_profile_use_case.dart'
+    as _i1023;
+import 'package:pulse_coach/features/social/friends/domain/usecases/update_handle_use_case.dart'
+    as _i846;
+import 'package:pulse_coach/features/social/friends/domain/usecases/update_visibility_tier_use_case.dart'
+    as _i586;
+import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_bloc.dart'
+    as _i477;
+import 'package:pulse_coach/features/social/friends/presentation/bloc/visibility_cubit.dart'
+    as _i613;
 import 'package:pulse_coach/features/subscription/data/repositories/entitlement_repository_impl.dart'
     as _i705;
 import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_service.dart'
@@ -223,6 +239,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i253.AccelerometerDataSource>(
       () => _i253.AccelerometerDataSource(),
     );
+    gh.factory<_i613.VisibilityCubit>(() => _i613.VisibilityCubit());
     gh.singleton<_i42.SupabaseClientProvider>(
       () => _i42.SupabaseClientProvider(),
     );
@@ -319,6 +336,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i757.BackupRemoteDataSource>(
       () => _i757.BackupRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
     );
+    gh.factory<_i165.SocialProfileRemoteDataSource>(
+      () => _i165.SocialProfileRemoteDataSource(
+        gh<_i42.SupabaseClientProvider>(),
+      ),
+    );
     gh.factory<_i1070.HealthRepository>(
       () => _i1067.HealthRepositoryImpl(
         gh<_i311.HealthDataSource>(),
@@ -354,6 +376,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i91.ExerciseLocalDataSource>(
       () => _i91.ExerciseLocalDataSource(gh<_i224.ExerciseCacheDao>()),
+    );
+    gh.factory<_i502.SocialProfileRepository>(
+      () => _i810.SocialProfileRepositoryImpl(
+        gh<_i165.SocialProfileRemoteDataSource>(),
+      ),
     );
     gh.factory<_i271.BackupRepository>(
       () => _i44.BackupRepositoryImpl(
@@ -420,6 +447,17 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i206.WeatherLocalDataSource>(
       () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
+    );
+    gh.factory<_i1023.GetSocialProfileUseCase>(
+      () => _i1023.GetSocialProfileUseCase(gh<_i502.SocialProfileRepository>()),
+    );
+    gh.factory<_i846.UpdateHandleUseCase>(
+      () => _i846.UpdateHandleUseCase(gh<_i502.SocialProfileRepository>()),
+    );
+    gh.factory<_i586.UpdateVisibilityTierUseCase>(
+      () => _i586.UpdateVisibilityTierUseCase(
+        gh<_i502.SocialProfileRepository>(),
+      ),
     );
     gh.factory<_i168.DeviceSettingsCubit>(
       () => _i168.DeviceSettingsCubit(
@@ -506,6 +544,13 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i727.GetSessionHistory>(
       () => _i727.GetSessionHistory(gh<_i73.ProgressRepository>()),
+    );
+    gh.factory<_i477.SocialProfileBloc>(
+      () => _i477.SocialProfileBloc(
+        gh<_i1023.GetSocialProfileUseCase>(),
+        gh<_i846.UpdateHandleUseCase>(),
+        gh<_i586.UpdateVisibilityTierUseCase>(),
+      ),
     );
     gh.lazySingleton<_i916.SessionsCatalogCubit>(
       () => _i916.SessionsCatalogCubit(gh<_i342.GetExercisesByType>()),

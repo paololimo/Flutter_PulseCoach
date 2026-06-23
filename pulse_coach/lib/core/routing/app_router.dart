@@ -29,6 +29,7 @@ import 'package:pulse_coach/features/settings/presentation/pages/device_settings
 import 'package:pulse_coach/features/settings/presentation/pages/privacy_page.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
+import 'package:pulse_coach/features/social/friends/presentation/pages/social_page.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 import 'package:pulse_coach/shared/widgets/app_shell.dart';
 
@@ -49,6 +50,7 @@ class AppRouter {
   static const String account = '/account';
   static const String backup = '/account/backup';
   static const String paywall = '/paywall';
+  static const String social = '/social';
 
   static final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -82,6 +84,10 @@ class AppRouter {
           GoRoute(
             path: progress,
             builder: (context, state) => const ProgressPage(),
+          ),
+          GoRoute(
+            path: social,
+            builder: (context, state) => const SocialPage(),
           ),
         ],
       ),

@@ -58,3 +58,13 @@ class SubscriptionFailure extends Failure {
   final String message;
   const SubscriptionFailure(this.message);
 }
+
+class SocialFailure extends Failure {
+  @override
+  final String message;
+  const SocialFailure(this.message);
+}
+
+class SocialHandleTakenFailure extends SocialFailure {
+  const SocialHandleTakenFailure() : super('handle_taken');
+}

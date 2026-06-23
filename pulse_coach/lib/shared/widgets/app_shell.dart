@@ -13,6 +13,7 @@ class AppShell extends StatelessWidget {
     AppRouter.sessions,
     AppRouter.today,
     AppRouter.progress,
+    AppRouter.social,
   ];
 
   int _currentIndex(String location) {
@@ -83,6 +84,10 @@ class _PhoneScaffold extends StatelessWidget {
             icon: const Icon(Icons.bar_chart),
             label: l10n.navTabProgress,
           ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.people),
+            label: l10n.navTabSocial,
+          ),
         ],
       ),
     );
@@ -131,6 +136,10 @@ class _TabletScaffold extends StatelessWidget {
               NavigationRailDestination(
                 icon: const Icon(Icons.bar_chart),
                 label: Text(l10n.navTabProgress),
+              ),
+              NavigationRailDestination(
+                icon: const Icon(Icons.people),
+                label: Text(l10n.navTabSocial),
               ),
             ],
           ),

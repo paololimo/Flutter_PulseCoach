@@ -260,5 +260,17 @@
   "deleteAccountErrorGeneric": "Error deleting account. Please try again.",
   "exportDataTileLabel": "Export My Data",
   "exportDataShareSubject": "My PulseCoach Data",
-  "exportDataErrorGeneric": "Error exporting data. Please try again."
+  "exportDataErrorGeneric": "Error exporting data. Please try again.",
+  "navTabSocial": "Social",
+  "visibilityTierPrivate": "Private",
+  "visibilityTierFriendsOnly": "Friends only",
+  "handleSetupTitle": "Set your username",
+  "handleSetupPlaceholder": "e.g. paolol",
+  "handleSetupSave": "Save",
+  "handleSetupSkip": "Skip for now",
+  "handleDuplicateError": "This username is already taken.",
+  "handleUpdateSuccess": "Username saved.",
+  "handleInvalidError": "Use 3–20 lowercase letters, numbers, or underscores.",
+  "socialGenericError": "Something went wrong. Please try again.",
+  "profileVisibilityLabel": "Profile visibility"
 }
