@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-22 # story 17.4 review complete (done)
+last_updated: 2026-06-23 # epic 17 retrospective complete (done)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -253,7 +253,7 @@ development_status:
   17-2-progress-history-free-pro-gating-with-grandfathering: done
   17-3-pro-upsell-sheet-with-session-day-cooldown: done
   17-4-subscription-purchase-restore-and-management: done
-  epic-17-retrospective: optional
+  epic-17-retrospective: done
 
   # ─────────────────────────────────────────
   # Epic 18: Social Graph & Friends (v2.3)

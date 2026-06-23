@@ -289,3 +289,25 @@ Run by Amelia on John's behalf, ratified by Paolo, immediately after the Epic 16
 **Outcome:** 11 → **2 active** Category A (`E10R-2`, `E16R-1`) after `E16R-3` closed today. **2/5, well under cap.** Killed-with-rationale: `E6-T8`, `E14R-4a`, `16.2-D1`, `16.4-D3`, `E6-T7`*, `16.4-D1`* (* = flagged Paolo-vetoable). Merged: `E14R-4b`→`E10R-2`, `16.4-D2`→`E16R-1`. Parked (not counted): `E11R-3`, `E12R-4`. **Epic 17 sprint is cleared to open** (create-story for 17.1, which must build `EntitlementGate` first — see checklist §5).
 
 **Category B sunset review:** owed at Epic 13 kickoff per the 2-epic cadence; next due is **Epic 17 kickoff** if not run at 13/15 — to confirm and run separately (not part of this Category A triage). Carry to that review.
+
+---
+
+## Epic 17 Retro — 2026-06-23
+
+Retrospective for **Epic 17: Pro Subscription & Feature Gating (v2.2)** (4/4 stories `done`; tests 985/985; analyze 0; on-device gate PASS on SM-A520F). Full report: `epic-17-retro-2026-06-23.md`.
+
+**New action items**
+
+| ID | Source | Action | Owner | Target | Cat. | Status | Notes |
+|---|---|---|---|---|---|---|---|
+| E17R-1 | Epic 17 retro | Map RevenueCat `PlatformException`s to localized IT messages on the paywall error-path | Amelia (Dev) | A future subscription story | A (deliverable) | open | The 17.4 review's `e.toString()`→`e.message`+IT-fallback fix is insufficient: RC `e.message` is itself English SDK text; the IT fallback only fires when `message == null`. On-device the paywall still shows "There is no singleton instance… errors.rev.cat/configuring-sdk". Low severity (keyless state never occurs in a properly-configured prod build), graceful with Riprova, free core unaffected (NFR34). |
+| E17R-2 | Epic 17 retro | Promote `E16R-1` to a standalone test story (restore round-trip + signOut-after-200 assertion); schedule **before** Story 18.1 enters the sprint | Amelia (Dev) + Murat (TEA) | **Story 18.0** (added to `epics.md` 2026-06-23) — before 18.1 sprint entry | A (deliverable) | open (story defined in epics.md; awaiting `create-story`) | Homed as **Story 18.0** at the head of Epic 18 (precedent: Story 10.0). `E16R-1` slipped through all 4 Epic 17 stories (annotated in every fire-check, never enforced). Next: Paolo runs `create-story` for 18.0, then `sprint-planning`. |
+| E17R-3 | Epic 17 retro | create-story fire-check must **hard-block** next-story sprint entry when an action item carries a hard deadline ("NOT past story X"), not merely annotate | John (PM) + Dev agents | Ongoing process | B (ongoing) | open | E16R-1 is the evidence: correctly surfaced in 17.1/17.2/17.3/17.4 fire-checks and still slipped. Annotation ≠ enforcement. Extends the consolidated E9-K1 fire-check. |
+
+**Closed / reconciled in-session**
+
+- **Doc-drift `epics.md` Story 17.2 AC2** — reconciled to as-built ("only the current weekly goal widget is visible; tab bar/history/charts replaced by the single tappable prompt"). Verified on-device. Done.
+
+**Category A snapshot (post Epic 17 retro): 3 / 5.** Active: `E10R-2` (non-UTC week-bucketing test), `E16R-1` (→ now scheduled as E17R-2 standalone story), `E17R-1` (paywall i18n). Under cap.
+
+**Category B sunset review:** owed at Epic 17 kickoff per the 2-epic cadence (not run during the Epic 17 Category A triage) — **carry to Epic 18 kickoff** and run it there alongside the Epic 18 Category A count.

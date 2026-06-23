@@ -2295,7 +2295,9 @@ So that existing users are not retroactively paywalled for data they already had
 
 **Given** a post-v2 user with a free (non-Pro) account
 **When** they open the Progress screen
-**Then** only the most recent session and the current weekly goal widget are visible; the history and charts are replaced by a single-line prompt: "Lo storico completo è una funzione Pro." with no persistent lock icon or badge elsewhere (FR59, FR61, UX-DR25)
+**Then** only the current weekly goal widget is visible; the tab bar, history list, and charts are replaced by a single tappable prompt: "Lo storico completo è una funzione Pro." with no persistent lock icon or badge elsewhere (FR59, FR61, UX-DR25)
+
+> **Reconciled 2026-06-23 (Epic 17 retro):** the original wording listed "the most recent session and the current weekly goal widget". The delivered Story 17.2 + implementation (`progress_page.dart`) show **only** the weekly goal widget + prompt (no recent-session card). AC aligned to as-built behavior (verified on-device).
 
 **Given** a post-v2 free user taps the "Lo storico completo è una funzione Pro." prompt area
 **When** the tap is registered
@@ -2366,6 +2368,28 @@ So that I can upgrade, cancel, or recover my subscription through standard store
 ## Epic 18: Social Graph & Friends (v2.3)
 
 **Goal:** Build the social graph layer: username/handle setup with privacy-by-default, the friend request flow, a friends-only activity feed showing explicitly-shared completions with light reactions, and a friends progress comparison view. All social content creation requires Pro. This epic depends on Epic 16 (auth) and Epic 17 (EntitlementGate).
+
+### Story 18.0: Auth/Backup Datasource Test Hardening (closes E16R-1)
+
+> **Critical-path prerequisite (Epic 17 retro, 2026-06-23 — E17R-2).** This is the deferred `E16R-1` test-hardening item, promoted to a standalone story per Paolo's decision. It MUST be scheduled and `done` **before Story 18.1 enters the sprint**, because Epic 18 works heavily on `profiles` + RLS + restore, and the restore-integrity fix from Story 16.3 (a P1) still has no dedicated regression test. `E16R-1` slipped through all four Epic 17 stories (annotated in every fire-check, never enforced — see E17R-3).
+
+As a developer,
+I want a regression test for the Drift export→restore round-trip and a safety assertion that `signOut()` runs only after a successful (200) server response,
+So that the critical restore-integrity path (Story 16.3 P1 fix) and the "no partial sign-out state" safety property (Story 16.4 AC2/AC4) are protected against regression before the social layer builds on `profiles`.
+
+**Acceptance Criteria:**
+
+**Given** a populated local database is exported and then restored from the export blob
+**When** the restore round-trip completes
+**Then** a regression test asserts the restored data is byte-for-byte / row-for-row equivalent to the original (closes the 16.3 P1 restore-integrity coverage gap, which currently has no dedicated test)
+
+**Given** a sign-out is requested against the auth/backup datasource
+**When** the server response is non-200 (failure)
+**Then** a test asserts `signOut()` does NOT run — no partial/orphaned local state is produced (closes 16.4-D2, merged into E16R-1 at the Epic 17 kickoff triage)
+
+**Given** the new tests are added
+**When** the suite runs
+**Then** `flutter test` stays green and `flutter analyze` reports 0 issues; the action-item ledger marks `E16R-1` / `E17R-2` as `done`
 
 ### Story 18.1: Username Handle Setup and VisibilityTierSelector
 
