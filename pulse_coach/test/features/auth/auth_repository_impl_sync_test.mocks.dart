@@ -50,6 +50,35 @@ class MockAuthRemoteDataSource extends _i1.Mock
   }
 
   @override
+  _i5.Future<int> Function() get invokeDeleteAccount =>
+      (super.noSuchMethod(
+            Invocation.getter(#invokeDeleteAccount),
+            returnValue: () => _i5.Future<int>.value(0),
+          )
+          as _i5.Future<int> Function());
+
+  @override
+  _i5.Future<void> Function() get performSignOut =>
+      (super.noSuchMethod(
+            Invocation.getter(#performSignOut),
+            returnValue: () => _i5.Future<void>.value(),
+          )
+          as _i5.Future<void> Function());
+
+  @override
+  set invokeDeleteAccount(_i5.Future<int> Function()? value) =>
+      super.noSuchMethod(
+        Invocation.setter(#invokeDeleteAccount, value),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set performSignOut(_i5.Future<void> Function()? value) => super.noSuchMethod(
+    Invocation.setter(#performSignOut, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
   _i5.Future<_i2.AuthUser> signInWithApple() =>
       (super.noSuchMethod(
             Invocation.method(#signInWithApple, []),

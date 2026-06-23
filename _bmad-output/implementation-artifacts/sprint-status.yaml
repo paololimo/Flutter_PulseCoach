@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-23 # epic 17 retrospective complete (done)
+last_updated: 2026-06-23 # story 18.0 done (code review passed)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -259,7 +259,8 @@ development_status:
   # Epic 18: Social Graph & Friends (v2.3)
   # Depends on Epic 16 (auth) and Epic 17 (EntitlementGate).
   # ─────────────────────────────────────────
-  epic-18: backlog
+  epic-18: in-progress
+  18-0-auth-backup-datasource-test-hardening: done
   18-1-username-handle-setup-and-visibility-tier-selector: backlog
   18-2-friend-request-flow: backlog
   18-3-activity-feed-with-light-reactions: backlog

@@ -278,6 +278,194 @@ void main() {
     );
 
     test(
+      '18.0-RESTORE-001: full round-trip — all 7 tables, FK relationships, and all fields preserved',
+      () async {
+        final now = DateTime.utc(2026, 6, 23, 12);
+        // ── seed Sessions ──────────────────────────────────────────────────
+        final sessionId = await db.into(db.sessions).insert(
+          SessionsCompanion.insert(
+            sessionType: 'cardio',
+            intensity: 6,
+            durationSeconds: 900,
+            abandoned: const Value(false),
+            completedAt: Value(now),
+            createdAt: now,
+          ),
+        );
+
+        // ── seed DailyPlans (within 30-day filter window) ─────────────────
+        final planId = await db.into(db.dailyPlans).insert(
+          DailyPlansCompanion.insert(
+            planDate: '2026-06-23',
+            planJson: '{"sessions":[{"type":"cardio"}]}',
+            generatedAt: now,
+            createdAt: now,
+            isCompleted: const Value(true),
+          ),
+        );
+
+        // ── seed SessionLogs (FK → DailyPlans) ────────────────────────────
+        final logId = await db.into(db.sessionLogs).insert(
+          SessionLogsCompanion.insert(
+            dailyPlanId: planId,
+            sessionIndex: 0,
+            completedAt: now,
+            createdAt: now,
+            abandoned: const Value(false),
+            elapsedSeconds: const Value(900),
+            currentStepIndex: const Value(4),
+          ),
+        );
+
+        // ── seed RpeFeedback (FK → Sessions AND SessionLogs) ───────────────
+        final rpeId = await db.into(db.rpeFeedback).insert(
+          RpeFeedbackCompanion.insert(
+            sessionId: sessionId,
+            sessionLogId: Value(logId),
+            rpeValue: 7,
+            recordedAt: now,
+          ),
+        );
+
+        // ── seed BanditState ───────────────────────────────────────────────
+        final banditId = await db.into(db.banditState).insert(
+          BanditStateCompanion.insert(
+            armWeightsJson: '{"cardio":0.4,"strength":0.3,"mobility":0.3}',
+            updatedAt: now,
+          ),
+        );
+
+        // ── seed BehavioralState ───────────────────────────────────────────
+        final bsId = await db.into(db.behavioralState).insert(
+          BehavioralStateCompanion.insert(
+            currentState: 'active',
+            streakCount: const Value(5),
+            restingHr: const Value(62),
+            stepCount: const Value(8000),
+            recordedAt: now,
+            updatedAt: now,
+          ),
+        );
+
+        // ── seed UserProfile with all fields including installCohort ───────
+        final profileId = await db.into(db.userProfile).insert(
+          UserProfileCompanion.insert(
+            fitnessGoal: const Value('cardio'),
+            weeklySessionTarget: const Value(4),
+            intensityPreference: const Value('medium'),
+            environmentPreference: const Value('indoor'),
+            availableTime: const Value('5-10'),
+            physicalConstraints: const Value('none'),
+            onboardingCompleted: const Value(true),
+            disclaimerAccepted: const Value(true),
+            installCohort: const Value('pre_v2'),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+
+        // ── Export ─────────────────────────────────────────────────────────
+        final snapshot = await sut.exportDriftSnapshot();
+
+        expect((snapshot['userProfile'] as List), hasLength(1));
+        expect((snapshot['sessions'] as List), hasLength(1));
+        expect((snapshot['dailyPlans'] as List), hasLength(1));
+        expect((snapshot['sessionLogs'] as List), hasLength(1));
+        expect((snapshot['rpeFeedback'] as List), hasLength(1));
+        expect((snapshot['banditState'] as List), hasLength(1));
+        expect((snapshot['behavioralState'] as List), hasLength(1));
+
+        // ── Clear and restore ──────────────────────────────────────────────
+        await sut.restoreDriftSnapshot(snapshot);
+
+        // ── Verify UserProfile — all fields including installCohort ────────
+        final profiles = await db.select(db.userProfile).get();
+        expect(profiles, hasLength(1));
+        final p = profiles.single;
+        expect(p.id, equals(profileId));
+        expect(p.fitnessGoal, equals('cardio'));
+        expect(p.weeklySessionTarget, equals(4));
+        expect(p.intensityPreference, equals('medium'));
+        expect(p.environmentPreference, equals('indoor'));
+        expect(p.availableTime, equals('5-10'));
+        expect(p.physicalConstraints, equals('none'));
+        expect(p.onboardingCompleted, isTrue);
+        expect(p.disclaimerAccepted, isTrue);
+        expect(p.installCohort, equals('pre_v2'),
+            reason: 'installCohort (grandfathering flag) must survive restore');
+        expect(p.createdAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+        expect(p.updatedAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+
+        // ── Verify Sessions ────────────────────────────────────────────────
+        final sessions = await db.select(db.sessions).get();
+        expect(sessions, hasLength(1));
+        final s = sessions.single;
+        expect(s.id, equals(sessionId));
+        expect(s.sessionType, equals('cardio'));
+        expect(s.intensity, equals(6));
+        expect(s.durationSeconds, equals(900));
+        expect(s.abandoned, isFalse);
+        expect(s.completedAt!.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+        expect(s.createdAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+
+        // ── Verify DailyPlans ──────────────────────────────────────────────
+        final plans = await db.select(db.dailyPlans).get();
+        expect(plans, hasLength(1));
+        final pl = plans.single;
+        expect(pl.id, equals(planId));
+        expect(pl.planDate, equals('2026-06-23'));
+        expect(pl.planJson, contains('cardio'));
+        expect(pl.isCompleted, isTrue);
+        expect(pl.generatedAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+        expect(pl.createdAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+
+        // ── Verify SessionLogs (FK integrity) ─────────────────────────────
+        final logs = await db.select(db.sessionLogs).get();
+        expect(logs, hasLength(1));
+        final l = logs.single;
+        expect(l.id, equals(logId));
+        expect(l.dailyPlanId, equals(planId),
+            reason: '16.3 P1: explicit id insertion preserves FK integrity');
+        expect(l.sessionIndex, equals(0));
+        expect(l.abandoned, isFalse);
+        expect(l.elapsedSeconds, equals(900));
+        expect(l.currentStepIndex, equals(4));
+        expect(l.completedAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+        expect(l.createdAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+
+        // ── Verify RpeFeedback ─────────────────────────────────────────────
+        final rpes = await db.select(db.rpeFeedback).get();
+        expect(rpes, hasLength(1));
+        final r = rpes.single;
+        expect(r.id, equals(rpeId));
+        expect(r.sessionId, equals(sessionId));
+        expect(r.sessionLogId, equals(logId));
+        expect(r.rpeValue, equals(7));
+        expect(r.recordedAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+
+        // ── Verify BanditState ─────────────────────────────────────────────
+        final bandits = await db.select(db.banditState).get();
+        expect(bandits, hasLength(1));
+        final b = bandits.single;
+        expect(b.id, equals(banditId));
+        expect(b.armWeightsJson, contains('cardio'));
+        expect(b.updatedAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+
+        // ── Verify BehavioralState ─────────────────────────────────────────
+        final bss = await db.select(db.behavioralState).get();
+        expect(bss, hasLength(1));
+        final bs = bss.single;
+        expect(bs.id, equals(bsId));
+        expect(bs.currentState, equals('active'));
+        expect(bs.streakCount, equals(5));
+        expect(bs.restingHr, equals(62));
+        expect(bs.stepCount, equals(8000));
+        expect(bs.recordedAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+        expect(bs.updatedAt.millisecondsSinceEpoch, equals(now.millisecondsSinceEpoch));
+      },
+    );
+
+    test(
       '16.3-DS-005b: restore clears existing rows before inserting snapshot data',
       () async {
         // Pre-existing row

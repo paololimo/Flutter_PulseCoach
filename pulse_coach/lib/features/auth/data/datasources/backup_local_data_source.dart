@@ -141,6 +141,7 @@ class BackupLocalDataSource {
     'physicalConstraints': r.physicalConstraints,
     'onboardingCompleted': r.onboardingCompleted,
     'disclaimerAccepted': r.disclaimerAccepted,
+    'installCohort': r.installCohort,
     'createdAt': r.createdAt.toIso8601String(),
     'updatedAt': r.updatedAt.toIso8601String(),
   };
@@ -156,6 +157,7 @@ class BackupLocalDataSource {
         physicalConstraints: Value(m['physicalConstraints'] as String?),
         onboardingCompleted: Value(m['onboardingCompleted'] as bool),
         disclaimerAccepted: Value(m['disclaimerAccepted'] as bool),
+        installCohort: Value(m['installCohort'] as String?),
         createdAt: Value(DateTime.parse(m['createdAt'] as String)),
         updatedAt: Value(DateTime.parse(m['updatedAt'] as String)),
       );

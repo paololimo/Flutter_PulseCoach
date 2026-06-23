@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of story-18.0 (2026-06-23)
+
+- Backup restore lacks a format-version guard and defensive parsing of legacy/malformed blobs — non-nullable casts (`as bool`/`as int`), `DateTime.parse`, and `snapshot[key] as List` throw on an absent/null key; deletes run before inserts in the restore transaction, so a malformed or pre-schema backup can wipe the DB then abort mid-restore [pulse_coach/lib/features/auth/data/datasources/backup_local_data_source.dart:restoreDriftSnapshot]. **[KEEP — pre-existing; this story only added the nullable `installCohort` field (backward-compat confirmed by 16.3-DS-005b). A defensive-parse + version-field hardening pass is a separate, broader change.]**
+- Real Supabase `deleteAccount` path (`_defaultInvokeDeleteAccount`: `functions.invoke` + status≠200 throw) has no direct test — 18.0-DS-001/002 override both seams, so the shipped status-check branch is uncovered [pulse_coach/lib/features/auth/data/datasources/auth_remote_data_source.dart:_defaultInvokeDeleteAccount]. **[KEEP — by-design seam pattern consistent with `cloudCohortReader/Writer`; the branch is a trivial status compare. Add a Supabase-functions integration test only if this path regresses.]**
+- Account deleted server-side but local session retained if `performSignOut()` throws after a 200 — no rollback/retry of local sign-out [pulse_coach/lib/features/auth/data/datasources/auth_remote_data_source.dart:deleteAccount]. **[KEEP — pre-existing (identical to the pre-refactor code) and out of AC2 scope, which only governs the non-200 → no-signOut property.]**
+- `signOut()` duplicates the `_defaultPerformSignOut` one-liner — two sources of truth that could silently drift [pulse_coach/lib/features/auth/data/datasources/auth_remote_data_source.dart:signOut]. **[KEEP — Low: both are a single `_supabase.client.auth.signOut()` call; cosmetic cleanup.]**
+
 ## Deferred from: code review of story-17.2 (2026-06-22)
 
 - User-facing strings hardcoded as Italian literals bypass the gen_l10n/ARB pipeline — locked banner, ProUpsellSheet buttons/fact string, `Cronologia`/`Grafici` tab labels [pulse_coach/lib/features/progress/presentation/pages/progress_page.dart:108,143; pulse_coach/lib/features/subscription/presentation/widgets/pro_upsell_sheet.dart]. **[KEEP — matches pre-existing ProgressPage style; spec mandated literal copy; app is locale-locked to `it`. Fold into the standing i18n/ARB debt (E7.5-T1), not a one-story fix.]**
