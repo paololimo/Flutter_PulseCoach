@@ -364,21 +364,19 @@ class _FriendsShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          children: [
-            const ShimmerPlaceholder(height: 56),
-            const SizedBox(height: 12),
-            ...List.generate(
-              5,
-              (_) => const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: ShimmerPlaceholder(height: 60),
-              ),
+        children: [
+          const ShimmerPlaceholder(height: 56),
+          const SizedBox(height: 12),
+          ...List.generate(
+            5,
+            (_) => const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: ShimmerPlaceholder(height: 60),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
