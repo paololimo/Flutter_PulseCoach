@@ -1,121 +1,62 @@
 {
-  "schema_version": "0.1.0",
-  "snapshot_at": "2026-06-22T00:00:00.000Z",
-  "repo": "Flutter_PulseCoach",
-  "collection_mode": "contract_static",
-  "collection_status": "COLLECTED",
-  "inventory_basis": "acceptance_criteria",
-  "gate_basis": "priority_thresholds",
-  "source_sha": "",
-  "target": {
-    "type": "epic",
-    "id": "17",
-    "label": "Epic 17 — Pro Subscription & Feature Gating (v2.2)",
-    "stories": ["17.1", "17.2", "17.3", "17.4"]
+  "schema_version": "1.0",
+  "generated_at": "2026-06-24",
+  "scope": "Epic 18 — Social Graph & Friends (Stories 18.0–18.4)",
+  "gate_decision": "PASS",
+  "gate_rationale": "P0 100% (4/4). P1 100% (24/24) — all 3 previously PARTIAL P1 ACs resolved by widget tests (HandleSetupSection, FriendsScreen Pro gate, MiniSummary toggle). P2 57% (4/7). Overall 91% (32/35). Suite 1089/1089 passing.",
+  "coverage_summary": {
+    "total_acs": 35,
+    "full": 32,
+    "partial": 3,
+    "none": 0,
+    "overall_percentage": 91,
+    "p0_percentage": 100,
+    "p1_percentage": 100,
+    "p2_percentage": 57
   },
-  "decision_mode": "deterministic",
-  "evaluator": "Paolo",
-  "confidence": "high",
-  "oracle": {
-    "resolution_mode": "formal_requirements",
-    "confidence": "high",
-    "sources": [
-      "_bmad-output/implementation-artifacts/17-1-revenuecat-iap-integration-and-entitlement-gate.md",
-      "_bmad-output/implementation-artifacts/17-2-progress-history-free-pro-gating-with-grandfathering.md",
-      "_bmad-output/implementation-artifacts/17-3-pro-upsell-sheet-with-session-day-cooldown.md",
-      "_bmad-output/implementation-artifacts/17-4-subscription-purchase-restore-and-management.md"
-    ],
-    "external_pointer_status": "not_used",
-    "synthetic": false
+  "test_inventory": {
+    "total_tests": 116,
+    "suite_total": 1089,
+    "suite_passing": 1089,
+    "unit_tests": 98,
+    "component_tests": 30,
+    "e2e_tests": 0,
+    "untracked_files": 0,
+    "untracked_tests": 0,
+    "analyze_issues": 0
   },
-  "coverage": {
-    "inventory": {
-      "covered": 20,
-      "partial": 5,
-      "none": 0,
-      "waived": 0,
-      "total": 25,
-      "pct": 80
-    },
-    "priority_breakdown": {
-      "P0": { "total": 2, "covered": 2, "partial": 0, "none": 0, "pct": 100 },
-      "P1": { "total": 12, "covered": 11, "partial": 1, "none": 0, "pct": 92 },
-      "P2": { "total": 7, "covered": 3, "partial": 4, "none": 0, "pct": 43 },
-      "P3": { "total": 4, "covered": 4, "partial": 0, "none": 0, "pct": 100 }
-    },
-    "by_level": {
-      "e2e": { "tests": 0, "criteria_covered": 0 },
-      "api": { "tests": 0, "criteria_covered": 0 },
-      "component": { "tests": 17, "criteria_covered": 14 },
-      "unit": { "tests": 33, "criteria_covered": 20 },
-      "other": { "tests": 0, "criteria_covered": 0 }
-    }
-  },
-  "tests": {
-    "files": 12,
-    "cases": 50,
-    "skipped_cases": 0,
-    "fixme_cases": 0,
-    "pending_cases": 0
-  },
-  "gate_status": "PASS",
-  "gate_criteria": {
-    "p0_coverage_required": "100%",
-    "p0_coverage_actual": "100%",
-    "p0_status": "MET",
-    "p1_coverage_target": "90%",
-    "p1_coverage_minimum": "80%",
-    "p1_coverage_actual": "91.7%",
-    "p1_status": "MET",
-    "overall_coverage_minimum": "80%",
-    "overall_coverage_actual": "80%",
-    "overall_status": "MET"
-  },
-  "risk_summary": {
-    "critical_open": 0,
-    "high_open": 0,
-    "medium_open": 1,
-    "low_open": 4
-  },
-  "heuristics": {
-    "endpoint_gaps": 0,
-    "auth_negative_path_status": "present",
-    "error_path_status": "present",
-    "ui_journey_status": "not_applicable",
-    "ui_state_status": "present"
-  },
-  "blockers": [],
-  "recommendations": [
+  "gaps": [
     {
-      "priority": "MEDIUM",
-      "action": "Add url_launcher mock test in settings_page_test.dart: verify launchUrl called with App Store subscription management URL when Gestisci abbonamento is tapped",
-      "requirements": ["17.4-AC4"]
+      "ac": "18.1-AC5",
+      "priority": "P2",
+      "coverage": "PARTIAL",
+      "risk": "LOW",
+      "description": "AppShell Social tab position no widget test (advisory)"
     },
     {
-      "priority": "LOW",
-      "action": "Add explicit find.byIcon(Icons.lock).findsNothing assertion to 17.2-WIDGET-001",
-      "requirements": ["17.3-AC5"]
+      "ac": "18.3-AC7",
+      "priority": "P2",
+      "coverage": "PARTIAL",
+      "risk": "LOW",
+      "description": "SocialPage 2-tab (Amici+Feed) no widget test (advisory)"
     },
     {
-      "priority": "LOW",
-      "action": "Add ProUpsellSheet.show() integration test from progress_page_test.dart banner tap (requires mock of cooldown service)",
-      "requirements": ["17.2-AC3"]
-    },
-    {
-      "priority": "LOW",
-      "action": "Accept 17.1-AC1 (boot-order) and 17.1-AC5 (no-flash) as structurally verified; document as known gap in action-item-ledger",
-      "requirements": ["17.1-AC1", "17.1-AC5"]
-    },
-    {
-      "priority": "LOW",
-      "action": "Run /bmad:tea:test-review to assess test quality across Epic 17 suite",
-      "requirements": []
+      "ac": "18.4-AC7",
+      "priority": "P2",
+      "coverage": "PARTIAL",
+      "risk": "LOW",
+      "description": "SocialPage 3-tab (Amici+Feed+Confronto) no widget test (advisory)"
     }
   ],
-  "links": {
-    "trace_report_path": "_bmad-output/test-artifacts/traceability/traceability-matrix.md",
-    "trace_report_url": "",
-    "artifact_url": "",
-    "journey_evidence_url": ""
+  "recommendations": [
+    {
+      "priority": "LOW",
+      "description": "Add SocialPage tab structure widget tests for 18.1-AC5, 18.3-AC7, 18.4-AC7 (advisory, no gate impact)"
+    }
+  ],
+  "files": {
+    "traceability_matrix": "_bmad-output/test-artifacts/traceability-matrix.md",
+    "per_epic_report": "_bmad-output/test-artifacts/traceability-report-epic18.md",
+    "gate_decision": "_bmad-output/test-artifacts/traceability/gate-decision.json"
   }
 }

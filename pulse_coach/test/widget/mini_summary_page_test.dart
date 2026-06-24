@@ -15,6 +15,9 @@ import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.
 import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/presentation/pages/session_summary_page.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/completion_ring.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 const _args = MiniSummaryArgs(
@@ -260,6 +263,61 @@ void main() {
       expect(find.text('Today target'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    '18.3-WIDGET-NEW-001: no SubscriptionBloc in context → share toggle hidden',
+    (tester) async {
+      _registerDaos(logs: [_log(0)], sessionCount: 3);
+
+      await tester.pumpWidget(_wrap(_router()));
+      await tester.pump();
+
+      expect(find.byType(SwitchListTile), findsNothing);
+    },
+  );
+
+  testWidgets(
+    '18.3-WIDGET-NEW-002: Pro subscription → share toggle visible, default OFF',
+    (tester) async {
+      _registerDaos(logs: [_log(0)], sessionCount: 3);
+
+      await tester.pumpWidget(
+        BlocProvider<SubscriptionBloc>.value(
+          value: _FakeSubscriptionBloc(
+            const SubscriptionState.loaded(tier: SubscriptionTier.pro),
+          ),
+          child: _wrap(_router()),
+        ),
+      );
+      await tester.pump();
+
+      final tile = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
+      expect(tile.value, isFalse);
+    },
+  );
+
+  testWidgets(
+    '18.3-WIDGET-NEW-003: Pro subscription → tap share toggle → value becomes ON',
+    (tester) async {
+      _registerDaos(logs: [_log(0)], sessionCount: 3);
+
+      await tester.pumpWidget(
+        BlocProvider<SubscriptionBloc>.value(
+          value: _FakeSubscriptionBloc(
+            const SubscriptionState.loaded(tier: SubscriptionTier.pro),
+          ),
+          child: _wrap(_router()),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pump();
+
+      final tile = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
+      expect(tile.value, isTrue);
+    },
+  );
 }
 
 // 9.2-PAGE-011 declared below — pulse coverage for AC3 (review patch #4).
@@ -336,4 +394,21 @@ class _FakeDailyPlansDao extends Fake implements DailyPlansDao {
 
   @override
   Future<db.DailyPlan?> getPlanById(int id) async => planRow;
+}
+
+class _FakeSubscriptionBloc extends Fake implements SubscriptionBloc {
+  final SubscriptionState _state;
+  _FakeSubscriptionBloc(this._state);
+
+  @override
+  SubscriptionState get state => _state;
+
+  @override
+  Stream<SubscriptionState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  void add(SubscriptionEvent event) {}
 }

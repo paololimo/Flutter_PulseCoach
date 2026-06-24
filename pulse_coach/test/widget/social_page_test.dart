@@ -1,0 +1,194 @@
+// [18.2-WIDGET-NEW-001..002] SocialPage Pro gate widget tests.
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_bloc.dart';
+import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_event.dart';
+import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_state.dart';
+import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_bloc.dart';
+import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_event.dart';
+import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_state.dart';
+import 'package:pulse_coach/features/social/friends/domain/entities/pending_requests.dart';
+import 'package:pulse_coach/features/social/friends/presentation/bloc/friends_bloc.dart';
+import 'package:pulse_coach/features/social/friends/presentation/bloc/friends_event.dart';
+import 'package:pulse_coach/features/social/friends/presentation/bloc/friends_state.dart';
+import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_bloc.dart';
+import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_event.dart';
+import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_state.dart';
+import 'package:pulse_coach/features/social/friends/presentation/pages/social_page.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
+
+Widget _wrapWithSub(_FakeSubscriptionBloc sub, {Widget child = const SocialPage()}) =>
+    MaterialApp(
+      locale: const Locale('it'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: BlocProvider<SubscriptionBloc>.value(value: sub, child: child),
+    );
+
+void main() {
+  tearDown(() async {
+    await getIt.reset();
+  });
+
+  testWidgets(
+    '18.2-WIDGET-NEW-001: non-Pro → locked banner visible, no tab bar',
+    (tester) async {
+      final sub = _FakeSubscriptionBloc(
+        const SubscriptionState.loaded(tier: SubscriptionTier.accountFree),
+      );
+
+      await tester.pumpWidget(_wrapWithSub(sub));
+      await tester.pump();
+
+      expect(
+        find.text('Amici e social sono funzionalità Pro.'),
+        findsOneWidget,
+      );
+      expect(find.text('Scopri Pro'), findsOneWidget);
+      expect(find.text('Cerca per @handle'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    '18.2-WIDGET-NEW-002: Pro → friends tab shows search field and QR button',
+    (tester) async {
+      final fakeFriends = _FakeFriendsBloc(
+        const FriendsState.loaded(
+          friends: [],
+          pendingRequests: PendingRequests(received: [], sent: []),
+        ),
+      );
+      final fakeSocial = _FakeSocialProfileBloc(
+        const SocialProfileState.initial(),
+      );
+      final fakeFeed = _FakeFeedBloc(const FeedState.initial());
+      final fakeComparison = _FakeProgressComparisonBloc(
+        const ProgressComparisonState.initial(),
+      );
+
+      getIt.registerFactory<FriendsBloc>(() => fakeFriends);
+      getIt.registerFactory<SocialProfileBloc>(() => fakeSocial);
+      getIt.registerFactory<FeedBloc>(() => fakeFeed);
+      getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
+
+      final sub = _FakeSubscriptionBloc(
+        const SubscriptionState.loaded(tier: SubscriptionTier.pro),
+      );
+
+      await tester.pumpWidget(_wrapWithSub(sub));
+      await tester.pump();
+
+      expect(find.text('Cerca per @handle'), findsOneWidget);
+      expect(find.text('Mostra il mio QR'), findsOneWidget);
+      expect(
+        find.text('Amici e social sono funzionalità Pro.'),
+        findsNothing,
+      );
+    },
+  );
+}
+
+class _FakeSubscriptionBloc extends Fake implements SubscriptionBloc {
+  final SubscriptionState _state;
+  _FakeSubscriptionBloc(this._state);
+
+  @override
+  SubscriptionState get state => _state;
+
+  @override
+  Stream<SubscriptionState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  void add(SubscriptionEvent event) {}
+
+  @override
+  Future<void> close() async {}
+}
+
+class _FakeFriendsBloc extends Fake implements FriendsBloc {
+  final FriendsState _state;
+  _FakeFriendsBloc(this._state);
+
+  @override
+  FriendsState get state => _state;
+
+  @override
+  Stream<FriendsState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  void add(FriendsEvent event) {}
+
+  @override
+  Future<void> close() async {}
+}
+
+class _FakeSocialProfileBloc extends Fake implements SocialProfileBloc {
+  final SocialProfileState _state;
+  _FakeSocialProfileBloc(this._state);
+
+  @override
+  SocialProfileState get state => _state;
+
+  @override
+  Stream<SocialProfileState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  void add(SocialProfileEvent event) {}
+
+  @override
+  Future<void> close() async {}
+}
+
+class _FakeFeedBloc extends Fake implements FeedBloc {
+  final FeedState _state;
+  _FakeFeedBloc(this._state);
+
+  @override
+  FeedState get state => _state;
+
+  @override
+  Stream<FeedState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  void add(FeedEvent event) {}
+
+  @override
+  Future<void> close() async {}
+}
+
+class _FakeProgressComparisonBloc extends Fake
+    implements ProgressComparisonBloc {
+  final ProgressComparisonState _state;
+  _FakeProgressComparisonBloc(this._state);
+
+  @override
+  ProgressComparisonState get state => _state;
+
+  @override
+  Stream<ProgressComparisonState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  void add(ProgressComparisonEvent event) {}
+
+  @override
+  Future<void> close() async {}
+}

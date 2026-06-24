@@ -1,8 +1,8 @@
 ---
-stepsCompleted: ['step-01-preflight-and-context', 'step-02-identify-targets', 'step-03-generate-tests', 'step-03c-aggregate', 'step-04-validate-and-summarize']
-lastStep: 'step-04-validate-and-summarize'
-lastSaved: '2026-06-22'
-lastRunDate: '2026-06-22'
+stepsCompleted: ['step-01-preflight-and-context', 'step-02-identify-targets', 'step-03-generate-tests', 'step-03c-aggregate', 'step-04-validate-and-summarize', 'step-01-preflight-and-context-epic18', 'step-02-identify-targets-epic18', 'step-03-generate-tests-epic18', 'step-03c-aggregate-epic18', 'step-04-validate-epic18', 'bmad-testarch-trace-epic18']
+lastStep: 'bmad-testarch-trace-epic18'
+lastSaved: '2026-06-24'
+lastRunDate: '2026-06-24'
 inputDocuments:
   - pulse_coach/pubspec.yaml
   - pulse_coach/analysis_options.yaml
@@ -27,6 +27,42 @@ inputDocuments:
   - _bmad-output/test-artifacts/test-design-handoff.md
   - _bmad-output/test-artifacts/traceability-report.md
   - all existing test files in pulse_coach/test/
+---
+
+# TEA Traceability Run — PulseCoach (Epic 18, 2026-06-24)
+
+## Run Type: bmad-testarch-trace (Create Mode — aggiornato 2026-06-24)
+
+**Scope:** Epic 18 — Social Graph & Friends (Stories 18.0–18.4)
+**Gate Decision:** PASS ✅
+**Suite total:** 1089 / 1089 tests passing; `flutter analyze` 0 issues
+
+### Coverage Results
+
+| Priority | Covered / Total | % | Status |
+|---|---|---|---|
+| P0 | 4/4 | 100% | ✅ MET |
+| P1 | 24/24 | 100% | ✅ MET (target: 90%) |
+| P2 | 4/7 | 57% | advisory |
+| Overall | 32/35 | 91% | ✅ MET |
+
+### Gaps (advisory only)
+
+| AC | Priority | Coverage | Notes |
+|---|---|---|---|
+| 18.1-AC5 AppShell Social tab position | P2 | PARTIAL | advisory — no gate impact |
+| 18.3-AC7 Social 2-tab structure | P2 | PARTIAL | advisory — no gate impact |
+| 18.4-AC7 Social 3-tab structure | P2 | PARTIAL | advisory — no gate impact |
+
+**11 staged test files** — `git commit` required before merge.
+
+### Output Files
+
+- `_bmad-output/test-artifacts/traceability-matrix.md` — full report (replaced Epic 14 content)
+- `_bmad-output/test-artifacts/traceability-report-epic18.md` — per-epic summary
+- `_bmad-output/test-artifacts/traceability/e2e-trace-summary.json` — machine-readable summary
+- `_bmad-output/test-artifacts/traceability/gate-decision.json` — gate decision JSON
+
 ---
 
 # TEA Automation Summary — PulseCoach (2026-06-04 Run)
@@ -2186,6 +2222,207 @@ PASS — 984/984 tests passed
 ### Recommended Next Workflow
 
 - `bmad-testarch-trace` se vuoi che i nuovi test `17.4-WIDGET-008/009` siano riflessi nella traceability matrix di Epic 17.
+
+---
+
+---
+
+# TEA Automation Summary — PulseCoach (Epic 18 Social Graph — 2026-06-24)
+
+## Step 1: Preflight & Context
+
+### Stack Detection
+- **Project type**: Flutter/Dart mobile app
+- **Detected stack**: `flutter/mobile` (adapted from TEA auto-detection)
+- **Test framework**: `flutter_test` + `bloc_test` + `mockito` verified
+- **Test directory**: `pulse_coach/test/`
+- **Playwright/Pact**: NOT applicable (mobile app)
+
+### Execution Mode
+- **Mode**: BMad-Integrated
+- **Active epic**: Epic 18 (Social Graph & Friends) — stories 18.0–18.4 all implemented
+- **Baseline**: 1,056 tests — ALL PASSING
+
+### Knowledge Fragments Loaded
+- `test-levels-framework.md`, `test-priorities-matrix.md`, `test-quality.md`
+
+---
+
+## Step 2: Coverage Analysis & Targets
+
+### Existing Coverage Summary (Epic 18)
+All explicitly-specified test IDs from stories 18.0–18.4 are implemented and passing:
+- Story 18.1: SocialProfileBloc (4 tests), VisibilityTierSelector widget, SocialProfileRemoteDataSource, SocialProfileRepositoryImpl
+- Story 18.2: FriendsRemoteDataSource DS-001..008, FriendsBloc BLOC-001..009, FriendRow WIDGET-001..005
+- Story 18.3: FeedRemoteDataSource DS-001..005, FeedBloc BLOC-001..006, ActivityFeedCard WIDGET-001..005
+- Story 18.4: ProgressComparisonRemoteDataSource DS-001..003, ProgressComparisonBloc BLOC-001..004, ComparisonRow WIDGET-001..003
+
+### Coverage Gaps Identified
+Repository implementations contain real DTO→domain mapping, graceful degradation, and exception-to-failure wrapping logic that is NOT exercised by existing tests (bloc tests mock the repo; DS tests test the datasource only).
+
+| # | Component | Gap | Priority |
+|---|---|---|---|
+| 1 | `FriendsRepositoryImpl` | `_rowToFriendItem` graceful degradation (null profiles embed → `displayHandle: ''`, malformed timestamp → epoch), error wrapping for 7 methods | P1 |
+| 2 | `FeedRepositoryImpl` | `_rowToDto` nested profiles parsing + bad-row degradation, `AuthFailureException` → `Left(SocialFailure('Not signed in'))` | P1 |
+| 3 | `ProgressComparisonRepositoryImpl` | `_safeFromJson` bad-row degradation, `StateError` → `Left(SocialFailure)`, generic exception | P2 |
+| 4 | `VisibilityCubit` | Trivial but untested UI-only cubit | P3 |
+
+### Coverage Plan
+
+| Test ID | File | Level | Priority | Target |
+|---|---|---|---|---|
+| `18.2-REPO-001` | `test/data/social/friends_repository_impl_test.dart` | Unit | P1 | `searchByHandle` found → `Right(SocialProfile)` |
+| `18.2-REPO-002` | `test/data/social/friends_repository_impl_test.dart` | Unit | P1 | `searchByHandle` null → `Right(null)` |
+| `18.2-REPO-003` | `test/data/social/friends_repository_impl_test.dart` | Unit | P1 | `searchByHandle` exception → `Left(SocialFailure)` |
+| `18.2-REPO-004` | `test/data/social/friends_repository_impl_test.dart` | Unit | P1 | `getPendingRequests` maps received/sent rows correctly |
+| `18.2-REPO-005` | `test/data/social/friends_repository_impl_test.dart` | Unit | P1 | `getPendingRequests` exception → `Left(SocialFailure)` |
+| `18.2-REPO-006` | `test/data/social/friends_repository_impl_test.dart` | Unit | P1 | `getFriends` success |
+| `18.2-REPO-007` | `test/data/social/friends_repository_impl_test.dart` | Unit | P1 | `getFriends` exception → `Left(SocialFailure)` |
+| `18.2-REPO-008` | `test/data/social/friends_repository_impl_test.dart` | Unit | P1 | `_rowToFriendItem` graceful degradation: null profiles → `displayHandle: ''`, malformed `created_at` → epoch |
+| `18.3-REPO-001` | `test/data/social/feed_repository_impl_test.dart` | Unit | P1 | `getFeed` success with nested profile handle |
+| `18.3-REPO-002` | `test/data/social/feed_repository_impl_test.dart` | Unit | P1 | `getFeed` degrades single bad row, rest returned |
+| `18.3-REPO-003` | `test/data/social/feed_repository_impl_test.dart` | Unit | P1 | `getFeed` exception → `Left(SocialFailure)` |
+| `18.3-REPO-004` | `test/data/social/feed_repository_impl_test.dart` | Unit | P1 | `shareFeedEntry` success → `Right(unit)` |
+| `18.3-REPO-005` | `test/data/social/feed_repository_impl_test.dart` | Unit | P1 | `shareFeedEntry` `AuthFailureException` → `Left(SocialFailure('Not signed in'))` |
+| `18.3-REPO-006` | `test/data/social/feed_repository_impl_test.dart` | Unit | P2 | `reactToEntry` + `revokeEntry` success and exception |
+| `18.4-REPO-001` | `test/data/social/progress_comparison_repository_impl_test.dart` | Unit | P2 | `getFriendsProgress` success — valid entries returned |
+| `18.4-REPO-002` | `test/data/social/progress_comparison_repository_impl_test.dart` | Unit | P2 | `getFriendsProgress` degrades malformed rows |
+| `18.4-REPO-003` | `test/data/social/progress_comparison_repository_impl_test.dart` | Unit | P2 | `getFriendsProgress` `StateError` → `Left(SocialFailure('Not signed in: …'))` |
+| `18.4-REPO-004` | `test/data/social/progress_comparison_repository_impl_test.dart` | Unit | P2 | `getFriendsProgress` generic exception → `Left(SocialFailure)` |
+| `18.1-CUBIT-001` | `test/bloc/visibility_cubit_test.dart` | Unit | P3 | `VisibilityCubit` initial state = `private`; `select()` emits new tier |
+
+**Total planned**: ~19 tests across 4 new test files
+
+### Scope Justification
+Selective data-layer expansion targeting repository implementations — the only layer with real DTO parsing/degradation logic not exercised elsewhere. No page-level widget tests planned (pages are thin compositors, not logic holders).
+
+---
+
+## Step 3: Test Generation (Sequential)
+
+```
+⚙️ Execution Mode Resolution:
+- Requested: auto
+- Probe Enabled: true
+- Supports agent-team: false
+- Supports subagent: false (this run)
+- Resolved: sequential
+- Stack: flutter/mobile (backend-equivalent dispatch)
+```
+
+### Tests Generated
+
+| Test ID | File | Description | Priority |
+|---|---|---|---|
+| `18.2-REPO-001` | `test/data/social/friends_repository_impl_test.dart` | `searchByHandle` found → `Right(SocialProfile)` | P1 |
+| `18.2-REPO-002` | `test/data/social/friends_repository_impl_test.dart` | `searchByHandle` null → `Right(null)` | P1 |
+| `18.2-REPO-003` | `test/data/social/friends_repository_impl_test.dart` | `searchByHandle` exception → `Left(SocialFailure)` | P1 |
+| `18.2-REPO-004` | `test/data/social/friends_repository_impl_test.dart` | `getPendingRequests` maps received/sent rows | P1 |
+| `18.2-REPO-005` | `test/data/social/friends_repository_impl_test.dart` | `getPendingRequests` exception → `Left(SocialFailure)` | P1 |
+| `18.2-REPO-006` | `test/data/social/friends_repository_impl_test.dart` | `getFriends` success | P1 |
+| `18.2-REPO-007` | `test/data/social/friends_repository_impl_test.dart` | `getFriends` exception → `Left(SocialFailure)` | P1 |
+| `18.2-REPO-008` | `test/data/social/friends_repository_impl_test.dart` | `_rowToFriendItem` null profiles → `''`; malformed timestamp → epoch | P1 |
+| `18.3-REPO-001` | `test/data/social/feed_repository_impl_test.dart` | `getFeed` with nested profile handle | P1 |
+| `18.3-REPO-002` | `test/data/social/feed_repository_impl_test.dart` | `getFeed` bad row degrades, valid row returned | P1 |
+| `18.3-REPO-003` | `test/data/social/feed_repository_impl_test.dart` | `getFeed` exception → `Left(SocialFailure)` | P1 |
+| `18.3-REPO-004` | `test/data/social/feed_repository_impl_test.dart` | `shareFeedEntry` success → `Right(unit)` | P1 |
+| `18.3-REPO-005` | `test/data/social/feed_repository_impl_test.dart` | `shareFeedEntry` `AuthFailureException` → `Left('Not signed in')` | P1 |
+| `18.3-REPO-006` | `test/data/social/feed_repository_impl_test.dart` | `shareFeedEntry` generic exception → `Left(SocialFailure)` | P2 |
+| `18.3-REPO-007` | `test/data/social/feed_repository_impl_test.dart` | `reactToEntry` success + exception | P2 |
+| `18.3-REPO-008` | `test/data/social/feed_repository_impl_test.dart` | `reactToEntry` exception → `Left(SocialFailure)` | P2 |
+| `18.4-REPO-001` | `test/data/social/progress_comparison_repository_impl_test.dart` | `getFriendsProgress` valid rows | P2 |
+| `18.4-REPO-002` | `test/data/social/progress_comparison_repository_impl_test.dart` | `getFriendsProgress` bad row degrades | P2 |
+| `18.4-REPO-003` | `test/data/social/progress_comparison_repository_impl_test.dart` | `getFriendsProgress` `StateError` → `Left('Not signed in')` | P2 |
+| `18.4-REPO-004` | `test/data/social/progress_comparison_repository_impl_test.dart` | `getFriendsProgress` generic exception | P2 |
+| `18.1-CUBIT-001` | `test/bloc/visibility_cubit_test.dart` | initial state = `private` | P3 |
+| `18.1-CUBIT-002` | `test/bloc/visibility_cubit_test.dart` | `select(friendsOnly)` emits `friendsOnly` | P3 |
+| `18.1-CUBIT-003` | `test/bloc/visibility_cubit_test.dart` | `select(private)` from `friendsOnly` emits `private` | P3 |
+
+**Total generated**: 23 tests across 4 new test files
+
+One runtime fix applied: `FeedEntry.displayHandle` → `ownerHandle` (entity field name correction discovered during first run; test adjusted before final passing).
+
+---
+
+## Step 3C: Aggregation
+
+```
+Test Generation Complete (SEQUENTIAL)
+Stack Type: flutter/mobile
+Total new tests: 23
+Fixture infrastructure: 3 new mock files (generated by build_runner)
+Files created: 4 test files + 3 .mocks.dart files
+Priority coverage: P1=12, P2=8, P3=3
+```
+
+### Files Created
+
+| File | Action |
+|---|---|
+| `pulse_coach/test/data/social/friends_repository_impl_test.dart` | Created (8 tests) |
+| `pulse_coach/test/data/social/friends_repository_impl_test.mocks.dart` | Generated by build_runner |
+| `pulse_coach/test/data/social/feed_repository_impl_test.dart` | Created (8 tests) |
+| `pulse_coach/test/data/social/feed_repository_impl_test.mocks.dart` | Generated by build_runner |
+| `pulse_coach/test/data/social/progress_comparison_repository_impl_test.dart` | Created (4 tests) |
+| `pulse_coach/test/data/social/progress_comparison_repository_impl_test.mocks.dart` | Generated by build_runner |
+| `pulse_coach/test/bloc/visibility_cubit_test.dart` | Created (3 tests) |
+
+---
+
+## Step 4: Validation & Final Summary
+
+### Test Execution Results
+
+```
+flutter test test/data/social/friends_repository_impl_test.dart \
+             test/data/social/feed_repository_impl_test.dart \
+             test/data/social/progress_comparison_repository_impl_test.dart \
+             test/bloc/visibility_cubit_test.dart
+PASS — 23/23 targeted tests passed
+
+flutter analyze
+PASS — No issues found
+
+flutter test
+PASS — 1079/1079 tests passed
+```
+
+### Checklist Validation (Flutter-Adapted)
+
+| Check | Status |
+|---|---|
+| Framework ready (`flutter_test`, `bloc_test`, `mockito`) | PASS |
+| Execution mode determined: BMad-Integrated, sequential | PASS |
+| Existing tests searched before target selection | PASS |
+| Duplicate coverage avoided | PASS |
+| Test levels correct (unit/mockito for repository layer) | PASS |
+| Priorities assigned (P1=12, P2=8, P3=3) | PASS |
+| Tests deterministic and isolated | PASS |
+| No hard waits, browser sessions, or external services | PASS |
+| `build_runner` run to generate mock files | PASS |
+| Targeted tests pass (23/23) | PASS |
+| Full regression suite passes (1079/1079) | PASS |
+| `flutter analyze` — No issues found | PASS |
+| Temp artifacts (no orphaned browsers/CLI sessions) | PASS — no browser sessions opened |
+
+### Final Test Count
+
+| Milestone | Count |
+|---|---|
+| Baseline (Epic 18 all stories shipped) | 1,056 |
+| Added in this run (+23) | **1,079** |
+
+### Key Assumptions & Risks
+
+- `FriendsRepositoryImpl` tests exercise `_rowToFriendItem` indirectly via `getPendingRequests` and `getFriends` — the graceful-degradation path (null profiles embed, malformed timestamp) is pinned by REPO-008.
+- `FeedRepositoryImpl._rowToDto` bad-row degradation verified by injecting a row with a wrong-type `id` field, which throws in the cast and returns `null`, filtered by `whereType<FeedEntryDto>()`.
+- `AuthFailureException` is defined in the datasource file and imported accordingly — the sync `currentUserId` getter throw is correctly caught by `on AuthFailureException` in the repo before any async `await`.
+- `ProgressComparisonRepositoryImpl._safeFromJson` degradation tested via a row with wrong-type fields that force `FriendProgressDto.fromJson` to throw.
+- `VisibilityCubit` is trivial but was the only untested public cubit in the social feature.
+
+### Recommended Next Workflow
+
+- `bmad-testarch-trace` per Epic 18 per collegare i nuovi test ID alla traceability matrix.
 
 ---
 

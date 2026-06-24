@@ -1,23 +1,42 @@
 {
   "schema_version": "0.1.0",
-  "evaluated_at": "2026-06-22T00:00:00.000Z",
+  "evaluated_at": "2026-06-24T00:00:00.000Z",
   "repo": "Flutter_PulseCoach",
   "target": {
     "type": "epic",
-    "id": "17",
-    "label": "Epic 17 — Pro Subscription & Feature Gating (v2.2)",
-    "stories": ["17.1", "17.2", "17.3", "17.4"]
+    "id": "18",
+    "label": "Epic 18 — Social Graph & Friends (Stories 18.0–18.4)",
+    "stories": ["18.0", "18.1", "18.2", "18.3", "18.4"]
   },
   "collection_status": "COLLECTED",
   "gate_basis": "priority_thresholds",
   "gate_status": "PASS",
-  "rationale": "P0 coverage is 100%, P1 coverage is 91.7% (target: 90%), and overall coverage is 80% (minimum: 80%). All three gate thresholds are met. No P0 or P1 NONE gaps identified. Single P1 PARTIAL item (17.4-AC4: launchUrl invocation untested) is the highest-priority recommendation for follow-up.",
+  "rationale": "P0 coverage 100% (4/4). P1 coverage 100% (24/24) — all 3 previously PARTIAL P1 ACs now have widget tests: HandleSetupSection (18.1-AC1), SocialPage Pro gate (18.2-AC1), MiniSummary share toggle (18.3-AC1). QrCodeScreen (18.2-AC7, P2) also fully covered. Overall coverage 91% (32/35). Remaining gaps: 3 P2 PARTIAL (tab structures, advisory, LOW risk). 11 test files staged (git add) — commit required before merge. Suite total 1089 / 1089 passing.",
   "p0_status": "MET",
   "p1_status": "MET",
   "overall_status": "MET",
   "critical_open": 0,
+  "risk_summary": {
+    "critical_open": 0,
+    "high_open": 0,
+    "medium_open": 0,
+    "low_open": 3
+  },
+  "gate_criteria": {
+    "p0_coverage_required": "100%",
+    "p0_coverage_actual": "100%",
+    "p0_status": "MET",
+    "p1_coverage_target": "90%",
+    "p1_coverage_minimum": "80%",
+    "p1_coverage_actual": "100%",
+    "p1_status": "MET",
+    "overall_coverage_minimum": "80%",
+    "overall_coverage_actual": "91%",
+    "overall_status": "MET"
+  },
   "links": {
-    "trace_report_path": "_bmad-output/test-artifacts/traceability/traceability-matrix.md",
-    "archive_path": "_bmad-output/test-artifacts/traceability-report-epic17.md"
+    "trace_report_path": "_bmad-output/test-artifacts/traceability-matrix.md",
+    "archive_path": "_bmad-output/test-artifacts/traceability-report-epic18.md",
+    "e2e_summary": "_bmad-output/test-artifacts/traceability/e2e-trace-summary.json"
   }
 }
