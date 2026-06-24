@@ -493,3 +493,8 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 - Empty/whitespace handle search queries `display_handle == ''` (`lib/features/social/friends/presentation/bloc/friends_bloc.dart:67`) — handle setup enforces non-empty handles.
 - Directional unique constraint allows reciprocal A→B and B→A duplicate friendships (`supabase/migrations/0003_friendships.sql:12`) — acknowledged in Dev Notes ("Unique Constraint Direction").
 - BLoC tests rely on state-equality dedup for not-found control flow (`pulse_coach/test/bloc/friends_bloc_test.dart`) — test-quality smell.
+
+## Deferred from: code review of story-18.4 (2026-06-24)
+
+- `_thisWeekMinutes` relies on byte-identical `DD/MM` label coupling between `GetOwnWeeklySummaryUseCase` (get_own_weekly_summary_use_case.dart:188-200) and `ProgressLocalDataSource`. Happy path verified correct; any future format change (adding year, switching to local time) silently zeroes "own minutes" with no error. Extends existing E10R-2 concern — add a non-UTC regression test in `test/domain/social/get_own_weekly_summary_use_case_test.dart`. Not new Category A debt.
+- Handle-less friend renders as `@<uuid>` in the comparison list (SQL `COALESCE(display_handle, p.id::text)` in 0007_friends_progress_rpc.sql:37, mirrored by friend_progress_dto.dart fallback). Low-probability since handle setup is enforced in Story 18.1; UX-only, not a data leak. Consider a localized "(senza handle)" fallback if it ever surfaces.

@@ -319,5 +319,21 @@
   "feedRevokeDialogConfirm": "Revoca",
   "feedRevokeDialogCancel": "Annulla",
   "miniSummaryShareToggle": "Condividi con gli amici",
-  "feedShareFailedError": "Impossibile condividere. Riprova."
+  "feedShareFailedError": "Impossibile condividere. Riprova.",
+  "comparisonScreenTitle": "Confronto",
+  "comparisonThisWeek": "Questa settimana",
+  "comparisonSessions": "{count}/{target} sessioni",
+  "@comparisonSessions": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "target": {"type": "int"}
+    }
+  },
+  "comparisonMinutes": "{count} min",
+  "@comparisonMinutes": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "comparisonEmptyFriends": "Nessun amico nel confronto."
 }

@@ -174,6 +174,18 @@ import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_
     as _i168;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
+import 'package:pulse_coach/features/social/comparison/data/datasources/progress_comparison_remote_data_source.dart'
+    as _i1003;
+import 'package:pulse_coach/features/social/comparison/data/repositories/progress_comparison_repository_impl.dart'
+    as _i718;
+import 'package:pulse_coach/features/social/comparison/domain/repositories/progress_comparison_repository.dart'
+    as _i180;
+import 'package:pulse_coach/features/social/comparison/domain/usecases/get_friends_comparison_use_case.dart'
+    as _i1033;
+import 'package:pulse_coach/features/social/comparison/domain/usecases/get_own_weekly_summary_use_case.dart'
+    as _i1038;
+import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_bloc.dart'
+    as _i418;
 import 'package:pulse_coach/features/social/feed/data/datasources/feed_remote_data_source.dart'
     as _i539;
 import 'package:pulse_coach/features/social/feed/data/repositories/feed_repository_impl.dart'
@@ -374,6 +386,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i757.BackupRemoteDataSource>(
       () => _i757.BackupRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
     );
+    gh.factory<_i1003.ProgressComparisonRemoteDataSource>(
+      () => _i1003.ProgressComparisonRemoteDataSource(
+        gh<_i42.SupabaseClientProvider>(),
+      ),
+    );
     gh.factory<_i539.FeedRemoteDataSource>(
       () => _i539.FeedRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
     );
@@ -540,6 +557,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i401.FriendsRepository>(
       () => _i500.FriendsRepositoryImpl(gh<_i27.FriendsRemoteDataSource>()),
     );
+    gh.factory<_i180.ProgressComparisonRepository>(
+      () => _i718.ProgressComparisonRepositoryImpl(
+        gh<_i1003.ProgressComparisonRemoteDataSource>(),
+      ),
+    );
     gh.factory<_i811.EntitlementRepository>(
       () => _i705.EntitlementRepositoryImpl(gh<_i499.EntitlementGate>()),
     );
@@ -569,6 +591,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i209.WeatherRemoteDataSource>(),
         gh<_i206.WeatherLocalDataSource>(),
         gh<_i160.LocationService>(),
+      ),
+    );
+    gh.factory<_i1033.GetFriendsComparisonUseCase>(
+      () => _i1033.GetFriendsComparisonUseCase(
+        gh<_i180.ProgressComparisonRepository>(),
       ),
     );
     gh.factory<_i649.PaywallCubit>(
@@ -608,11 +635,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i986.SignUpWithEmailUseCase>(
       () => _i986.SignUpWithEmailUseCase(gh<_i213.AuthRepository>()),
     );
+    gh.factory<_i1038.GetOwnWeeklySummaryUseCase>(
+      () => _i1038.GetOwnWeeklySummaryUseCase(gh<_i73.ProgressRepository>()),
+    );
     gh.lazySingleton<_i303.GetProgressStats>(
       () => _i303.GetProgressStats(gh<_i73.ProgressRepository>()),
     );
     gh.lazySingleton<_i727.GetSessionHistory>(
       () => _i727.GetSessionHistory(gh<_i73.ProgressRepository>()),
+    );
+    gh.factory<_i418.ProgressComparisonBloc>(
+      () => _i418.ProgressComparisonBloc(
+        gh<_i1033.GetFriendsComparisonUseCase>(),
+        gh<_i1038.GetOwnWeeklySummaryUseCase>(),
+      ),
     );
     gh.factory<_i477.SocialProfileBloc>(
       () => _i477.SocialProfileBloc(

@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
+import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_bloc.dart';
+import 'package:pulse_coach/features/social/comparison/presentation/pages/progress_comparison_page.dart';
 import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_bloc.dart';
 import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_event.dart';
 import 'package:pulse_coach/features/social/feed/presentation/pages/feed_page.dart';
@@ -38,6 +40,10 @@ class SocialPage extends StatelessWidget {
         BlocProvider<FeedBloc>(
           create: (_) => getIt<FeedBloc>()..add(const FeedLoaded()),
         ),
+        BlocProvider<ProgressComparisonBloc>(
+          create: (_) => getIt<ProgressComparisonBloc>(),
+          // Event is dispatched from _ComparisonViewState.initState — NOT here
+        ),
       ],
       child: const _SocialView(),
     );
@@ -59,7 +65,7 @@ class _SocialViewState extends State<_SocialView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -95,6 +101,7 @@ class _SocialViewState extends State<_SocialView>
               tabs: [
                 Tab(text: l10n.friendsScreenTitle),
                 Tab(text: l10n.feedScreenTitle),
+                Tab(text: l10n.comparisonScreenTitle),
               ],
             ),
           ),
@@ -103,6 +110,7 @@ class _SocialViewState extends State<_SocialView>
             children: [
               _FriendsTab(searchController: _searchController),
               const FeedPage(),
+              const ProgressComparisonPage(),
             ],
           ),
         );
