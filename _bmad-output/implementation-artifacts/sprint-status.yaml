@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-24 # story 18.4 review complete (done)
+last_updated: 2026-06-24 # epic-18 retrospective complete (done)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -265,7 +265,7 @@ development_status:
   18-2-friend-request-flow: done
   18-3-activity-feed-with-light-reactions: done
   18-4-friends-progress-comparison: done
-  epic-18-retrospective: optional
+  epic-18-retrospective: done
 
   # ─────────────────────────────────────────
   # Epic 19: Real-Time Session Transport (v2.4a)
