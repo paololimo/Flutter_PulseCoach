@@ -303,5 +303,21 @@
   "qrScreenTitle": "Il mio QR",
   "qrScreenNoHandle": "Imposta prima il tuo nome utente.",
   "qrScreenHelper": "Mostra questo codice a un amico per essere trovato per handle.",
-  "qrGoToAccountLink": "Vai alle impostazioni account"
+  "qrGoToAccountLink": "Vai alle impostazioni account",
+  "socialScreenTitle": "Sociale",
+  "feedScreenTitle": "Feed",
+  "feedEmptyState": "Ancora nessuna attività",
+  "feedRelativeMinutes": "{count} min fa",
+  "@feedRelativeMinutes": {"placeholders": {"count": {"type": "int"}}},
+  "feedRelativeHours": "{count} ore fa",
+  "@feedRelativeHours": {"placeholders": {"count": {"type": "int"}}},
+  "feedRelativeDays": "{count} giorni fa",
+  "@feedRelativeDays": {"placeholders": {"count": {"type": "int"}}},
+  "feedReactionButtonLabel": "Invia incoraggiamento",
+  "feedRevokeButtonLabel": "Revoca condivisione",
+  "feedRevokeDialogTitle": "Revocare questa condivisione?",
+  "feedRevokeDialogConfirm": "Revoca",
+  "feedRevokeDialogCancel": "Annulla",
+  "miniSummaryShareToggle": "Condividi con gli amici",
+  "feedShareFailedError": "Impossibile condividere. Riprova."
 }

@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of story-18.3 (2026-06-24)
+
+- `getFeed` `.limit(50)` has no pagination — beyond the 50 newest entries, a user's own older shared entries become invisible and un-revokable through the feed UI [pulse_coach/lib/features/social/feed/data/datasources/feed_remote_data_source.dart]. **[Product call — MVP/exam scope acceptable; revisit if feed volume grows.]**
+- Inconsistent row-degradation: a malformed `completed_at`/`created_at` errors the whole feed rather than dropping one row — `DateTime.parse` runs in `FeedEntryDtoMapper.toDomain()`, outside the `_rowToDto` try/catch, so a bad timestamp throws past the per-row guard and is caught only by the outer `getFeed` catch [pulse_coach/lib/features/social/feed/data/models/feed_entry_dto.dart; feed_repository_impl.dart `_rowToDto`]. **[Low — server always emits valid ISO timestamps; harden the per-row guard if a serialization drift ever appears.]**
+- `_shareEnabled` not re-checked against Pro status at share time — if the subscription lapses between toggling the share on and the `MiniSummaryFading` event, the share still fires for a now-non-Pro user [pulse_coach/lib/features/session/presentation/pages/session_summary_page.dart]. **[Low — negligible real-world timing window.]**
+
 ## Deferred from: code review of story-18.0 (2026-06-23)
 
 - Backup restore lacks a format-version guard and defensive parsing of legacy/malformed blobs — non-nullable casts (`as bool`/`as int`), `DateTime.parse`, and `snapshot[key] as List` throw on an absent/null key; deletes run before inserts in the restore transaction, so a malformed or pre-schema backup can wipe the DB then abort mid-restore [pulse_coach/lib/features/auth/data/datasources/backup_local_data_source.dart:restoreDriftSnapshot]. **[KEEP — pre-existing; this story only added the nullable `installCohort` field (backward-compat confirmed by 16.3-DS-005b). A defensive-parse + version-field hardening pass is a separate, broader change.]**

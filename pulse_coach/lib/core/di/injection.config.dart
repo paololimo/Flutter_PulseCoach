@@ -174,6 +174,22 @@ import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_
     as _i168;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
+import 'package:pulse_coach/features/social/feed/data/datasources/feed_remote_data_source.dart'
+    as _i539;
+import 'package:pulse_coach/features/social/feed/data/repositories/feed_repository_impl.dart'
+    as _i213;
+import 'package:pulse_coach/features/social/feed/domain/repositories/feed_repository.dart'
+    as _i351;
+import 'package:pulse_coach/features/social/feed/domain/usecases/get_feed_use_case.dart'
+    as _i618;
+import 'package:pulse_coach/features/social/feed/domain/usecases/react_to_entry_use_case.dart'
+    as _i332;
+import 'package:pulse_coach/features/social/feed/domain/usecases/revoke_feed_entry_use_case.dart'
+    as _i731;
+import 'package:pulse_coach/features/social/feed/domain/usecases/share_feed_entry_use_case.dart'
+    as _i615;
+import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_bloc.dart'
+    as _i111;
 import 'package:pulse_coach/features/social/friends/data/datasources/friends_remote_data_source.dart'
     as _i27;
 import 'package:pulse_coach/features/social/friends/data/datasources/social_profile_remote_data_source.dart'
@@ -358,6 +374,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i757.BackupRemoteDataSource>(
       () => _i757.BackupRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
     );
+    gh.factory<_i539.FeedRemoteDataSource>(
+      () => _i539.FeedRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
+    );
     gh.factory<_i27.FriendsRemoteDataSource>(
       () => _i27.FriendsRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
     );
@@ -401,6 +420,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i91.ExerciseLocalDataSource>(
       () => _i91.ExerciseLocalDataSource(gh<_i224.ExerciseCacheDao>()),
+    );
+    gh.factory<_i351.FeedRepository>(
+      () => _i213.FeedRepositoryImpl(gh<_i539.FeedRemoteDataSource>()),
     );
     gh.factory<_i502.SocialProfileRepository>(
       () => _i810.SocialProfileRepositoryImpl(
@@ -469,6 +491,18 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i122.RestoreBackupUseCase>(
       () => _i122.RestoreBackupUseCase(gh<_i271.BackupRepository>()),
+    );
+    gh.factory<_i618.GetFeedUseCase>(
+      () => _i618.GetFeedUseCase(gh<_i351.FeedRepository>()),
+    );
+    gh.factory<_i332.ReactToEntryUseCase>(
+      () => _i332.ReactToEntryUseCase(gh<_i351.FeedRepository>()),
+    );
+    gh.factory<_i731.RevokeFeedEntryUseCase>(
+      () => _i731.RevokeFeedEntryUseCase(gh<_i351.FeedRepository>()),
+    );
+    gh.factory<_i615.ShareFeedEntryUseCase>(
+      () => _i615.ShareFeedEntryUseCase(gh<_i351.FeedRepository>()),
     );
     gh.factory<_i206.WeatherLocalDataSource>(
       () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
@@ -539,6 +573,13 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i649.PaywallCubit>(
       () => _i649.PaywallCubit(gh<_i326.GetOfferingsUseCase>()),
+    );
+    gh.factory<_i111.FeedBloc>(
+      () => _i111.FeedBloc(
+        gh<_i618.GetFeedUseCase>(),
+        gh<_i332.ReactToEntryUseCase>(),
+        gh<_i731.RevokeFeedEntryUseCase>(),
+      ),
     );
     gh.lazySingleton<_i73.ProgressRepository>(
       () => _i1027.ProgressRepositoryImpl(gh<_i272.ProgressLocalDataSource>()),

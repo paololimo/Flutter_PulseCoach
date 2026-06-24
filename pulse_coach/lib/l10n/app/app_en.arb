@@ -303,5 +303,21 @@
   "qrScreenTitle": "My QR",
   "qrScreenNoHandle": "Set your username first.",
   "qrScreenHelper": "Show this code to a friend to be found by handle.",
-  "qrGoToAccountLink": "Go to account settings"
+  "qrGoToAccountLink": "Go to account settings",
+  "socialScreenTitle": "Social",
+  "feedScreenTitle": "Feed",
+  "feedEmptyState": "No activity yet",
+  "feedRelativeMinutes": "{count} min ago",
+  "@feedRelativeMinutes": {"placeholders": {"count": {"type": "int"}}},
+  "feedRelativeHours": "{count}h ago",
+  "@feedRelativeHours": {"placeholders": {"count": {"type": "int"}}},
+  "feedRelativeDays": "{count}d ago",
+  "@feedRelativeDays": {"placeholders": {"count": {"type": "int"}}},
+  "feedReactionButtonLabel": "Send encouragement",
+  "feedRevokeButtonLabel": "Revoke share",
+  "feedRevokeDialogTitle": "Revoke this share?",
+  "feedRevokeDialogConfirm": "Revoke",
+  "feedRevokeDialogCancel": "Cancel",
+  "miniSummaryShareToggle": "Share with friends",
+  "feedShareFailedError": "Could not share. Try again."
 }

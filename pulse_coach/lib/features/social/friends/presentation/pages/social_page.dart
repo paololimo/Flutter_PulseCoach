@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
+import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_bloc.dart';
+import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_event.dart';
+import 'package:pulse_coach/features/social/feed/presentation/pages/feed_page.dart';
 import 'package:pulse_coach/features/social/friends/domain/entities/friend_item.dart';
 import 'package:pulse_coach/features/social/friends/domain/entities/pending_requests.dart';
 import 'package:pulse_coach/features/social/friends/domain/entities/social_profile.dart';
@@ -32,24 +35,36 @@ class SocialPage extends StatelessWidget {
           create: (_) =>
               getIt<SocialProfileBloc>()..add(const SocialProfileLoaded()),
         ),
+        BlocProvider<FeedBloc>(
+          create: (_) => getIt<FeedBloc>()..add(const FeedLoaded()),
+        ),
       ],
-      child: const _FriendsView(),
+      child: const _SocialView(),
     );
   }
 }
 
-class _FriendsView extends StatefulWidget {
-  const _FriendsView();
+class _SocialView extends StatefulWidget {
+  const _SocialView();
 
   @override
-  State<_FriendsView> createState() => _FriendsViewState();
+  State<_SocialView> createState() => _SocialViewState();
 }
 
-class _FriendsViewState extends State<_FriendsView> {
+class _SocialViewState extends State<_SocialView>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   final _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
   void dispose() {
+    _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -70,38 +85,69 @@ class _FriendsViewState extends State<_FriendsView> {
           );
         }
 
-        return BlocConsumer<FriendsBloc, FriendsState>(
-          listener: (context, state) {
-            state.whenOrNull(
-              error: (failure) {
-                final l10n = AppLocalizations.of(context)!;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      failure.message.isNotEmpty
-                          ? failure.message
-                          : l10n.socialGenericError,
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-          builder: (context, state) {
-            return state.when(
-              initial: () => const _FriendsShimmer(),
-              loading: () => const _FriendsShimmer(),
-              loaded: (friends, pendingRequests, searchResult, requestSent) =>
-                  _FriendsList(
-                searchController: _searchController,
-                friends: friends,
-                pendingRequests: pendingRequests,
-                searchResult: searchResult,
-                requestSent: requestSent,
+        final l10n = AppLocalizations.of(context)!;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.socialScreenTitle),
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: [
+                Tab(text: l10n.friendsScreenTitle),
+                Tab(text: l10n.feedScreenTitle),
+              ],
+            ),
+          ),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _FriendsTab(searchController: _searchController),
+              const FeedPage(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _FriendsTab extends StatelessWidget {
+  final TextEditingController searchController;
+
+  const _FriendsTab({required this.searchController});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<FriendsBloc, FriendsState>(
+      listener: (context, state) {
+        state.whenOrNull(
+          error: (failure) {
+            final l10n = AppLocalizations.of(context)!;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  failure.message.isNotEmpty
+                      ? failure.message
+                      : l10n.socialGenericError,
+                ),
               ),
-              error: (_) => const _FriendsShimmer(),
             );
           },
+        );
+      },
+      builder: (context, state) {
+        return state.when(
+          initial: () => const _FriendsShimmer(),
+          loading: () => const _FriendsShimmer(),
+          loaded: (friends, pendingRequests, searchResult, requestSent) =>
+              _FriendsList(
+            searchController: searchController,
+            friends: friends,
+            pendingRequests: pendingRequests,
+            searchResult: searchResult,
+            requestSent: requestSent,
+          ),
+          error: (_) => const _FriendsShimmer(),
         );
       },
     );
@@ -138,114 +184,112 @@ class _FriendsList extends StatelessWidget {
         !alreadySent &&
         !alreadyReceived;
 
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      hintText: l10n.friendsSearchHint,
-                      prefixIcon: const Icon(Icons.search),
-                    ),
-                    onSubmitted: (value) {
-                      if (value.trim().isNotEmpty) {
-                        context.read<FriendsBloc>().add(
-                              FriendSearchRequested(value.trim()),
-                            );
-                      }
-                    },
-                    textInputAction: TextInputAction.search,
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: l10n.friendsSearchHint,
+                    prefixIcon: const Icon(Icons.search),
                   ),
+                  onSubmitted: (value) {
+                    if (value.trim().isNotEmpty) {
+                      context.read<FriendsBloc>().add(
+                            FriendSearchRequested(value.trim()),
+                          );
+                    }
+                  },
+                  textInputAction: TextInputAction.search,
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.qr_code),
+            label: Text(l10n.friendsShowQrButton),
+            onPressed: () => context.push(AppRouter.socialQr),
+          ),
+          if (searchResult != null) ...[
+            const Divider(height: 24),
+            Text(
+              l10n.friendsSearchResultLabel,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
+            if (alreadyFriend)
+              ListTile(title: Text(l10n.friendsAlreadyFriend))
+            else if (alreadySent)
+              FriendRow(
+                displayHandle: searchResult!.displayHandle ?? '',
+                variant: FriendRowVariant.searchResult,
+                requestSent: true,
+              )
+            else if (alreadyReceived)
+              ListTile(title: Text(l10n.friendsAlreadyReceivedRequest))
+            else
+              FriendRow(
+                displayHandle: searchResult!.displayHandle ?? '',
+                variant: FriendRowVariant.searchResult,
+                requestSent: requestSent || !canAdd,
+                onPrimaryAction: canAdd && !requestSent
+                    ? () => context.read<FriendsBloc>().add(
+                          FriendRequestSent(searchResult!.userId),
+                        )
+                    : null,
+              ),
+          ] else if (searchController.text.isNotEmpty) ...[
             const SizedBox(height: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.qr_code),
-              label: Text(l10n.friendsShowQrButton),
-              onPressed: () => context.push(AppRouter.socialQr),
-            ),
-            if (searchResult != null) ...[
-              const Divider(height: 24),
-              Text(
-                l10n.friendsSearchResultLabel,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              if (alreadyFriend)
-                ListTile(title: Text(l10n.friendsAlreadyFriend))
-              else if (alreadySent)
-                FriendRow(
-                  displayHandle: searchResult!.displayHandle ?? '',
-                  variant: FriendRowVariant.searchResult,
-                  requestSent: true,
-                )
-              else if (alreadyReceived)
-                ListTile(title: Text(l10n.friendsAlreadyReceivedRequest))
-              else
-                FriendRow(
-                  displayHandle: searchResult!.displayHandle ?? '',
-                  variant: FriendRowVariant.searchResult,
-                  requestSent: requestSent || !canAdd,
-                  onPrimaryAction: canAdd && !requestSent
-                      ? () => context.read<FriendsBloc>().add(
-                            FriendRequestSent(searchResult!.userId),
-                          )
-                      : null,
-                ),
-            ] else if (searchController.text.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Center(child: Text(l10n.friendsNoUserFound)),
-            ],
-            if (pendingRequests.received.isNotEmpty) ...[
-              const Divider(height: 24),
-              Text(
-                l10n.friendsIncomingSection,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              for (final req in pendingRequests.received)
-                FriendRow(
-                  displayHandle: req.displayHandle,
-                  variant: FriendRowVariant.receivedRequest,
-                  onPrimaryAction: () => context.read<FriendsBloc>().add(
-                        FriendRequestAccepted(req.friendshipId),
-                      ),
-                  onSecondaryAction: () => context.read<FriendsBloc>().add(
-                        FriendRequestDeclined(req.friendshipId),
-                      ),
-                ),
-            ],
-            if (pendingRequests.sent.isNotEmpty) ...[
-              const Divider(height: 24),
-              Text(
-                l10n.friendsOutgoingSection,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              for (final req in pendingRequests.sent)
-                FriendRow(
-                  displayHandle: req.displayHandle,
-                  variant: FriendRowVariant.sentRequest,
-                ),
-            ],
-            if (friends.isNotEmpty) ...[
-              const Divider(height: 24),
-              Text(
-                l10n.friendsListSection,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              for (final friend in friends)
-                FriendRow(
-                  displayHandle: friend.displayHandle,
-                  variant: FriendRowVariant.friend,
-                  onPrimaryAction: () => _confirmRemove(context, friend, l10n),
-                ),
-            ],
+            Center(child: Text(l10n.friendsNoUserFound)),
           ],
-        ),
+          if (pendingRequests.received.isNotEmpty) ...[
+            const Divider(height: 24),
+            Text(
+              l10n.friendsIncomingSection,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            for (final req in pendingRequests.received)
+              FriendRow(
+                displayHandle: req.displayHandle,
+                variant: FriendRowVariant.receivedRequest,
+                onPrimaryAction: () => context.read<FriendsBloc>().add(
+                      FriendRequestAccepted(req.friendshipId),
+                    ),
+                onSecondaryAction: () => context.read<FriendsBloc>().add(
+                      FriendRequestDeclined(req.friendshipId),
+                    ),
+              ),
+          ],
+          if (pendingRequests.sent.isNotEmpty) ...[
+            const Divider(height: 24),
+            Text(
+              l10n.friendsOutgoingSection,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            for (final req in pendingRequests.sent)
+              FriendRow(
+                displayHandle: req.displayHandle,
+                variant: FriendRowVariant.sentRequest,
+              ),
+          ],
+          if (friends.isNotEmpty) ...[
+            const Divider(height: 24),
+            Text(
+              l10n.friendsListSection,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            for (final friend in friends)
+              FriendRow(
+                displayHandle: friend.displayHandle,
+                variant: FriendRowVariant.friend,
+                onPrimaryAction: () => _confirmRemove(context, friend, l10n),
+              ),
+          ],
+        ],
       ),
     );
   }
@@ -270,9 +314,7 @@ class _FriendsList extends StatelessWidget {
       ),
     ).then((confirmed) {
       if (confirmed == true && context.mounted) {
-        context
-            .read<FriendsBloc>()
-            .add(FriendRemoved(friend.friendshipId));
+        context.read<FriendsBloc>().add(FriendRemoved(friend.friendshipId));
       }
     });
   }

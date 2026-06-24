@@ -13,6 +13,9 @@ import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/session/domain/entities/mini_summary_args.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/mini_summary_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/mini_summary_state.dart';
+import 'package:pulse_coach/features/social/feed/domain/usecases/share_feed_entry_use_case.dart';
+import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
+import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/completion_ring.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
@@ -34,6 +37,7 @@ class _MiniSummaryPageState extends State<MiniSummaryPage>
   // newCompletedCount/totalSessions during Fading/Done/Error rather than
   // snapping back to 0/0 via the BlocBuilder default arm.
   MiniSummaryLoaded? _lastLoaded;
+  bool _shareEnabled = false;
 
   @override
   void initState() {
@@ -99,6 +103,30 @@ class _MiniSummaryPageState extends State<MiniSummaryPage>
               return;
             }
             if (state is MiniSummaryFading) {
+              final args = widget.args;
+              if (_shareEnabled && args != null && !args.abandoned) {
+                final useCase = getIt<ShareFeedEntryUseCase>();
+                // Capture the messenger + localized text synchronously: the
+                // summary route is torn down by the navigation below, so looking
+                // them up off `context` after the async gap would target a
+                // deactivated widget. The app-level ScaffoldMessenger survives
+                // the route change, so the SnackBar still lands on Today.
+                final messenger = ScaffoldMessenger.of(context);
+                final failedMessage =
+                    AppLocalizations.of(context)!.feedShareFailedError;
+                unawaited(useCase(
+                  sessionType: args.sessionType,
+                  durationMinutes: args.durationMinutes,
+                  completedAt: DateTime.now().toUtc(),
+                ).then((result) {
+                  result.fold(
+                    (f) => messenger.showSnackBar(
+                      SnackBar(content: Text(failedMessage)),
+                    ),
+                    (_) {},
+                  );
+                }));
+              }
               final disableAnimations = MediaQuery.disableAnimationsOf(context);
               if (disableAnimations) {
                 // Review patch #12: skip the 300ms invisible-page gap on
@@ -177,6 +205,27 @@ class _MiniSummaryPageState extends State<MiniSummaryPage>
                 _StatRow(
                   label: l10n.miniSummaryRpeLabel,
                   value: '${args.rpeValue}/10',
+                ),
+                const SizedBox(height: 16),
+                Builder(
+                  builder: (context) {
+                    if (args.abandoned) return const SizedBox.shrink();
+                    SubscriptionState? subState;
+                    try {
+                      subState = context.read<SubscriptionBloc>().state;
+                    } catch (_) {
+                      subState = null;
+                    }
+                    final isPro =
+                        subState?.whenOrNull(loaded: (t) => t) ==
+                            SubscriptionTier.pro;
+                    if (!isPro) return const SizedBox.shrink();
+                    return SwitchListTile(
+                      title: Text(l10n.miniSummaryShareToggle),
+                      value: _shareEnabled,
+                      onChanged: (val) => setState(() => _shareEnabled = val),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
                 Text(
