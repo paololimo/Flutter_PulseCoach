@@ -272,5 +272,36 @@
   "handleUpdateSuccess": "Nome utente salvato.",
   "handleInvalidError": "Usa 3–20 lettere minuscole, numeri o underscore.",
   "socialGenericError": "Qualcosa è andato storto. Riprova.",
-  "profileVisibilityLabel": "Visibilità profilo"
+  "profileVisibilityLabel": "Visibilità profilo",
+  "friendsScreenTitle": "Amici",
+  "friendsSearchHint": "Cerca per @handle",
+  "friendsShowQrButton": "Mostra il mio QR",
+  "friendsNoUserFound": "Nessun utente trovato",
+  "friendsAddButton": "Aggiungi amico",
+  "friendsRequestSent": "Richiesta inviata",
+  "friendsAcceptButton": "Accetta",
+  "friendsDeclineButton": "Rifiuta",
+  "friendsRemoveButton": "Rimuovi",
+  "friendsPendingWaiting": "In attesa",
+  "friendsIncomingSection": "Richieste in arrivo",
+  "friendsOutgoingSection": "Richieste inviate",
+  "friendsListSection": "Amici",
+  "friendsRemoveDialogTitle": "Rimuovere amico?",
+  "friendsRemoveDialogConfirm": "Rimuovi",
+  "friendsRemoveDialogCancel": "Annulla",
+  "friendsLockedBannerBody": "Amici e social sono funzionalità Pro.",
+  "friendsDiscoverProButton": "Scopri Pro",
+  "friendsSearchResultLabel": "Risultato ricerca",
+  "friendsAlreadyFriend": "Già amici",
+  "friendsAlreadyReceivedRequest": "Ha già inviato una richiesta",
+  "friendsRemoveDialogBody": "@{handle} non sarà più nel tuo elenco amici.",
+  "@friendsRemoveDialogBody": {
+    "placeholders": {
+      "handle": { "type": "String" }
+    }
+  },
+  "qrScreenTitle": "Il mio QR",
+  "qrScreenNoHandle": "Imposta prima il tuo nome utente.",
+  "qrScreenHelper": "Mostra questo codice a un amico per essere trovato per handle.",
+  "qrGoToAccountLink": "Vai alle impostazioni account"
 }

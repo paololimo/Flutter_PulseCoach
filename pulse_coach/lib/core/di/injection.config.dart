@@ -174,18 +174,40 @@ import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_
     as _i168;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
+import 'package:pulse_coach/features/social/friends/data/datasources/friends_remote_data_source.dart'
+    as _i27;
 import 'package:pulse_coach/features/social/friends/data/datasources/social_profile_remote_data_source.dart'
     as _i165;
+import 'package:pulse_coach/features/social/friends/data/repositories/friends_repository_impl.dart'
+    as _i500;
 import 'package:pulse_coach/features/social/friends/data/repositories/social_profile_repository_impl.dart'
     as _i810;
+import 'package:pulse_coach/features/social/friends/domain/repositories/friends_repository.dart'
+    as _i401;
 import 'package:pulse_coach/features/social/friends/domain/repositories/social_profile_repository.dart'
     as _i502;
+import 'package:pulse_coach/features/social/friends/domain/usecases/accept_request_use_case.dart'
+    as _i563;
+import 'package:pulse_coach/features/social/friends/domain/usecases/decline_request_use_case.dart'
+    as _i662;
+import 'package:pulse_coach/features/social/friends/domain/usecases/get_friends_use_case.dart'
+    as _i879;
+import 'package:pulse_coach/features/social/friends/domain/usecases/get_pending_requests_use_case.dart'
+    as _i282;
 import 'package:pulse_coach/features/social/friends/domain/usecases/get_social_profile_use_case.dart'
     as _i1023;
+import 'package:pulse_coach/features/social/friends/domain/usecases/remove_friend_use_case.dart'
+    as _i816;
+import 'package:pulse_coach/features/social/friends/domain/usecases/search_by_handle_use_case.dart'
+    as _i482;
+import 'package:pulse_coach/features/social/friends/domain/usecases/send_friend_request_use_case.dart'
+    as _i623;
 import 'package:pulse_coach/features/social/friends/domain/usecases/update_handle_use_case.dart'
     as _i846;
 import 'package:pulse_coach/features/social/friends/domain/usecases/update_visibility_tier_use_case.dart'
     as _i586;
+import 'package:pulse_coach/features/social/friends/presentation/bloc/friends_bloc.dart'
+    as _i829;
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_bloc.dart'
     as _i477;
 import 'package:pulse_coach/features/social/friends/presentation/bloc/visibility_cubit.dart'
@@ -336,6 +358,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i757.BackupRemoteDataSource>(
       () => _i757.BackupRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
     );
+    gh.factory<_i27.FriendsRemoteDataSource>(
+      () => _i27.FriendsRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
+    );
     gh.factory<_i165.SocialProfileRemoteDataSource>(
       () => _i165.SocialProfileRemoteDataSource(
         gh<_i42.SupabaseClientProvider>(),
@@ -478,6 +503,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i439.ProgressGatingCubit>(
       () => _i439.ProgressGatingCubit(gh<_i589.GetInstallCohortUseCase>()),
     );
+    gh.factory<_i401.FriendsRepository>(
+      () => _i500.FriendsRepositoryImpl(gh<_i27.FriendsRemoteDataSource>()),
+    );
     gh.factory<_i811.EntitlementRepository>(
       () => _i705.EntitlementRepositoryImpl(gh<_i499.EntitlementGate>()),
     );
@@ -555,6 +583,27 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i916.SessionsCatalogCubit>(
       () => _i916.SessionsCatalogCubit(gh<_i342.GetExercisesByType>()),
     );
+    gh.factory<_i563.AcceptRequestUseCase>(
+      () => _i563.AcceptRequestUseCase(gh<_i401.FriendsRepository>()),
+    );
+    gh.factory<_i662.DeclineRequestUseCase>(
+      () => _i662.DeclineRequestUseCase(gh<_i401.FriendsRepository>()),
+    );
+    gh.factory<_i879.GetFriendsUseCase>(
+      () => _i879.GetFriendsUseCase(gh<_i401.FriendsRepository>()),
+    );
+    gh.factory<_i282.GetPendingRequestsUseCase>(
+      () => _i282.GetPendingRequestsUseCase(gh<_i401.FriendsRepository>()),
+    );
+    gh.factory<_i816.RemoveFriendUseCase>(
+      () => _i816.RemoveFriendUseCase(gh<_i401.FriendsRepository>()),
+    );
+    gh.factory<_i482.SearchByHandleUseCase>(
+      () => _i482.SearchByHandleUseCase(gh<_i401.FriendsRepository>()),
+    );
+    gh.factory<_i623.SendFriendRequestUseCase>(
+      () => _i623.SendFriendRequestUseCase(gh<_i401.FriendsRepository>()),
+    );
     gh.factory<_i992.GenerateDailyPlan>(
       () => _i992.GenerateDailyPlan(
         gh<_i78.DailyPlanRepository>(),
@@ -593,6 +642,17 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i627.ExportDataCubit>(
       () => _i627.ExportDataCubit(gh<_i1032.ExportDataUseCase>()),
+    );
+    gh.factory<_i829.FriendsBloc>(
+      () => _i829.FriendsBloc(
+        gh<_i879.GetFriendsUseCase>(),
+        gh<_i282.GetPendingRequestsUseCase>(),
+        gh<_i482.SearchByHandleUseCase>(),
+        gh<_i623.SendFriendRequestUseCase>(),
+        gh<_i563.AcceptRequestUseCase>(),
+        gh<_i662.DeclineRequestUseCase>(),
+        gh<_i816.RemoveFriendUseCase>(),
+      ),
     );
     gh.factory<_i183.RegenerateDailyPlan>(
       () => _i183.RegenerateDailyPlan(

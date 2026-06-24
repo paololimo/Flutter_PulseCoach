@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-24 # story 18.1 done (code review)
+last_updated: 2026-06-24 # story 18.2 done (code review passed)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -262,7 +262,7 @@ development_status:
   epic-18: in-progress
   18-0-auth-backup-datasource-test-hardening: done
   18-1-username-handle-setup-and-visibility-tier-selector: done
-  18-2-friend-request-flow: backlog
+  18-2-friend-request-flow: done
   18-3-activity-feed-with-light-reactions: backlog
   18-4-friends-progress-comparison: backlog
   epic-18-retrospective: optional

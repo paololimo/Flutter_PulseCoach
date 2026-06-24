@@ -272,5 +272,36 @@
   "handleUpdateSuccess": "Username saved.",
   "handleInvalidError": "Use 3–20 lowercase letters, numbers, or underscores.",
   "socialGenericError": "Something went wrong. Please try again.",
-  "profileVisibilityLabel": "Profile visibility"
+  "profileVisibilityLabel": "Profile visibility",
+  "friendsScreenTitle": "Friends",
+  "friendsSearchHint": "Search by @handle",
+  "friendsShowQrButton": "Show my QR",
+  "friendsNoUserFound": "No user found",
+  "friendsAddButton": "Add friend",
+  "friendsRequestSent": "Request sent",
+  "friendsAcceptButton": "Accept",
+  "friendsDeclineButton": "Decline",
+  "friendsRemoveButton": "Remove",
+  "friendsPendingWaiting": "Pending",
+  "friendsIncomingSection": "Incoming requests",
+  "friendsOutgoingSection": "Sent requests",
+  "friendsListSection": "Friends",
+  "friendsRemoveDialogTitle": "Remove friend?",
+  "friendsRemoveDialogConfirm": "Remove",
+  "friendsRemoveDialogCancel": "Cancel",
+  "friendsLockedBannerBody": "Friends and social features are Pro.",
+  "friendsDiscoverProButton": "Discover Pro",
+  "friendsSearchResultLabel": "Search result",
+  "friendsAlreadyFriend": "Already friends",
+  "friendsAlreadyReceivedRequest": "They already sent you a request",
+  "friendsRemoveDialogBody": "@{handle} will no longer be in your friends list.",
+  "@friendsRemoveDialogBody": {
+    "placeholders": {
+      "handle": { "type": "String" }
+    }
+  },
+  "qrScreenTitle": "My QR",
+  "qrScreenNoHandle": "Set your username first.",
+  "qrScreenHelper": "Show this code to a friend to be found by handle.",
+  "qrGoToAccountLink": "Go to account settings"
 }

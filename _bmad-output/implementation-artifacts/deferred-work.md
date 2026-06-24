@@ -477,3 +477,13 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 - **purchasePro re-fetches offerings** [`entitlement_repository_impl.dart:55-65`] — on purchase the repo calls `Purchases.getOfferings()` a second time to resolve `packageId → Package`, adding latency and a non-deterministic failure path ("Pacchetto non trovato") if the network blips or offerings rotate between page load and tap. Fix properly by threading the already-loaded `Package` from `PaywallCubit` through to `purchasePro`. Deferred: cross-layer refactor, not surgical; happy path is correct.
 - **Hardcoded Italian UI strings bypass gen_l10n/ARB** [`settings_page.dart`, `paywall_page.dart`] — "Abbonamento", "Gestisci abbonamento", "Scopri Pro", "PulseCoach Pro", "Sblocca l'esperienza completa", "Acquista", "Ripristina acquisti" are inline literals while the rest of the app routes copy through `app_it.arb`. Deferred: the spec prescribes these literals and the app is locale-locked to `it`; address in an epic-wide i18n pass.
 - **No automated test for AC4 (launchUrl / platform URLs)** [`settings_page_test.dart`] — the Pro-only "Gestisci abbonamento" tile that calls `launchUrl(..., LaunchMode.externalApplication)` is never rendered in tests (stub repo returns free tier), so platform-URL branching is unverified. Pairs with the launchUrl error-handling patch.
+
+## Deferred from: code review of story-18.2-friend-request-flow (2026-06-24)
+
+- `_onSearch` discards the fetched profile and triggers a full reload when state is not `loaded` (`lib/features/social/friends/presentation/bloc/friends_bloc.dart:71-77`) — low real-world impact, page loads before search is possible.
+- Sent request only flips a global `requestSent` flag (no reload / no `pendingRequests.sent` update; flag is not per-target) (`lib/features/social/friends/presentation/bloc/friends_bloc.dart:82-91`) — AC3 still satisfied.
+- No empty-state when a Pro user has zero friends and zero requests (`lib/features/social/friends/presentation/pages/social_page.dart`) — UX enhancement.
+- Rapid accept/decline/remove enqueue multiple `FriendsLoaded`, causing shimmer re-entrancy/flicker with no in-flight guard (`lib/features/social/friends/presentation/bloc/friends_bloc.dart`) — low impact.
+- Empty/whitespace handle search queries `display_handle == ''` (`lib/features/social/friends/presentation/bloc/friends_bloc.dart:67`) — handle setup enforces non-empty handles.
+- Directional unique constraint allows reciprocal A→B and B→A duplicate friendships (`supabase/migrations/0003_friendships.sql:12`) — acknowledged in Dev Notes ("Unique Constraint Direction").
+- BLoC tests rely on state-equality dedup for not-found control flow (`pulse_coach/test/bloc/friends_bloc_test.dart`) — test-quality smell.
