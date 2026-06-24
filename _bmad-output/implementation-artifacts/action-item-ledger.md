@@ -313,3 +313,76 @@ Retrospective for **Epic 17: Pro Subscription & Feature Gating (v2.2)** (4/4 sto
 **Category A snapshot (post Story 18.0, 2026-06-23): 1 / 5.** `E16R-1` → done (Story 18.0). `E17R-2` → done (Story 18.0). Active: `E10R-2` (non-UTC week-bucketing test), `E17R-1` (paywall i18n).
 
 **Category B sunset review:** owed at Epic 17 kickoff per the 2-epic cadence (not run during the Epic 17 Category A triage) — **carry to Epic 18 kickoff** and run it there alongside the Epic 18 Category A count.
+
+---
+
+## Epic 18 Retro → Epic 19 Kickoff Triage — 2026-06-24
+
+PM (John) ran the Epic 19 kickoff triage, ratified by Paolo. This entry both **reconciles the Epic 18 retro action items** (`epic-18-retro-2026-06-24.md`, not previously appended here) into the ledger and runs the two items owed at kickoff: (1) the Category A budget triage (Epic 18 retro flagged the soft cap of 5 was breached), and (2) the **overdue Category B sunset review** (owed at Epic 17 kickoff, carried to Epic 18, never run — now executed, covering Epics 16–18).
+
+### Epic 18 closures recorded
+
+- `E16R-1` — auth/backup datasource test hardening → **done (Story 18.0)**. Story 18.0 also caught a real data-loss bug (`UserProfile.installCohort` not serialized in the backup map → grandfathered Pro user silently loses Pro on restore); fixed + regression test before the social layer built on `profiles`.
+- `E17R-2` — promote E16R-1 to a standalone gating story → **done (Story 18.0)**.
+- `E18R-3` — live-backend spike before 19.1 → **done (2026-06-24)**. Full Epic 18 friends/feed/comparison flow verified on SM-A520F against a live Supabase EU project with a real GoTrue session + 4 negative RLS checks. Replaced one open item with two concrete code bugs (E18R-5, E18R-6).
+
+### Category A triage
+
+Open Category A entering triage (6): `E18R-1`, `E18R-2`, `E18R-5`, `E10R-2`, `E18R-4`, `E18R-6` — over the soft cap of 5.
+
+| Item | Disposition | Rationale |
+|---|---|---|
+| `E18R-5` no `profiles` insert-on-signup (genuine new-user blocker) | ✅ **CLOSE from ledger → homed as Story 19.0** | Scheduled as Story 19.0 in `epics.md` (precedent: E17R-2 → Story 18.0). **Satisfies the Epic 18 retro sprint gate** ("no new Epic 19 story enters sprint until E18R-5 is scheduled or closed"). |
+| `E18R-6` GoTrue rejects no-MX email | ✅ **CLOSE standalone → folded into Story 19.0 AC4** | AC4 surfaces a localized error for invalid/no-MX domains; remains standalone only if descoped. |
+| `E18R-1` small-device overflow root cause | 🔵 **KEEP — active (A: small-viewport test infra)** + B review-rule formalized below | `_FriendsShimmer` fix shipped in-session; remaining deliverable is a 360×640 widget/golden test for shimmer/loading states. 4-epic recurring root cause (9 → 16 → 17 → 18); Paolo's directive: close structurally. |
+| `E18R-2` Amici tab raw-English `failure.message` | 🔵 **KEEP — active (Category A debt)** (Paolo, 2026-06-24) | Real user-facing prod bug (Pro-but-not-signed-in sees English on Amici). Fix opportunistically when a social tab is touched in Epic 19; not scheduled as a dedicated story (Epic 19 is realtime co-op — off-theme for a dedicated i18n cleanup). Supersedes/broadens `E17R-1`. |
+| `E10R-2` non-UTC week-bucketing regression test | 🔵 **KEEP — active (carried)** | Extended by Story 18.4 (`GetOwnWeeklySummaryUseCase._thisWeekMinutes` repeats the UTC Monday-label computation). Legitimate correctness-adjacent gap for the actual target timezone (CET/CEST). |
+| `E18R-4` social-specific `ProUpsellSheet` copy | 🔵 **KEEP — minor, low-priority (Category A)** (Paolo, 2026-06-24) | Cosmetic copy inconsistency; no cap pressure (under cap). Not killed — real if tiny UX inconsistency. |
+| `E17R-1` backend-failure → localized IT | ✅ **CLOSE — superseded by `E18R-2`** | E18R-2 broadens it to all backend-failure paths incl. each social tab. |
+
+**Category A outcome: 6 → 4 active (4 / 5, under cap).** Active: `E18R-1`, `E18R-2`, `E10R-2`, `E18R-4`. Closed/homed: `E18R-5` (→ Story 19.0), `E18R-6` (→ Story 19.0 AC4), `E16R-1` + `E17R-2` (Story 18.0), `E18R-3` (live spike), `E17R-1` (superseded).
+
+**Sprint gate:** E18R-5 is scheduled as Story 19.0 → the gate is satisfied. **Story 19.0 is cleared to enter the sprint** (must be `done` before Story 19.1 enters, per its critical-path prerequisite note in `epics.md`).
+
+### Category B sunset review (overdue — covers Epics 16–18)
+
+Last formal sunset ran at Epic 11 (2026-06-02); owed at Epic 13/15/17 kickoffs per the 2-epic cadence and skipped. Run now. Standing set entering review: `E6-P1`, `E7-P2`, `E7.5-P1`, `E9-K1` (consolidated fire-check), `E17R-3` (hard-block), + 2 new review-rules surfaced in the Epic 18 retro.
+
+| Item | Triggered in Epics 16–18? | Verdict | Rationale |
+|---|---|---|---|
+| `E6-P1` patch-validation gate after DI/lifecycle/cross-cutting review patches | Partially — Story 18.2 RLS-broadening + affected-row-verification patches were cross-cutting, but were caught in adversarial review | **Keep dormant** | Clear future trigger, low standing cost. |
+| `E7-P2` architect pre-flight for Cubit/BLoC collection-index state | No (Epic 18 = social graph, no index state) | **RETIRE standalone — lives inside `E9-K1`** | Already consolidated into the E9-K1 fire-check at Epic 11; no standalone value. |
+| `E7.5-P1` Flutter deprecation pre-check for SDK-sensitive specs | No (no l10n/build/plugin/deprecated-API surface) | **Keep dormant** | Standing rule, low cost. |
+| `E9-K1` consolidated create-story fire-check | Yes — annotated E16R-1 across all Epic 17 stories; the hard-block extension (E17R-3) made it stick in Epic 18 (Story 18.0 before 18.1) | **Keep — canonical fire-check; ABSORB `E17R-3` (hard-block clause) + reconfirm absorption of `E7-P2`** | E9-K1 is the single create-story fire-check. Its scope now explicitly includes: (a) cross-cutting review-patch surfacing [E6-P1/E9-K1], (b) Category A deliverable-debt with a firing relative trigger [E9R-4/E10R-3], (c) Cubit/BLoC collection-index pre-flight [E7-P2], and (d) **hard-block** (not merely annotate) any action item carrying a hard deadline / "before story X" target [E17R-3]. |
+| `E17R-3` fire-check must hard-block deadline-bearing items, not annotate | **Validated effective** in Epic 18 (E16R-1/E17R-2 enforced via Story 18.0 before 18.1 entered sprint) | **RETIRE standalone — folded into `E9-K1` as the enforcement clause** | "Annotation ≠ enforcement" is now the enforcement semantics of E9-K1, not a separate rule. |
+| **NEW (E18R-1 B-half)** "every shimmer/loading layout must be scrollable like its loaded state" | Origin: `_FriendsShimmer` non-scrollable `Column` overflow, 4th epic of the small-device-overflow family | **Formalize — active standing review check** | Add to the Edge-Case Hunter / code-review project-specific traps alongside the existing `Hero`-in-`AnimatedSwitcher` trap. |
+| **NEW (E18 retro)** "localized-IT on every backend-failure path (no raw `failure.message` passthrough)" | Origin: recurring E17R-1 → E18R-2 (Amici raw English) | **Formalize — active standing review check** | Review-rule complement to the `E18R-2` deliverable; fires on any new screen surfacing a `Failure`. |
+
+**Category B outcome:** ~7 → **3 active standing rules** (`E6-P1` dormant, `E7.5-P1` dormant, + the 2 new Epic-18 review checks) **+ 1 canonical create-story fire-check** (`E9-K1`, now absorbing `E7-P2` index pre-flight and `E17R-3` hard-block enforcement). **Retired:** `E7-P2` (standalone → in E9-K1), `E17R-3` (standalone → enforcement clause of E9-K1). Next sunset review: **Epic 21 kickoff** (2-epic cadence: Epic 19 + Epic 20).
+
+### New action items (Epic 18 retro, reconciled)
+
+| ID | Source | Description | Owner | Target | Cat. | Status | Notes |
+|---|---|---|---|---|---|---|---|
+| E18R-1 | Epic 18 retro (2026-06-24) | Small-viewport (≈360×640) widget/golden test for shimmer/loading states of new screens | Amelia (Dev) + Murat (TEA) | Next screen-adding story / Progress-touching work | A | pending | `_FriendsShimmer` fix shipped in-session; B-half (scrollable-shimmer review rule) formalized in this triage's Category B section. |
+| E18R-2 | Epic 18 retro (2026-06-24) | Map all backend-failure paths to localized IT; eliminate raw-`failure.message` passthrough on Amici | Amelia (Dev) | Opportunistic — next Epic 19 story touching a social tab | A | pending | Supersedes `E17R-1`. Real prod bug for Pro-but-not-signed-in. Kept as debt (Paolo, 2026-06-24); not a dedicated story. |
+| E18R-4 | Epic 18 retro (2026-06-24) | Social-specific `ProUpsellSheet` copy when entered from the Social locked banner | Sally (UX) + Dev | When `ProUpsellSheet` is next touched | A | pending (minor) | Cosmetic; kept low-priority (Paolo, 2026-06-24). |
+| E18R-5 | Epic 18 retro / E18R-3 live spike (2026-06-24) | Profile-row creation on signup (`handle_new_user` trigger on `auth.users` or app-side upsert) | Amelia (Dev) | **Story 19.0** (critical-path prerequisite; `done` before 19.1 enters sprint) | A | **closed from ledger → homed as Story 19.0** | Genuine new-user blocker found by the live spike. Run `create-story` for 19.0. |
+| E18R-6 | Epic 18 retro / E18R-3 live spike (2026-06-24) | Localized error for no-MX / invalid email signup (GoTrue `400 email_address_invalid`) | Amelia (Dev) + Sally | **Story 19.0 AC4** | A | **closed standalone → folded into Story 19.0 AC4** | Reopens as standalone only if descoped from 19.0. |
+| E18R-CB1 | Epic 19 kickoff triage (2026-06-24) | Review check: every shimmer/loading layout must be scrollable like its loaded state (add to Edge-Case Hunter project-specific traps) | Amelia (Dev) — code-review skill maintenance | Ongoing process | B | pending | Closes the 4-epic small-device-overflow family at the review layer. |
+| E18R-CB2 | Epic 19 kickoff triage (2026-06-24) | Review check: localized-IT on every backend-failure path; no raw `failure.message` passthrough | Amelia (Dev) — code-review skill maintenance | Ongoing process | B | pending | Complements the `E18R-2` deliverable. |
+
+**Category A snapshot (post Epic 19 kickoff triage): 4 / 5.** Active: `E18R-1`, `E18R-2`, `E10R-2`, `E18R-4`. **Epic 19 sprint cleared to open** — next action: `create-story` for **Story 19.0** (closes E18R-5; folds E18R-6 AC4), which must be `done` before Story 19.1 enters the sprint.
+
+### Epic 19 create-story fire-check watchlist (per `E9-K1`)
+
+At `bmad-create-story` time for each Epic 19 story, scan this list and surface any item whose trigger fires for the story being created. **Hard-block** rule (`E17R-3`): a deadline-bearing item that fires must be closed/scheduled before the dependent story enters the sprint — annotation is not enough.
+
+| Active item | Trigger condition (fires when…) | Enforcement |
+|---|---|---|
+| `E18R-5` (→ Story 19.0) | **Hard deadline:** must be `done` before Story 19.1 enters sprint | **Hard-block** — 19.1 may not enter sprint until 19.0 is `done`. |
+| `E18R-2` Amici / backend-failure localization | a story touches any social tab (Amici / Feed / Confronto) or surfaces a `Failure` on a social surface | Surface + fix opportunistically in that story; not a separate story. |
+| `E18R-1` small-viewport shimmer test | a story adds a new screen with a shimmer/loading state | Surface; add the 360×640 shimmer test for the new screen. Companion review rule `E18R-CB1` (shimmer must be scrollable like loaded). |
+| `E18R-4` social `ProUpsellSheet` copy | a story touches `ProUpsellSheet` / the Social locked banner | Surface; apply social-specific copy in passing (minor). |
+| `E10R-2` non-UTC week-bucketing test | a story touches week-bucketing / `_mondayOf` / `_thisWeekMinutes` / Progress weekly stats | Surface; add the non-UTC regression test. |
+| `E18R-CB2` localized-IT review check | any story surfacing a `Failure` to the user | Review-layer check; no raw `failure.message` passthrough. |
