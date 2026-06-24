@@ -2501,6 +2501,32 @@ So that I can see how I'm doing relative to my social circle without competitive
 
 **Goal:** Implement the Supabase Realtime Broadcast/Presence infrastructure as a standalone, testable layer before shared session logic is layered on top. This epic delivers the `RealtimeGateway` Dart stream, host-authority enforcement, and drop-out tolerance — prerequisites for Epic 20 (Co-Located Shared Sessions).
 
+### Story 19.0: Profile Row Creation on Signup (closes E18R-5)
+
+> **Critical-path prerequisite (Epic 18 retro / E18R-3 live spike, 2026-06-24 — E18R-5).** It MUST be scheduled and `done` **before Story 19.1 enters the sprint**, because Epic 19 stacks realtime presence on `auth` + `profiles`, and the E18R-3 live-backend spike proved that a genuinely new user has **no `profiles` row** at all: `SocialProfileRemoteDataSource` only issues `UPDATE`s, and no DB trigger or edge-function creates the row at signup. A real new user can therefore never set a handle (the `UPDATE` matches 0 rows and throws), and presence/handle-based discovery in Epic 19 would have no profile to resolve. (Same "prerequisite story closes a foundational gap before the epic builds on it" pattern as Story 18.0 closing E16R-1.)
+
+As a newly-registered user,
+I want a `profiles` row to exist automatically the moment my account is created,
+So that I can set my handle, choose my visibility tier, and be discoverable — and so the realtime social layer has a profile to resolve.
+
+**Acceptance Criteria:**
+
+**Given** a new user completes email (or Apple/Google) signup
+**When** the `auth.users` row is created
+**Then** a matching `public.profiles` row is created automatically (id = `auth.users.id`, `visibility_tier = 'private'` default, `install_cohort = 'post_v2'`, `display_handle = null`) — implemented as a Postgres `handle_new_user` trigger on `auth.users` (preferred; server-authoritative) so it fires for every provider, not only the email path
+
+**Given** the new `profiles` row exists
+**When** the user opens the Account page and submits a handle
+**Then** `updateHandle` succeeds (the `UPDATE ... .single()` now matches exactly one row) — closing the E18R-3 finding where a fresh user's handle setup threw because no row existed
+
+**Given** the trigger is added as a new Supabase migration (`supabase/migrations/0008_*.sql`)
+**When** the migration is applied
+**Then** it is idempotent and back-fills a `profiles` row for any pre-existing `auth.users` lacking one; a regression/integration test asserts that a freshly-created auth user has exactly one `profiles` row with the documented defaults
+
+**Given** signup with a no-MX / invalid email domain (the E18R-6 finding)
+**When** GoTrue returns `400 email_address_invalid`
+**Then** the app surfaces a clear localized message (not the generic "Accesso non riuscito. Riprova.") — this AC folds the minor E18R-6 item into this story; if descoped, E18R-6 remains a standalone open item
+
 ### Story 19.1: RealtimeGateway and Supabase Broadcast/Presence Channel
 
 As a developer,
