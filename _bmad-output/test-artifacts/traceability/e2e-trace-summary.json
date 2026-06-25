@@ -1,62 +1,112 @@
 {
-  "schema_version": "1.0",
-  "generated_at": "2026-06-24",
-  "scope": "Epic 18 — Social Graph & Friends (Stories 18.0–18.4)",
-  "gate_decision": "PASS",
-  "gate_rationale": "P0 100% (4/4). P1 100% (24/24) — all 3 previously PARTIAL P1 ACs resolved by widget tests (HandleSetupSection, FriendsScreen Pro gate, MiniSummary toggle). P2 57% (4/7). Overall 91% (32/35). Suite 1089/1089 passing.",
-  "coverage_summary": {
-    "total_acs": 35,
-    "full": 32,
-    "partial": 3,
-    "none": 0,
-    "overall_percentage": 91,
-    "p0_percentage": 100,
-    "p1_percentage": 100,
-    "p2_percentage": 57
+  "schema_version": "0.1.0",
+  "snapshot_at": "2026-06-25T00:00:00.000Z",
+  "repo": "Flutter_PulseCoach",
+  "collection_mode": "contract_static",
+  "collection_status": "COLLECTED",
+  "inventory_basis": "acceptance_criteria",
+  "gate_basis": "priority_thresholds",
+  "source_sha": "",
+  "target": {
+    "type": "epic",
+    "id": "19",
+    "label": "Epic 19 — Group/Shared Session (Realtime) (Stories 19.0–19.3)"
   },
-  "test_inventory": {
-    "total_tests": 116,
-    "suite_total": 1089,
-    "suite_passing": 1089,
-    "unit_tests": 98,
-    "component_tests": 30,
-    "e2e_tests": 0,
-    "untracked_files": 0,
-    "untracked_tests": 0,
-    "analyze_issues": 0
+  "decision_mode": "create",
+  "evaluator": "Paolo",
+  "confidence": "high",
+  "oracle": {
+    "resolution_mode": "formal_requirements",
+    "confidence": "high",
+    "sources": [
+      "_bmad-output/implementation-artifacts/19-0-profile-row-creation-on-signup.md",
+      "_bmad-output/implementation-artifacts/19-1-realtime-gateway-and-supabase-broadcast-presence-channel.md",
+      "_bmad-output/implementation-artifacts/19-2-host-authority-step-advancement-and-presence-lobby.md",
+      "_bmad-output/implementation-artifacts/19-3-drop-out-tolerance-and-reconnect.md"
+    ],
+    "external_pointer_status": "not_used",
+    "synthetic": false
   },
-  "gaps": [
-    {
-      "ac": "18.1-AC5",
-      "priority": "P2",
-      "coverage": "PARTIAL",
-      "risk": "LOW",
-      "description": "AppShell Social tab position no widget test (advisory)"
+  "gate_status": "PASS",
+  "gate_criteria": {
+    "p0_coverage_required": "100%",
+    "p0_coverage_actual": "100%",
+    "p0_status": "MET",
+    "p1_coverage_target": "90%",
+    "p1_coverage_minimum": "80%",
+    "p1_coverage_actual": "100%",
+    "p1_status": "MET",
+    "overall_coverage_minimum": "80%",
+    "overall_coverage_actual": "100%",
+    "overall_status": "MET"
+  },
+  "coverage": {
+    "inventory": {
+      "covered": 21,
+      "total": 21,
+      "pct": 100
     },
-    {
-      "ac": "18.3-AC7",
-      "priority": "P2",
-      "coverage": "PARTIAL",
-      "risk": "LOW",
-      "description": "SocialPage 2-tab (Amici+Feed) no widget test (advisory)"
+    "priority_breakdown": {
+      "P0": { "total": 2, "covered": 2, "pct": 100 },
+      "P1": { "total": 16, "covered": 16, "pct": 100 },
+      "P2": { "total": 2, "covered": 2, "pct": 100 },
+      "P3": { "total": 0, "covered": 0, "pct": 100 }
     },
+    "by_level": {
+      "unit": { "tests": 39, "criteria_covered": 14 },
+      "component": { "tests": 11, "criteria_covered": 7 },
+      "api": { "tests": 0, "criteria_covered": 0 },
+      "e2e": { "tests": 0, "criteria_covered": 0 },
+      "other": { "tests": 0, "criteria_covered": 0 }
+    }
+  },
+  "tests": {
+    "files": 7,
+    "cases": 50,
+    "skipped_cases": 0,
+    "fixme_cases": 0,
+    "pending_cases": 0,
+    "notes": "7 additional lifecycle tests (19.1-GW-009..015) exist in an untracked file. Total suite: 1146 passing."
+  },
+  "risk_summary": {
+    "critical_open": 0,
+    "high_open": 0,
+    "medium_open": 0,
+    "low_open": 0
+  },
+  "heuristics": {
+    "endpoint_gaps": 0,
+    "auth_negative_path_status": "present",
+    "error_path_status": "present",
+    "ui_journey_status": "not_applicable",
+    "ui_state_status": "not_applicable"
+  },
+  "findings": [
     {
-      "ac": "18.4-AC7",
-      "priority": "P2",
-      "coverage": "PARTIAL",
-      "risk": "LOW",
-      "description": "SocialPage 3-tab (Amici+Feed+Confronto) no widget test (advisory)"
+      "id": "F-19-001",
+      "severity": "medium",
+      "type": "untracked_test_file",
+      "description": "test/core/cloud/realtime_gateway_lifecycle_test.dart (7 tests: 19.1-GW-009..015) is not tracked in git. Covers 19.1-AC1 and 19.1-AC4. Must be committed before CI runs.",
+      "action": "git add pulse_coach/test/core/cloud/realtime_gateway_lifecycle_test.dart && git commit"
     }
   ],
+  "blockers": [],
   "recommendations": [
     {
+      "priority": "HIGH",
+      "action": "Commit untracked lifecycle test file: git add pulse_coach/test/core/cloud/realtime_gateway_lifecycle_test.dart",
+      "requirements": ["19.1-AC1", "19.1-AC4"]
+    },
+    {
       "priority": "LOW",
-      "description": "Add SocialPage tab structure widget tests for 18.1-AC5, 18.3-AC7, 18.4-AC7 (advisory, no gate impact)"
+      "action": "Run /bmad:tea:test-review to assess test quality for Epic 19 bloc tests",
+      "requirements": []
     }
   ],
-  "files": {
-    "traceability_matrix": "_bmad-output/test-artifacts/traceability-matrix.md",
-    "per_epic_report": "_bmad-output/test-artifacts/traceability-report-epic18.md",
-    "gate_decision": "_bmad-output/test-artifacts/traceability/gate-decision.json"
+  "links": {
+    "trace_report_path": "_bmad-output/test-artifacts/traceability-matrix.md",
+    "trace_report_url": "",
+    "artifact_url": "",
+    "journey_evidence_url": ""
   }
 }

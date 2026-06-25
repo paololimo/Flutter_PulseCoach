@@ -1,8 +1,8 @@
 ---
-stepsCompleted: ['step-01-preflight-and-context', 'step-02-identify-targets', 'step-03-generate-tests', 'step-03c-aggregate', 'step-04-validate-and-summarize', 'step-01-preflight-and-context-epic18', 'step-02-identify-targets-epic18', 'step-03-generate-tests-epic18', 'step-03c-aggregate-epic18', 'step-04-validate-epic18', 'bmad-testarch-trace-epic18']
-lastStep: 'bmad-testarch-trace-epic18'
-lastSaved: '2026-06-24'
-lastRunDate: '2026-06-24'
+stepsCompleted: ['step-01-preflight-and-context', 'step-02-identify-targets', 'step-03-generate-tests', 'step-03c-aggregate', 'step-04-validate-and-summarize', 'step-01-preflight-and-context-epic18', 'step-02-identify-targets-epic18', 'step-03-generate-tests-epic18', 'step-03c-aggregate-epic18', 'step-04-validate-epic18', 'bmad-testarch-trace-epic18', 'step-01-preflight-and-context-epic19', 'step-02-identify-targets-epic19', 'step-03-generate-tests-epic19', 'step-03c-aggregate-epic19', 'step-04-validate-and-summarize-epic19', 'gap-close-19.1-AC1']
+lastStep: 'gap-close-19.1-AC1'
+lastSaved: '2026-06-25'
+lastRunDate: '2026-06-25'
 inputDocuments:
   - pulse_coach/pubspec.yaml
   - pulse_coach/analysis_options.yaml
@@ -2436,3 +2436,183 @@ PASS — 1079/1079 tests passed
 - Archive: `_bmad-output/test-artifacts/traceability-report-epic17.md`
 
 Coverage: 20/25 ACs FULL (80%) | P0 100% | P1 91.7% | Test suite 984/984 PASS
+
+---
+
+# TEA Traceability Run — PulseCoach (Epic 19, 2026-06-25)
+
+## Run Type: bmad-testarch-automate Create (Epic 19 ATDD trace)
+
+**Scope:** Epic 19 — Real-Time Session Transport (Stories 19.0–19.3)
+**Gate Decision:** PASS ✅
+**Suite total:** 1146 / 1146 tests passing; `flutter analyze` 0 issues
+
+---
+
+## Step 1: Preflight & Context
+
+- **Stack:** Flutter/Dart mobile, BMad-Integrated mode
+- **Test framework:** `flutter_test` + `bloc_test` + `mockito`
+- **Baseline:** 1089 tests (post-Epic-18)
+- **Knowledge fragments:** test-levels-framework, test-priorities-matrix, test-quality
+- **ATDD status:** All 4 Epic 19 stories implemented with ATDD tests pre-existing
+
+---
+
+## Step 2: Coverage Analysis & Targets
+
+### AC-to-Test Mapping
+
+#### Story 19.0 — Profile Row Creation on Signup (5 tests)
+
+| AC | Priorità | Copertura | Test ID |
+|---|---|---|---|
+| AC1 — trigger creates profiles row | P1 | ✅ Live MCP SQL | live verification |
+| AC2 — updateHandle succeeds | P1 | ✅ Live MCP SQL | live verification |
+| AC3 — migration idempotent | P2 | ✅ Live MCP SQL | live verification |
+| AC4 — email_address_invalid error | P0 | ✅ COVERED | 19.0-REPO-001/002, 19.0-WIDGET-001/002 |
+| AC5 — zero regression | P0 | ✅ COVERED | suite 1094 verdi |
+
+#### Story 19.1 — RealtimeGateway + Supabase Broadcast/Presence (13 tests)
+
+| AC | Priorità | Copertura | Test ID |
+|---|---|---|---|
+| AC1 — channel open, streams esposti | P1 | ✅ COVERED | 19.1-GW-009..015 (lifecycle_test.dart) |
+| AC2 — step_advanced → BroadcastEvent | P0 | ✅ COVERED | 19.1-GW-001..008 |
+| AC3 — injectable singleton | P2 | ✅ COVERED | injection_test.dart esistente |
+| AC4 — teardown pulito | P1 | ✅ COVERED | 19.2-BLOC-012 |
+| AC5 — zero regression | P0 | ✅ COVERED | suite 1106 verdi |
+
+#### Story 19.2 — Host-Authority + Presence Lobby (17 tests)
+
+| AC | Priorità | Copertura | Test ID |
+|---|---|---|---|
+| AC1 — host authority enforced | P0 | ✅ COVERED | 19.2-BLOC-009/010/011 |
+| AC2 — follower renderizza step | P0 | ✅ COVERED | 19.2-BLOC-008 |
+| AC3 — lobby Start gating ≥2 | P1 | ✅ COVERED | 19.2-BLOC-004, WIDGET-002/003 |
+| AC4 — session_started su tutti i client | P0 | ✅ COVERED | 19.2-BLOC-007 |
+| AC5 — semantics liveRegion | P2 | ✅ COVERED | 19.2-WIDGET-005 |
+| AC6 — zero regression | P0 | ✅ COVERED | suite 1123 verdi |
+
+#### Story 19.3 — Drop-Out Tolerance and Reconnect (15 tests)
+
+| AC | Priorità | Copertura | Test ID |
+|---|---|---|---|
+| AC1 — drop-out rilevato, sessione continua | P0 | ✅ COVERED | 19.3-BLOC-001/002, WIDGET-001 |
+| AC2 — riconnessione snappa | P1 | ✅ COVERED | 19.3-BLOC-006/007 |
+| AC3 — host transfer | P0 | ✅ COVERED | 19.3-BLOC-003/004/005 |
+| AC4 — session_ended cleanup | P0 | ✅ COVERED | 19.3-BLOC-008/009/010, WIDGET-002 |
+| AC5 — zero regression | P0 | ✅ COVERED | suite 1139 verdi |
+
+### Gap Analysis
+
+| Gap | Priorità | Decisione |
+|---|---|---|
+| 19.1-AC1 gateway lifecycle | P1 | **CLOSED** — 7 test aggiunti in `realtime_gateway_lifecycle_test.dart` (GW-009..015) |
+| 19.0-AC1/AC2/AC3 DB trigger | P1/P2 | **Infrastruttura server** — non unit-testabile; coperto da live MCP SQL |
+
+**Verdict STEP 2:** ATDD pre-existing + gap close successivo. Tutti i P0 e P1 coperti al 100%.
+
+---
+
+## Step 3: Test Generation (ATDD pre-existing)
+
+**Execution Mode:** sequential (tests pre-existing via ATDD — verification pass only)
+
+### Test Files Confermati
+
+| File | Modo | Test | Livello | Priorità |
+|---|---|---:|---|---|
+| `test/data/auth/auth_repository_impl_test.dart` | modified | 2 | unit | P0 |
+| `test/bloc/auth/sign_in_sheet_error_test.dart` | new | 3 | widget | P0 |
+| `test/core/cloud/realtime_gateway_test.dart` | new | 8 | unit | P0 |
+| `test/domain/social/shared_session/broadcast_event_test.dart` | new | 5 | unit | P1 |
+| `test/bloc/shared_session/shared_session_bloc_test.dart` | new | 12 | bloc | P0 |
+| `test/widget/shared_session/shared_session_lobby_page_test.dart` | new | 5 | widget | P1 |
+| `test/bloc/shared_session/drop_out_tolerance_bloc_test.dart` | new | 13 | bloc | P0 |
+| `test/widget/shared_session/drop_out_tolerance_widget_test.dart` | new | 2 | widget | P0 |
+| **Totale** | | **50** | | |
+
+---
+
+## Step 4: Validation & Final Summary
+
+### Test Execution Results
+
+```
+flutter test
+✅ 1139 / 1139 tests passed  [initial Epic 19 ATDD verification]
+✅ 1146 / 1146 tests passed  [after 19.1-AC1 gap close]
+
+flutter analyze
+✅ No issues found
+```
+
+### Checklist Validation (Flutter-adapted)
+
+| Check | Status |
+|---|---|
+| Framework ready (`flutter_test`, `bloc_test`, `mockito`) | PASS |
+| Test directory identificato (`pulse_coach/test/`) | PASS |
+| BMad-Integrated mode — story artifacts 19.0–19.3 caricati | PASS |
+| Execution mode risolto deterministicamente | PASS |
+| AC-to-test mapping completato per tutte le 4 storie | PASS |
+| Duplicate coverage avoided | PASS |
+| Test levels corretti (unit, bloc, widget) | PASS |
+| Priorità assegnate | PASS |
+| Test deterministici e isolati | PASS |
+| No hard waits, browser sessions, servizi esterni | PASS |
+| Fixture needs: nessuna nuova fixture richiesta | PASS |
+| CLI/browser cleanup | PASS — nessuna sessione aperta |
+| Temp artifacts in scratchpad | PASS |
+| Full suite passing | PASS ✅ |
+
+### Coverage Results
+
+| Priorità | AC coperte / Totale | % | Status |
+|---|---|---|---|
+| P0 | 12/12 | 100% | ✅ MET |
+| P1 | 6/6 | 100% | ✅ MET |
+| P2 | 3/3 | 100% | ✅ MET |
+| Overall | 21/21 | 100% | ✅ MET |
+
+**Gate:** `risk_threshold: p1` — tutti i P0 e P1 coperti al 100%. **PASS ✅**
+
+### Test Count Delta
+
+| Milestone | Count |
+|---|---|
+| Baseline Epic 18 chiuso | 1,089 |
+| Story 19.0 (+5) | 1,094 |
+| Story 19.1 (+13) | 1,107 |
+| Story 19.2 (+17) | 1,124 |
+| Story 19.3 (+15) | 1,139 |
+| Gap close 19.1-AC1 (+7) | **1,146** |
+
+### Files Confermati
+
+| File | Change |
+|---|---|
+| `test/data/auth/auth_repository_impl_test.dart` | +2 tests (19.0-REPO-001/002) |
+| `test/bloc/auth/sign_in_sheet_error_test.dart` | new (19.0-WIDGET-001/002 + sanity) |
+| `test/core/cloud/realtime_gateway_test.dart` | new (19.1-GW-001..008) |
+| `test/core/cloud/realtime_gateway_lifecycle_test.dart` | new (19.1-GW-009..015) — gap close 19.1-AC1 |
+| `test/domain/social/shared_session/broadcast_event_test.dart` | new (19.1-DOMAIN-001..005) |
+| `test/bloc/shared_session/shared_session_bloc_test.dart` | new (19.2-BLOC-001..012) |
+| `test/bloc/shared_session/shared_session_bloc_test.mocks.dart` | generated |
+| `test/widget/shared_session/shared_session_lobby_page_test.dart` | new (19.2-WIDGET-001..005) |
+| `test/widget/shared_session/shared_session_lobby_page_test.mocks.dart` | generated |
+| `test/bloc/shared_session/drop_out_tolerance_bloc_test.dart` | new (19.3-BLOC-001..013) |
+| `test/widget/shared_session/drop_out_tolerance_widget_test.dart` | new (19.3-WIDGET-001/002) |
+| `test/widget/shared_session/drop_out_tolerance_widget_test.mocks.dart` | generated |
+
+### Key Assumptions & Risks
+
+- 19.1-AC1 (gateway lifecycle): inizialmente deferred, poi chiuso con 7 test in `realtime_gateway_lifecycle_test.dart`. I fakes (`_FakeChannel`, `_FakeClient`, `_FakeProvider`) evitano `Supabase.initialize()` nel test, rispettando ARCH25 anche nei test.
+- 19.0-AC1/AC2/AC3 (DB trigger): validato tramite live MCP SQL durante l'implementazione. Il trigger Postgres non è unit-testabile; la migration `0008_handle_new_user_trigger.sql` è tracciata nel repo.
+- `build_runner` era già stato eseguito durante l'implementazione ATDD; i file `.mocks.dart` sono presenti nel repo.
+
+### Recommended Next Workflow
+
+- Produrre `traceability-report-epic19.md` per collegare i 50 nuovi test ID alla matrice di traceability ufficiale.
+- Aggiornare `traceability-matrix.md` con i test Epic 19.

@@ -1,42 +1,24 @@
 {
   "schema_version": "0.1.0",
-  "evaluated_at": "2026-06-24T00:00:00.000Z",
+  "evaluated_at": "2026-06-25T00:00:00.000Z",
   "repo": "Flutter_PulseCoach",
   "target": {
     "type": "epic",
-    "id": "18",
-    "label": "Epic 18 — Social Graph & Friends (Stories 18.0–18.4)",
-    "stories": ["18.0", "18.1", "18.2", "18.3", "18.4"]
+    "id": "19",
+    "label": "Epic 19 — Group/Shared Session (Realtime) (Stories 19.0–19.3)"
   },
   "collection_status": "COLLECTED",
   "gate_basis": "priority_thresholds",
   "gate_status": "PASS",
-  "rationale": "P0 coverage 100% (4/4). P1 coverage 100% (24/24) — all 3 previously PARTIAL P1 ACs now have widget tests: HandleSetupSection (18.1-AC1), SocialPage Pro gate (18.2-AC1), MiniSummary share toggle (18.3-AC1). QrCodeScreen (18.2-AC7, P2) also fully covered. Overall coverage 91% (32/35). Remaining gaps: 3 P2 PARTIAL (tab structures, advisory, LOW risk). 11 test files staged (git add) — commit required before merge. Suite total 1089 / 1089 passing.",
+  "rationale": "P0 coverage is 100%, P1 coverage is 100% (target: 90%), and overall coverage is 100% (minimum: 80%). All 21 ACs across Stories 19.0–19.3 are fully covered. One medium finding (F-19-001): 7 lifecycle tests are untracked in git and must be committed before CI.",
   "p0_status": "MET",
   "p1_status": "MET",
   "overall_status": "MET",
   "critical_open": 0,
-  "risk_summary": {
-    "critical_open": 0,
-    "high_open": 0,
-    "medium_open": 0,
-    "low_open": 3
-  },
-  "gate_criteria": {
-    "p0_coverage_required": "100%",
-    "p0_coverage_actual": "100%",
-    "p0_status": "MET",
-    "p1_coverage_target": "90%",
-    "p1_coverage_minimum": "80%",
-    "p1_coverage_actual": "100%",
-    "p1_status": "MET",
-    "overall_coverage_minimum": "80%",
-    "overall_coverage_actual": "91%",
-    "overall_status": "MET"
-  },
   "links": {
     "trace_report_path": "_bmad-output/test-artifacts/traceability-matrix.md",
-    "archive_path": "_bmad-output/test-artifacts/traceability-report-epic18.md",
-    "e2e_summary": "_bmad-output/test-artifacts/traceability/e2e-trace-summary.json"
+    "trace_report_url": "",
+    "artifact_url": "",
+    "journey_evidence_url": ""
   }
 }
