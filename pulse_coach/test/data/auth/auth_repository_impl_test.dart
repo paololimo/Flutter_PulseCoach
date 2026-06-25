@@ -200,6 +200,54 @@ void main() {
     );
   });
 
+  // ── 19.0-REPO-001..002 ────────────────────────────────────────────────────
+  group('signUp email_address_invalid (19.0)', () {
+    test(
+      '19.0-REPO-001: exception with email_address_invalid → Left sentinel',
+      () async {
+        when(
+          mockDataSource.signUp(
+            email: anyNamed('email'),
+            password: anyNamed('password'),
+          ),
+        ).thenThrow(Exception('email_address_invalid: invalid MX'));
+
+        final result = await sut.signUp(email: 'bad@dev', password: 'pass');
+
+        expect(
+          result,
+          equals(
+            const Left<AuthFailure, AuthUser?>(
+              AuthFailure('email_address_invalid'),
+            ),
+          ),
+        );
+      },
+    );
+
+    test(
+      '19.0-REPO-002: other exception → Left with message (not email_address_invalid sentinel)',
+      () async {
+        when(
+          mockDataSource.signUp(
+            email: anyNamed('email'),
+            password: anyNamed('password'),
+          ),
+        ).thenThrow(Exception('network error'));
+
+        final result = await sut.signUp(email: 'x@y.com', password: 'pass');
+
+        result.fold(
+          (f) {
+            expect(f, isA<AuthFailure>());
+            expect(f.message, isNot(equals('email_address_invalid')));
+          },
+          (_) => fail('Expected Left'),
+        );
+      },
+    );
+  });
+
   // ── 16.1-REPO-008 ─────────────────────────────────────────────────────────
   group('signOut', () {
     test(

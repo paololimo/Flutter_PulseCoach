@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-24 # added Story 19.0 (profiles-on-signup, E18R-5) to Epic 19 backlog
+last_updated: 2026-06-25 # Story 19.0 reviewed → done (AC3 verified live; 1094 tests green)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -271,8 +271,8 @@ development_status:
   # Epic 19: Real-Time Session Transport (v2.4a)
   # Prerequisite for Epic 20. Depends on Epic 16.
   # ─────────────────────────────────────────
-  epic-19: backlog
-  19-0-profile-row-creation-on-signup: backlog
+  epic-19: in-progress
+  19-0-profile-row-creation-on-signup: done
   19-1-realtime-gateway-and-supabase-broadcast-presence-channel: backlog
   19-2-host-authority-step-advancement-and-presence-lobby: backlog
   19-3-drop-out-tolerance-and-reconnect: backlog

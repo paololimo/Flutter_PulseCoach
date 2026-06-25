@@ -498,3 +498,9 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 
 - `_thisWeekMinutes` relies on byte-identical `DD/MM` label coupling between `GetOwnWeeklySummaryUseCase` (get_own_weekly_summary_use_case.dart:188-200) and `ProgressLocalDataSource`. Happy path verified correct; any future format change (adding year, switching to local time) silently zeroes "own minutes" with no error. Extends existing E10R-2 concern — add a non-UTC regression test in `test/domain/social/get_own_weekly_summary_use_case_test.dart`. Not new Category A debt.
 - Handle-less friend renders as `@<uuid>` in the comparison list (SQL `COALESCE(display_handle, p.id::text)` in 0007_friends_progress_rpc.sql:37, mirrored by friend_progress_dto.dart fallback). Low-probability since handle setup is enforced in Story 18.1; UX-only, not a data leak. Consider a localized "(senza handle)" fallback if it ever surfaces.
+
+## Deferred from: code review of story-19.0 (2026-06-25)
+
+- Back-fill INSERT in 0008_handle_new_user_trigger.sql lacks `ON CONFLICT (id) DO NOTHING` — marginal in-migration TOCTOU race vs trigger; already applied to prod (0 rows). Add for parity if 0008 re-run on fresh env. [0008:39]
+- Invalid-email error taxonomy covers only `email_address_invalid`; sibling GoTrue codes (email_exists, weak_password, signup_disabled, rate-limit) fall through to generic error. Out of AC4 scope — future enhancement. [auth_repository_impl.dart:120]
+- Sentinel `'email_address_invalid'` duplicated as magic string across repo + UI; consider extracting a shared const. Story intentionally used the literal. [sign_in_sheet.dart:214]

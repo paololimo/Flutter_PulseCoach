@@ -117,6 +117,9 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await _dataSource.signUp(email: email, password: password);
       return Right(user); // null means unconfirmed
     } catch (e) {
+      if (e.toString().contains('email_address_invalid')) {
+        return const Left(AuthFailure('email_address_invalid'));
+      }
       return Left(AuthFailure(e.toString()));
     }
   }

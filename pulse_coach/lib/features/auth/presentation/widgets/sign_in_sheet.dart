@@ -211,7 +211,9 @@ class _SignInSheetState extends State<SignInSheet> {
                   if (state is AuthError) ...[
                     const SizedBox(height: 12),
                     Text(
-                      l10n.signInErrorGeneric,
+                      state.failure.message == 'email_address_invalid'
+                          ? l10n.signInErrorInvalidEmail
+                          : l10n.signInErrorGeneric,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.error,
                       ),

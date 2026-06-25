@@ -227,6 +227,7 @@
   "emailUnconfirmedMessage": "Controlla la tua email per confermare l'account.",
   "signInErrorGeneric": "Accesso non riuscito. Riprova.",
   "signInErrorNoConnectivity": "Nessuna connessione. Riprova quando sei online.",
+  "signInErrorInvalidEmail": "Indirizzo email non valido. Usa un indirizzo reale.",
   "ageConfirmationLabel": "Ho almeno 16 anni",
   "ageConfirmationRequired": "Devi confermare di avere almeno 16 anni per registrarti.",
   "backupSectionTitle": "Backup",
