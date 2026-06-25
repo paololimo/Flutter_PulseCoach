@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-25 # Story 19.3 → done (code review passed)
+last_updated: 2026-06-25 # Epic 19 → done; epic-19-retrospective → done
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -271,12 +271,12 @@ development_status:
   # Epic 19: Real-Time Session Transport (v2.4a)
   # Prerequisite for Epic 20. Depends on Epic 16.
   # ─────────────────────────────────────────
-  epic-19: in-progress
+  epic-19: done
   19-0-profile-row-creation-on-signup: done
   19-1-realtime-gateway-and-supabase-broadcast-presence-channel: done
   19-2-host-authority-step-advancement-and-presence-lobby: done
   19-3-drop-out-tolerance-and-reconnect: done
-  epic-19-retrospective: optional
+  epic-19-retrospective: done
 
   # ─────────────────────────────────────────
   # Epic 20: Co-Located Shared Sessions (v2.4b)
