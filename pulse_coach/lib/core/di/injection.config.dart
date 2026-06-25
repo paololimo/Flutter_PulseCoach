@@ -19,6 +19,7 @@ import 'package:pulse_coach/ai/engine/ai_engine.dart' as _i122;
 import 'package:pulse_coach/ai/engine/ai_engine_isolate.dart' as _i157;
 import 'package:pulse_coach/core/cloud/crypto/e2e_backup_codec.dart' as _i684;
 import 'package:pulse_coach/core/cloud/entitlement_gate.dart' as _i499;
+import 'package:pulse_coach/core/cloud/realtime_gateway.dart' as _i281;
 import 'package:pulse_coach/core/cloud/supabase_client.dart' as _i42;
 import 'package:pulse_coach/core/database/app_database.dart' as _i79;
 import 'package:pulse_coach/core/database/daos/bandit_state_dao.dart' as _i10;
@@ -363,6 +364,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i30.SessionLogsDao>(),
         gh<_i562.DailyPlansDao>(),
       ),
+    );
+    gh.singleton<_i281.RealtimeGateway>(
+      () => _i281.RealtimeGateway(gh<_i42.SupabaseClientProvider>()),
     );
     gh.factory<_i1.GetActivityLevel>(
       () => _i1.GetActivityLevel(gh<_i628.SensorRepository>()),

@@ -68,3 +68,9 @@ class SocialFailure extends Failure {
 class SocialHandleTakenFailure extends SocialFailure {
   const SocialHandleTakenFailure() : super('handle_taken');
 }
+
+class RealtimeFailure extends Failure {
+  @override
+  final String message;
+  const RealtimeFailure(this.message);
+}

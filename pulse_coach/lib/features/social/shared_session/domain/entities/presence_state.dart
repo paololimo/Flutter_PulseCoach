@@ -1,0 +1,18 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'presence_state.freezed.dart';
+
+@freezed
+abstract class PresenceState with _$PresenceState {
+  const factory PresenceState({
+    required List<ParticipantPresence> participants,
+  }) = _PresenceState;
+}
+
+@freezed
+abstract class ParticipantPresence with _$ParticipantPresence {
+  const factory ParticipantPresence({
+    required String userId,
+    String? displayHandle,
+  }) = _ParticipantPresence;
+}
