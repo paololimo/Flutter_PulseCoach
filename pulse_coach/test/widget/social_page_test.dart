@@ -1,8 +1,13 @@
 // [18.2-WIDGET-NEW-001..002] SocialPage Pro gate widget tests.
+// [E18R-2] Amici error localization regression test.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/di/injection.dart';
+import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_bloc.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_event.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_state.dart';
@@ -24,6 +29,7 @@ import 'package:pulse_coach/l10n/app_localizations.dart';
 Widget _wrapWithSub(_FakeSubscriptionBloc sub, {Widget child = const SocialPage()}) =>
     MaterialApp(
       locale: const Locale('it'),
+      theme: AppTheme.darkTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: BlocProvider<SubscriptionBloc>.value(value: sub, child: child),
@@ -90,6 +96,49 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'E18R-2: Amici error shows localized generic message, never the raw '
+    'failure.message',
+    (tester) async {
+      final controller = StreamController<FriendsState>.broadcast();
+      addTearDown(controller.close);
+
+      final fakeFriends = _FakeFriendsBloc(
+        const FriendsState.loading(),
+        stream: controller.stream,
+      );
+      final fakeSocial = _FakeSocialProfileBloc(
+        const SocialProfileState.initial(),
+      );
+      final fakeFeed = _FakeFeedBloc(const FeedState.initial());
+      final fakeComparison = _FakeProgressComparisonBloc(
+        const ProgressComparisonState.initial(),
+      );
+
+      getIt.registerFactory<FriendsBloc>(() => fakeFriends);
+      getIt.registerFactory<SocialProfileBloc>(() => fakeSocial);
+      getIt.registerFactory<FeedBloc>(() => fakeFeed);
+      getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
+
+      final sub = _FakeSubscriptionBloc(
+        const SubscriptionState.loaded(tier: SubscriptionTier.pro),
+      );
+
+      await tester.pumpWidget(_wrapWithSub(sub));
+      await tester.pump();
+
+      const rawMessage = 'Failed to fetch friends: Bad state: '
+          'No authenticated session';
+      controller.add(
+        const FriendsState.error(failure: ServerFailure(rawMessage)),
+      );
+      await tester.pump(); // process stream emission + show SnackBar
+
+      expect(find.text('Qualcosa è andato storto. Riprova.'), findsOneWidget);
+      expect(find.text(rawMessage), findsNothing);
+    },
+  );
 }
 
 class _FakeSubscriptionBloc extends Fake implements SubscriptionBloc {
@@ -114,13 +163,15 @@ class _FakeSubscriptionBloc extends Fake implements SubscriptionBloc {
 
 class _FakeFriendsBloc extends Fake implements FriendsBloc {
   final FriendsState _state;
-  _FakeFriendsBloc(this._state);
+  final Stream<FriendsState> _stream;
+  _FakeFriendsBloc(this._state, {Stream<FriendsState>? stream})
+      : _stream = stream ?? const Stream.empty();
 
   @override
   FriendsState get state => _state;
 
   @override
-  Stream<FriendsState> get stream => const Stream.empty();
+  Stream<FriendsState> get stream => _stream;
 
   @override
   bool get isClosed => false;

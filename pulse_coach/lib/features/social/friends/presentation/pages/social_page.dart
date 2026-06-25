@@ -129,16 +129,12 @@ class _FriendsTab extends StatelessWidget {
     return BlocConsumer<FriendsBloc, FriendsState>(
       listener: (context, state) {
         state.whenOrNull(
-          error: (failure) {
+          // Show a localized generic message — never surface the raw
+          // exception string (`failure.message` interpolates `$e`) to the user.
+          error: (_) {
             final l10n = AppLocalizations.of(context)!;
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  failure.message.isNotEmpty
-                      ? failure.message
-                      : l10n.socialGenericError,
-                ),
-              ),
+              SnackBar(content: Text(l10n.socialGenericError)),
             );
           },
         );
