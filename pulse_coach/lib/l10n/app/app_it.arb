@@ -351,6 +351,15 @@
     }
   },
   "sharedSessionEnded": "Sessione terminata",
+  "sharedSessionCreateButton": "Sessione condivisa",
+  "sharedSessionRefreshCode": "Aggiorna codice",
+  "sharedSessionNoOneYet": "Nessuno ancora — condividi il codice",
+  "sharedSessionCancelDialogTitle": "Annullare la sessione?",
+  "sharedSessionCancelDialogBody": "La sessione verrà annullata e il codice di accesso non sarà più valido.",
+  "sharedSessionCancelDialogKeep": "Continua ad aspettare",
+  "sharedSessionCancelDialogConfirm": "Annulla",
+  "sharedSessionCreateError": "Impossibile creare la sessione. Riprova.",
+  "sharedSessionRefreshError": "Impossibile aggiornare il codice. Riprova.",
 
   "settingsLanguageSection": "Lingua",
   "settingsLanguageItalian": "Italiano",

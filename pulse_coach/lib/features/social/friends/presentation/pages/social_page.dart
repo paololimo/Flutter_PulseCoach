@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
+import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_bloc.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/pages/progress_comparison_page.dart';
 import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_bloc.dart';
@@ -16,7 +17,10 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/friends_ev
 import 'package:pulse_coach/features/social/friends/presentation/bloc/friends_state.dart';
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_bloc.dart';
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_event.dart';
+import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_state.dart';
 import 'package:pulse_coach/features/social/friends/presentation/widgets/friend_row.dart';
+import 'package:pulse_coach/features/social/shared_session/domain/entities/shared_session_start_args.dart';
+import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_creation_cubit.dart';
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/features/subscription/presentation/widgets/pro_upsell_sheet.dart';
@@ -43,6 +47,9 @@ class SocialPage extends StatelessWidget {
         BlocProvider<ProgressComparisonBloc>(
           create: (_) => getIt<ProgressComparisonBloc>(),
           // Event is dispatched from _ComparisonViewState.initState — NOT here
+        ),
+        BlocProvider<SharedSessionCreationCubit>(
+          create: (_) => getIt<SharedSessionCreationCubit>(),
         ),
       ],
       child: const _SocialView(),
@@ -105,13 +112,47 @@ class _SocialViewState extends State<_SocialView>
               ],
             ),
           ),
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              _FriendsTab(searchController: _searchController),
-              const FeedPage(),
-              const ProgressComparisonPage(),
-            ],
+          body: BlocListener<SharedSessionCreationCubit, SharedSessionCreationState>(
+            listener: (context, state) {
+              state.mapOrNull(
+                created: (s) {
+                  final authState = context.read<AuthBloc>().state;
+                  final socialState = context.read<SocialProfileBloc>().state;
+                  final userId = authState.mapOrNull(
+                    authenticated: (a) => a.user.id,
+                  );
+                  if (userId == null) return;
+                  final displayHandle = socialState.mapOrNull(
+                    loaded: (p) => p.profile.displayHandle,
+                  );
+                  context.push(
+                    AppRouter.sharedSessionLobby,
+                    extra: SharedSessionStartArgs(
+                      sessionId: s.sessionId,
+                      isHost: true,
+                      userId: userId,
+                      displayHandle: displayHandle,
+                      steps: const [],
+                      joinCode: s.joinCode,
+                    ),
+                  );
+                },
+                error: (_) {
+                  final l10n = AppLocalizations.of(context)!;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.sharedSessionCreateError)),
+                  );
+                },
+              );
+            },
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _FriendsTab(searchController: _searchController),
+                const FeedPage(),
+                const ProgressComparisonPage(),
+              ],
+            ),
           ),
         );
       },
@@ -218,6 +259,35 @@ class _FriendsList extends StatelessWidget {
             icon: const Icon(Icons.qr_code),
             label: Text(l10n.friendsShowQrButton),
             onPressed: () => context.push(AppRouter.socialQr),
+          ),
+          const SizedBox(height: 8),
+          BlocBuilder<SharedSessionCreationCubit, SharedSessionCreationState>(
+            builder: (context, creationState) {
+              final isCreating = creationState.mapOrNull(creating: (_) => true) ?? false;
+              return OutlinedButton.icon(
+                icon: isCreating
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.group_add),
+                label: Text(l10n.sharedSessionCreateButton),
+                onPressed: isCreating
+                    ? null
+                    : () {
+                        final authState = context.read<AuthBloc>().state;
+                        final userId = authState.mapOrNull(
+                          authenticated: (a) => a.user.id,
+                        );
+                        if (userId != null) {
+                          context
+                              .read<SharedSessionCreationCubit>()
+                              .create(hostUserId: userId);
+                        }
+                      },
+              );
+            },
           ),
           if (searchResult != null) ...[
             const Divider(height: 24),

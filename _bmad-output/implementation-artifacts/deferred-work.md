@@ -530,3 +530,10 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 - No dedup of duplicate `user_id` entries in presence mapping [realtime_gateway.dart:137-146] — pre-existing from gateway 19.1.
 - Out-of-range `stepIndex`/`elapsedSeconds` stored unclamped in state; clamp lives only in the view [shared_session_bloc.dart:155-172] — pre-existing pattern from 19.2.
 - Subscriptions not cancelled on `SessionEnded`, only on `close()` [shared_session_bloc.dart:176-182] — streams complete via `leaveChannel`; leak only on same-bloc re-use.
+
+## Deferred from: code review of story-20.1 (2026-06-25)
+
+- Follower can trigger `DeleteSharedSessionUseCase` via `SharedSessionCancelled` (no `_isHost` guard in `_onCancelled`). Host-guard explicitly assigned to Story 20.3; today's UI cancel is host-only and RLS rejects a non-host delete. [shared_session_bloc.dart:141-158]
+- Cancel emits `cancelled()` even when the delete fails or matches 0 rows. Documented design (Task 8.2f: navigate the host back regardless of delete outcome; worst case is a stale, RLS-protected `shared_sessions` row). Pairs with the cleanup item below. [shared_session_bloc.dart:152]
+- Stale `waiting` `shared_sessions` rows accumulate and the global UNIQUE `join_code` namespace is never freed (no expiry/cleanup job). Documented future work — cleanup Edge Function or row TTL. [supabase/migrations/0009_shared_sessions.sql]
+- Join-code collision detection relies on `e.toString().contains('unique'/'23505')`, which is brittle. Retry path probability is ~10⁻⁶; prefer matching `PostgrestException.code == '23505'` when this datasource is next touched. [shared_session_remote_data_source.dart:42-43,59-61]

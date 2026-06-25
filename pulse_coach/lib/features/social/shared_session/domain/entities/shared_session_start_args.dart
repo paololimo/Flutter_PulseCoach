@@ -10,6 +10,8 @@ class SharedSessionStartArgs {
   final String userId;
   final String? displayHandle;
   final List<ExerciseStep> steps;
+  // Non-null for host (set in Story 20.1); null for followers (set in Story 20.3)
+  final String? joinCode;
 
   const SharedSessionStartArgs({
     required this.sessionId,
@@ -17,5 +19,6 @@ class SharedSessionStartArgs {
     required this.userId,
     this.displayHandle,
     required this.steps,
+    this.joinCode,
   });
 }

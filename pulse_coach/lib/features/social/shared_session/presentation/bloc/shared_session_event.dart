@@ -14,6 +14,8 @@ final class SharedSessionJoined extends SharedSessionEvent {
   final String userId;
   final String? displayHandle;
   final List<ExerciseStep> steps;
+  // Non-null for host; null for followers (set in Story 20.3)
+  final String? joinCode;
 
   const SharedSessionJoined({
     required this.sessionId,
@@ -21,6 +23,7 @@ final class SharedSessionJoined extends SharedSessionEvent {
     required this.userId,
     this.displayHandle,
     required this.steps,
+    this.joinCode,
   });
 }
 
@@ -56,5 +59,15 @@ final class PresenceStateReceived extends SharedSessionEvent {
 final class BroadcastEventReceived extends SharedSessionEvent {
   final BroadcastEvent broadcastEvent;
   const BroadcastEventReceived(this.broadcastEvent);
+}
+
+/// Host refreshes the join code without creating a new session (AC3).
+final class SharedSessionJoinCodeRefreshed extends SharedSessionEvent {
+  const SharedSessionJoinCodeRefreshed();
+}
+
+/// Host cancels the lobby before anyone joins (AC5).
+final class SharedSessionCancelled extends SharedSessionEvent {
+  const SharedSessionCancelled();
 }
 

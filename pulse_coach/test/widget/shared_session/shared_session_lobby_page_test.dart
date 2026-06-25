@@ -22,6 +22,7 @@ const _kSteps = [
 Widget _buildTestWidget(
   SharedSessionState state, {
   Size viewportSize = const Size(390, 844),
+  Locale? locale,
 }) {
   final mockBloc = MockSharedSessionBloc();
   when(mockBloc.state).thenReturn(state);
@@ -31,6 +32,7 @@ Widget _buildTestWidget(
   return MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
+    locale: locale,
     theme: AppTheme.darkTheme,
     home: MediaQuery(
       data: MediaQueryData(size: viewportSize),
@@ -119,6 +121,66 @@ void main() {
         expect(find.byType(SingleChildScrollView), findsOneWidget);
         // Should render without overflow
         expect(tester.takeException(), isNull);
+      },
+    );
+
+    // AC4: 5-minute wait message (no countdown), host-only.
+    testWidgets(
+      '20.1-WIDGET-005: host lobby shows "no one yet" after 5 min (AC4)',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildTestWidget(
+            const SharedSessionState.lobby(
+              participants: [
+                ParticipantPresence(userId: 'host', displayHandle: 'alice'),
+              ],
+              isHost: true,
+              steps: _kSteps,
+              joinCode: 'ABC123',
+            ),
+            locale: const Locale('it'),
+          ),
+        );
+        await tester.pump();
+        // Not shown before the 5-minute window elapses (no countdown pressure).
+        expect(
+          find.text('Nessuno ancora — condividi il codice'),
+          findsNothing,
+        );
+
+        await tester.pump(const Duration(minutes: 5));
+        expect(
+          find.text('Nessuno ancora — condividi il codice'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      '20.1-WIDGET-006: "no one yet" stays hidden when a participant is present '
+      '(AC4)',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildTestWidget(
+            const SharedSessionState.lobby(
+              participants: [
+                ParticipantPresence(userId: 'host', displayHandle: 'alice'),
+                ParticipantPresence(userId: 'f', displayHandle: 'bob'),
+              ],
+              isHost: true,
+              steps: _kSteps,
+              joinCode: 'ABC123',
+            ),
+            locale: const Locale('it'),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(minutes: 5));
+        // Someone already joined → the nudge must never appear.
+        expect(
+          find.text('Nessuno ancora — condividi il codice'),
+          findsNothing,
+        );
       },
     );
 

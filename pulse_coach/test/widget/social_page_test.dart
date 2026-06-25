@@ -22,6 +22,7 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/social_pro
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_event.dart';
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_state.dart';
 import 'package:pulse_coach/features/social/friends/presentation/pages/social_page.dart';
+import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_creation_cubit.dart';
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
@@ -80,6 +81,8 @@ void main() {
       getIt.registerFactory<SocialProfileBloc>(() => fakeSocial);
       getIt.registerFactory<FeedBloc>(() => fakeFeed);
       getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
+      getIt.registerFactory<SharedSessionCreationCubit>(
+          () => _FakeSharedSessionCreationCubit());
 
       final sub = _FakeSubscriptionBloc(
         const SubscriptionState.loaded(tier: SubscriptionTier.pro),
@@ -94,6 +97,53 @@ void main() {
         find.text('Amici e social sono funzionalità Pro.'),
         findsNothing,
       );
+    },
+  );
+
+  testWidgets(
+    '20.1-WIDGET-004: SocialPage friends tab "creating" state — no overflow '
+    '360×640 (E18R-1)',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final fakeFriends = _FakeFriendsBloc(
+        const FriendsState.loaded(
+          friends: [],
+          pendingRequests: PendingRequests(received: [], sent: []),
+        ),
+      );
+      final fakeSocial = _FakeSocialProfileBloc(
+        const SocialProfileState.initial(),
+      );
+      final fakeFeed = _FakeFeedBloc(const FeedState.initial());
+      final fakeComparison = _FakeProgressComparisonBloc(
+        const ProgressComparisonState.initial(),
+      );
+
+      getIt.registerFactory<FriendsBloc>(() => fakeFriends);
+      getIt.registerFactory<SocialProfileBloc>(() => fakeSocial);
+      getIt.registerFactory<FeedBloc>(() => fakeFeed);
+      getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
+      getIt.registerFactory<SharedSessionCreationCubit>(
+        () => _FakeSharedSessionCreationCubit(
+          const SharedSessionCreationState.creating(),
+        ),
+      );
+
+      final sub = _FakeSubscriptionBloc(
+        const SubscriptionState.loaded(tier: SubscriptionTier.pro),
+      );
+
+      await tester.pumpWidget(_wrapWithSub(sub));
+      await tester.pump();
+
+      // The creating affordance is an inline spinner inside the
+      // "Sessione condivisa" button; the friends list must not overflow.
+      expect(find.text('Sessione condivisa'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
+      expect(tester.takeException(), isNull);
     },
   );
 
@@ -120,6 +170,8 @@ void main() {
       getIt.registerFactory<SocialProfileBloc>(() => fakeSocial);
       getIt.registerFactory<FeedBloc>(() => fakeFeed);
       getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
+      getIt.registerFactory<SharedSessionCreationCubit>(
+          () => _FakeSharedSessionCreationCubit());
 
       final sub = _FakeSubscriptionBloc(
         const SubscriptionState.loaded(tier: SubscriptionTier.pro),
@@ -239,6 +291,29 @@ class _FakeProgressComparisonBloc extends Fake
 
   @override
   void add(ProgressComparisonEvent event) {}
+
+  @override
+  Future<void> close() async {}
+}
+
+class _FakeSharedSessionCreationCubit extends Fake
+    implements SharedSessionCreationCubit {
+  final SharedSessionCreationState _state;
+  _FakeSharedSessionCreationCubit([
+    this._state = const SharedSessionCreationState.initial(),
+  ]);
+
+  @override
+  SharedSessionCreationState get state => _state;
+
+  @override
+  Stream<SharedSessionCreationState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  Future<void> create({required String hostUserId}) async {}
 
   @override
   Future<void> close() async {}

@@ -243,8 +243,22 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/social_pro
     as _i477;
 import 'package:pulse_coach/features/social/friends/presentation/bloc/visibility_cubit.dart'
     as _i613;
+import 'package:pulse_coach/features/social/shared_session/data/datasources/shared_session_remote_data_source.dart'
+    as _i473;
+import 'package:pulse_coach/features/social/shared_session/data/repositories/shared_session_repository_impl.dart'
+    as _i195;
+import 'package:pulse_coach/features/social/shared_session/domain/repositories/shared_session_repository.dart'
+    as _i123;
+import 'package:pulse_coach/features/social/shared_session/domain/usecases/create_shared_session_use_case.dart'
+    as _i532;
+import 'package:pulse_coach/features/social/shared_session/domain/usecases/delete_shared_session_use_case.dart'
+    as _i102;
+import 'package:pulse_coach/features/social/shared_session/domain/usecases/refresh_join_code_use_case.dart'
+    as _i1039;
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_bloc.dart'
     as _i596;
+import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_creation_cubit.dart'
+    as _i606;
 import 'package:pulse_coach/features/subscription/data/repositories/entitlement_repository_impl.dart'
     as _i705;
 import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_service.dart'
@@ -413,6 +427,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i42.SupabaseClientProvider>(),
       ),
     );
+    gh.factory<_i473.SharedSessionRemoteDataSource>(
+      () => _i473.SharedSessionRemoteDataSource(
+        gh<_i42.SupabaseClientProvider>(),
+      ),
+    );
     gh.factory<_i1070.HealthRepository>(
       () => _i1067.HealthRepositoryImpl(
         gh<_i311.HealthDataSource>(),
@@ -421,6 +440,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i491.TodaySessionCubit>(
       () => _i491.TodaySessionCubit(gh<_i30.SessionLogsDao>()),
+    );
+    gh.factory<_i123.SharedSessionRepository>(
+      () => _i195.SharedSessionRepositoryImpl(
+        gh<_i473.SharedSessionRemoteDataSource>(),
+      ),
     );
     gh.factory<_i160.LocationService>(
       () => _i160.LocationService(gh<_i973.GeolocatorWrapper>()),
@@ -448,6 +472,17 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i91.ExerciseLocalDataSource>(
       () => _i91.ExerciseLocalDataSource(gh<_i224.ExerciseCacheDao>()),
+    );
+    gh.factory<_i532.CreateSharedSessionUseCase>(
+      () =>
+          _i532.CreateSharedSessionUseCase(gh<_i123.SharedSessionRepository>()),
+    );
+    gh.factory<_i102.DeleteSharedSessionUseCase>(
+      () =>
+          _i102.DeleteSharedSessionUseCase(gh<_i123.SharedSessionRepository>()),
+    );
+    gh.factory<_i1039.RefreshJoinCodeUseCase>(
+      () => _i1039.RefreshJoinCodeUseCase(gh<_i123.SharedSessionRepository>()),
     );
     gh.factory<_i351.FeedRepository>(
       () => _i213.FeedRepositoryImpl(gh<_i539.FeedRemoteDataSource>()),
@@ -536,7 +571,11 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
     );
     gh.factory<_i596.SharedSessionBloc>(
-      () => _i596.SharedSessionBloc(gh<_i281.RealtimeGateway>()),
+      () => _i596.SharedSessionBloc(
+        gh<_i281.RealtimeGateway>(),
+        gh<_i102.DeleteSharedSessionUseCase>(),
+        gh<_i1039.RefreshJoinCodeUseCase>(),
+      ),
     );
     gh.factory<_i1023.GetSocialProfileUseCase>(
       () => _i1023.GetSocialProfileUseCase(gh<_i502.SocialProfileRepository>()),
@@ -564,6 +603,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i574.SyncExerciseCatalog>(
       () => _i574.SyncExerciseCatalog(gh<_i207.ExerciseRepository>()),
+    );
+    gh.factory<_i606.SharedSessionCreationCubit>(
+      () => _i606.SharedSessionCreationCubit(
+        gh<_i532.CreateSharedSessionUseCase>(),
+      ),
     );
     gh.factory<_i439.ProgressGatingCubit>(
       () => _i439.ProgressGatingCubit(gh<_i589.GetInstallCohortUseCase>()),

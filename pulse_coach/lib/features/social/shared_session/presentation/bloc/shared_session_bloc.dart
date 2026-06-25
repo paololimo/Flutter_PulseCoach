@@ -5,6 +5,8 @@ import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/cloud/realtime_gateway.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/broadcast_event.dart';
+import 'package:pulse_coach/features/social/shared_session/domain/usecases/delete_shared_session_use_case.dart';
+import 'package:pulse_coach/features/social/shared_session/domain/usecases/refresh_join_code_use_case.dart';
 
 import 'shared_session_event.dart';
 import 'shared_session_state.dart';
@@ -12,24 +14,34 @@ import 'shared_session_state.dart';
 @injectable
 class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
   final RealtimeGateway _gateway;
+  final DeleteSharedSessionUseCase _deleteUseCase;
+  final RefreshJoinCodeUseCase _refreshUseCase;
 
   StreamSubscription<dynamic>? _broadcastSub;
   StreamSubscription<dynamic>? _presenceSub;
 
-  // True only once this bloc has successfully taken the gateway channel.
   bool _joined = false;
 
   String? _myUserId;
   String? _myDisplayHandle;
   bool _isHost = false;
 
-  SharedSessionBloc(this._gateway) : super(const SharedSessionState.initial()) {
+  // Set on join; used for cancel/refresh operations
+  String? _sessionId;
+
+  SharedSessionBloc(
+    this._gateway,
+    this._deleteUseCase,
+    this._refreshUseCase,
+  ) : super(const SharedSessionState.initial()) {
     on<SharedSessionJoined>(_onJoined);
     on<SessionStartTapped>(_onStartTapped);
     on<HostStepAdvanced>(_onHostStepAdvanced);
     on<SessionEndRequested>(_onSessionEndRequested);
     on<PresenceStateReceived>(_onPresenceReceived);
     on<BroadcastEventReceived>(_onBroadcastReceived);
+    on<SharedSessionJoinCodeRefreshed>(_onJoinCodeRefreshed);
+    on<SharedSessionCancelled>(_onCancelled);
   }
 
   Future<void> _onJoined(
@@ -38,6 +50,7 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
     _myUserId = event.userId;
     _myDisplayHandle = event.displayHandle;
     _isHost = event.isHost;
+    _sessionId = event.sessionId;
     try {
       await _gateway.joinChannel(event.sessionId);
       _joined = true;
@@ -56,6 +69,7 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
         participants: const [],
         isHost: event.isHost,
         steps: event.steps,
+        joinCode: event.joinCode,
       ));
     } catch (e) {
       emit(SharedSessionState.error(
@@ -106,6 +120,51 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
     }
   }
 
+  Future<void> _onJoinCodeRefreshed(
+      SharedSessionJoinCodeRefreshed event,
+      Emitter<SharedSessionState> emit) async {
+    // Refresh is only meaningful from the lobby; ignore it from any other state
+    // so the DB code is never rotated while no one is showing it.
+    final inLobby = state.mapOrNull(lobby: (_) => true) ?? false;
+    if (!inLobby) return;
+    final sid = _sessionId;
+    if (sid == null) return;
+    final result = await _refreshUseCase.call(sessionId: sid);
+    result.fold(
+      (_) {
+        // Keep the existing code visible and bump a one-shot tick so the page
+        // can surface a "refresh failed" SnackBar without leaving the lobby.
+        state.mapOrNull(
+          lobby: (s) =>
+              emit(s.copyWith(refreshErrorTick: s.refreshErrorTick + 1)),
+        );
+      },
+      (newCode) {
+        state.mapOrNull(
+          lobby: (s) => emit(s.copyWith(joinCode: newCode)),
+        );
+      },
+    );
+  }
+
+  Future<void> _onCancelled(
+      SharedSessionCancelled event, Emitter<SharedSessionState> emit) async {
+    // Cancel is valid before/at the lobby only. Once in-session, teardown is
+    // owned by SessionEndRequested (which broadcasts session_ended); deleting
+    // the row here would strand followers without an end signal.
+    final inSession = state.mapOrNull(inSession: (_) => true) ?? false;
+    if (inSession) return;
+    final sid = _sessionId;
+    if (sid != null) {
+      await _deleteUseCase.call(sessionId: sid);
+    }
+    if (_joined) {
+      _joined = false;
+      unawaited(_gateway.leaveChannel());
+    }
+    emit(const SharedSessionState.cancelled());
+  }
+
   void _onPresenceReceived(
       PresenceStateReceived event, Emitter<SharedSessionState> emit) {
     state.mapOrNull(
@@ -115,7 +174,6 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
         final prev = s.participants;
         final next = event.presenceState.participants;
 
-        // AC1: detect dropped participants for the inline note
         final dropped = prev
             .where((p) => !next.any((n) => n.userId == p.userId))
             .toList();
@@ -123,13 +181,6 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
             ? (dropped.first.displayHandle ?? dropped.first.userId)
             : null;
 
-        // AC3 + hardening: elect a new host whenever no participant is flagged
-        // host. This covers a plain host-drop AND the reconnect case where the
-        // dropped host was never in `prev` (a follower that snapped to inSession
-        // with empty participants). The lexicographically-first remaining userId
-        // wins and re-tracks presence with isHost:true, so peers learn the new
-        // host — which keeps a subsequent transfer detectable if the promoted
-        // host later drops too.
         if (!_isHost && next.isNotEmpty && !next.any((p) => p.isHost)) {
           final sortedIds = next.map((p) => p.userId).toList()..sort();
           if (sortedIds.first == _myUserId) {
@@ -169,11 +220,9 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
         state.mapOrNull(
           inSession: (s) {
             if (s.isHost) return;
-            // AC1: clear droppedHandle on step advance (note is transient)
             emit(s.copyWith(
                 stepIndex: idx, elapsedSeconds: elapsed, droppedHandle: null));
           },
-          // AC2: reconnect path — follower missed session_started or re-joined mid-session
           lobby: (s) {
             if (!s.isHost) {
               emit(SharedSessionState.inSession(
@@ -187,7 +236,6 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
           },
         );
       case SessionEnded():
-        // AC4: terminal state — leaves channel and emits sessionEnded()
         if (_joined) {
           _joined = false;
           unawaited(_gateway.leaveChannel());

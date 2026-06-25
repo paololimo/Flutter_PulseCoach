@@ -351,6 +351,15 @@
     }
   },
   "sharedSessionEnded": "Session complete",
+  "sharedSessionCreateButton": "Shared Session",
+  "sharedSessionRefreshCode": "Refresh code",
+  "sharedSessionNoOneYet": "No one yet — share the code",
+  "sharedSessionCancelDialogTitle": "Cancel session?",
+  "sharedSessionCancelDialogBody": "The session will be cancelled and the join code will be invalidated.",
+  "sharedSessionCancelDialogKeep": "Keep waiting",
+  "sharedSessionCancelDialogConfirm": "Cancel",
+  "sharedSessionCreateError": "Could not create session. Please try again.",
+  "sharedSessionRefreshError": "Could not refresh the code. Please try again.",
 
   "settingsLanguageSection": "Language",
   "settingsLanguageItalian": "Italiano",

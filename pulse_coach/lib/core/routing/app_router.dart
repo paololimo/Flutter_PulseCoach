@@ -117,6 +117,7 @@ class AppRouter {
                 userId: extra.userId,
                 displayHandle: extra.displayHandle,
                 steps: extra.steps,
+                joinCode: extra.joinCode,
               )),
             child: const SharedSessionLobbyPage(),
           );

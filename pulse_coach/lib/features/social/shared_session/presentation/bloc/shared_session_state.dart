@@ -15,6 +15,10 @@ sealed class SharedSessionState with _$SharedSessionState {
     required List<ParticipantPresence> participants,
     required bool isHost,
     required List<ExerciseStep> steps,
+    String? joinCode,
+    // One-shot counter bumped each time a join-code refresh fails, so the page
+    // can show a transient SnackBar without leaving the lobby.
+    @Default(0) int refreshErrorTick,
   }) = _Lobby;
 
   const factory SharedSessionState.inSession({
@@ -31,4 +35,6 @@ sealed class SharedSessionState with _$SharedSessionState {
   }) = _Error;
 
   const factory SharedSessionState.sessionEnded() = _SessionEnded;
+
+  const factory SharedSessionState.cancelled() = _Cancelled;
 }
