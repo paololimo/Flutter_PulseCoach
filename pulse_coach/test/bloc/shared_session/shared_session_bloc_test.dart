@@ -56,7 +56,8 @@ void main() {
     when(mockGateway.joinChannel(any)).thenAnswer((_) async {});
     when(mockGateway.trackPresence(
             userId: anyNamed('userId'),
-            displayHandle: anyNamed('displayHandle')))
+            displayHandle: anyNamed('displayHandle'),
+            isHost: anyNamed('isHost')))
         .thenAnswer((_) async {});
     when(mockGateway.leaveChannel()).thenAnswer((_) async {});
     when(mockGateway.sendBroadcast(

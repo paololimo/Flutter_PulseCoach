@@ -341,5 +341,14 @@
   "sharedSessionLobbyWaiting": "In attesa dei partecipanti...",
   "sharedSessionStartButton": "Avvia",
   "sharedSessionWaitingForHost": "In attesa che l'host avvii la sessione...",
-  "sharedSessionErrorGeneric": "Errore di connessione. Riprova."
+  "sharedSessionErrorGeneric": "Errore di connessione. Riprova.",
+  "sharedSessionParticipantDropped": "{handle} si è disconnesso",
+  "@sharedSessionParticipantDropped": {
+    "placeholders": {
+      "handle": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedSessionEnded": "Sessione terminata"
 }

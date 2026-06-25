@@ -37,6 +37,13 @@ final class HostStepAdvanced extends SharedSessionEvent {
   const HostStepAdvanced({required this.stepIndex, required this.elapsedSeconds});
 }
 
+/// Host signals that the session is complete (all steps done or manual end).
+/// Only the host dispatches this; the bloc guards against non-host dispatch.
+/// Story 20.4 wires the InSessionCubit's completion callback to dispatch this.
+final class SessionEndRequested extends SharedSessionEvent {
+  const SessionEndRequested();
+}
+
 // Bloc-internal events — must be in the same file as the sealed base class.
 // Not part of the public API; dispatched only from stream subscriptions inside
 // SharedSessionBloc.

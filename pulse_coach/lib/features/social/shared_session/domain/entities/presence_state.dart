@@ -14,5 +14,6 @@ abstract class ParticipantPresence with _$ParticipantPresence {
   const factory ParticipantPresence({
     required String userId,
     String? displayHandle,
+    @Default(false) bool isHost,
   }) = _ParticipantPresence;
 }

@@ -111,6 +111,7 @@ class RealtimeGateway {
   Future<void> trackPresence({
     required String userId,
     String? displayHandle,
+    bool isHost = false,
   }) async {
     final channel = _channel;
     if (channel == null) {
@@ -119,6 +120,7 @@ class RealtimeGateway {
     await channel.track({
       'user_id': userId,
       'display_handle': displayHandle,
+      'is_host': isHost,
     });
   }
 
@@ -135,9 +137,11 @@ class RealtimeGateway {
     final participants = rawState.expand((s) => s.presences).map((p) {
       final userId = p.payload['user_id'];
       final displayHandle = p.payload['display_handle'];
+      final isHost = p.payload['is_host'];
       return ParticipantPresence(
         userId: userId is String ? userId : '',
         displayHandle: displayHandle is String ? displayHandle : null,
+        isHost: isHost is bool && isHost,
       );
     }).toList();
     _presenceController?.add(PresenceState(participants: participants));

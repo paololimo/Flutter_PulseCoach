@@ -86,11 +86,13 @@ class MockRealtimeGateway extends _i1.Mock implements _i2.RealtimeGateway {
   _i3.Future<void> trackPresence({
     required String? userId,
     String? displayHandle,
+    bool? isHost = false,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#trackPresence, [], {
               #userId: userId,
               #displayHandle: displayHandle,
+              #isHost: isHost,
             }),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),

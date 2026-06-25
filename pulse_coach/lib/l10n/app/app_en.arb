@@ -341,5 +341,14 @@
   "sharedSessionLobbyWaiting": "Waiting for participants...",
   "sharedSessionStartButton": "Start",
   "sharedSessionWaitingForHost": "Waiting for host to start...",
-  "sharedSessionErrorGeneric": "Connection error. Please try again."
+  "sharedSessionErrorGeneric": "Connection error. Please try again.",
+  "sharedSessionParticipantDropped": "{handle} disconnected",
+  "@sharedSessionParticipantDropped": {
+    "placeholders": {
+      "handle": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedSessionEnded": "Session complete"
 }

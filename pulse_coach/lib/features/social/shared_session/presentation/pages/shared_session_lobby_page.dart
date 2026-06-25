@@ -31,8 +31,10 @@ class SharedSessionLobbyPage extends StatelessWidget {
             stepIndex: s.stepIndex,
             elapsedSeconds: s.elapsedSeconds,
             steps: s.steps,
+            droppedHandle: s.droppedHandle,
           ),
           error: (s) => _ErrorView(failure: s.failure),
+          sessionEnded: (_) => const _SessionEndedView(),
         );
       },
     );
@@ -177,22 +179,27 @@ class _SharedInSessionView extends StatelessWidget {
   final int stepIndex;
   final int elapsedSeconds;
   final List<ExerciseStep> steps;
+  final String? droppedHandle;
 
   const _SharedInSessionView({
     required this.stepIndex,
     required this.elapsedSeconds,
     required this.steps,
+    this.droppedHandle,
   });
 
   @override
   Widget build(BuildContext context) {
     final pulseTheme = Theme.of(context).extension<PulseCoachTheme>()!;
     final l10n = AppLocalizations.of(context)!;
-    // Defensive: steps is required by contract, but guard against an empty list
-    // (clamp(0, -1) throws) and against an out-of-range stepIndex from a
-    // malformed broadcast (label / progress would otherwise go negative or
-    // divide by zero).
-    if (steps.isEmpty) return const SizedBox.shrink();
+
+    if (steps.isEmpty) {
+      return Scaffold(
+        backgroundColor: pulseTheme.surface,
+        body: const SizedBox.shrink(),
+      );
+    }
+
     final safeIndex = stepIndex.clamp(0, steps.length - 1);
     final step = steps[safeIndex];
     final totalSteps = steps.length;
@@ -207,7 +214,6 @@ class _SharedInSessionView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // AC5 — liveRegion + explicit label for AT announcements.
               Semantics(
                 liveRegion: true,
                 label: step.title,
@@ -248,6 +254,17 @@ class _SharedInSessionView extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
+              // AC1: inline drop-out note (E18R-2: localized IT, no raw string)
+              if (droppedHandle != null) ...[
+                const SizedBox(height: 24),
+                Text(
+                  l10n.sharedSessionParticipantDropped(droppedHandle!),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: pulseTheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ],
           ),
         ),
@@ -277,12 +294,36 @@ class _ErrorView extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           // E18R-2 + E18R-CB2: NO raw failure.message passthrough.
-          // Use a localized IT string for all Failure types.
           child: Text(
             l10n.sharedSessionErrorGeneric,
             style: AppTextStyles.body.copyWith(
               color: pulseTheme.onSurface,
             ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// AC4: terminal state shown when session_ended broadcast received.
+// Story 20.4 will wire RPE navigation via a BlocListener on sessionEnded().
+class _SessionEndedView extends StatelessWidget {
+  const _SessionEndedView();
+
+  @override
+  Widget build(BuildContext context) {
+    final pulseTheme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: pulseTheme.surface,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            l10n.sharedSessionEnded,
+            style: AppTextStyles.h2.copyWith(color: pulseTheme.onSurface),
             textAlign: TextAlign.center,
           ),
         ),

@@ -521,3 +521,12 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 - Presence robustness cluster: presence drops during `inSession` ignored (stale count / solo continuation); unparseable `step_advanced` payloads silently dropped (follower drift); duplicate participant identities can inflate the `>=2` start gate (19.3 drop-out tolerance + presence dedup).
 - `_onHostStepAdvanced` swallows broadcast failure with empty `catch (e)` (no log/telemetry) — observability; 19.3 handles persistent failure.
 - `_onJoined` subscribes to streams only after `await joinChannel`/`trackPresence` — narrow lost-event window + partial-setup dangling channel on `trackPresence` throw (minor; host subscribes before any start in practice).
+
+## Deferred from: code review of story-19.3 (2026-06-25)
+
+- `droppedHandle` surfaces only one participant on simultaneous multi-drop [shared_session_bloc.dart:120-122] — explicitly accepted in story "Known Post-19.3 Gaps".
+- Host's drop note persists across step changes — host ignores its own `step_advanced` echo so never clears `droppedHandle` [shared_session_bloc.dart:120 vs 158-161]; minor UX inconsistency vs follower.
+- `SessionEnded` honored in any state can mask an `error` state or skip the lobby [shared_session_bloc.dart:176-182] — semi-per-spec (AC4: any participant receiving sessionEnded emits sessionEnded).
+- No dedup of duplicate `user_id` entries in presence mapping [realtime_gateway.dart:137-146] — pre-existing from gateway 19.1.
+- Out-of-range `stepIndex`/`elapsedSeconds` stored unclamped in state; clamp lives only in the view [shared_session_bloc.dart:155-172] — pre-existing pattern from 19.2.
+- Subscriptions not cancelled on `SessionEnded`, only on `close()` [shared_session_bloc.dart:176-182] — streams complete via `leaveChannel`; leak only on same-bloc re-use.

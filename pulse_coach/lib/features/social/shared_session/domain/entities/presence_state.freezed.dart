@@ -277,7 +277,7 @@ as List<ParticipantPresence>,
 /// @nodoc
 mixin _$ParticipantPresence {
 
- String get userId; String? get displayHandle;
+ String get userId; String? get displayHandle; bool get isHost;
 /// Create a copy of ParticipantPresence
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -288,16 +288,16 @@ $ParticipantPresenceCopyWith<ParticipantPresence> get copyWith => _$ParticipantP
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ParticipantPresence&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayHandle, displayHandle) || other.displayHandle == displayHandle));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ParticipantPresence&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayHandle, displayHandle) || other.displayHandle == displayHandle)&&(identical(other.isHost, isHost) || other.isHost == isHost));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,userId,displayHandle);
+int get hashCode => Object.hash(runtimeType,userId,displayHandle,isHost);
 
 @override
 String toString() {
-  return 'ParticipantPresence(userId: $userId, displayHandle: $displayHandle)';
+  return 'ParticipantPresence(userId: $userId, displayHandle: $displayHandle, isHost: $isHost)';
 }
 
 
@@ -308,7 +308,7 @@ abstract mixin class $ParticipantPresenceCopyWith<$Res>  {
   factory $ParticipantPresenceCopyWith(ParticipantPresence value, $Res Function(ParticipantPresence) _then) = _$ParticipantPresenceCopyWithImpl;
 @useResult
 $Res call({
- String userId, String? displayHandle
+ String userId, String? displayHandle, bool isHost
 });
 
 
@@ -325,11 +325,12 @@ class _$ParticipantPresenceCopyWithImpl<$Res>
 
 /// Create a copy of ParticipantPresence
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? displayHandle = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? displayHandle = freezed,Object? isHost = null,}) {
   return _then(_self.copyWith(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,displayHandle: freezed == displayHandle ? _self.displayHandle : displayHandle // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isHost: null == isHost ? _self.isHost : isHost // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -414,10 +415,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String? displayHandle)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String? displayHandle,  bool isHost)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ParticipantPresence() when $default != null:
-return $default(_that.userId,_that.displayHandle);case _:
+return $default(_that.userId,_that.displayHandle,_that.isHost);case _:
   return orElse();
 
 }
@@ -435,10 +436,10 @@ return $default(_that.userId,_that.displayHandle);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String? displayHandle)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String? displayHandle,  bool isHost)  $default,) {final _that = this;
 switch (_that) {
 case _ParticipantPresence():
-return $default(_that.userId,_that.displayHandle);case _:
+return $default(_that.userId,_that.displayHandle,_that.isHost);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -455,10 +456,10 @@ return $default(_that.userId,_that.displayHandle);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String? displayHandle)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String? displayHandle,  bool isHost)?  $default,) {final _that = this;
 switch (_that) {
 case _ParticipantPresence() when $default != null:
-return $default(_that.userId,_that.displayHandle);case _:
+return $default(_that.userId,_that.displayHandle,_that.isHost);case _:
   return null;
 
 }
@@ -470,11 +471,12 @@ return $default(_that.userId,_that.displayHandle);case _:
 
 
 class _ParticipantPresence implements ParticipantPresence {
-  const _ParticipantPresence({required this.userId, this.displayHandle});
+  const _ParticipantPresence({required this.userId, this.displayHandle, this.isHost = false});
   
 
 @override final  String userId;
 @override final  String? displayHandle;
+@override@JsonKey() final  bool isHost;
 
 /// Create a copy of ParticipantPresence
 /// with the given fields replaced by the non-null parameter values.
@@ -486,16 +488,16 @@ _$ParticipantPresenceCopyWith<_ParticipantPresence> get copyWith => __$Participa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ParticipantPresence&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayHandle, displayHandle) || other.displayHandle == displayHandle));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ParticipantPresence&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayHandle, displayHandle) || other.displayHandle == displayHandle)&&(identical(other.isHost, isHost) || other.isHost == isHost));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,userId,displayHandle);
+int get hashCode => Object.hash(runtimeType,userId,displayHandle,isHost);
 
 @override
 String toString() {
-  return 'ParticipantPresence(userId: $userId, displayHandle: $displayHandle)';
+  return 'ParticipantPresence(userId: $userId, displayHandle: $displayHandle, isHost: $isHost)';
 }
 
 
@@ -506,7 +508,7 @@ abstract mixin class _$ParticipantPresenceCopyWith<$Res> implements $Participant
   factory _$ParticipantPresenceCopyWith(_ParticipantPresence value, $Res Function(_ParticipantPresence) _then) = __$ParticipantPresenceCopyWithImpl;
 @override @useResult
 $Res call({
- String userId, String? displayHandle
+ String userId, String? displayHandle, bool isHost
 });
 
 
@@ -523,11 +525,12 @@ class __$ParticipantPresenceCopyWithImpl<$Res>
 
 /// Create a copy of ParticipantPresence
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? displayHandle = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? displayHandle = freezed,Object? isHost = null,}) {
   return _then(_ParticipantPresence(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,displayHandle: freezed == displayHandle ? _self.displayHandle : displayHandle // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isHost: null == isHost ? _self.isHost : isHost // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

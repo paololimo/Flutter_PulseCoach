@@ -22,9 +22,13 @@ sealed class SharedSessionState with _$SharedSessionState {
     required int elapsedSeconds,
     required bool isHost,
     required List<ExerciseStep> steps,
+    @Default([]) List<ParticipantPresence> participants,
+    String? droppedHandle,
   }) = _InSession;
 
   const factory SharedSessionState.error({
     required Failure failure,
   }) = _Error;
+
+  const factory SharedSessionState.sessionEnded() = _SessionEnded;
 }

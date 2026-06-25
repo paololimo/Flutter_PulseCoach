@@ -17,14 +17,17 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
   StreamSubscription<dynamic>? _presenceSub;
 
   // True only once this bloc has successfully taken the gateway channel.
-  // Guards teardown so a bloc that never joined (or failed to join) does not
-  // leave a channel owned by another bloc instance.
   bool _joined = false;
+
+  String? _myUserId;
+  String? _myDisplayHandle;
+  bool _isHost = false;
 
   SharedSessionBloc(this._gateway) : super(const SharedSessionState.initial()) {
     on<SharedSessionJoined>(_onJoined);
     on<SessionStartTapped>(_onStartTapped);
     on<HostStepAdvanced>(_onHostStepAdvanced);
+    on<SessionEndRequested>(_onSessionEndRequested);
     on<PresenceStateReceived>(_onPresenceReceived);
     on<BroadcastEventReceived>(_onBroadcastReceived);
   }
@@ -32,12 +35,16 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
   Future<void> _onJoined(
       SharedSessionJoined event, Emitter<SharedSessionState> emit) async {
     emit(const SharedSessionState.loading());
+    _myUserId = event.userId;
+    _myDisplayHandle = event.displayHandle;
+    _isHost = event.isHost;
     try {
       await _gateway.joinChannel(event.sessionId);
       _joined = true;
       await _gateway.trackPresence(
         userId: event.userId,
         displayHandle: event.displayHandle,
+        isHost: event.isHost,
       );
       _broadcastSub = _gateway.broadcastEvents.listen(
         (e) => add(BroadcastEventReceived(e)),
@@ -85,9 +92,17 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
       );
     } catch (e) {
       // Non-fatal: broadcast failure for step doesn't end the session.
-      // The host's local session continues; followers experience a sync gap
-      // that will be corrected on the next step_advanced broadcast.
-      // Story 19.3 (drop-out tolerance) handles persistent broadcast failure.
+    }
+  }
+
+  Future<void> _onSessionEndRequested(
+      SessionEndRequested event, Emitter<SharedSessionState> emit) async {
+    final inSessionState = state.mapOrNull(inSession: (s) => s);
+    if (inSessionState == null || !inSessionState.isHost) return;
+    try {
+      await _gateway.sendBroadcast(event: 'session_ended', payload: {});
+    } catch (e) {
+      // Non-fatal: followers detect the host dropped via Presence (AC3).
     }
   }
 
@@ -96,7 +111,43 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
     state.mapOrNull(
       lobby: (s) =>
           emit(s.copyWith(participants: event.presenceState.participants)),
-      inSession: (s) => null,
+      inSession: (s) {
+        final prev = s.participants;
+        final next = event.presenceState.participants;
+
+        // AC1: detect dropped participants for the inline note
+        final dropped = prev
+            .where((p) => !next.any((n) => n.userId == p.userId))
+            .toList();
+        final droppedHandle = dropped.isNotEmpty
+            ? (dropped.first.displayHandle ?? dropped.first.userId)
+            : null;
+
+        // AC3 + hardening: elect a new host whenever no participant is flagged
+        // host. This covers a plain host-drop AND the reconnect case where the
+        // dropped host was never in `prev` (a follower that snapped to inSession
+        // with empty participants). The lexicographically-first remaining userId
+        // wins and re-tracks presence with isHost:true, so peers learn the new
+        // host — which keeps a subsequent transfer detectable if the promoted
+        // host later drops too.
+        if (!_isHost && next.isNotEmpty && !next.any((p) => p.isHost)) {
+          final sortedIds = next.map((p) => p.userId).toList()..sort();
+          if (sortedIds.first == _myUserId) {
+            _isHost = true;
+            unawaited(_gateway.trackPresence(
+              userId: _myUserId!,
+              displayHandle: _myDisplayHandle,
+              isHost: true,
+            ));
+          }
+        }
+
+        emit(s.copyWith(
+          participants: next,
+          isHost: _isHost,
+          droppedHandle: droppedHandle,
+        ));
+      },
     );
   }
 
@@ -111,21 +162,37 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
             elapsedSeconds: 0,
             isHost: s.isHost,
             steps: s.steps,
+            participants: s.participants,
           )),
         );
       case StepAdvanced(stepIndex: final idx, elapsedSeconds: final elapsed):
         state.mapOrNull(
           inSession: (s) {
             if (s.isHost) return;
-            emit(s.copyWith(stepIndex: idx, elapsedSeconds: elapsed));
+            // AC1: clear droppedHandle on step advance (note is transient)
+            emit(s.copyWith(
+                stepIndex: idx, elapsedSeconds: elapsed, droppedHandle: null));
+          },
+          // AC2: reconnect path — follower missed session_started or re-joined mid-session
+          lobby: (s) {
+            if (!s.isHost) {
+              emit(SharedSessionState.inSession(
+                stepIndex: idx,
+                elapsedSeconds: elapsed,
+                isHost: false,
+                steps: s.steps,
+                participants: s.participants,
+              ));
+            }
           },
         );
       case SessionEnded():
+        // AC4: terminal state — leaves channel and emits sessionEnded()
         if (_joined) {
           _joined = false;
           unawaited(_gateway.leaveChannel());
         }
-        emit(const SharedSessionState.initial());
+        emit(const SharedSessionState.sessionEnded());
       case UnknownBroadcast():
         break;
     }
