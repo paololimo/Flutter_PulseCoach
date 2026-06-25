@@ -31,6 +31,10 @@ import 'package:pulse_coach/features/settings/presentation/pages/settings_page.d
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/social/friends/presentation/pages/social_page.dart';
 import 'package:pulse_coach/features/social/friends/presentation/pages/qr_code_screen.dart';
+import 'package:pulse_coach/features/social/shared_session/domain/entities/shared_session_start_args.dart';
+import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_bloc.dart';
+import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_event.dart';
+import 'package:pulse_coach/features/social/shared_session/presentation/pages/shared_session_lobby_page.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
 import 'package:pulse_coach/shared/widgets/app_shell.dart';
 
@@ -53,6 +57,7 @@ class AppRouter {
   static const String paywall = '/paywall';
   static const String social = '/social';
   static const String socialQr = '/social/qr';
+  static const String sharedSessionLobby = '/social/shared-session/lobby';
 
   static final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -96,6 +101,26 @@ class AppRouter {
       GoRoute(
         path: socialQr,
         builder: (context, state) => const QrCodeScreen(),
+      ),
+      GoRoute(
+        path: sharedSessionLobby,
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is! SharedSessionStartArgs) {
+            return const SizedBox.shrink();
+          }
+          return BlocProvider(
+            create: (_) => getIt<SharedSessionBloc>()
+              ..add(SharedSessionJoined(
+                sessionId: extra.sessionId,
+                isHost: extra.isHost,
+                userId: extra.userId,
+                displayHandle: extra.displayHandle,
+                steps: extra.steps,
+              )),
+            child: const SharedSessionLobbyPage(),
+          );
+        },
       ),
       GoRoute(
         path: sessionActive,

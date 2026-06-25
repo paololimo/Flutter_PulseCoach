@@ -336,5 +336,10 @@
       "count": {"type": "int"}
     }
   },
-  "comparisonEmptyFriends": "No friends have opted in to comparison yet."
+  "comparisonEmptyFriends": "No friends have opted in to comparison yet.",
+  "sharedSessionLobbyTitle": "Waiting Room",
+  "sharedSessionLobbyWaiting": "Waiting for participants...",
+  "sharedSessionStartButton": "Start",
+  "sharedSessionWaitingForHost": "Waiting for host to start...",
+  "sharedSessionErrorGeneric": "Connection error. Please try again."
 }

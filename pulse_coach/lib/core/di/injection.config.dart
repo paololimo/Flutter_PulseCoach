@@ -241,6 +241,8 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/social_pro
     as _i477;
 import 'package:pulse_coach/features/social/friends/presentation/bloc/visibility_cubit.dart'
     as _i613;
+import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_bloc.dart'
+    as _i596;
 import 'package:pulse_coach/features/subscription/data/repositories/entitlement_repository_impl.dart'
     as _i705;
 import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_service.dart'
@@ -527,6 +529,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i206.WeatherLocalDataSource>(
       () => _i206.WeatherLocalDataSource(gh<_i194.WeatherCacheDao>()),
+    );
+    gh.factory<_i596.SharedSessionBloc>(
+      () => _i596.SharedSessionBloc(gh<_i281.RealtimeGateway>()),
     );
     gh.factory<_i1023.GetSocialProfileUseCase>(
       () => _i1023.GetSocialProfileUseCase(gh<_i502.SocialProfileRepository>()),

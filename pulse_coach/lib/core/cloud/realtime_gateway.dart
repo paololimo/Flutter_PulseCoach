@@ -17,6 +17,7 @@ class RealtimeGateway {
   final SupabaseClientProvider _clientProvider;
 
   RealtimeChannel? _channel;
+  String? _activeSessionId;
   StreamController<BroadcastEvent>? _broadcastController;
   StreamController<PresenceState>? _presenceController;
 
@@ -30,13 +31,26 @@ class RealtimeGateway {
 
   Future<void> joinChannel(String sessionId) async {
     if (_channel != null) {
+      // Single-active-session invariant: refuse to silently tear down a live
+      // channel for a *different* session, which would deafen any consumer
+      // still listening to it. Same-session re-join is allowed (idempotent).
+      if (_activeSessionId != sessionId) {
+        throw StateError('shared_session_already_active');
+      }
       await leaveChannel();
     }
+    _activeSessionId = sessionId;
     _broadcastController = StreamController<BroadcastEvent>.broadcast();
     _presenceController = StreamController<PresenceState>.broadcast();
 
     _channel = _clientProvider.client
-        .channel('shared-session:$sessionId')
+        .channel(
+          'shared-session:$sessionId',
+          // self: true so the host receives the echo of its own broadcasts
+          // (session_started / step_advanced). The host's lobby→inSession
+          // transition depends on this echo (ARCH21 host authority).
+          opts: const RealtimeChannelConfig(self: true),
+        )
         .onBroadcast(
           event: 'step_advanced',
           callback: (payload) {
@@ -69,6 +83,7 @@ class RealtimeGateway {
     // the async teardown throws — a subsequent joinChannel must not re-trigger
     // the re-entry guard against a half-torn-down channel.
     _channel = null;
+    _activeSessionId = null;
     _broadcastController = null;
     _presenceController = null;
     try {

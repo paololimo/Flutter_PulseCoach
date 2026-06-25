@@ -511,3 +511,13 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 - **No error handling / subscribe status unobserved** [realtime_gateway.dart:30] — async Supabase calls (`sendBroadcastMessage`, `track`, `untrack`, `unsubscribe`, `removeChannel`) are unwrapped, and `subscribe()` is called with no status callback, so channel-error/timeout joins look identical to a healthy quiet channel. `RealtimeFailure` exists but is never thrown. Wire error surfacing in Story 19.2 via `Either<RealtimeFailure, ...>` at the bloc boundary (per story spec scope note).
 - **Gateway lifecycle untested** — join/leave/presence emission/stream teardown have no coverage; only static `parseBroadcast` + freezed entity equality are tested. Story 19.2 mocks the gateway at the bloc boundary; add integration-level coverage there.
 - **Presence id hygiene** [realtime_gateway.dart:94] — `_emitPresenceState` does not filter empty `user_id` (`?? ''`) or de-dup duplicate presences, producing ghost/duplicate participants in the emitted `PresenceState`. Resolve in Story 19.2 presence-lobby UI.
+
+## Deferred from: code review of story-19.2 (2026-06-25)
+
+- Follower that misses the `session_started` broadcast is stuck in `lobby` forever — `StepAdvanced` requires `inSession`, no resync path (19.3 drop-out/resync scope).
+- `SessionEnded` emits `initial()` → lobby page renders blank `SizedBox.shrink()` with no navigation pop (19.3 full teardown scope).
+- `error` state is a dead-end: `_ErrorView` says "Riprova" but has no retry event/action; join/start failure leaves subscriptions live until `close()` (page not user-reachable until 20.1 wires navigation).
+- Route bad/null `extra` → blank `SizedBox.shrink()` (no Scaffold, no escape) — spec-sanctioned; 20.1 owns the navigation entry.
+- Presence robustness cluster: presence drops during `inSession` ignored (stale count / solo continuation); unparseable `step_advanced` payloads silently dropped (follower drift); duplicate participant identities can inflate the `>=2` start gate (19.3 drop-out tolerance + presence dedup).
+- `_onHostStepAdvanced` swallows broadcast failure with empty `catch (e)` (no log/telemetry) — observability; 19.3 handles persistent failure.
+- `_onJoined` subscribes to streams only after `await joinChannel`/`trackPresence` — narrow lost-event window + partial-setup dangling channel on `trackPresence` throw (minor; host subscribes before any start in practice).
