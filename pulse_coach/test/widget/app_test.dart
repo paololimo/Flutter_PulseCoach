@@ -10,6 +10,7 @@ import 'package:pulse_coach/features/onboarding/domain/usecases/accept_disclaime
 import 'package:pulse_coach/features/onboarding/domain/usecases/check_disclaimer_status.dart';
 import 'package:pulse_coach/features/onboarding/domain/usecases/save_profile.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/locale_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
+    getIt.registerLazySingleton<LocaleCubit>(() => LocaleCubit(prefs));
     getIt.registerSingleton<AppDatabase>(
       AppDatabase.forTesting(NativeDatabase.memory()),
     );

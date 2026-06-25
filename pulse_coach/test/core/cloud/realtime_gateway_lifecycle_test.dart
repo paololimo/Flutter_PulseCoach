@@ -5,7 +5,6 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show
-        ChannelResponse,
         RealtimeChannel,
         RealtimeChannelConfig,
         RealtimePresenceJoinPayload,

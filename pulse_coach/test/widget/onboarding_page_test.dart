@@ -17,6 +17,7 @@ import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_sta
 import 'package:pulse_coach/features/onboarding/presentation/widgets/disclaimer_screen.dart';
 import 'package:pulse_coach/features/onboarding/presentation/widgets/onboarding_carousel.dart';
 import 'package:pulse_coach/features/onboarding/presentation/widgets/profile_setup_form.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 import 'onboarding_page_test.mocks.dart';
 
@@ -37,6 +38,9 @@ void main() {
   Widget buildPage() {
     return MaterialApp(
       theme: AppTheme.darkTheme,
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: BlocProvider(
         create: (_) => OnboardingCubit(
           mockAcceptDisclaimer,
@@ -58,6 +62,9 @@ void main() {
     );
     return MaterialApp(
       theme: AppTheme.darkTheme,
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: MediaQuery(
         data: const MediaQueryData(disableAnimations: true),
         child: BlocProvider.value(
@@ -76,6 +83,9 @@ void main() {
     );
     return MaterialApp(
       theme: AppTheme.darkTheme,
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: MediaQuery(
         data: const MediaQueryData(disableAnimations: true),
         child: BlocProvider.value(
@@ -183,6 +193,9 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.darkTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: BlocProvider(
               create: (_) {
                 final cubit = OnboardingCubit(
@@ -207,6 +220,9 @@ void main() {
     Widget buildProfileSetupForm() {
       return MaterialApp(
         theme: AppTheme.darkTheme,
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: BlocProvider(
           create: (_) => OnboardingCubit(
             mockAcceptDisclaimer,
@@ -273,6 +289,9 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.darkTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: BlocProvider(
               create: (_) {
                 final cubit = OnboardingCubit(

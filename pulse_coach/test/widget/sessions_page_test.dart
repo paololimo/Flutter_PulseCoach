@@ -157,7 +157,7 @@ void main() {
 
       expect(find.text('Open hips and restore range.'), findsOneWidget);
       expect(find.text('8 min'), findsWidgets);
-      expect(find.text('Low intensity'), findsOneWidget);
+      expect(find.text('Leggera'), findsOneWidget);
       expect(find.text('1. Breathe tall'), findsOneWidget);
       expect(find.text('2. Lunge gently'), findsOneWidget);
       expect(find.text('3. Rotate slowly'), findsOneWidget);

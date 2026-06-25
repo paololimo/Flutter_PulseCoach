@@ -6,6 +6,7 @@ import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_state.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class ProfileSetupForm extends StatefulWidget {
   const ProfileSetupForm({super.key});
@@ -52,6 +53,7 @@ class _ProfileSetupFormState extends State<ProfileSetupForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
 
     return PopScope(
       canPop: false,
@@ -68,23 +70,23 @@ class _ProfileSetupFormState extends State<ProfileSetupForm> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Let's set up your profile",
+                    l10n.profileSetupHeading,
                     style: AppTextStyles.display.copyWith(
                       color: theme.onSurface,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   _buildField(
-                    'Fitness Level',
+                    l10n.profileFitnessLevel,
                     SegmentedButton<String>(
-                      segments: const [
+                      segments: [
                         ButtonSegment<String>(
                           value: 'low',
-                          label: Text('Beginner'),
+                          label: Text(l10n.profileFitnessBeginner),
                         ),
                         ButtonSegment<String>(
                           value: 'medium',
-                          label: Text('Intermediate'),
+                          label: Text(l10n.profileFitnessIntermediate),
                         ),
                       ],
                       selected: _fitnessLevel != null
@@ -100,24 +102,24 @@ class _ProfileSetupFormState extends State<ProfileSetupForm> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _buildField(
-                    'Primary Goal',
+                    l10n.profilePrimaryGoal,
                     SegmentedButton<String>(
-                      segments: const [
+                      segments: [
                         ButtonSegment<String>(
                           value: 'cardio',
-                          label: Text('Cardio'),
+                          label: Text(l10n.profileGoalCardio),
                         ),
                         ButtonSegment<String>(
                           value: 'strength',
-                          label: Text('Strength'),
+                          label: Text(l10n.profileGoalStrength),
                         ),
                         ButtonSegment<String>(
                           value: 'mobility',
-                          label: Text('Mobility'),
+                          label: Text(l10n.profileGoalMobility),
                         ),
                         ButtonSegment<String>(
                           value: 'wellbeing',
-                          label: Text('Well-being'),
+                          label: Text(l10n.profileGoalWellbeing),
                         ),
                       ],
                       selected: _goal != null ? {_goal!} : const <String>{},
@@ -131,7 +133,7 @@ class _ProfileSetupFormState extends State<ProfileSetupForm> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _buildField(
-                    'Available Time',
+                    l10n.profileAvailableTime,
                     SegmentedButton<String>(
                       segments: const [
                         ButtonSegment<String>(
@@ -156,24 +158,24 @@ class _ProfileSetupFormState extends State<ProfileSetupForm> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _buildField(
-                    'Physical Constraints',
+                    l10n.profilePhysicalConstraints,
                     SegmentedButton<String>(
-                      segments: const [
+                      segments: [
                         ButtonSegment<String>(
                           value: 'none',
-                          label: Text('None'),
+                          label: Text(l10n.profileConstraintNone),
                         ),
                         ButtonSegment<String>(
                           value: 'knee',
-                          label: Text('Knee issues'),
+                          label: Text(l10n.profileConstraintKnee),
                         ),
                         ButtonSegment<String>(
                           value: 'back',
-                          label: Text('Back issues'),
+                          label: Text(l10n.profileConstraintBack),
                         ),
                         ButtonSegment<String>(
                           value: 'indoor',
-                          label: Text('Prefer indoor'),
+                          label: Text(l10n.profileConstraintIndoor),
                         ),
                       ],
                       selected: _physicalConstraints != null
@@ -214,7 +216,7 @@ class _ProfileSetupFormState extends State<ProfileSetupForm> {
                                   ),
                                 )
                               : Text(
-                                  'Start My Plan',
+                                  l10n.profileStartPlan,
                                   style: AppTextStyles.body.copyWith(
                                     color: theme.surface,
                                     fontWeight: FontWeight.w600,

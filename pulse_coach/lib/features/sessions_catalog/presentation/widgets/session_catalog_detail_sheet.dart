@@ -13,8 +13,9 @@ class SessionCatalogDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pulseTheme = theme.extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
     final category = _categoryFor(exercise.sessionType);
-    final intensity = _intensityLabel(exercise.difficulty);
+    final intensity = _intensityLabel(l10n, exercise.difficulty);
 
     return SafeArea(
       child: Padding(
@@ -37,7 +38,7 @@ class SessionCatalogDetailSheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Close',
+                    tooltip: l10n.sessionDetailClose,
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close),
                   ),
@@ -49,9 +50,7 @@ class SessionCatalogDetailSheet extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   _MetadataPill(
-                    label: category.localizedLabel(
-                      AppLocalizations.of(context)!,
-                    ),
+                    label: category.localizedLabel(l10n),
                   ),
                   _MetadataPill(label: '${exercise.durationMinutes} min'),
                   _MetadataPill(label: intensity),
@@ -67,7 +66,7 @@ class SessionCatalogDetailSheet extends StatelessWidget {
               if (exercise.steps.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 Text(
-                  'Steps',
+                  l10n.sessionDetailSteps,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: pulseTheme.onSurface,
                     fontWeight: FontWeight.w700,
@@ -123,12 +122,12 @@ class _MetadataPill extends StatelessWidget {
   }
 }
 
-String _intensityLabel(String difficulty) {
+String _intensityLabel(AppLocalizations l10n, String difficulty) {
   return switch (difficulty.toLowerCase()) {
-    'low' => 'Low intensity',
-    'medium' => 'Medium intensity',
-    'high' => 'High intensity',
-    _ => 'Unknown intensity',
+    'low' => l10n.intensityLow,
+    'medium' => l10n.intensityMedium,
+    'high' => l10n.intensityHigh,
+    _ => l10n.intensityMedium,
   };
 }
 

@@ -5,44 +5,48 @@ import 'package:pulse_coach/core/theme/app_spacing.dart';
 import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class _PageData {
   const _PageData({
     required this.assetPath,
-    required this.headline,
-    required this.body,
     required this.fallbackIcon,
   });
 
   final String assetPath;
-  final String headline;
-  final String body;
   final IconData fallbackIcon;
 }
 
 const _pages = [
   _PageData(
     assetPath: 'assets/animations/onboarding_plan.json',
-    headline: 'Move more. Decide less.',
-    body:
-        'PulseCoach selects your sessions automatically, adapting each day to how your body actually feels.',
     fallbackIcon: Icons.auto_awesome,
   ),
   _PageData(
     assetPath: 'assets/animations/onboarding_privacy.json',
-    headline: 'Your data stays yours.',
-    body:
-        'All your health data lives on your device. Nothing is sent to external servers — ever.',
     fallbackIcon: Icons.lock_outline,
   ),
   _PageData(
     assetPath: 'assets/animations/onboarding_setup.json',
-    headline: "Let's set you up in 60 seconds.",
-    body:
-        'Four quick questions and PulseCoach will have your first personalized plan ready.',
     fallbackIcon: Icons.person_outline,
   ),
 ];
+
+String _headlineFor(AppLocalizations l10n, int index) {
+  return switch (index) {
+    0 => l10n.onboardingPage1Headline,
+    1 => l10n.onboardingPage2Headline,
+    _ => l10n.onboardingPage3Headline,
+  };
+}
+
+String _bodyFor(AppLocalizations l10n, int index) {
+  return switch (index) {
+    0 => l10n.onboardingPage1Body,
+    1 => l10n.onboardingPage2Body,
+    _ => l10n.onboardingPage3Body,
+  };
+}
 
 class OnboardingCarousel extends StatefulWidget {
   const OnboardingCarousel({
@@ -102,6 +106,7 @@ class _OnboardingCarouselState extends State<OnboardingCarousel> {
   Widget _buildPage(int index, PulseCoachTheme theme) {
     final disableAnimations = MediaQuery.of(context).disableAnimations;
     final page = _pages[index];
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -124,13 +129,13 @@ class _OnboardingCarouselState extends State<OnboardingCarousel> {
           ),
           const SizedBox(height: AppSpacing.xl),
           Text(
-            page.headline,
+            _headlineFor(l10n, index),
             style: AppTextStyles.display.copyWith(color: theme.onSurface),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            page.body,
+            _bodyFor(l10n, index),
             style: AppTextStyles.body.copyWith(color: theme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -150,7 +155,9 @@ class _OnboardingCarouselState extends State<OnboardingCarousel> {
                 minimumSize: const Size.fromHeight(48),
               ),
               child: Text(
-                index < _pages.length - 1 ? 'Next' : 'Get Started',
+                index < _pages.length - 1
+                    ? l10n.onboardingNext
+                    : l10n.onboardingGetStarted,
                 style: AppTextStyles.body.copyWith(
                   color: theme.surface,
                   fontWeight: FontWeight.w600,

@@ -16,6 +16,7 @@ import 'package:pulse_coach/features/auth/domain/usecases/sign_up_with_email_use
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/data_export_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/data_export_state.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/locale_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
 import 'package:pulse_coach/features/subscription/domain/entities/pro_offer.dart';
@@ -32,6 +33,7 @@ void main() {
   group('SettingsPage', () {
     late SharedPreferences prefs;
     late ThemeCubit themeCubit;
+    late LocaleCubit localeCubit;
 
     Future<void> pumpSettingsPage(
       WidgetTester tester, {
@@ -40,9 +42,18 @@ void main() {
           _StubDataExportCubit.new,
       SubscriptionTier subscriptionTier = SubscriptionTier.accountFree,
     }) async {
+      // Tall surface so the full settings ListView (now including the Language
+      // section) renders — the lazy ListView would otherwise not build the
+      // bottom "Esporta dati" tile in the default 600px-tall test window.
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       SharedPreferences.setMockInitialValues(initialValues);
       prefs = await SharedPreferences.getInstance();
       themeCubit = ThemeCubit(prefs);
+      localeCubit = LocaleCubit(prefs);
       getIt.registerFactory<DataExportCubit>(exportCubitFactory);
       final authBloc = _StubAuthBloc();
       final settingsRepo = _StubEntitlementRepositoryForSettings(subscriptionTier);
@@ -53,6 +64,7 @@ void main() {
       );
       addTearDown(() async {
         await themeCubit.close();
+        await localeCubit.close();
         await authBloc.close();
         await subscriptionBloc.close();
         await getIt.reset();
@@ -66,6 +78,7 @@ void main() {
           home: MultiBlocProvider(
             providers: [
               BlocProvider.value(value: themeCubit),
+              BlocProvider.value(value: localeCubit),
               BlocProvider<AuthBloc>.value(value: authBloc),
               BlocProvider<SubscriptionBloc>.value(value: subscriptionBloc),
             ],

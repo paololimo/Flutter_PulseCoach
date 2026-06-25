@@ -173,6 +173,8 @@ import 'package:pulse_coach/features/settings/presentation/bloc/data_export_cubi
     as _i705;
 import 'package:pulse_coach/features/settings/presentation/bloc/device_settings_cubit.dart'
     as _i168;
+import 'package:pulse_coach/features/settings/presentation/bloc/locale_cubit.dart'
+    as _i288;
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart'
     as _i291;
 import 'package:pulse_coach/features/social/comparison/data/datasources/progress_comparison_remote_data_source.dart'
@@ -375,6 +377,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i540.UpsellCooldownService>(
       () => _i540.UpsellCooldownService(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i288.LocaleCubit>(
+      () => _i288.LocaleCubit(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i291.ThemeCubit>(
       () => _i291.ThemeCubit(gh<_i460.SharedPreferences>()),

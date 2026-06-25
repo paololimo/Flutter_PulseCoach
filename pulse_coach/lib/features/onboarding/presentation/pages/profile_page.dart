@@ -7,6 +7,7 @@ import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_state.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -81,7 +82,9 @@ class _ProfilePageState extends State<ProfilePage> {
           }
           if (state is ProfileError && _fitnessLevel == null) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Profile')),
+              appBar: AppBar(
+                title: Text(AppLocalizations.of(context)!.profileEditTitle),
+              ),
               body: Center(child: Text(state.message)),
             );
           }
@@ -93,8 +96,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildForm(BuildContext context) {
     final theme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(l10n.profileEditTitle)),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -105,21 +109,21 @@ class _ProfilePageState extends State<ProfilePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Your Profile',
+                l10n.profileHeading,
                 style: AppTextStyles.display.copyWith(color: theme.onSurface),
               ),
               const SizedBox(height: AppSpacing.xl),
               _buildField(
                 context,
-                label: 'Fitness Level',
+                label: l10n.profileFitnessLevel,
                 segments: [
                   ButtonSegment<String>(
                     value: 'low',
-                    label: _segmentLabel('Beginner'),
+                    label: _segmentLabel(l10n.profileFitnessBeginner),
                   ),
                   ButtonSegment<String>(
                     value: 'medium',
-                    label: _segmentLabel('Intermediate'),
+                    label: _segmentLabel(l10n.profileFitnessIntermediate),
                   ),
                 ],
                 selected: _fitnessLevel,
@@ -135,23 +139,23 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: AppSpacing.lg),
               _buildField(
                 context,
-                label: 'Primary Goal',
+                label: l10n.profilePrimaryGoal,
                 segments: [
                   ButtonSegment<String>(
                     value: 'cardio',
-                    label: _segmentLabel('Cardio'),
+                    label: _segmentLabel(l10n.profileGoalCardio),
                   ),
                   ButtonSegment<String>(
                     value: 'strength',
-                    label: _segmentLabel('Strength'),
+                    label: _segmentLabel(l10n.profileGoalStrength),
                   ),
                   ButtonSegment<String>(
                     value: 'mobility',
-                    label: _segmentLabel('Mobility'),
+                    label: _segmentLabel(l10n.profileGoalMobility),
                   ),
                   ButtonSegment<String>(
                     value: 'wellbeing',
-                    label: _segmentLabel('Well-being'),
+                    label: _segmentLabel(l10n.profileGoalWellbeing),
                   ),
                 ],
                 selected: _goal,
@@ -168,7 +172,7 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: AppSpacing.lg),
               _buildField(
                 context,
-                label: 'Available Time',
+                label: l10n.profileAvailableTime,
                 segments: [
                   ButtonSegment<String>(
                     value: 'short',
@@ -192,23 +196,23 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: AppSpacing.lg),
               _buildField(
                 context,
-                label: 'Physical Constraints',
+                label: l10n.profilePhysicalConstraints,
                 segments: [
                   ButtonSegment<String>(
                     value: 'none',
-                    label: _segmentLabel('None'),
+                    label: _segmentLabel(l10n.profileConstraintNone),
                   ),
                   ButtonSegment<String>(
                     value: 'knee',
-                    label: _segmentLabel('Knee issues'),
+                    label: _segmentLabel(l10n.profileConstraintKnee),
                   ),
                   ButtonSegment<String>(
                     value: 'back',
-                    label: _segmentLabel('Back issues'),
+                    label: _segmentLabel(l10n.profileConstraintBack),
                   ),
                   ButtonSegment<String>(
                     value: 'indoor',
-                    label: _segmentLabel('Prefer indoor'),
+                    label: _segmentLabel(l10n.profileConstraintIndoor),
                   ),
                 ],
                 selected: _physicalConstraints,

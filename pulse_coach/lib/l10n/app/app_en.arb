@@ -350,5 +350,52 @@
       }
     }
   },
-  "sharedSessionEnded": "Session complete"
+  "sharedSessionEnded": "Session complete",
+
+  "settingsLanguageSection": "Language",
+  "settingsLanguageItalian": "Italiano",
+  "settingsLanguageEnglish": "English",
+
+  "subscriptionSectionTitle": "Subscription",
+  "subscriptionManage": "Manage subscription",
+  "subscriptionDiscoverPro": "Discover Pro",
+  "subscriptionManageError": "Unable to open subscription management.",
+
+  "profileEditTitle": "Profile",
+  "profileHeading": "Your Profile",
+  "profileSetupHeading": "Let's set up your profile",
+  "profileFitnessLevel": "Fitness Level",
+  "profileFitnessBeginner": "Beginner",
+  "profileFitnessIntermediate": "Intermediate",
+  "profilePrimaryGoal": "Primary Goal",
+  "profileGoalCardio": "Cardio",
+  "profileGoalStrength": "Strength",
+  "profileGoalMobility": "Mobility",
+  "profileGoalWellbeing": "Well-being",
+  "profileAvailableTime": "Available Time",
+  "profilePhysicalConstraints": "Physical Constraints",
+  "profileConstraintNone": "None",
+  "profileConstraintKnee": "Knee issues",
+  "profileConstraintBack": "Back issues",
+  "profileConstraintIndoor": "Prefer indoor",
+  "profileStartPlan": "Start My Plan",
+
+  "onboardingPage1Headline": "Move more. Decide less.",
+  "onboardingPage1Body": "PulseCoach selects your sessions automatically, adapting each day to how your body actually feels.",
+  "onboardingPage2Headline": "Your data stays yours.",
+  "onboardingPage2Body": "All your health data lives on your device. Nothing is sent to external servers — ever.",
+  "onboardingPage3Headline": "Let's set you up in 60 seconds.",
+  "onboardingPage3Body": "Four quick questions and PulseCoach will have your first personalized plan ready.",
+  "onboardingNext": "Next",
+  "onboardingGetStarted": "Get Started",
+
+  "disclaimerPrivacyHeadline": "Your data stays yours.",
+  "disclaimerPrivacyBody": "PulseCoach stores your health data exclusively on your device. Nothing is ever sent to external servers. You are always in full control.",
+  "disclaimerMedicalTitle": "Medical disclaimer",
+  "disclaimerMedicalBody": "PulseCoach is a fitness guidance tool, not a medical device. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare professional before starting any exercise programme.",
+  "disclaimerCheckbox": "I understand PulseCoach is not a medical device and does not replace professional medical advice.",
+  "disclaimerContinue": "Continue",
+
+  "sessionDetailClose": "Close",
+  "sessionDetailSteps": "Steps"
 }

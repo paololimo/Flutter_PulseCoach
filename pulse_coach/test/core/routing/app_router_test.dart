@@ -14,6 +14,7 @@ import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:pulse_coach/app.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/core/database/app_database.dart' hide DailyPlan;
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/features/onboarding/data/repositories/onboarding_repository_impl.dart';
@@ -25,6 +26,7 @@ import 'package:pulse_coach/features/onboarding/domain/usecases/save_profile.dar
 import 'package:pulse_coach/features/onboarding/domain/usecases/update_profile.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/locale_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -86,6 +88,7 @@ void main() {
     setUp(() async {
       final prefs = await _testThemePrefs();
       getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
+      getIt.registerLazySingleton<LocaleCubit>(() => LocaleCubit(prefs));
       getIt.registerSingleton<AppDatabase>(
         AppDatabase.forTesting(NativeDatabase.memory()),
       );
@@ -98,7 +101,7 @@ void main() {
         await tester.pumpWidget(const PulseCoachApp());
         await tester.pumpAndSettle();
         // DisclaimerScreen headline confirms the redirect fired correctly
-        expect(find.text('Your data stays yours.'), findsOneWidget);
+        expect(find.text('I tuoi dati restano tuoi.'), findsOneWidget);
       },
     );
 
@@ -108,7 +111,7 @@ void main() {
         await tester.pumpWidget(const PulseCoachApp());
         await tester.pumpAndSettle();
         // Medical disclaimer text confirms DisclaimerScreen rendered
-        expect(find.textContaining('not a medical device'), findsWidgets);
+        expect(find.textContaining('dispositivo medico'), findsWidgets);
       },
     );
   });
@@ -117,6 +120,7 @@ void main() {
     setUp(() async {
       final prefs = await _testThemePrefs();
       getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
+      getIt.registerLazySingleton<LocaleCubit>(() => LocaleCubit(prefs));
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       // Profile exists but disclaimerAccepted = false (default)
       await db.userProfileDao.insertProfile(
@@ -135,7 +139,7 @@ void main() {
       (tester) async {
         await tester.pumpWidget(const PulseCoachApp());
         await tester.pumpAndSettle();
-        expect(find.text('Your data stays yours.'), findsOneWidget);
+        expect(find.text('I tuoi dati restano tuoi.'), findsOneWidget);
       },
     );
   });
@@ -144,6 +148,7 @@ void main() {
     setUp(() async {
       final prefs = await _testThemePrefs();
       getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
+      getIt.registerLazySingleton<LocaleCubit>(() => LocaleCubit(prefs));
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       await db.userProfileDao.insertProfile(
         UserProfileCompanion.insert(
@@ -167,7 +172,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 500)); // DB read + cubit
         await tester.pump(const Duration(milliseconds: 100)); // router redirect
         // OnboardingCarousel Screen 1 headline confirms carousel rendered
-        expect(find.text('Move more. Decide less.'), findsOneWidget);
+        expect(find.text('Muoviti di più. Decidi di meno.'), findsOneWidget);
       },
     );
   });
@@ -215,6 +220,9 @@ void main() {
         await tester.pumpWidget(
           MaterialApp.router(
             theme: AppTheme.darkTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             routerConfig: testRouter,
             builder: (context, child) => MediaQuery(
               data: MediaQuery.of(context).copyWith(disableAnimations: true),
@@ -267,6 +275,7 @@ void main() {
     setUp(() async {
       final prefs = await _testThemePrefs();
       getIt.registerLazySingleton<ThemeCubit>(() => ThemeCubit(prefs));
+      getIt.registerLazySingleton<LocaleCubit>(() => LocaleCubit(prefs));
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       await db.userProfileDao.insertProfile(
         UserProfileCompanion.insert(

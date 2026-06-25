@@ -15,6 +15,7 @@ import 'package:pulse_coach/features/onboarding/domain/usecases/get_profile.dart
 import 'package:pulse_coach/features/onboarding/domain/usecases/update_profile.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 import 'profile_page_test.mocks.dart';
 
@@ -43,7 +44,13 @@ void main() {
   });
 
   Widget buildPage() {
-    return MaterialApp(theme: AppTheme.darkTheme, home: const ProfilePage());
+    return MaterialApp(
+      theme: AppTheme.darkTheme,
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: const ProfilePage(),
+    );
   }
 
   group('ProfilePage widget', () {

@@ -9,6 +9,7 @@ import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/auth/presentation/widgets/sign_in_sheet.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/data_export_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/data_export_state.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/locale_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
@@ -63,7 +64,7 @@ class SettingsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Abbonamento',
+                  l10n.subscriptionSectionTitle,
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
@@ -76,14 +77,14 @@ class SettingsPage extends StatelessWidget {
                     if (isPro) {
                       return ListTile(
                         contentPadding: const EdgeInsets.all(0),
-                        title: const Text('Gestisci abbonamento'),
+                        title: Text(l10n.subscriptionManage),
                         trailing: const Icon(Icons.open_in_new),
                         onTap: () => _launchSubscriptionManagement(context),
                       );
                     }
                     return ListTile(
                       contentPadding: const EdgeInsets.all(0),
-                      title: const Text('Scopri Pro'),
+                      title: Text(l10n.subscriptionDiscoverPro),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => context.push(AppRouter.paywall),
                     );
@@ -113,6 +114,32 @@ class SettingsPage extends StatelessWidget {
                   selected: {themeMode},
                   onSelectionChanged: (selected) =>
                       context.read<ThemeCubit>().setTheme(selected.first),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.settingsLanguageSection,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                BlocBuilder<LocaleCubit, Locale>(
+                  builder: (context, locale) {
+                    return SegmentedButton<String>(
+                      segments: [
+                        ButtonSegment<String>(
+                          value: 'it',
+                          label: Text(l10n.settingsLanguageItalian),
+                        ),
+                        ButtonSegment<String>(
+                          value: 'en',
+                          label: Text(l10n.settingsLanguageEnglish),
+                        ),
+                      ],
+                      selected: {locale.languageCode},
+                      onSelectionChanged: (selected) => context
+                          .read<LocaleCubit>()
+                          .setLocale(Locale(selected.first)),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -151,22 +178,15 @@ Future<void> _launchSubscriptionManagement(BuildContext context) async {
       ? Uri.parse('https://play.google.com/store/account/subscriptions')
       : Uri.parse('https://apps.apple.com/account/subscriptions');
   final messenger = ScaffoldMessenger.of(context);
+  final errorText = AppLocalizations.of(context)!.subscriptionManageError;
   try {
     final launched =
         await launchUrl(url, mode: LaunchMode.externalApplication);
     if (!launched) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Impossibile aprire la gestione abbonamento.'),
-        ),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(errorText)));
     }
   } catch (_) {
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Impossibile aprire la gestione abbonamento.'),
-      ),
-    );
+    messenger.showSnackBar(SnackBar(content: Text(errorText)));
   }
 }
 

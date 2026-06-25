@@ -5,6 +5,7 @@ import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_state.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class DisclaimerScreen extends StatefulWidget {
   const DisclaimerScreen({super.key});
@@ -19,6 +20,7 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
 
     return BlocListener<OnboardingCubit, OnboardingState>(
       listener: (context, state) {
@@ -44,7 +46,7 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
                 const Spacer(),
                 // Privacy narrative headline
                 Text(
-                  'Your data stays yours.',
+                  l10n.disclaimerPrivacyHeadline,
                   style: AppTextStyles.display.copyWith(
                     color: theme.onSurface,
                   ),
@@ -52,9 +54,7 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
                 const SizedBox(height: AppSpacing.md),
                 // Privacy explanation
                 Text(
-                  'PulseCoach stores your health data exclusively on your device. '
-                  'Nothing is ever sent to external servers. '
-                  'You are always in full control.',
+                  l10n.disclaimerPrivacyBody,
                   style: AppTextStyles.body.copyWith(
                     color: theme.onSurfaceVariant,
                   ),
@@ -62,15 +62,12 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
                 const SizedBox(height: AppSpacing.xl),
                 // Medical disclaimer text
                 Text(
-                  'Medical disclaimer',
+                  l10n.disclaimerMedicalTitle,
                   style: AppTextStyles.h3.copyWith(color: theme.onSurface),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'PulseCoach is a fitness guidance tool, not a medical device. '
-                  'It is not a substitute for professional medical advice, '
-                  'diagnosis, or treatment. Always consult a qualified healthcare '
-                  'professional before starting any exercise programme.',
+                  l10n.disclaimerMedicalBody,
                   style: AppTextStyles.body.copyWith(
                     color: theme.onSurfaceVariant,
                   ),
@@ -94,8 +91,7 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
                         child: Padding(
                           padding: const EdgeInsets.only(top: 12),
                           child: Text(
-                            'I understand PulseCoach is not a medical device and '
-                            'does not replace professional medical advice.',
+                            l10n.disclaimerCheckbox,
                             style: AppTextStyles.body.copyWith(
                               color: theme.onSurface,
                             ),
@@ -135,7 +131,7 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
                                 ),
                               )
                             : Text(
-                                'Continue',
+                                l10n.disclaimerContinue,
                                 style: AppTextStyles.body.copyWith(
                                   color: theme.surface,
                                   fontWeight: FontWeight.w600,

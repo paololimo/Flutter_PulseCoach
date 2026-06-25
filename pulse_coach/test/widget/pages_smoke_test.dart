@@ -37,6 +37,7 @@ import 'package:pulse_coach/features/auth/domain/usecases/delete_account_use_cas
 import 'package:pulse_coach/features/auth/domain/usecases/sign_out_use_case.dart';
 import 'package:pulse_coach/features/auth/domain/usecases/sign_up_with_email_use_case.dart';
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:pulse_coach/features/settings/presentation/bloc/locale_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
 import 'package:pulse_coach/features/progress/domain/entities/progress_stats.dart';
@@ -202,7 +203,13 @@ void main() {
       '[P1] 1.7-WIDGET-004: OnboardingPage renders disclaimer screen',
       (tester) async {
         await tester.pumpWidget(
-          MaterialApp(theme: AppTheme.darkTheme, home: const OnboardingPage()),
+          MaterialApp(
+            theme: AppTheme.darkTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const OnboardingPage(),
+          ),
         );
         await tester.pumpAndSettle();
         // DisclaimerScreen is now the OnboardingPage content (Story 2.1)
@@ -214,7 +221,13 @@ void main() {
       '[P1] 1.7-WIDGET-005: ProfilePage renders with correct AppBar title',
       (tester) async {
         await tester.pumpWidget(
-          MaterialApp(theme: AppTheme.darkTheme, home: const ProfilePage()),
+          MaterialApp(
+            theme: AppTheme.darkTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const ProfilePage(),
+          ),
         );
         await tester.pumpAndSettle();
         // AppBar title is always visible (loading or form state)
@@ -318,6 +331,7 @@ void main() {
             MultiBlocProvider(
               providers: [
                 BlocProvider(create: (_) => ThemeCubit(prefs)),
+                BlocProvider(create: (_) => LocaleCubit(prefs)),
                 BlocProvider<AuthBloc>.value(value: authBloc),
               ],
               child: const SettingsPage(),
