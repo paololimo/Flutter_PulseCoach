@@ -75,6 +75,9 @@ dependencies:
   # WearOS
   wear_plus: ^1.2.4
 
+  # Annotations
+  meta: ^1.16.0
+
   # Internationalisation / Date formatting
   intl: ^0.20.2
   watch_connectivity: ^0.2.8
