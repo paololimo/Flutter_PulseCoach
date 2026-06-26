@@ -299,4 +299,75 @@ void main() {
       },
     );
   });
+
+  group('SharedSessionBloc session end (20.4)', () {
+    blocTest<SharedSessionBloc, SharedSessionState>(
+      '20.4-BLOC-001: SessionEndRequested from host → sendBroadcast called with session_ended',
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
+      act: (bloc) async {
+        bloc.add(_hostJoin());
+        await Future<void>.delayed(Duration.zero);
+        broadcastController.add(const BroadcastEvent.sessionStarted());
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const SessionEndRequested());
+      },
+      verify: (_) {
+        verify(mockGateway.sendBroadcast(
+          event: 'session_ended',
+          payload: {},
+        )).called(1);
+      },
+    );
+
+    blocTest<SharedSessionBloc, SharedSessionState>(
+      '20.4-BLOC-002: SessionEndRequested from follower → sendBroadcast NOT called',
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
+      act: (bloc) async {
+        bloc.add(_followerJoin());
+        await Future<void>.delayed(Duration.zero);
+        broadcastController.add(const BroadcastEvent.sessionStarted());
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const SessionEndRequested());
+      },
+      verify: (_) {
+        verifyNever(mockGateway.sendBroadcast(
+          event: 'session_ended',
+          payload: anyNamed('payload'),
+        ));
+      },
+    );
+
+    blocTest<SharedSessionBloc, SharedSessionState>(
+      '20.4-BLOC-003: BroadcastEvent.sessionEnded received → SharedSessionState.sessionEnded emitted',
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
+      act: (bloc) async {
+        bloc.add(_hostJoin());
+        await Future<void>.delayed(Duration.zero);
+        broadcastController.add(const BroadcastEvent.sessionStarted());
+        await Future<void>.delayed(Duration.zero);
+        broadcastController.add(const BroadcastEvent.sessionEnded());
+      },
+      expect: () => [
+        const SharedSessionState.loading(),
+        const SharedSessionState.lobby(
+            participants: [], isHost: true, steps: _kSteps),
+        const SharedSessionState.inSession(
+            stepIndex: 0, elapsedSeconds: 0, isHost: true, steps: _kSteps),
+        const SharedSessionState.sessionEnded(),
+      ],
+    );
+
+    blocTest<SharedSessionBloc, SharedSessionState>(
+      '20.4-BLOC-004: session_ended broadcast → leaveChannel() called',
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
+      act: (bloc) async {
+        bloc.add(_hostJoin());
+        await Future<void>.delayed(Duration.zero);
+        broadcastController.add(const BroadcastEvent.sessionEnded());
+      },
+      verify: (_) {
+        verify(mockGateway.leaveChannel()).called(greaterThanOrEqualTo(1));
+      },
+    );
+  });
 }

@@ -367,6 +367,15 @@
   "sharedSessionJoinError": "Invalid code or session not found.",
   "sharedSessionAlreadyStarted": "This session has already started.",
   "sharedSessionCoLocated": "Nearby",
+  "sharedSessionParticipantCount": "{count} participants",
+  "@sharedSessionParticipantCount": {
+    "description": "Participant count badge shown in shared in-session view",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
 
   "settingsLanguageSection": "Language",
   "settingsLanguageItalian": "Italiano",

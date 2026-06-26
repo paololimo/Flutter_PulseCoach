@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-26 # Epic 20 → in-progress; 20-1 → done (code review); 20-2 → done (code review); 20-3 → done (code review)
+last_updated: 2026-06-26 # Epic 20 → in-progress; 20-1 → done (code review); 20-2 → done (code review); 20-3 → done (code review); 20-4 → done (code review)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -286,7 +286,7 @@ development_status:
   20-1-shared-session-creation-join-code-card-and-lobby-navigation: done
   20-2-group-constraint-resolver-deterministic-group-plan-generation: done
   20-3-co-location-join-flow-momentary-non-blocking-confirmation: done
-  20-4-synchronized-session-start-and-shared-in-session-view: backlog
+  20-4-synchronized-session-start-and-shared-in-session-view: done
   20-5-per-participant-rpe-and-protective-state-social-suppression: backlog
   epic-20-retrospective: optional
 

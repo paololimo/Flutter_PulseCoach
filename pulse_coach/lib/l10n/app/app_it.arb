@@ -367,6 +367,15 @@
   "sharedSessionJoinError": "Codice non valido o sessione non trovata.",
   "sharedSessionAlreadyStarted": "La sessione è già iniziata.",
   "sharedSessionCoLocated": "Vicino",
+  "sharedSessionParticipantCount": "{count} partecipanti",
+  "@sharedSessionParticipantCount": {
+    "description": "Contatore partecipanti nella sessione condivisa",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
 
   "settingsLanguageSection": "Lingua",
   "settingsLanguageItalian": "Italiano",

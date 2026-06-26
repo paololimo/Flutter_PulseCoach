@@ -1,5 +1,14 @@
 # Deferred Work
 
+## Deferred from: code review of story-20.4 (2026-06-26)
+
+- Host abandon is recorded identically to a completed session (`abandoned: false`) — same `sessionEnded` → RPE path serves both genuine completion and host abandon. **[Defer — spec AC8 prescribes `abandoned: false`; `planId: null` disables persistence/bandit so the flag has no consumer until Story 20.5.]** [shared_session_lobby_page.dart:54-68]
+- `sessionEnded` reached while still in `lobby` (no `inSession` render) navigates to RPE with `durationMinutes: 0` for a session never run — `_lastSteps` is still `const []`. **[Defer — low-probability path; spec accepts "from last inSession snapshot".]** [shared_session_lobby_page.dart:54-68]
+- Host `_ParticipantBadge` at `Positioned(top:16)` overlays full-screen `InSessionView` with no reserved space — may overlap its top content. **[Defer — visual only; 360×640 widget tests pass without exception; verify on device.]** [shared_session_lobby_page.dart:_buildHostView]
+- `sharedSessionParticipantCount` has no plural handling → "1 partecipanti" / "1 participants". **[Defer — spec deliberately chose `{count}` String over ICU plural; Story 20.5 may upgrade.]** [app_it.arb/app_en.arb]
+- AC6 haptic (`HapticFeedback.mediumImpact()`) fire is implemented in `didUpdateWidget` but not asserted by any test. **[Defer — coverage gap, not in Task 6 scope; static call hard to assert.]**
+- AC7 follower `Timer.periodic(1s)` display tick is implemented but no test advances the clock to assert it. **[Defer — coverage gap, not in Task 6 scope.]**
+
 ## Deferred from: code review of story-18.3 (2026-06-24)
 
 - `getFeed` `.limit(50)` has no pagination — beyond the 50 newest entries, a user's own older shared entries become invisible and un-revokable through the feed UI [pulse_coach/lib/features/social/feed/data/datasources/feed_remote_data_source.dart]. **[Product call — MVP/exam scope acceptable; revisit if feed volume grows.]**
