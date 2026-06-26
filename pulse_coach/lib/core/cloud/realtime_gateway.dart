@@ -112,6 +112,8 @@ class RealtimeGateway {
     required String userId,
     String? displayHandle,
     bool isHost = false,
+    double? lat,
+    double? lon,
   }) async {
     final channel = _channel;
     if (channel == null) {
@@ -121,6 +123,8 @@ class RealtimeGateway {
       'user_id': userId,
       'display_handle': displayHandle,
       'is_host': isHost,
+      'lat': ?lat,
+      'lon': ?lon,
     });
   }
 
@@ -138,10 +142,14 @@ class RealtimeGateway {
       final userId = p.payload['user_id'];
       final displayHandle = p.payload['display_handle'];
       final isHost = p.payload['is_host'];
+      final lat = p.payload['lat'];
+      final lon = p.payload['lon'];
       return ParticipantPresence(
         userId: userId is String ? userId : '',
         displayHandle: displayHandle is String ? displayHandle : null,
         isHost: isHost is bool && isHost,
+        lat: lat is num ? lat.toDouble() : null,
+        lon: lon is num ? lon.toDouble() : null,
       );
     }).toList();
     _presenceController?.add(PresenceState(participants: participants));

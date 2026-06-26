@@ -14,4 +14,9 @@ abstract class SharedSessionRepository {
   Future<Either<Failure, Unit>> deleteSharedSession({
     required String sessionId,
   });
+
+  Future<Either<Failure, SharedSession>> joinSharedSession({
+    required String joinCode,
+    required String userId,
+  });
 }

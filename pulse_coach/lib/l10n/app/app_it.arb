@@ -360,6 +360,13 @@
   "sharedSessionCancelDialogConfirm": "Annulla",
   "sharedSessionCreateError": "Impossibile creare la sessione. Riprova.",
   "sharedSessionRefreshError": "Impossibile aggiornare il codice. Riprova.",
+  "sharedSessionJoinButton": "Unisciti a una sessione",
+  "sharedSessionJoinDialogTitle": "Inserisci il codice",
+  "sharedSessionJoinDialogHint": "Codice sessione",
+  "sharedSessionJoinDialogConfirm": "Unisciti",
+  "sharedSessionJoinError": "Codice non valido o sessione non trovata.",
+  "sharedSessionAlreadyStarted": "La sessione è già iniziata.",
+  "sharedSessionCoLocated": "Vicino",
 
   "settingsLanguageSection": "Lingua",
   "settingsLanguageItalian": "Italiano",

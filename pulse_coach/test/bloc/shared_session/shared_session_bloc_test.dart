@@ -18,6 +18,7 @@ import 'package:pulse_coach/features/social/shared_session/presentation/bloc/sha
 @GenerateNiceMocks([MockSpec<RealtimeGateway>()])
 import 'shared_session_bloc_test.mocks.dart';
 import 'shared_session_cancel_refresh_bloc_test.mocks.dart';
+import 'shared_session_bloc_co_location_test.mocks.dart';
 
 const _kSteps = [
   ExerciseStep(title: 'Warm Up', instruction: 'Breathe', durationSeconds: 60),
@@ -46,6 +47,7 @@ void main() {
   late MockRealtimeGateway mockGateway;
   late MockDeleteSharedSessionUseCase mockDelete;
   late MockRefreshJoinCodeUseCase mockRefresh;
+  late MockLocationService mockLocation;
   late StreamController<BroadcastEvent> broadcastController;
   late StreamController<PresenceState> presenceController;
 
@@ -53,6 +55,9 @@ void main() {
     mockGateway = MockRealtimeGateway();
     mockDelete = MockDeleteSharedSessionUseCase();
     mockRefresh = MockRefreshJoinCodeUseCase();
+    mockLocation = MockLocationService();
+    when(mockLocation.getCityLevelCoordinates())
+        .thenAnswer((_) async => const Left(LocationFailure('disabled')));
     broadcastController = StreamController<BroadcastEvent>.broadcast();
     presenceController = StreamController<PresenceState>.broadcast();
     when(mockGateway.broadcastEvents)
@@ -63,7 +68,9 @@ void main() {
     when(mockGateway.trackPresence(
             userId: anyNamed('userId'),
             displayHandle: anyNamed('displayHandle'),
-            isHost: anyNamed('isHost')))
+            isHost: anyNamed('isHost'),
+            lat: anyNamed('lat'),
+            lon: anyNamed('lon')))
         .thenAnswer((_) async {});
     when(mockGateway.leaveChannel()).thenAnswer((_) async {});
     when(mockGateway.sendBroadcast(
@@ -83,14 +90,14 @@ void main() {
 
   group('SharedSessionBloc (19.2)', () {
     test('19.2-BLOC-001: initial state is SharedSessionState.initial', () {
-      final bloc = SharedSessionBloc(mockGateway, mockDelete, mockRefresh);
+      final bloc = SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation);
       expect(bloc.state, const SharedSessionState.initial());
       bloc.close();
     });
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-002: SharedSessionJoined → loading → lobby',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) => bloc.add(_hostJoin()),
       expect: () => [
         const SharedSessionState.loading(),
@@ -107,7 +114,7 @@ void main() {
       build: () {
         when(mockGateway.joinChannel(any))
             .thenThrow(Exception('ws failure'));
-        return SharedSessionBloc(mockGateway, mockDelete, mockRefresh);
+        return SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation);
       },
       act: (bloc) => bloc.add(_hostJoin()),
       expect: () => [
@@ -121,7 +128,7 @@ void main() {
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-004: PresenceState update → lobby.participants updated',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) async {
         bloc.add(_hostJoin());
         await Future<void>.delayed(Duration.zero);
@@ -148,7 +155,7 @@ void main() {
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-005: SessionStartTapped with <2 participants → no broadcast',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) async {
         bloc.add(_hostJoin());
         await Future<void>.delayed(Duration.zero);
@@ -164,7 +171,7 @@ void main() {
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-006: follower cannot dispatch session_started (AC1)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) async {
         bloc.add(_followerJoin());
         await Future<void>.delayed(Duration.zero);
@@ -180,7 +187,7 @@ void main() {
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-007: BroadcastEvent.sessionStarted → all move to inSession (AC4)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) async {
         bloc.add(_hostJoin());
         await Future<void>.delayed(Duration.zero);
@@ -201,7 +208,7 @@ void main() {
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-008: follower receives stepAdvanced → inSession state updated (AC2)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) async {
         bloc.add(_followerJoin());
         await Future<void>.delayed(Duration.zero);
@@ -223,7 +230,7 @@ void main() {
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-009: host ignores echo of own step_advanced broadcast (AC1)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) async {
         bloc.add(_hostJoin());
         await Future<void>.delayed(Duration.zero);
@@ -244,7 +251,7 @@ void main() {
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-010: HostStepAdvanced → sendBroadcast called with correct payload (AC1)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) async {
         bloc.add(_hostJoin());
         await Future<void>.delayed(Duration.zero);
@@ -262,7 +269,7 @@ void main() {
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-011: follower cannot call sendBroadcast for step_advanced (AC1)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) async {
         bloc.add(_followerJoin());
         await Future<void>.delayed(Duration.zero);
@@ -281,7 +288,7 @@ void main() {
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.2-BLOC-012: close() calls leaveChannel() (AC6)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation),
       act: (bloc) async {
         bloc.add(_hostJoin());
         await Future<void>.delayed(Duration.zero);

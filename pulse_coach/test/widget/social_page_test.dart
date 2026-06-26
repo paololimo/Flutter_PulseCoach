@@ -23,6 +23,7 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/social_pro
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_state.dart';
 import 'package:pulse_coach/features/social/friends/presentation/pages/social_page.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_creation_cubit.dart';
+import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_join_cubit.dart';
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
@@ -83,6 +84,8 @@ void main() {
       getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
       getIt.registerFactory<SharedSessionCreationCubit>(
           () => _FakeSharedSessionCreationCubit());
+      getIt.registerFactory<SharedSessionJoinCubit>(
+          () => _FakeSharedSessionJoinCubit());
 
       final sub = _FakeSubscriptionBloc(
         const SubscriptionState.loaded(tier: SubscriptionTier.pro),
@@ -131,6 +134,8 @@ void main() {
           const SharedSessionCreationState.creating(),
         ),
       );
+      getIt.registerFactory<SharedSessionJoinCubit>(
+          () => _FakeSharedSessionJoinCubit());
 
       final sub = _FakeSubscriptionBloc(
         const SubscriptionState.loaded(tier: SubscriptionTier.pro),
@@ -172,6 +177,8 @@ void main() {
       getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
       getIt.registerFactory<SharedSessionCreationCubit>(
           () => _FakeSharedSessionCreationCubit());
+      getIt.registerFactory<SharedSessionJoinCubit>(
+          () => _FakeSharedSessionJoinCubit());
 
       final sub = _FakeSubscriptionBloc(
         const SubscriptionState.loaded(tier: SubscriptionTier.pro),
@@ -314,6 +321,27 @@ class _FakeSharedSessionCreationCubit extends Fake
 
   @override
   Future<void> create({required String hostUserId}) async {}
+
+  @override
+  Future<void> close() async {}
+}
+
+class _FakeSharedSessionJoinCubit extends Fake
+    implements SharedSessionJoinCubit {
+  @override
+  SharedSessionJoinState get state => const SharedSessionJoinState.initial();
+
+  @override
+  Stream<SharedSessionJoinState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  Future<void> join({required String joinCode, required String userId}) async {}
+
+  @override
+  void reset() {}
 
   @override
   Future<void> close() async {}

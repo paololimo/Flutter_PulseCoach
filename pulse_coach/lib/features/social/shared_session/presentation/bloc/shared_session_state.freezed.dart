@@ -134,12 +134,12 @@ return cancelled(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick)?  lobby,TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle)?  inSession,TResult Function( Failure failure)?  error,TResult Function()?  sessionEnded,TResult Function()?  cancelled,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle)?  inSession,TResult Function( Failure failure)?  error,TResult Function()?  sessionEnded,TResult Function()?  cancelled,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _Lobby() when lobby != null:
-return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick);case _InSession() when inSession != null:
+return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick,_that.coLocated);case _InSession() when inSession != null:
 return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle);case _Error() when error != null:
 return error(_that.failure);case _SessionEnded() when sessionEnded != null:
 return sessionEnded();case _Cancelled() when cancelled != null:
@@ -161,12 +161,12 @@ return cancelled();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick)  lobby,required TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle)  inSession,required TResult Function( Failure failure)  error,required TResult Function()  sessionEnded,required TResult Function()  cancelled,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)  lobby,required TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle)  inSession,required TResult Function( Failure failure)  error,required TResult Function()  sessionEnded,required TResult Function()  cancelled,}) {final _that = this;
 switch (_that) {
 case _Initial():
 return initial();case _Loading():
 return loading();case _Lobby():
-return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick);case _InSession():
+return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick,_that.coLocated);case _InSession():
 return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle);case _Error():
 return error(_that.failure);case _SessionEnded():
 return sessionEnded();case _Cancelled():
@@ -184,12 +184,12 @@ return cancelled();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick)?  lobby,TResult? Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle)?  inSession,TResult? Function( Failure failure)?  error,TResult? Function()?  sessionEnded,TResult? Function()?  cancelled,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult? Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle)?  inSession,TResult? Function( Failure failure)?  error,TResult? Function()?  sessionEnded,TResult? Function()?  cancelled,}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _Lobby() when lobby != null:
-return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick);case _InSession() when inSession != null:
+return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick,_that.coLocated);case _InSession() when inSession != null:
 return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle);case _Error() when error != null:
 return error(_that.failure);case _SessionEnded() when sessionEnded != null:
 return sessionEnded();case _Cancelled() when cancelled != null:
@@ -269,7 +269,7 @@ String toString() {
 
 
 class _Lobby implements SharedSessionState {
-  const _Lobby({required final  List<ParticipantPresence> participants, required this.isHost, required final  List<ExerciseStep> steps, this.joinCode, this.refreshErrorTick = 0}): _participants = participants,_steps = steps;
+  const _Lobby({required final  List<ParticipantPresence> participants, required this.isHost, required final  List<ExerciseStep> steps, this.joinCode, this.refreshErrorTick = 0, this.coLocated}): _participants = participants,_steps = steps;
   
 
  final  List<ParticipantPresence> _participants;
@@ -291,6 +291,7 @@ class _Lobby implements SharedSessionState {
 // One-shot counter bumped each time a join-code refresh fails, so the page
 // can show a transient SnackBar without leaving the lobby.
 @JsonKey() final  int refreshErrorTick;
+ final  bool? coLocated;
 
 /// Create a copy of SharedSessionState
 /// with the given fields replaced by the non-null parameter values.
@@ -302,16 +303,16 @@ _$LobbyCopyWith<_Lobby> get copyWith => __$LobbyCopyWithImpl<_Lobby>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Lobby&&const DeepCollectionEquality().equals(other._participants, _participants)&&(identical(other.isHost, isHost) || other.isHost == isHost)&&const DeepCollectionEquality().equals(other._steps, _steps)&&(identical(other.joinCode, joinCode) || other.joinCode == joinCode)&&(identical(other.refreshErrorTick, refreshErrorTick) || other.refreshErrorTick == refreshErrorTick));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Lobby&&const DeepCollectionEquality().equals(other._participants, _participants)&&(identical(other.isHost, isHost) || other.isHost == isHost)&&const DeepCollectionEquality().equals(other._steps, _steps)&&(identical(other.joinCode, joinCode) || other.joinCode == joinCode)&&(identical(other.refreshErrorTick, refreshErrorTick) || other.refreshErrorTick == refreshErrorTick)&&(identical(other.coLocated, coLocated) || other.coLocated == coLocated));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_participants),isHost,const DeepCollectionEquality().hash(_steps),joinCode,refreshErrorTick);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_participants),isHost,const DeepCollectionEquality().hash(_steps),joinCode,refreshErrorTick,coLocated);
 
 @override
 String toString() {
-  return 'SharedSessionState.lobby(participants: $participants, isHost: $isHost, steps: $steps, joinCode: $joinCode, refreshErrorTick: $refreshErrorTick)';
+  return 'SharedSessionState.lobby(participants: $participants, isHost: $isHost, steps: $steps, joinCode: $joinCode, refreshErrorTick: $refreshErrorTick, coLocated: $coLocated)';
 }
 
 
@@ -322,7 +323,7 @@ abstract mixin class _$LobbyCopyWith<$Res> implements $SharedSessionStateCopyWit
   factory _$LobbyCopyWith(_Lobby value, $Res Function(_Lobby) _then) = __$LobbyCopyWithImpl;
 @useResult
 $Res call({
- List<ParticipantPresence> participants, bool isHost, List<ExerciseStep> steps, String? joinCode, int refreshErrorTick
+ List<ParticipantPresence> participants, bool isHost, List<ExerciseStep> steps, String? joinCode, int refreshErrorTick, bool? coLocated
 });
 
 
@@ -339,14 +340,15 @@ class __$LobbyCopyWithImpl<$Res>
 
 /// Create a copy of SharedSessionState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? participants = null,Object? isHost = null,Object? steps = null,Object? joinCode = freezed,Object? refreshErrorTick = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? participants = null,Object? isHost = null,Object? steps = null,Object? joinCode = freezed,Object? refreshErrorTick = null,Object? coLocated = freezed,}) {
   return _then(_Lobby(
 participants: null == participants ? _self._participants : participants // ignore: cast_nullable_to_non_nullable
 as List<ParticipantPresence>,isHost: null == isHost ? _self.isHost : isHost // ignore: cast_nullable_to_non_nullable
 as bool,steps: null == steps ? _self._steps : steps // ignore: cast_nullable_to_non_nullable
 as List<ExerciseStep>,joinCode: freezed == joinCode ? _self.joinCode : joinCode // ignore: cast_nullable_to_non_nullable
 as String?,refreshErrorTick: null == refreshErrorTick ? _self.refreshErrorTick : refreshErrorTick // ignore: cast_nullable_to_non_nullable
-as int,
+as int,coLocated: freezed == coLocated ? _self.coLocated : coLocated // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 

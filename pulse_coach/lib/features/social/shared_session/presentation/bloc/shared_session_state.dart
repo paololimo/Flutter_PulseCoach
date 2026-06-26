@@ -19,6 +19,7 @@ sealed class SharedSessionState with _$SharedSessionState {
     // One-shot counter bumped each time a join-code refresh fails, so the page
     // can show a transient SnackBar without leaving the lobby.
     @Default(0) int refreshErrorTick,
+    bool? coLocated, // null = check pending or inconclusive (NFR33); true = within 100m
   }) = _Lobby;
 
   const factory SharedSessionState.inSession({

@@ -20,6 +20,7 @@ import 'shared_session_bloc_test.mocks.dart';
 
 @GenerateMocks([DeleteSharedSessionUseCase, RefreshJoinCodeUseCase])
 import 'shared_session_cancel_refresh_bloc_test.mocks.dart';
+import 'shared_session_bloc_co_location_test.mocks.dart';
 
 const _kSteps = [
   ExerciseStep(title: 'Warm Up', instruction: 'Breathe', durationSeconds: 60),
@@ -29,6 +30,7 @@ void main() {
   late MockRealtimeGateway mockGateway;
   late MockDeleteSharedSessionUseCase mockDelete;
   late MockRefreshJoinCodeUseCase mockRefresh;
+  late MockLocationService mockLocation;
   late StreamController<BroadcastEvent> bc;
   late StreamController<PresenceState> pc;
 
@@ -36,6 +38,9 @@ void main() {
     mockGateway = MockRealtimeGateway();
     mockDelete = MockDeleteSharedSessionUseCase();
     mockRefresh = MockRefreshJoinCodeUseCase();
+    mockLocation = MockLocationService();
+    when(mockLocation.getCityLevelCoordinates())
+        .thenAnswer((_) async => const Left(LocationFailure('disabled')));
     bc = StreamController<BroadcastEvent>.broadcast();
     pc = StreamController<PresenceState>.broadcast();
     when(mockGateway.broadcastEvents).thenAnswer((_) => bc.stream);
@@ -45,6 +50,8 @@ void main() {
       userId: anyNamed('userId'),
       displayHandle: anyNamed('displayHandle'),
       isHost: anyNamed('isHost'),
+      lat: anyNamed('lat'),
+      lon: anyNamed('lon'),
     )).thenAnswer((_) async {});
     when(mockGateway.leaveChannel()).thenAnswer((_) async {});
     when(mockDelete.call(sessionId: anyNamed('sessionId')))
@@ -60,7 +67,7 @@ void main() {
 
   group('SharedSessionBloc — Cancel and Refresh (20.1)', () {
     SharedSessionBloc build() =>
-        SharedSessionBloc(mockGateway, mockDelete, mockRefresh);
+        SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation);
 
     Future<void> joinLobby(SharedSessionBloc bloc) async {
       bloc.add(const SharedSessionJoined(

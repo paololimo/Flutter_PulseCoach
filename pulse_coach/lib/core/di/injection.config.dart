@@ -253,12 +253,16 @@ import 'package:pulse_coach/features/social/shared_session/domain/usecases/creat
     as _i532;
 import 'package:pulse_coach/features/social/shared_session/domain/usecases/delete_shared_session_use_case.dart'
     as _i102;
+import 'package:pulse_coach/features/social/shared_session/domain/usecases/join_shared_session_use_case.dart'
+    as _i31;
 import 'package:pulse_coach/features/social/shared_session/domain/usecases/refresh_join_code_use_case.dart'
     as _i1039;
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_bloc.dart'
     as _i596;
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_creation_cubit.dart'
     as _i606;
+import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_join_cubit.dart'
+    as _i385;
 import 'package:pulse_coach/features/subscription/data/repositories/entitlement_repository_impl.dart'
     as _i705;
 import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_service.dart'
@@ -481,6 +485,9 @@ extension GetItInjectableX on _i174.GetIt {
       () =>
           _i102.DeleteSharedSessionUseCase(gh<_i123.SharedSessionRepository>()),
     );
+    gh.factory<_i31.JoinSharedSessionUseCase>(
+      () => _i31.JoinSharedSessionUseCase(gh<_i123.SharedSessionRepository>()),
+    );
     gh.factory<_i1039.RefreshJoinCodeUseCase>(
       () => _i1039.RefreshJoinCodeUseCase(gh<_i123.SharedSessionRepository>()),
     );
@@ -575,6 +582,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i281.RealtimeGateway>(),
         gh<_i102.DeleteSharedSessionUseCase>(),
         gh<_i1039.RefreshJoinCodeUseCase>(),
+        gh<_i160.LocationService>(),
       ),
     );
     gh.factory<_i1023.GetSocialProfileUseCase>(
@@ -628,6 +636,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i746.GetHealthData>(),
         gh<_i1.GetActivityLevel>(),
       ),
+    );
+    gh.factory<_i385.SharedSessionJoinCubit>(
+      () => _i385.SharedSessionJoinCubit(gh<_i31.JoinSharedSessionUseCase>()),
     );
     gh.factory<_i705.DataExportCubit>(
       () => _i705.DataExportCubit(gh<_i748.DataExportService>()),

@@ -21,6 +21,7 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/social_pro
 import 'package:pulse_coach/features/social/friends/presentation/widgets/friend_row.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/shared_session_start_args.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_creation_cubit.dart';
+import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_join_cubit.dart';
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/features/subscription/presentation/widgets/pro_upsell_sheet.dart';
@@ -50,6 +51,9 @@ class SocialPage extends StatelessWidget {
         ),
         BlocProvider<SharedSessionCreationCubit>(
           create: (_) => getIt<SharedSessionCreationCubit>(),
+        ),
+        BlocProvider<SharedSessionJoinCubit>(
+          create: (_) => getIt<SharedSessionJoinCubit>(),
         ),
       ],
       child: const _SocialView(),
@@ -112,39 +116,89 @@ class _SocialViewState extends State<_SocialView>
               ],
             ),
           ),
-          body: BlocListener<SharedSessionCreationCubit, SharedSessionCreationState>(
-            listener: (context, state) {
-              state.mapOrNull(
-                created: (s) {
-                  final authState = context.read<AuthBloc>().state;
-                  final socialState = context.read<SocialProfileBloc>().state;
-                  final userId = authState.mapOrNull(
-                    authenticated: (a) => a.user.id,
-                  );
-                  if (userId == null) return;
-                  final displayHandle = socialState.mapOrNull(
-                    loaded: (p) => p.profile.displayHandle,
-                  );
-                  context.push(
-                    AppRouter.sharedSessionLobby,
-                    extra: SharedSessionStartArgs(
-                      sessionId: s.sessionId,
-                      isHost: true,
-                      userId: userId,
-                      displayHandle: displayHandle,
-                      steps: const [],
-                      joinCode: s.joinCode,
-                    ),
+          body: MultiBlocListener(
+            listeners: [
+              BlocListener<SharedSessionCreationCubit,
+                  SharedSessionCreationState>(
+                listener: (context, state) {
+                  state.mapOrNull(
+                    created: (s) {
+                      final authState = context.read<AuthBloc>().state;
+                      final socialState =
+                          context.read<SocialProfileBloc>().state;
+                      final userId = authState.mapOrNull(
+                        authenticated: (a) => a.user.id,
+                      );
+                      if (userId == null) return;
+                      final displayHandle = socialState.mapOrNull(
+                        loaded: (p) => p.profile.displayHandle,
+                      );
+                      context.push(
+                        AppRouter.sharedSessionLobby,
+                        extra: SharedSessionStartArgs(
+                          sessionId: s.sessionId,
+                          isHost: true,
+                          userId: userId,
+                          displayHandle: displayHandle,
+                          steps: const [],
+                          joinCode: s.joinCode,
+                        ),
+                      );
+                    },
+                    error: (_) {
+                      final l10n = AppLocalizations.of(context)!;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(l10n.sharedSessionCreateError)),
+                      );
+                    },
                   );
                 },
-                error: (_) {
-                  final l10n = AppLocalizations.of(context)!;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.sharedSessionCreateError)),
+              ),
+              BlocListener<SharedSessionJoinCubit, SharedSessionJoinState>(
+                listener: (context, joinState) {
+                  joinState.mapOrNull(
+                    joined: (s) {
+                      final authState = context.read<AuthBloc>().state;
+                      final socialState =
+                          context.read<SocialProfileBloc>().state;
+                      final userId = authState.mapOrNull(
+                        authenticated: (a) => a.user.id,
+                      );
+                      if (userId == null) return;
+                      final displayHandle = socialState.mapOrNull(
+                        loaded: (p) => p.profile.displayHandle,
+                      );
+                      context.push(
+                        AppRouter.sharedSessionLobby,
+                        extra: SharedSessionStartArgs(
+                          sessionId: s.sessionId,
+                          isHost: false,
+                          userId: userId,
+                          displayHandle: displayHandle,
+                          steps: const [],
+                          joinCode: null,
+                        ),
+                      );
+                      context.read<SharedSessionJoinCubit>().reset();
+                    },
+                    sessionAlreadyStarted: (_) {
+                      _showSessionAlreadyStartedDialog(context);
+                      context.read<SharedSessionJoinCubit>().reset();
+                    },
+                    error: (_) {
+                      final l10n = AppLocalizations.of(context)!;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        // E18R-2 / E18R-CB2: localized string — never failure.message
+                        SnackBar(
+                            content: Text(l10n.sharedSessionJoinError)),
+                      );
+                      context.read<SharedSessionJoinCubit>().reset();
+                    },
                   );
                 },
-              );
-            },
+              ),
+            ],
             child: TabBarView(
               controller: _tabController,
               children: [
@@ -156,6 +210,22 @@ class _SocialViewState extends State<_SocialView>
           ),
         );
       },
+    );
+  }
+
+  void _showSessionAlreadyStartedDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(l10n.sharedSessionAlreadyStarted),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -289,6 +359,26 @@ class _FriendsList extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(height: 8),
+          BlocBuilder<SharedSessionJoinCubit, SharedSessionJoinState>(
+            builder: (context, joinState) {
+              final isJoining =
+                  joinState.mapOrNull(joining: (_) => true) ?? false;
+              return OutlinedButton.icon(
+                icon: isJoining
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.login),
+                label: Text(l10n.sharedSessionJoinButton),
+                onPressed: isJoining
+                    ? null
+                    : () => _showJoinDialog(context, l10n),
+              );
+            },
+          ),
           if (searchResult != null) ...[
             const Divider(height: 24),
             Text(
@@ -366,6 +456,46 @@ class _FriendsList extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showJoinDialog(BuildContext context, AppLocalizations l10n) {
+    final controller = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.sharedSessionJoinDialogTitle),
+        content: TextField(
+          controller: controller,
+          decoration:
+              InputDecoration(hintText: l10n.sharedSessionJoinDialogHint),
+          textCapitalization: TextCapitalization.characters,
+          maxLength: 6,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.sharedSessionCancelDialogKeep),
+          ),
+          FilledButton(
+            onPressed: () {
+              final code = controller.text.trim();
+              if (code.isEmpty) return;
+              Navigator.of(ctx).pop();
+              final authState = context.read<AuthBloc>().state;
+              final userId = authState.mapOrNull(
+                authenticated: (a) => a.user.id,
+              );
+              if (userId == null) return;
+              context
+                  .read<SharedSessionJoinCubit>()
+                  .join(joinCode: code, userId: userId);
+            },
+            child: Text(l10n.sharedSessionJoinDialogConfirm),
+          ),
+        ],
+      ),
+    ).then((_) => controller.dispose());
   }
 
   void _confirmRemove(

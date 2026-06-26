@@ -360,6 +360,13 @@
   "sharedSessionCancelDialogConfirm": "Cancel",
   "sharedSessionCreateError": "Could not create session. Please try again.",
   "sharedSessionRefreshError": "Could not refresh the code. Please try again.",
+  "sharedSessionJoinButton": "Join a session",
+  "sharedSessionJoinDialogTitle": "Enter the join code",
+  "sharedSessionJoinDialogHint": "Session code",
+  "sharedSessionJoinDialogConfirm": "Join",
+  "sharedSessionJoinError": "Invalid code or session not found.",
+  "sharedSessionAlreadyStarted": "This session has already started.",
+  "sharedSessionCoLocated": "Nearby",
 
   "settingsLanguageSection": "Language",
   "settingsLanguageItalian": "Italiano",

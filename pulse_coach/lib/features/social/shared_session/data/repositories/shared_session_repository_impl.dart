@@ -46,4 +46,22 @@ class SharedSessionRepositoryImpl implements SharedSessionRepository {
       return Left(ServerFailure('delete_shared_session_failed: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, SharedSession>> joinSharedSession({
+    required String joinCode,
+    required String userId,
+  }) async {
+    try {
+      final dto = await _dataSource.joinSharedSession(
+        joinCode: joinCode,
+        userId: userId,
+      );
+      return Right(dto.toDomain());
+    } on SessionAlreadyStartedFailure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(ServerFailure('join_shared_session_failed: $e'));
+    }
+  }
 }

@@ -277,7 +277,8 @@ as List<ParticipantPresence>,
 /// @nodoc
 mixin _$ParticipantPresence {
 
- String get userId; String? get displayHandle; bool get isHost;
+ String get userId; String? get displayHandle; bool get isHost; double? get lat;// ephemeral city-level coordinate, NFR33 — never persisted to DB
+ double? get lon;
 /// Create a copy of ParticipantPresence
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -288,16 +289,16 @@ $ParticipantPresenceCopyWith<ParticipantPresence> get copyWith => _$ParticipantP
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ParticipantPresence&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayHandle, displayHandle) || other.displayHandle == displayHandle)&&(identical(other.isHost, isHost) || other.isHost == isHost));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ParticipantPresence&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayHandle, displayHandle) || other.displayHandle == displayHandle)&&(identical(other.isHost, isHost) || other.isHost == isHost)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lon, lon) || other.lon == lon));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,userId,displayHandle,isHost);
+int get hashCode => Object.hash(runtimeType,userId,displayHandle,isHost,lat,lon);
 
 @override
 String toString() {
-  return 'ParticipantPresence(userId: $userId, displayHandle: $displayHandle, isHost: $isHost)';
+  return 'ParticipantPresence(userId: $userId, displayHandle: $displayHandle, isHost: $isHost, lat: $lat, lon: $lon)';
 }
 
 
@@ -308,7 +309,7 @@ abstract mixin class $ParticipantPresenceCopyWith<$Res>  {
   factory $ParticipantPresenceCopyWith(ParticipantPresence value, $Res Function(ParticipantPresence) _then) = _$ParticipantPresenceCopyWithImpl;
 @useResult
 $Res call({
- String userId, String? displayHandle, bool isHost
+ String userId, String? displayHandle, bool isHost, double? lat, double? lon
 });
 
 
@@ -325,12 +326,14 @@ class _$ParticipantPresenceCopyWithImpl<$Res>
 
 /// Create a copy of ParticipantPresence
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? displayHandle = freezed,Object? isHost = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? displayHandle = freezed,Object? isHost = null,Object? lat = freezed,Object? lon = freezed,}) {
   return _then(_self.copyWith(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,displayHandle: freezed == displayHandle ? _self.displayHandle : displayHandle // ignore: cast_nullable_to_non_nullable
 as String?,isHost: null == isHost ? _self.isHost : isHost // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,lat: freezed == lat ? _self.lat : lat // ignore: cast_nullable_to_non_nullable
+as double?,lon: freezed == lon ? _self.lon : lon // ignore: cast_nullable_to_non_nullable
+as double?,
   ));
 }
 
@@ -415,10 +418,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String? displayHandle,  bool isHost)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String? displayHandle,  bool isHost,  double? lat,  double? lon)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ParticipantPresence() when $default != null:
-return $default(_that.userId,_that.displayHandle,_that.isHost);case _:
+return $default(_that.userId,_that.displayHandle,_that.isHost,_that.lat,_that.lon);case _:
   return orElse();
 
 }
@@ -436,10 +439,10 @@ return $default(_that.userId,_that.displayHandle,_that.isHost);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String? displayHandle,  bool isHost)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String? displayHandle,  bool isHost,  double? lat,  double? lon)  $default,) {final _that = this;
 switch (_that) {
 case _ParticipantPresence():
-return $default(_that.userId,_that.displayHandle,_that.isHost);case _:
+return $default(_that.userId,_that.displayHandle,_that.isHost,_that.lat,_that.lon);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -456,10 +459,10 @@ return $default(_that.userId,_that.displayHandle,_that.isHost);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String? displayHandle,  bool isHost)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String? displayHandle,  bool isHost,  double? lat,  double? lon)?  $default,) {final _that = this;
 switch (_that) {
 case _ParticipantPresence() when $default != null:
-return $default(_that.userId,_that.displayHandle,_that.isHost);case _:
+return $default(_that.userId,_that.displayHandle,_that.isHost,_that.lat,_that.lon);case _:
   return null;
 
 }
@@ -471,12 +474,15 @@ return $default(_that.userId,_that.displayHandle,_that.isHost);case _:
 
 
 class _ParticipantPresence implements ParticipantPresence {
-  const _ParticipantPresence({required this.userId, this.displayHandle, this.isHost = false});
+  const _ParticipantPresence({required this.userId, this.displayHandle, this.isHost = false, this.lat, this.lon});
   
 
 @override final  String userId;
 @override final  String? displayHandle;
 @override@JsonKey() final  bool isHost;
+@override final  double? lat;
+// ephemeral city-level coordinate, NFR33 — never persisted to DB
+@override final  double? lon;
 
 /// Create a copy of ParticipantPresence
 /// with the given fields replaced by the non-null parameter values.
@@ -488,16 +494,16 @@ _$ParticipantPresenceCopyWith<_ParticipantPresence> get copyWith => __$Participa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ParticipantPresence&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayHandle, displayHandle) || other.displayHandle == displayHandle)&&(identical(other.isHost, isHost) || other.isHost == isHost));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ParticipantPresence&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayHandle, displayHandle) || other.displayHandle == displayHandle)&&(identical(other.isHost, isHost) || other.isHost == isHost)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lon, lon) || other.lon == lon));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,userId,displayHandle,isHost);
+int get hashCode => Object.hash(runtimeType,userId,displayHandle,isHost,lat,lon);
 
 @override
 String toString() {
-  return 'ParticipantPresence(userId: $userId, displayHandle: $displayHandle, isHost: $isHost)';
+  return 'ParticipantPresence(userId: $userId, displayHandle: $displayHandle, isHost: $isHost, lat: $lat, lon: $lon)';
 }
 
 
@@ -508,7 +514,7 @@ abstract mixin class _$ParticipantPresenceCopyWith<$Res> implements $Participant
   factory _$ParticipantPresenceCopyWith(_ParticipantPresence value, $Res Function(_ParticipantPresence) _then) = __$ParticipantPresenceCopyWithImpl;
 @override @useResult
 $Res call({
- String userId, String? displayHandle, bool isHost
+ String userId, String? displayHandle, bool isHost, double? lat, double? lon
 });
 
 
@@ -525,12 +531,14 @@ class __$ParticipantPresenceCopyWithImpl<$Res>
 
 /// Create a copy of ParticipantPresence
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? displayHandle = freezed,Object? isHost = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? displayHandle = freezed,Object? isHost = null,Object? lat = freezed,Object? lon = freezed,}) {
   return _then(_ParticipantPresence(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,displayHandle: freezed == displayHandle ? _self.displayHandle : displayHandle // ignore: cast_nullable_to_non_nullable
 as String?,isHost: null == isHost ? _self.isHost : isHost // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,lat: freezed == lat ? _self.lat : lat // ignore: cast_nullable_to_non_nullable
+as double?,lon: freezed == lon ? _self.lon : lon // ignore: cast_nullable_to_non_nullable
+as double?,
   ));
 }
 

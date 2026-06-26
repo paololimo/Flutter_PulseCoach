@@ -52,6 +52,7 @@ class SharedSessionLobbyPage extends StatelessWidget {
               isHost: s.isHost,
               steps: s.steps,
               joinCode: s.joinCode,
+              coLocated: s.coLocated,
               onStart: () =>
                   context.read<SharedSessionBloc>().add(const SessionStartTapped()),
               onCancel: () => _showCancelDialog(context),
@@ -147,6 +148,7 @@ class _LobbyView extends StatefulWidget {
   final bool isHost;
   final List<ExerciseStep> steps;
   final String? joinCode;
+  final bool? coLocated;
   final VoidCallback onStart;
   final VoidCallback onCancel;
 
@@ -155,6 +157,7 @@ class _LobbyView extends StatefulWidget {
     required this.isHost,
     required this.steps,
     this.joinCode,
+    this.coLocated,
     required this.onStart,
     required this.onCancel,
   });
@@ -249,6 +252,25 @@ class _LobbyViewState extends State<_LobbyView> {
               child: _ParticipantRow(participant: p),
             ),
           ),
+          if (!widget.isHost && widget.coLocated == true)
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.location_on,
+                      size: 16,
+                      color: pulseTheme.primaryColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    l10n.sharedSessionCoLocated,
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: pulseTheme.primaryColor),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: 24),
           if (widget.isHost)
             Padding(

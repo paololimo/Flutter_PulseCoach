@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/cloud/realtime_gateway.dart';
 import 'package:pulse_coach/core/error/failures.dart';
+import 'package:pulse_coach/core/utils/location_service.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/broadcast_event.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/usecases/delete_shared_session_use_case.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/usecases/refresh_join_code_use_case.dart';
@@ -16,6 +18,7 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
   final RealtimeGateway _gateway;
   final DeleteSharedSessionUseCase _deleteUseCase;
   final RefreshJoinCodeUseCase _refreshUseCase;
+  final LocationService _locationService;
 
   StreamSubscription<dynamic>? _broadcastSub;
   StreamSubscription<dynamic>? _presenceSub;
@@ -29,10 +32,15 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
   // Set on join; used for cancel/refresh operations
   String? _sessionId;
 
+  // Ephemeral city-level coordinates — never persisted (NFR33); cleared in close()
+  double? _myLat;
+  double? _myLon;
+
   SharedSessionBloc(
     this._gateway,
     this._deleteUseCase,
     this._refreshUseCase,
+    this._locationService,
   ) : super(const SharedSessionState.initial()) {
     on<SharedSessionJoined>(_onJoined);
     on<SessionStartTapped>(_onStartTapped);
@@ -54,6 +62,10 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
     try {
       await _gateway.joinChannel(event.sessionId);
       _joined = true;
+
+      // Track presence immediately without coordinates so lobby entry is never
+      // blocked on GPS (NFR33: momentary, non-blocking). The city-level position
+      // is resolved in the background and re-tracked when available.
       await _gateway.trackPresence(
         userId: event.userId,
         displayHandle: event.displayHandle,
@@ -71,11 +83,35 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
         steps: event.steps,
         joinCode: event.joinCode,
       ));
+
+      unawaited(_resolveCoLocation(event));
     } catch (e) {
       emit(SharedSessionState.error(
         failure: RealtimeFailure('channel_join_failed: $e'),
       ));
     }
+  }
+
+  // One-shot city-level position for co-location, fetched off the lobby-entry
+  // path (NFR33: non-blocking). On success, re-tracks Presence with the
+  // coordinates so followers can resolve `coLocated` from the next Presence
+  // update. Bails out — leaving coords cleared (AC9) — if the bloc was torn
+  // down or left the channel while awaiting GPS.
+  Future<void> _resolveCoLocation(SharedSessionJoined event) async {
+    final posResult = await _locationService.getCityLevelCoordinates();
+    if (isClosed || !_joined) return;
+    final coords =
+        posResult.fold<(double, double)?>((_) => null, (c) => c);
+    if (coords == null) return;
+    _myLat = coords.$1;
+    _myLon = coords.$2;
+    await _gateway.trackPresence(
+      userId: event.userId,
+      displayHandle: event.displayHandle,
+      isHost: _isHost,
+      lat: _myLat,
+      lon: _myLon,
+    );
   }
 
   Future<void> _onStartTapped(
@@ -168,8 +204,32 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
   void _onPresenceReceived(
       PresenceStateReceived event, Emitter<SharedSessionState> emit) {
     state.mapOrNull(
-      lobby: (s) =>
-          emit(s.copyWith(participants: event.presenceState.participants)),
+      lobby: (s) {
+        bool? coLocated = s.coLocated;
+        if (!_isHost && _myLat != null && _myLon != null) {
+          final host = event.presenceState.participants
+              .where((p) => p.isHost && p.lat != null && p.lon != null)
+              .firstOrNull;
+          if (host != null) {
+            final distanceM = Geolocator.distanceBetween(
+              _myLat!,
+              _myLon!,
+              host.lat!,
+              host.lon!,
+            );
+            coLocated = distanceM <= 100.0;
+          } else {
+            // Host left presence or re-tracked without coordinates: the cue is
+            // no longer valid, so fall back to inconclusive instead of keeping
+            // a stale `true`.
+            coLocated = null;
+          }
+        }
+        emit(s.copyWith(
+          participants: event.presenceState.participants,
+          coLocated: coLocated,
+        ));
+      },
       inSession: (s) {
         final prev = s.participants;
         final next = event.presenceState.participants;
@@ -248,6 +308,8 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
 
   @override
   Future<void> close() async {
+    _myLat = null;
+    _myLon = null;
     await _broadcastSub?.cancel();
     await _presenceSub?.cancel();
     if (_joined) await _gateway.leaveChannel();

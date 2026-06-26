@@ -15,5 +15,7 @@ abstract class ParticipantPresence with _$ParticipantPresence {
     required String userId,
     String? displayHandle,
     @Default(false) bool isHost,
+    double? lat, // ephemeral city-level coordinate, NFR33 — never persisted to DB
+    double? lon,
   }) = _ParticipantPresence;
 }

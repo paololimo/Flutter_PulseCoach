@@ -76,4 +76,34 @@ class SharedSessionRemoteDataSource {
         .delete()
         .eq('id', sessionId);
   }
+
+  /// Looks up a session by [joinCode] (normalized to uppercase), validates
+  /// that its status is 'waiting', upserts the [userId] into
+  /// session_participants, and returns the session DTO.
+  ///
+  /// Throws [SessionAlreadyStartedFailure] when status != 'waiting'.
+  /// Throws [ServerFailure] when no matching session is found or on any
+  /// other network error.
+  Future<SharedSessionDto> joinSharedSession({
+    required String joinCode,
+    required String userId,
+  }) async {
+    final rows = await _supabase.client
+        .from('shared_sessions')
+        .select()
+        .eq('join_code', joinCode.toUpperCase())
+        .limit(1);
+    if (rows.isEmpty) {
+      throw const ServerFailure('join_code_not_found');
+    }
+    final session = SharedSessionDto.fromJson(rows.first);
+    if (session.status != 'waiting') {
+      throw const SessionAlreadyStartedFailure();
+    }
+    await _supabase.client.from('session_participants').upsert({
+      'session_id': session.id,
+      'user_id': userId,
+    });
+    return session;
+  }
 }

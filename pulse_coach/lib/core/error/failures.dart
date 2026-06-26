@@ -74,3 +74,9 @@ class RealtimeFailure extends Failure {
   final String message;
   const RealtimeFailure(this.message);
 }
+
+class SessionAlreadyStartedFailure extends Failure {
+  @override
+  String get message => 'session_already_started';
+  const SessionAlreadyStartedFailure();
+}
