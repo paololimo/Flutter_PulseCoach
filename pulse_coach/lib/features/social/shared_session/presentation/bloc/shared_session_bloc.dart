@@ -3,7 +3,12 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
+import 'package:pulse_coach/ai/safety/group_constraint_resolver.dart';
+import 'package:pulse_coach/ai/safety/participant_profile.dart';
+import 'package:pulse_coach/ai/safety/safety_constraints.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_state.dart' as ai_state;
 import 'package:pulse_coach/core/cloud/realtime_gateway.dart';
+import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/utils/location_service.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/broadcast_event.dart';
@@ -19,6 +24,10 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
   final DeleteSharedSessionUseCase _deleteUseCase;
   final RefreshJoinCodeUseCase _refreshUseCase;
   final LocationService _locationService;
+  final AppDatabase _db;
+
+  // Set in _onStartTapped (host) or from broadcast echo; used when sessionEnded fires.
+  String? _armKey;
 
   StreamSubscription<dynamic>? _broadcastSub;
   StreamSubscription<dynamic>? _presenceSub;
@@ -41,6 +50,7 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
     this._deleteUseCase,
     this._refreshUseCase,
     this._locationService,
+    this._db,
   ) : super(const SharedSessionState.initial()) {
     on<SharedSessionJoined>(_onJoined);
     on<SessionStartTapped>(_onStartTapped);
@@ -119,8 +129,54 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
     final lobbyState = state.mapOrNull(lobby: (s) => s);
     if (lobbyState == null || !lobbyState.isHost) return;
     if (lobbyState.participants.length < 2) return;
+
+    // Derive group plan from host's behavioral state via GroupConstraintResolver.
+    // Only the host's profile is used (followers' profiles are not available
+    // over the wire in v2.4b; documented MVP limitation).
+    const sessionType = 'mobility';
+    int intensity;
+    int durationMinutes;
     try {
-      await _gateway.sendBroadcast(event: 'session_started', payload: {});
+      final stateRow = await _db.behavioralStateDao.getLatestState();
+      final behavioralState = _parseBehavioralState(stateRow?.currentState);
+      // Fail-safe (FR24): an unrecognized/corrupt state string caps to LOW
+      // rather than defaulting to no cap.
+      final safetyCapIntensity = behavioralState == null
+          ? SessionIntensity.low
+          : _safetyCapFrom(behavioralState);
+
+      final hostProfile = ParticipantProfile(
+        safetyCapIntensity: safetyCapIntensity,
+        fitnessLevel: 'medium',
+        movementExclusions: const {},
+        availableTimeMinutes: 20,
+      );
+
+      final constraint = const GroupConstraintResolver().resolve([hostProfile]);
+      intensity = _intensityFromCeiling(constraint.intensityCeiling);
+      durationMinutes = constraint.durationMinutes;
+    } catch (_) {
+      // Fail-safe (FR24): if we cannot confirm the host's behavioral state,
+      // fall back to the most protective LOW intensity rather than medium —
+      // social pressure must never override the recovery-empathy promise.
+      intensity = 3;
+      durationMinutes = 20;
+    }
+
+    final armKey = '${sessionType}_${_intensityName(intensity)}';
+    // Set before broadcast so host echo path (armKey ??= ...) is a no-op.
+    _armKey = armKey;
+
+    try {
+      await _gateway.sendBroadcast(
+        event: 'session_started',
+        payload: {
+          'session_type': sessionType,
+          'intensity': intensity,
+          'duration_minutes': durationMinutes,
+          'arm_key': armKey,
+        },
+      );
     } catch (e) {
       emit(SharedSessionState.error(
         failure: RealtimeFailure('session_start_broadcast_failed: $e'),
@@ -266,14 +322,25 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
       BroadcastEventReceived event, Emitter<SharedSessionState> emit) {
     final broadcast = event.broadcastEvent;
     switch (broadcast) {
-      case SessionStarted():
+      case SessionStarted(
+        sessionType: final sessionType,
+        intensity: final intensity,
+        durationMinutes: final durationMinutes,
+        armKey: final broadcastArmKey,
+      ):
+        // Follower path: armKey comes from broadcast. Host already set _armKey
+        // in _onStartTapped, so ??= is a no-op for the host echo.
+        _armKey ??= broadcastArmKey;
         state.mapOrNull(
           lobby: (s) => emit(SharedSessionState.inSession(
             stepIndex: 0,
             elapsedSeconds: 0,
             isHost: s.isHost,
-            steps: s.steps,
+            steps: const [], // Page generates steps from plan params (UX-DR29)
             participants: s.participants,
+            sessionType: sessionType,
+            intensity: intensity,
+            durationMinutes: durationMinutes,
           )),
         );
       case StepAdvanced(stepIndex: final idx, elapsedSeconds: final elapsed):
@@ -300,10 +367,51 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
           _joined = false;
           unawaited(_gateway.leaveChannel());
         }
-        emit(const SharedSessionState.sessionEnded());
+        emit(SharedSessionState.sessionEnded(
+          armKey: _armKey ?? 'mobility_medium',
+        ));
       case UnknownBroadcast():
         break;
     }
+  }
+
+  // Maps behavioral state to the per-user safety intensity cap per FR24.
+  // Exhaustive switch — compiler catches new BehavioralState values.
+  SessionIntensity? _safetyCapFrom(ai_state.BehavioralState state) =>
+      switch (state) {
+        ai_state.BehavioralState.atRisk => SessionIntensity.low,
+        ai_state.BehavioralState.recovering => SessionIntensity.medium,
+        ai_state.BehavioralState.fatigued => SessionIntensity.medium,
+        ai_state.BehavioralState.active => null,
+      };
+
+  // Returns null for an unrecognized non-null state string so the caller can
+  // fail safe (FR24). A null input (no state recorded yet) is the legitimate
+  // first-run default and maps to `active`.
+  ai_state.BehavioralState? _parseBehavioralState(String? raw) {
+    if (raw == null) return ai_state.BehavioralState.active;
+    return switch (raw.toLowerCase()) {
+      'atrisk' => ai_state.BehavioralState.atRisk,
+      'recovering' => ai_state.BehavioralState.recovering,
+      'fatigued' => ai_state.BehavioralState.fatigued,
+      'active' => ai_state.BehavioralState.active,
+      _ => null,
+    };
+  }
+
+  // Maps SessionIntensity ceiling to a concrete intensity int value.
+  // null = no cap → medium (5). Ranges: low 1-3, medium 4-7, high 8-10.
+  int _intensityFromCeiling(SessionIntensity? ceiling) => switch (ceiling) {
+        SessionIntensity.low => 3,
+        SessionIntensity.medium => 5,
+        SessionIntensity.high => 8,
+        null => 5,
+      };
+
+  String _intensityName(int intensity) {
+    if (intensity <= 3) return 'low';
+    if (intensity <= 7) return 'medium';
+    return 'high';
   }
 
   @override

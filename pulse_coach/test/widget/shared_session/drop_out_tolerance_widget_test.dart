@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
-import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_bloc.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_state.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/pages/shared_session_lobby_page.dart';
@@ -13,10 +12,6 @@ import 'package:pulse_coach/l10n/app_localizations.dart';
 
 @GenerateMocks([SharedSessionBloc])
 import 'drop_out_tolerance_widget_test.mocks.dart';
-
-const _kSteps = [
-  ExerciseStep(title: 'Warm Up', instruction: 'Breathe', durationSeconds: 60),
-];
 
 Widget _buildTestWidget(SharedSessionState state) {
   final mockBloc = MockSharedSessionBloc();
@@ -51,16 +46,19 @@ void main() {
               stepIndex: 0,
               elapsedSeconds: 30,
               isHost: false,
-              steps: _kSteps,
+              steps: [],
               droppedHandle: 'bob',
+              sessionType: 'mobility',
+              intensity: 5,
+              durationMinutes: 20,
             ),
           ),
         );
         await tester.pump();
         // E18R-2: localized IT string; NOT raw 'bob disconnected'
         expect(find.textContaining('bob si è disconnesso'), findsOneWidget);
-        // Step content still visible
-        expect(find.text('Warm Up'), findsOneWidget);
+        // Step content still visible: IT locale generates 'Riscaldamento' (inSessionWarmupTitle)
+        expect(find.text('Riscaldamento'), findsOneWidget);
       },
     );
 

@@ -29,13 +29,18 @@ sealed class SharedSessionState with _$SharedSessionState {
     required List<ExerciseStep> steps,
     @Default([]) List<ParticipantPresence> participants,
     String? droppedHandle,
+    @Default('mobility') String sessionType,
+    @Default(5) int intensity,
+    @Default(20) int durationMinutes,
   }) = _InSession;
 
   const factory SharedSessionState.error({
     required Failure failure,
   }) = _Error;
 
-  const factory SharedSessionState.sessionEnded() = _SessionEnded;
+  const factory SharedSessionState.sessionEnded({
+    @Default('mobility_medium') String armKey,
+  }) = _SessionEnded;
 
   const factory SharedSessionState.cancelled() = _Cancelled;
 }

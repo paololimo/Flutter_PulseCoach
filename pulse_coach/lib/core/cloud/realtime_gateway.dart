@@ -60,8 +60,10 @@ class RealtimeGateway {
         )
         .onBroadcast(
           event: 'session_started',
-          callback: (_) =>
-              _broadcastController?.add(const BroadcastEvent.sessionStarted()),
+          callback: (payload) {
+            final event = _parseBroadcast('session_started', payload);
+            if (event != null) _broadcastController?.add(event);
+          },
         )
         .onBroadcast(
           event: 'session_ended',
@@ -170,7 +172,31 @@ class RealtimeGateway {
         }
         return null;
       case 'session_started':
-        return const BroadcastEvent.sessionStarted();
+        // Type-guarded reads (mirrors 'step_advanced' above): a present-but-
+        // wrong-type field falls back to its default instead of throwing a
+        // TypeError inside the uncaught broadcast stream callback.
+        final rawType = payload['session_type'];
+        final rawIntensity = payload['intensity'];
+        final rawDuration = payload['duration_minutes'];
+        final rawArmKey = payload['arm_key'];
+        final sessionType = rawType is String ? rawType : 'mobility';
+        final intensity = rawIntensity is num ? rawIntensity.toInt() : 5;
+        final durationMinutes = rawDuration is num ? rawDuration.toInt() : 20;
+        // Default arm key derived from the parsed intensity (low 1-3, medium
+        // 4-7, high 8-10) so a missing arm_key stays consistent with intensity.
+        final defaultName = intensity <= 3
+            ? 'low'
+            : intensity <= 7
+                ? 'medium'
+                : 'high';
+        final armKey =
+            rawArmKey is String ? rawArmKey : '${sessionType}_$defaultName';
+        return BroadcastEvent.sessionStarted(
+          sessionType: sessionType,
+          intensity: intensity,
+          durationMinutes: durationMinutes,
+          armKey: armKey,
+        );
       case 'session_ended':
         return const BroadcastEvent.sessionEnded();
       default:

@@ -8,11 +8,13 @@ import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
+import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.dart';
 import 'package:pulse_coach/features/session/presentation/utils/haptic_service.dart';
+import 'package:pulse_coach/features/session/presentation/utils/session_step_generator.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/in_session_view.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/presence_state.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_bloc.dart';
@@ -51,16 +53,17 @@ class _SharedSessionLobbyPageState extends State<SharedSessionLobbyPage> {
           cancelled: (_) {
             if (context.canPop()) context.pop();
           },
-          sessionEnded: (_) {
+          sessionEnded: (s) {
             final totalDurationMinutes =
-                _lastSteps.fold(0, (sum, s) => sum + s.durationSeconds) ~/ 60;
+                _lastSteps.fold(0, (sum, step) => sum + step.durationSeconds) ~/
+                    60;
             context.go(
               AppRouter.sessionRpe,
               extra: RpeSubmitArgs(
                 planId: null,
                 sessionIndex: 0,
                 abandoned: false,
-                armKey: 'shared_session',
+                armKey: s.armKey,
                 durationMinutes: totalDurationMinutes,
                 sessionLogId: null,
               ),
@@ -90,12 +93,22 @@ class _SharedSessionLobbyPageState extends State<SharedSessionLobbyPage> {
               onCancel: () => _showCancelDialog(context),
             ),
             inSession: (s) {
-              _lastSteps = s.steps;
+              final l10n = AppLocalizations.of(context)!;
+              final steps = SessionStepGenerator.generate(
+                PlannedSession(
+                  sessionType: s.sessionType,
+                  intensity: s.intensity,
+                  durationMinutes: s.durationMinutes,
+                  isIndoor: true,
+                ),
+                l10n,
+              );
+              _lastSteps = steps;
               return _SharedInSessionView(
                 stepIndex: s.stepIndex,
                 elapsedSeconds: s.elapsedSeconds,
                 isHost: s.isHost,
-                steps: s.steps,
+                steps: steps,
                 participantCount: s.participants.length,
                 droppedHandle: s.droppedHandle,
               );

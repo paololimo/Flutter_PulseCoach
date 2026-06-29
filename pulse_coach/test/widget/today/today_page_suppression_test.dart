@@ -1,0 +1,38 @@
+// [20.5-TODAY-001..004] suppressSharedSessionCta unit tests
+// Tests the protective-state social suppression guard (UX-DR31, Story 20.5).
+// suppressSharedSessionCta is @visibleForTesting and accessible from this file.
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
+import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
+
+void main() {
+  group('suppressSharedSessionCta (20.5)', () {
+    test(
+      '[20.5-TODAY-001] atRisk → returns true (CTA suppressed)',
+      () {
+        expect(suppressSharedSessionCta(BehavioralState.atRisk), isTrue);
+      },
+    );
+
+    test(
+      '[20.5-TODAY-002] recovering → returns true (CTA suppressed)',
+      () {
+        expect(suppressSharedSessionCta(BehavioralState.recovering), isTrue);
+      },
+    );
+
+    test(
+      '[20.5-TODAY-003] active → returns false (CTA allowed)',
+      () {
+        expect(suppressSharedSessionCta(BehavioralState.active), isFalse);
+      },
+    );
+
+    test(
+      '[20.5-TODAY-004] fatigued → returns false (CTA allowed)',
+      () {
+        expect(suppressSharedSessionCta(BehavioralState.fatigued), isFalse);
+      },
+    );
+  });
+}

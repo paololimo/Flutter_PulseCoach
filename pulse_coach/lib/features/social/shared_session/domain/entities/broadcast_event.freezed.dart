@@ -125,11 +125,11 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int stepIndex,  int elapsedSeconds)?  stepAdvanced,TResult Function()?  sessionStarted,TResult Function()?  sessionEnded,TResult Function( String rawEvent)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int stepIndex,  int elapsedSeconds)?  stepAdvanced,TResult Function( String sessionType,  int intensity,  int durationMinutes,  String armKey)?  sessionStarted,TResult Function()?  sessionEnded,TResult Function( String rawEvent)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case StepAdvanced() when stepAdvanced != null:
 return stepAdvanced(_that.stepIndex,_that.elapsedSeconds);case SessionStarted() when sessionStarted != null:
-return sessionStarted();case SessionEnded() when sessionEnded != null:
+return sessionStarted(_that.sessionType,_that.intensity,_that.durationMinutes,_that.armKey);case SessionEnded() when sessionEnded != null:
 return sessionEnded();case UnknownBroadcast() when unknown != null:
 return unknown(_that.rawEvent);case _:
   return orElse();
@@ -149,11 +149,11 @@ return unknown(_that.rawEvent);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int stepIndex,  int elapsedSeconds)  stepAdvanced,required TResult Function()  sessionStarted,required TResult Function()  sessionEnded,required TResult Function( String rawEvent)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int stepIndex,  int elapsedSeconds)  stepAdvanced,required TResult Function( String sessionType,  int intensity,  int durationMinutes,  String armKey)  sessionStarted,required TResult Function()  sessionEnded,required TResult Function( String rawEvent)  unknown,}) {final _that = this;
 switch (_that) {
 case StepAdvanced():
 return stepAdvanced(_that.stepIndex,_that.elapsedSeconds);case SessionStarted():
-return sessionStarted();case SessionEnded():
+return sessionStarted(_that.sessionType,_that.intensity,_that.durationMinutes,_that.armKey);case SessionEnded():
 return sessionEnded();case UnknownBroadcast():
 return unknown(_that.rawEvent);}
 }
@@ -169,11 +169,11 @@ return unknown(_that.rawEvent);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int stepIndex,  int elapsedSeconds)?  stepAdvanced,TResult? Function()?  sessionStarted,TResult? Function()?  sessionEnded,TResult? Function( String rawEvent)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int stepIndex,  int elapsedSeconds)?  stepAdvanced,TResult? Function( String sessionType,  int intensity,  int durationMinutes,  String armKey)?  sessionStarted,TResult? Function()?  sessionEnded,TResult? Function( String rawEvent)?  unknown,}) {final _that = this;
 switch (_that) {
 case StepAdvanced() when stepAdvanced != null:
 return stepAdvanced(_that.stepIndex,_that.elapsedSeconds);case SessionStarted() when sessionStarted != null:
-return sessionStarted();case SessionEnded() when sessionEnded != null:
+return sessionStarted(_that.sessionType,_that.intensity,_that.durationMinutes,_that.armKey);case SessionEnded() when sessionEnded != null:
 return sessionEnded();case UnknownBroadcast() when unknown != null:
 return unknown(_that.rawEvent);case _:
   return null;
@@ -255,33 +255,73 @@ as int,
 
 
 class SessionStarted implements BroadcastEvent {
-  const SessionStarted();
+  const SessionStarted({this.sessionType = 'mobility', this.intensity = 5, this.durationMinutes = 20, this.armKey = 'mobility_medium'});
   
 
+@JsonKey() final  String sessionType;
+@JsonKey() final  int intensity;
+@JsonKey() final  int durationMinutes;
+@JsonKey() final  String armKey;
 
-
+/// Create a copy of BroadcastEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SessionStartedCopyWith<SessionStarted> get copyWith => _$SessionStartedCopyWithImpl<SessionStarted>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SessionStarted);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SessionStarted&&(identical(other.sessionType, sessionType) || other.sessionType == sessionType)&&(identical(other.intensity, intensity) || other.intensity == intensity)&&(identical(other.durationMinutes, durationMinutes) || other.durationMinutes == durationMinutes)&&(identical(other.armKey, armKey) || other.armKey == armKey));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode => Object.hash(runtimeType,sessionType,intensity,durationMinutes,armKey);
 
 @override
 String toString() {
-  return 'BroadcastEvent.sessionStarted()';
+  return 'BroadcastEvent.sessionStarted(sessionType: $sessionType, intensity: $intensity, durationMinutes: $durationMinutes, armKey: $armKey)';
 }
 
 
 }
 
+/// @nodoc
+abstract mixin class $SessionStartedCopyWith<$Res> implements $BroadcastEventCopyWith<$Res> {
+  factory $SessionStartedCopyWith(SessionStarted value, $Res Function(SessionStarted) _then) = _$SessionStartedCopyWithImpl;
+@useResult
+$Res call({
+ String sessionType, int intensity, int durationMinutes, String armKey
+});
 
 
+
+
+}
+/// @nodoc
+class _$SessionStartedCopyWithImpl<$Res>
+    implements $SessionStartedCopyWith<$Res> {
+  _$SessionStartedCopyWithImpl(this._self, this._then);
+
+  final SessionStarted _self;
+  final $Res Function(SessionStarted) _then;
+
+/// Create a copy of BroadcastEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? sessionType = null,Object? intensity = null,Object? durationMinutes = null,Object? armKey = null,}) {
+  return _then(SessionStarted(
+sessionType: null == sessionType ? _self.sessionType : sessionType // ignore: cast_nullable_to_non_nullable
+as String,intensity: null == intensity ? _self.intensity : intensity // ignore: cast_nullable_to_non_nullable
+as int,durationMinutes: null == durationMinutes ? _self.durationMinutes : durationMinutes // ignore: cast_nullable_to_non_nullable
+as int,armKey: null == armKey ? _self.armKey : armKey // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
 
 /// @nodoc
 

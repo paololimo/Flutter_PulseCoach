@@ -546,3 +546,10 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 - Cancel emits `cancelled()` even when the delete fails or matches 0 rows. Documented design (Task 8.2f: navigate the host back regardless of delete outcome; worst case is a stale, RLS-protected `shared_sessions` row). Pairs with the cleanup item below. [shared_session_bloc.dart:152]
 - Stale `waiting` `shared_sessions` rows accumulate and the global UNIQUE `join_code` namespace is never freed (no expiry/cleanup job). Documented future work — cleanup Edge Function or row TTL. [supabase/migrations/0009_shared_sessions.sql]
 - Join-code collision detection relies on `e.toString().contains('unique'/'23505')`, which is brittle. Retry path probability is ~10⁻⁶; prefer matching `PostgrestException.code == '23505'` when this datasource is next touched. [shared_session_remote_data_source.dart:42-43,59-61]
+
+## Deferred from: code review of story-20.5 (2026-06-27)
+
+- Reconnect/late-join via `StepAdvanced` snap renders a default `mobility/medium/20` session (plan params are not carried in that event) and leaves `_lastSteps` stale → wrong RPE duration. Reconnect flow out of scope since Story 20.4. [shared_session_bloc.dart `_onBroadcastReceived` + shared_session_lobby_page.dart `inSession:`/`sessionEnded` listener]
+- `inSession.steps` field is now vestigial — the page always regenerates steps via `SessionStepGenerator` and never reads `s.steps`. Removal touches `_SharedInSessionView` ctor (out of scope per Task 3.1 note). [shared_session_state.dart]
+- `_armKey` is never reset on `SessionEnded`; on a reused bloc instance the follower `??=` path would keep the previous session's arm key. Currently safe — bloc is `@injectable` factory-scoped per route. [shared_session_bloc.dart]
+- Only the host's profile (with hardcoded `fitnessLevel: 'medium'`, `movementExclusions: {}`, `availableTimeMinutes: 20`) feeds `GroupConstraintResolver`; followers' safety caps/time constraints are ignored. Documented MVP limitation (dev notes "MVP Limitation: Only Host's Profile"). [shared_session_bloc.dart `_onStartTapped`]

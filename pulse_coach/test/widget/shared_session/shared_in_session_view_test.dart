@@ -70,15 +70,19 @@ void main() {
               stepIndex: 0,
               elapsedSeconds: 0,
               isHost: false,
-              steps: _kSteps,
+              steps: [],
               participants: _kParticipants,
+              sessionType: 'mobility',
+              intensity: 5,
+              durationMinutes: 20,
             ),
             locale: const Locale('it'),
           ),
         );
         await tester.pump();
 
-        expect(find.text('Warm Up'), findsOneWidget);
+        // Step title generated from plan params; IT locale: 'Riscaldamento' (inSessionWarmupTitle)
+        expect(find.text('Riscaldamento'), findsOneWidget);
         expect(find.text('2 partecipanti'), findsOneWidget);
       },
     );

@@ -1,11 +1,16 @@
-// [19.2-WIDGET-001..004] SharedSessionLobbyPage widget tests
+// [19.2-WIDGET-001..004, 20.5-WIDGET-001..003] SharedSessionLobbyPage widget tests
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
+import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/presence_state.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_bloc.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_state.dart';
@@ -185,22 +190,27 @@ void main() {
     );
 
     testWidgets(
-      '19.2-WIDGET-005: inSession renders step title in a liveRegion Semantics (AC5/AC2)',
+      '19.2-WIDGET-005: inSession renders generated step title in a liveRegion Semantics (AC5/AC2)',
       (tester) async {
+        // Steps are generated from plan params (Story 20.5 Task 6).
+        // EN locale: first step = "Warm-up" (inSessionWarmupTitle ARB key).
         await tester.pumpWidget(
           _buildTestWidget(
             const SharedSessionState.inSession(
               stepIndex: 0,
               elapsedSeconds: 0,
               isHost: false,
-              steps: _kSteps,
+              steps: [],
+              sessionType: 'mobility',
+              intensity: 5,
+              durationMinutes: 20,
             ),
+            locale: const Locale('en'),
           ),
         );
         await tester.pump();
-        // AC2: the received step content is rendered.
-        expect(find.text('Warm Up'), findsOneWidget);
-        expect(find.text('Breathe'), findsOneWidget);
+        // AC2: the generated first-step title is rendered.
+        expect(find.text('Warm-up'), findsOneWidget);
         // AC5: the step title is wrapped in a liveRegion Semantics carrying an
         // explicit label, so AT users hear the step the group advanced to.
         expect(
@@ -208,10 +218,152 @@ void main() {
             (w) =>
                 w is Semantics &&
                 w.properties.liveRegion == true &&
-                w.properties.label == 'Warm Up',
+                w.properties.label == 'Warm-up',
           ),
           findsOneWidget,
         );
+      },
+    );
+  });
+
+  group('SharedSessionLobbyPage step generation and armKey (20.5)', () {
+    testWidgets(
+      '[20.5-WIDGET-001] inSession with plan params → '
+      '_SharedInSessionView receives 3 generated steps (AC6)',
+      (tester) async {
+        // Follower path: steps are generated from plan params.
+        // state.steps is const [] — page generates via SessionStepGenerator.
+        await tester.pumpWidget(
+          _buildTestWidget(
+            const SharedSessionState.inSession(
+              stepIndex: 0,
+              elapsedSeconds: 0,
+              isHost: false,
+              steps: [],
+              sessionType: 'mobility',
+              intensity: 3,
+              durationMinutes: 20,
+            ),
+            locale: const Locale('en'),
+          ),
+        );
+        await tester.pump();
+
+        // EN locale: SessionStepGenerator for 'mobility' generates:
+        // step 0: title 'Warm-up', step 1: 'Mobility', step 2: 'Cool-down'
+        // The follower view renders the first step title and instruction.
+        expect(find.text('Warm-up'), findsOneWidget);
+        // Semantics liveRegion must carry the generated warmup title.
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is Semantics &&
+                w.properties.liveRegion == true &&
+                w.properties.label == 'Warm-up',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      '[20.5-WIDGET-002] inSession → sessionEnded(armKey: mobility_low) '
+      'transition → context.go(sessionRpe) carries RpeSubmitArgs.armKey (AC7)',
+      (tester) async {
+        // BlocListener does NOT fire on the initial state — only on transitions.
+        // Start in inSession (which also populates _lastSteps) and then emit
+        // sessionEnded so the listener actually runs and navigates.
+        final mockBloc = MockSharedSessionBloc();
+        final controller = StreamController<SharedSessionState>.broadcast();
+        addTearDown(controller.close);
+
+        var current = const SharedSessionState.inSession(
+          stepIndex: 0,
+          elapsedSeconds: 0,
+          isHost: false,
+          steps: [],
+          sessionType: 'mobility',
+          intensity: 3,
+          durationMinutes: 20,
+        );
+        when(mockBloc.state).thenAnswer((_) => current);
+        when(mockBloc.stream).thenAnswer((_) => controller.stream);
+        when(mockBloc.close()).thenAnswer((_) async {});
+
+        RpeSubmitArgs? capturedArgs;
+        final router = GoRouter(
+          initialLocation: '/',
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (context, _) => BlocProvider<SharedSessionBloc>.value(
+                value: mockBloc,
+                child: const SharedSessionLobbyPage(),
+              ),
+            ),
+            GoRoute(
+              path: AppRouter.sessionRpe,
+              builder: (context, state) {
+                capturedArgs = state.extra as RpeSubmitArgs?;
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          MaterialApp.router(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            theme: AppTheme.darkTheme,
+            routerConfig: router,
+          ),
+        );
+        await tester.pump(); // build inSession → _lastSteps populated
+
+        // Transition to sessionEnded — listener fires and navigates.
+        current = const SharedSessionState.sessionEnded(armKey: 'mobility_low');
+        controller.add(current);
+        await tester.pumpAndSettle();
+
+        expect(capturedArgs, isNotNull);
+        expect(capturedArgs!.armKey, 'mobility_low');
+      },
+    );
+
+    // E18R-1 fire: small viewport with inSession plan params
+    testWidgets(
+      '[20.5-WIDGET-003] 360×640 viewport, inSession with plan params → '
+      'no overflow (E18R-1)',
+      (tester) async {
+        final prevSize = tester.view.physicalSize;
+        final prevDpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = const Size(360, 640);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.physicalSize = prevSize;
+          tester.view.devicePixelRatio = prevDpr;
+        });
+
+        await tester.pumpWidget(
+          _buildTestWidget(
+            const SharedSessionState.inSession(
+              stepIndex: 0,
+              elapsedSeconds: 0,
+              isHost: false,
+              steps: [],
+              sessionType: 'mobility',
+              intensity: 3,
+              durationMinutes: 20,
+            ),
+            locale: const Locale('en'),
+            viewportSize: const Size(360, 640),
+          ),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
       },
     );
   });

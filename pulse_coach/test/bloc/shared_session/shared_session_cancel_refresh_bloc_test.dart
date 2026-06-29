@@ -6,6 +6,8 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:drift/native.dart';
+import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/broadcast_event.dart';
@@ -33,8 +35,10 @@ void main() {
   late MockLocationService mockLocation;
   late StreamController<BroadcastEvent> bc;
   late StreamController<PresenceState> pc;
+  late AppDatabase db;
 
   setUp(() {
+    db = AppDatabase.forTesting(NativeDatabase.memory());
     mockGateway = MockRealtimeGateway();
     mockDelete = MockDeleteSharedSessionUseCase();
     mockRefresh = MockRefreshJoinCodeUseCase();
@@ -60,14 +64,15 @@ void main() {
         .thenAnswer((_) async => const Right('XYZ789'));
   });
 
-  tearDown(() {
+  tearDown(() async {
     bc.close();
     pc.close();
+    await db.close();
   });
 
   group('SharedSessionBloc — Cancel and Refresh (20.1)', () {
     SharedSessionBloc build() =>
-        SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation);
+        SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db);
 
     Future<void> joinLobby(SharedSessionBloc bloc) async {
       bloc.add(const SharedSessionJoined(

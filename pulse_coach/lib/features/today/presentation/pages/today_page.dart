@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
@@ -543,3 +544,12 @@ class _SessionEntry {
 
   const _SessionEntry({required this.index, required this.session});
 }
+
+// [Protective-State Social Suppression — UX-DR31, Story 20.5]
+// Returns true when the user is in a protective behavioral state (AtRisk or
+// Recovering). Any shared-session CTA on the Today screen — present or future
+// — MUST be hidden when this returns true. Rank-movement badges added by
+// Epic 21 follow the same rule.
+@visibleForTesting
+bool suppressSharedSessionCta(BehavioralState state) =>
+    state == BehavioralState.atRisk || state == BehavioralState.recovering;

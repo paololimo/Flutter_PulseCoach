@@ -134,15 +134,15 @@ return cancelled(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle)?  inSession,TResult Function( Failure failure)?  error,TResult Function()?  sessionEnded,TResult Function()?  cancelled,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle,  String sessionType,  int intensity,  int durationMinutes)?  inSession,TResult Function( Failure failure)?  error,TResult Function( String armKey)?  sessionEnded,TResult Function()?  cancelled,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _Lobby() when lobby != null:
 return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick,_that.coLocated);case _InSession() when inSession != null:
-return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle);case _Error() when error != null:
+return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle,_that.sessionType,_that.intensity,_that.durationMinutes);case _Error() when error != null:
 return error(_that.failure);case _SessionEnded() when sessionEnded != null:
-return sessionEnded();case _Cancelled() when cancelled != null:
+return sessionEnded(_that.armKey);case _Cancelled() when cancelled != null:
 return cancelled();case _:
   return orElse();
 
@@ -161,15 +161,15 @@ return cancelled();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)  lobby,required TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle)  inSession,required TResult Function( Failure failure)  error,required TResult Function()  sessionEnded,required TResult Function()  cancelled,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)  lobby,required TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle,  String sessionType,  int intensity,  int durationMinutes)  inSession,required TResult Function( Failure failure)  error,required TResult Function( String armKey)  sessionEnded,required TResult Function()  cancelled,}) {final _that = this;
 switch (_that) {
 case _Initial():
 return initial();case _Loading():
 return loading();case _Lobby():
 return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick,_that.coLocated);case _InSession():
-return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle);case _Error():
+return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle,_that.sessionType,_that.intensity,_that.durationMinutes);case _Error():
 return error(_that.failure);case _SessionEnded():
-return sessionEnded();case _Cancelled():
+return sessionEnded(_that.armKey);case _Cancelled():
 return cancelled();}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -184,15 +184,15 @@ return cancelled();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult? Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle)?  inSession,TResult? Function( Failure failure)?  error,TResult? Function()?  sessionEnded,TResult? Function()?  cancelled,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult? Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle,  String sessionType,  int intensity,  int durationMinutes)?  inSession,TResult? Function( Failure failure)?  error,TResult? Function( String armKey)?  sessionEnded,TResult? Function()?  cancelled,}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _Lobby() when lobby != null:
 return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick,_that.coLocated);case _InSession() when inSession != null:
-return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle);case _Error() when error != null:
+return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle,_that.sessionType,_that.intensity,_that.durationMinutes);case _Error() when error != null:
 return error(_that.failure);case _SessionEnded() when sessionEnded != null:
-return sessionEnded();case _Cancelled() when cancelled != null:
+return sessionEnded(_that.armKey);case _Cancelled() when cancelled != null:
 return cancelled();case _:
   return null;
 
@@ -359,7 +359,7 @@ as bool?,
 
 
 class _InSession implements SharedSessionState {
-  const _InSession({required this.stepIndex, required this.elapsedSeconds, required this.isHost, required final  List<ExerciseStep> steps, final  List<ParticipantPresence> participants = const [], this.droppedHandle}): _steps = steps,_participants = participants;
+  const _InSession({required this.stepIndex, required this.elapsedSeconds, required this.isHost, required final  List<ExerciseStep> steps, final  List<ParticipantPresence> participants = const [], this.droppedHandle, this.sessionType = 'mobility', this.intensity = 5, this.durationMinutes = 20}): _steps = steps,_participants = participants;
   
 
  final  int stepIndex;
@@ -380,6 +380,9 @@ class _InSession implements SharedSessionState {
 }
 
  final  String? droppedHandle;
+@JsonKey() final  String sessionType;
+@JsonKey() final  int intensity;
+@JsonKey() final  int durationMinutes;
 
 /// Create a copy of SharedSessionState
 /// with the given fields replaced by the non-null parameter values.
@@ -391,16 +394,16 @@ _$InSessionCopyWith<_InSession> get copyWith => __$InSessionCopyWithImpl<_InSess
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InSession&&(identical(other.stepIndex, stepIndex) || other.stepIndex == stepIndex)&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.isHost, isHost) || other.isHost == isHost)&&const DeepCollectionEquality().equals(other._steps, _steps)&&const DeepCollectionEquality().equals(other._participants, _participants)&&(identical(other.droppedHandle, droppedHandle) || other.droppedHandle == droppedHandle));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InSession&&(identical(other.stepIndex, stepIndex) || other.stepIndex == stepIndex)&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.isHost, isHost) || other.isHost == isHost)&&const DeepCollectionEquality().equals(other._steps, _steps)&&const DeepCollectionEquality().equals(other._participants, _participants)&&(identical(other.droppedHandle, droppedHandle) || other.droppedHandle == droppedHandle)&&(identical(other.sessionType, sessionType) || other.sessionType == sessionType)&&(identical(other.intensity, intensity) || other.intensity == intensity)&&(identical(other.durationMinutes, durationMinutes) || other.durationMinutes == durationMinutes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,stepIndex,elapsedSeconds,isHost,const DeepCollectionEquality().hash(_steps),const DeepCollectionEquality().hash(_participants),droppedHandle);
+int get hashCode => Object.hash(runtimeType,stepIndex,elapsedSeconds,isHost,const DeepCollectionEquality().hash(_steps),const DeepCollectionEquality().hash(_participants),droppedHandle,sessionType,intensity,durationMinutes);
 
 @override
 String toString() {
-  return 'SharedSessionState.inSession(stepIndex: $stepIndex, elapsedSeconds: $elapsedSeconds, isHost: $isHost, steps: $steps, participants: $participants, droppedHandle: $droppedHandle)';
+  return 'SharedSessionState.inSession(stepIndex: $stepIndex, elapsedSeconds: $elapsedSeconds, isHost: $isHost, steps: $steps, participants: $participants, droppedHandle: $droppedHandle, sessionType: $sessionType, intensity: $intensity, durationMinutes: $durationMinutes)';
 }
 
 
@@ -411,7 +414,7 @@ abstract mixin class _$InSessionCopyWith<$Res> implements $SharedSessionStateCop
   factory _$InSessionCopyWith(_InSession value, $Res Function(_InSession) _then) = __$InSessionCopyWithImpl;
 @useResult
 $Res call({
- int stepIndex, int elapsedSeconds, bool isHost, List<ExerciseStep> steps, List<ParticipantPresence> participants, String? droppedHandle
+ int stepIndex, int elapsedSeconds, bool isHost, List<ExerciseStep> steps, List<ParticipantPresence> participants, String? droppedHandle, String sessionType, int intensity, int durationMinutes
 });
 
 
@@ -428,7 +431,7 @@ class __$InSessionCopyWithImpl<$Res>
 
 /// Create a copy of SharedSessionState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? stepIndex = null,Object? elapsedSeconds = null,Object? isHost = null,Object? steps = null,Object? participants = null,Object? droppedHandle = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? stepIndex = null,Object? elapsedSeconds = null,Object? isHost = null,Object? steps = null,Object? participants = null,Object? droppedHandle = freezed,Object? sessionType = null,Object? intensity = null,Object? durationMinutes = null,}) {
   return _then(_InSession(
 stepIndex: null == stepIndex ? _self.stepIndex : stepIndex // ignore: cast_nullable_to_non_nullable
 as int,elapsedSeconds: null == elapsedSeconds ? _self.elapsedSeconds : elapsedSeconds // ignore: cast_nullable_to_non_nullable
@@ -436,7 +439,10 @@ as int,isHost: null == isHost ? _self.isHost : isHost // ignore: cast_nullable_t
 as bool,steps: null == steps ? _self._steps : steps // ignore: cast_nullable_to_non_nullable
 as List<ExerciseStep>,participants: null == participants ? _self._participants : participants // ignore: cast_nullable_to_non_nullable
 as List<ParticipantPresence>,droppedHandle: freezed == droppedHandle ? _self.droppedHandle : droppedHandle // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,sessionType: null == sessionType ? _self.sessionType : sessionType // ignore: cast_nullable_to_non_nullable
+as String,intensity: null == intensity ? _self.intensity : intensity // ignore: cast_nullable_to_non_nullable
+as int,durationMinutes: null == durationMinutes ? _self.durationMinutes : durationMinutes // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -513,33 +519,67 @@ as Failure,
 
 
 class _SessionEnded implements SharedSessionState {
-  const _SessionEnded();
+  const _SessionEnded({this.armKey = 'mobility_medium'});
   
 
+@JsonKey() final  String armKey;
 
-
+/// Create a copy of SharedSessionState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SessionEndedCopyWith<_SessionEnded> get copyWith => __$SessionEndedCopyWithImpl<_SessionEnded>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SessionEnded);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SessionEnded&&(identical(other.armKey, armKey) || other.armKey == armKey));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode => Object.hash(runtimeType,armKey);
 
 @override
 String toString() {
-  return 'SharedSessionState.sessionEnded()';
+  return 'SharedSessionState.sessionEnded(armKey: $armKey)';
 }
 
 
 }
 
+/// @nodoc
+abstract mixin class _$SessionEndedCopyWith<$Res> implements $SharedSessionStateCopyWith<$Res> {
+  factory _$SessionEndedCopyWith(_SessionEnded value, $Res Function(_SessionEnded) _then) = __$SessionEndedCopyWithImpl;
+@useResult
+$Res call({
+ String armKey
+});
 
 
+
+
+}
+/// @nodoc
+class __$SessionEndedCopyWithImpl<$Res>
+    implements _$SessionEndedCopyWith<$Res> {
+  __$SessionEndedCopyWithImpl(this._self, this._then);
+
+  final _SessionEnded _self;
+  final $Res Function(_SessionEnded) _then;
+
+/// Create a copy of SharedSessionState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? armKey = null,}) {
+  return _then(_SessionEnded(
+armKey: null == armKey ? _self.armKey : armKey // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
 
 /// @nodoc
 

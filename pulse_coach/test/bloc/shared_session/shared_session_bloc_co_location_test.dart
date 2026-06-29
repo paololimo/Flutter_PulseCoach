@@ -6,6 +6,8 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:drift/native.dart';
+import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/utils/location_service.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
@@ -78,8 +80,10 @@ void main() {
   late MockLocationService mockLocation;
   late StreamController<BroadcastEvent> broadcastController;
   late StreamController<PresenceState> presenceController;
+  late AppDatabase db;
 
   setUp(() {
+    db = AppDatabase.forTesting(NativeDatabase.memory());
     mockGateway = MockRealtimeGateway();
     mockDelete = MockDeleteSharedSessionUseCase();
     mockRefresh = MockRefreshJoinCodeUseCase();
@@ -104,10 +108,11 @@ void main() {
   tearDown(() async {
     await broadcastController.close();
     await presenceController.close();
+    await db.close();
   });
 
   SharedSessionBloc buildBloc() =>
-      SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation);
+      SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db);
 
   group('SharedSessionBloc co-location (20.3)', () {
     blocTest<SharedSessionBloc, SharedSessionState>(
