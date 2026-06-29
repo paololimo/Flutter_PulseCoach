@@ -376,6 +376,10 @@
       }
     }
   },
+  "sharedSessionParticipantUnknown": "Participant",
+  "@sharedSessionParticipantUnknown": {
+    "description": "Lobby participant row fallback label when the handle is not yet known"
+  },
 
   "settingsLanguageSection": "Language",
   "settingsLanguageItalian": "Italiano",

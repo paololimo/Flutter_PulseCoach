@@ -355,13 +355,23 @@ class _ParticipantRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pulseTheme = Theme.of(context).extension<PulseCoachTheme>()!;
+    final l10n = AppLocalizations.of(context)!;
+    final handle = participant.displayHandle;
+    // Never render the raw userId (a 36-char UUID) — it leaks an internal id and
+    // overflows the row on narrow screens. Show the @handle when known, otherwise
+    // a localized generic label. Expanded + ellipsis guarantees no overflow.
+    final label =
+        handle != null ? '@$handle' : l10n.sharedSessionParticipantUnknown;
     return Row(
       children: [
         const Icon(Icons.person_outline, size: 20),
         const SizedBox(width: 8),
-        Text(
-          participant.displayHandle ?? participant.userId,
-          style: AppTextStyles.body.copyWith(color: pulseTheme.onSurface),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyles.body.copyWith(color: pulseTheme.onSurface),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -572,6 +582,12 @@ class _SharedInSessionViewState extends State<_SharedInSessionView> {
     final step = widget.steps[safeIndex];
     final totalSteps = widget.steps.length;
     final displayStep = safeIndex + 1;
+    // Show the current step's *remaining* time (count-down), matching the v1
+    // solo InSessionView the host renders. _displayedElapsed is total elapsed;
+    // widget.elapsedSeconds is the elapsed at this step's start (broadcast).
+    final withinStep =
+        (_displayedElapsed - widget.elapsedSeconds).clamp(0, step.durationSeconds);
+    final secondsRemaining = step.durationSeconds - withinStep;
 
     return Scaffold(
       backgroundColor: pulseTheme.surface,
@@ -606,7 +622,7 @@ class _SharedInSessionViewState extends State<_SharedInSessionView> {
                   ),
                   const SizedBox(height: 32),
                   Text(
-                    _formatTime(_displayedElapsed),
+                    _formatTime(secondsRemaining),
                     style: AppTextStyles.timerDisplay.copyWith(
                       color: pulseTheme.primaryColor,
                     ),

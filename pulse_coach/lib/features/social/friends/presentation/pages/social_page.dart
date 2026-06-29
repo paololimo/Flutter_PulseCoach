@@ -481,15 +481,22 @@ class _FriendsList extends StatelessWidget {
             onPressed: () {
               final code = controller.text.trim();
               if (code.isEmpty) return;
-              Navigator.of(ctx).pop();
               final authState = context.read<AuthBloc>().state;
               final userId = authState.mapOrNull(
                 authenticated: (a) => a.user.id,
               );
               if (userId == null) return;
-              context
-                  .read<SharedSessionJoinCubit>()
-                  .join(joinCode: code, userId: userId);
+              final joinCubit = context.read<SharedSessionJoinCubit>();
+              // Dismiss the keyboard, then defer the join (and the lobby
+              // navigation it triggers) until after the dialog has fully popped.
+              // Navigating while the autofocus TextField's IME focus is still
+              // tearing down trips a `_dependents.isEmpty` framework assertion
+              // (red screen) on the joiner.
+              FocusManager.instance.primaryFocus?.unfocus();
+              Navigator.of(ctx).pop();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                joinCubit.join(joinCode: code, userId: userId);
+              });
             },
             child: Text(l10n.sharedSessionJoinDialogConfirm),
           ),

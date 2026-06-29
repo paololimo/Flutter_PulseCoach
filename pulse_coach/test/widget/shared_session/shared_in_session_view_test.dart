@@ -129,8 +129,10 @@ void main() {
           ),
         );
         await tester.pump();
-        // Initial render shows elapsedSeconds: 0 → "00:00"
-        expect(find.text('00:00'), findsOneWidget);
+        // Steps are generated from the plan (mobility/20min → warm-up 240s,
+        // main 720s, cool-down 240s). Initial: step 0, 0s within step →
+        // remaining "04:00" (follower shows count-DOWN, matching v1 solo view).
+        expect(find.text('04:00'), findsOneWidget);
 
         // Emit updated state with new stepIndex and elapsedSeconds: 100
         when(mockBloc.state).thenReturn(updatedState);
@@ -140,8 +142,9 @@ void main() {
         await tester.pump();
         await tester.pump();
 
-        // didUpdateWidget fires (stepIndex changed) → _displayedElapsed = 100
-        expect(find.text('01:40'), findsOneWidget);
+        // didUpdateWidget fires (stepIndex changed) → _displayedElapsed = 100;
+        // step 1 (main, 720s), 0s within step → remaining "12:00"
+        expect(find.text('12:00'), findsOneWidget);
       },
     );
 
@@ -262,16 +265,19 @@ void main() {
           ),
         );
         await tester.pump();
-        // Initial: elapsedSeconds=10 → "00:10"
-        expect(find.text('00:10'), findsOneWidget);
+        // Steps generated from the plan (mobility/20min → warm-up 240s). Initial:
+        // 0s within step (elapsed==broadcast) → "04:00". The tick still
+        // increments _displayedElapsed; the display now counts DOWN the current
+        // step's remaining time (matches the v1 solo view).
+        expect(find.text('04:00'), findsOneWidget);
 
         // Advance fake clock 1 second → _displayedElapsed++ via Timer.periodic
         await tester.pump(const Duration(seconds: 1));
-        expect(find.text('00:11'), findsOneWidget);
+        expect(find.text('03:59'), findsOneWidget);
 
         // Advance another second → still ticking without any new broadcast
         await tester.pump(const Duration(seconds: 1));
-        expect(find.text('00:12'), findsOneWidget);
+        expect(find.text('03:58'), findsOneWidget);
       },
     );
 

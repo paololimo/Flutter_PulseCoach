@@ -376,6 +376,10 @@
       }
     }
   },
+  "sharedSessionParticipantUnknown": "Partecipante",
+  "@sharedSessionParticipantUnknown": {
+    "description": "Etichetta di ripiego per la riga partecipante nella lobby quando l'handle non è ancora noto"
+  },
 
   "settingsLanguageSection": "Lingua",
   "settingsLanguageItalian": "Italiano",
