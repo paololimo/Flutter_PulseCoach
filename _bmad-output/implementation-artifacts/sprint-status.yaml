@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-27 # 20-5 → done (code review; 5 patches applied, fail-safe-low decision, 1222 tests green)
+last_updated: 2026-06-29 # epic-20-retrospective → done (2-device GUI gate found+fixed D1/D2/D3; 1245 tests green; retro saved)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -288,7 +288,7 @@ development_status:
   20-3-co-location-join-flow-momentary-non-blocking-confirmation: done
   20-4-synchronized-session-start-and-shared-in-session-view: done
   20-5-per-participant-rpe-and-protective-state-social-suppression: done
-  epic-20-retrospective: optional
+  epic-20-retrospective: done
 
   # ─────────────────────────────────────────
   # Epic 21: Leaderboard & Scoring (v2.5)
