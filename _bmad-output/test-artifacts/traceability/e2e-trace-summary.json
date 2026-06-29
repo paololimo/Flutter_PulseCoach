@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1.0",
-  "snapshot_at": "2026-06-25T00:00:00.000Z",
+  "snapshot_at": "2026-06-29T00:00:00.000Z",
   "repo": "Flutter_PulseCoach",
   "collection_mode": "contract_static",
   "collection_status": "COLLECTED",
@@ -9,24 +9,66 @@
   "source_sha": "",
   "target": {
     "type": "epic",
-    "id": "19",
-    "label": "Epic 19 — Group/Shared Session (Realtime) (Stories 19.0–19.3)"
+    "id": "20",
+    "label": "Epic 20 — Co-Located Shared Sessions (v2.4b)"
   },
-  "decision_mode": "create",
+  "decision_mode": "auto",
   "evaluator": "Paolo",
   "confidence": "high",
   "oracle": {
     "resolution_mode": "formal_requirements",
     "confidence": "high",
     "sources": [
-      "_bmad-output/implementation-artifacts/19-0-profile-row-creation-on-signup.md",
-      "_bmad-output/implementation-artifacts/19-1-realtime-gateway-and-supabase-broadcast-presence-channel.md",
-      "_bmad-output/implementation-artifacts/19-2-host-authority-step-advancement-and-presence-lobby.md",
-      "_bmad-output/implementation-artifacts/19-3-drop-out-tolerance-and-reconnect.md"
+      "_bmad-output/implementation-artifacts/20-1-shared-session-creation-join-code-card-and-lobby-navigation.md",
+      "_bmad-output/implementation-artifacts/20-2-group-constraint-resolver-deterministic-group-plan-generation.md",
+      "_bmad-output/implementation-artifacts/20-3-co-location-join-flow-momentary-non-blocking-confirmation.md",
+      "_bmad-output/implementation-artifacts/20-4-synchronized-session-start-and-shared-in-session-view.md",
+      "_bmad-output/implementation-artifacts/20-5-per-participant-rpe-and-protective-state-social-suppression.md"
     ],
     "external_pointer_status": "not_used",
     "synthetic": false
   },
+  "coverage": {
+    "inventory": {
+      "covered": 35,
+      "total": 39,
+      "pct": 90
+    },
+    "priority_breakdown": {
+      "P0": { "total": 0, "covered": 0, "pct": 100 },
+      "P1": { "total": 22, "covered": 22, "pct": 100 },
+      "P2": { "total": 17, "covered": 13, "pct": 76 },
+      "P3": { "total": 0, "covered": 0, "pct": 100 }
+    },
+    "by_level": {
+      "unit": { "tests": 71, "criteria_covered": 30 },
+      "component": { "tests": 16, "criteria_covered": 15 },
+      "e2e": { "tests": 0, "criteria_covered": 0 },
+      "api": { "tests": 0, "criteria_covered": 0 },
+      "other": { "tests": 0, "criteria_covered": 0 }
+    }
+  },
+  "tests": {
+    "files": 15,
+    "cases": 87,
+    "skipped_cases": 0,
+    "fixme_cases": 0,
+    "pending_cases": 0
+  },
+  "risk_summary": {
+    "critical_open": 0,
+    "high_open": 0,
+    "medium_open": 4,
+    "low_open": 0
+  },
+  "heuristics": {
+    "endpoint_gaps": 0,
+    "auth_negative_path_status": "present",
+    "error_path_status": "present",
+    "ui_journey_status": "not_applicable",
+    "ui_state_status": "partial"
+  },
+  "blockers": [],
   "gate_status": "PASS",
   "gate_criteria": {
     "p0_coverage_required": "100%",
@@ -37,69 +79,33 @@
     "p1_coverage_actual": "100%",
     "p1_status": "MET",
     "overall_coverage_minimum": "80%",
-    "overall_coverage_actual": "100%",
+    "overall_coverage_actual": "90%",
     "overall_status": "MET"
   },
-  "coverage": {
-    "inventory": {
-      "covered": 21,
-      "total": 21,
-      "pct": 100
-    },
-    "priority_breakdown": {
-      "P0": { "total": 2, "covered": 2, "pct": 100 },
-      "P1": { "total": 16, "covered": 16, "pct": 100 },
-      "P2": { "total": 2, "covered": 2, "pct": 100 },
-      "P3": { "total": 0, "covered": 0, "pct": 100 }
-    },
-    "by_level": {
-      "unit": { "tests": 39, "criteria_covered": 14 },
-      "component": { "tests": 11, "criteria_covered": 7 },
-      "api": { "tests": 0, "criteria_covered": 0 },
-      "e2e": { "tests": 0, "criteria_covered": 0 },
-      "other": { "tests": 0, "criteria_covered": 0 }
-    }
-  },
-  "tests": {
-    "files": 7,
-    "cases": 50,
-    "skipped_cases": 0,
-    "fixme_cases": 0,
-    "pending_cases": 0,
-    "notes": "7 additional lifecycle tests (19.1-GW-009..015) exist in an untracked file. Total suite: 1146 passing."
-  },
-  "risk_summary": {
-    "critical_open": 0,
-    "high_open": 0,
-    "medium_open": 0,
-    "low_open": 0
-  },
-  "heuristics": {
-    "endpoint_gaps": 0,
-    "auth_negative_path_status": "present",
-    "error_path_status": "present",
-    "ui_journey_status": "not_applicable",
-    "ui_state_status": "not_applicable"
-  },
-  "findings": [
-    {
-      "id": "F-19-001",
-      "severity": "medium",
-      "type": "untracked_test_file",
-      "description": "test/core/cloud/realtime_gateway_lifecycle_test.dart (7 tests: 19.1-GW-009..015) is not tracked in git. Covers 19.1-AC1 and 19.1-AC4. Must be committed before CI runs.",
-      "action": "git add pulse_coach/test/core/cloud/realtime_gateway_lifecycle_test.dart && git commit"
-    }
-  ],
-  "blockers": [],
   "recommendations": [
     {
       "priority": "HIGH",
-      "action": "Commit untracked lifecycle test file: git add pulse_coach/test/core/cloud/realtime_gateway_lifecycle_test.dart",
-      "requirements": ["19.1-AC1", "19.1-AC4"]
+      "action": "Commit 4 uncommitted/untracked test files from TEA run (2026-06-29): shared_session_20_5_bloc_test.dart (M), realtime_gateway_test.dart (M), shared_session_repository_impl_test.dart (??), shared_session_repository_impl_test.mocks.dart (??). Contains 18 TEA-generated tests.",
+      "requirements": ["F-20-001"]
+    },
+    {
+      "priority": "MEDIUM",
+      "action": "Add fakeAsync widget test for 5-minute lobby wait message (20.1-AC4).",
+      "requirements": ["20.1-AC4"]
+    },
+    {
+      "priority": "MEDIUM",
+      "action": "Add dedicated co-located visual cue widget assertions for coLocated=true/null/host cases (20.3-AC8).",
+      "requirements": ["20.3-AC8"]
     },
     {
       "priority": "LOW",
-      "action": "Run /bmad:tea:test-review to assess test quality for Epic 19 bloc tests",
+      "action": "Add fakeAsync follower local clock timer tick test (20.4-AC7).",
+      "requirements": ["20.4-AC7"]
+    },
+    {
+      "priority": "LOW",
+      "action": "Run /bmad:tea:test-review to assess Epic 20 test suite quality.",
       "requirements": []
     }
   ],

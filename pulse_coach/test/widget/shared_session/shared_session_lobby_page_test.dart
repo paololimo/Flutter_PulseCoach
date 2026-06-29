@@ -1,4 +1,4 @@
-// [19.2-WIDGET-001..004, 20.5-WIDGET-001..003] SharedSessionLobbyPage widget tests
+// [19.2-WIDGET-001..004, 20.3-WIDGET-008..010, 20.5-WIDGET-001..003] SharedSessionLobbyPage widget tests
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -186,6 +186,78 @@ void main() {
           find.text('Nessuno ancora — condividi il codice'),
           findsNothing,
         );
+      },
+    );
+
+    // AC8: soft co-location visual cue (Icons.location_on + sharedSessionCoLocated)
+    // shown for followers when coLocated==true, hidden otherwise.
+    testWidgets(
+      '20.3-WIDGET-008: follower + coLocated=true → location icon and '
+      '"Vicino" text visible (AC8)',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildTestWidget(
+            const SharedSessionState.lobby(
+              participants: [
+                ParticipantPresence(userId: 'host', displayHandle: 'alice'),
+                ParticipantPresence(userId: 'f', displayHandle: 'bob'),
+              ],
+              isHost: false,
+              steps: _kSteps,
+              coLocated: true,
+            ),
+            locale: const Locale('it'),
+          ),
+        );
+        await tester.pump();
+        expect(find.byIcon(Icons.location_on), findsOneWidget);
+        expect(find.text('Vicino'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '20.3-WIDGET-009: follower + coLocated=null → location icon absent '
+      '(check still pending, AC8)',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildTestWidget(
+            const SharedSessionState.lobby(
+              participants: [
+                ParticipantPresence(userId: 'host', displayHandle: 'alice'),
+                ParticipantPresence(userId: 'f', displayHandle: 'bob'),
+              ],
+              isHost: false,
+              steps: _kSteps,
+              // coLocated omitted → null (check still running)
+            ),
+            locale: const Locale('it'),
+          ),
+        );
+        await tester.pump();
+        expect(find.byIcon(Icons.location_on), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '20.3-WIDGET-010: host + coLocated=true → location icon absent '
+      '(hosts do not see the cue, AC8)',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildTestWidget(
+            const SharedSessionState.lobby(
+              participants: [
+                ParticipantPresence(userId: 'host', displayHandle: 'alice'),
+                ParticipantPresence(userId: 'f', displayHandle: 'bob'),
+              ],
+              isHost: true,
+              steps: _kSteps,
+              coLocated: true,
+            ),
+            locale: const Locale('it'),
+          ),
+        );
+        await tester.pump();
+        expect(find.byIcon(Icons.location_on), findsNothing);
       },
     );
 

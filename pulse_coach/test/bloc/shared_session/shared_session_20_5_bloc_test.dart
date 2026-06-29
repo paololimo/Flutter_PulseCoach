@@ -1,4 +1,4 @@
-// [20.5-BLOC-001..004] SharedSessionBloc — group plan generation and arm key wiring
+// [20.5-BLOC-001..008] SharedSessionBloc — group plan generation and arm key wiring
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -191,6 +191,124 @@ void main() {
         ),
       ],
     );
+
+    test('[20.5-BLOC-005] Recovering host → broadcast intensity 4-7, armKey ends in _medium',
+        () async {
+      await db.into(db.behavioralState).insert(
+            BehavioralStateCompanion.insert(
+              currentState: 'recovering',
+              recordedAt: DateTime.now().toUtc(),
+              updatedAt: DateTime.now().toUtc(),
+            ),
+          );
+
+      final bloc = buildBloc();
+      await arrangeHostLobbyWith2Participants(bloc);
+      bloc.add(const SessionStartTapped());
+      await Future<void>.delayed(Duration.zero);
+
+      final captured = verify(mockGateway.sendBroadcast(
+        event: 'session_started',
+        payload: captureAnyNamed('payload'),
+      )).captured;
+
+      expect(captured, hasLength(1));
+      final payload = captured.first as Map<String, dynamic>;
+      final intensity = payload['intensity'] as int;
+      expect(intensity, greaterThanOrEqualTo(4));
+      expect(intensity, lessThanOrEqualTo(7));
+      expect((payload['arm_key'] as String).endsWith('_medium'), isTrue);
+
+      await bloc.close();
+    });
+
+    test('[20.5-BLOC-006] Fatigued host → broadcast intensity 4-7, armKey ends in _medium',
+        () async {
+      await db.into(db.behavioralState).insert(
+            BehavioralStateCompanion.insert(
+              currentState: 'fatigued',
+              recordedAt: DateTime.now().toUtc(),
+              updatedAt: DateTime.now().toUtc(),
+            ),
+          );
+
+      final bloc = buildBloc();
+      await arrangeHostLobbyWith2Participants(bloc);
+      bloc.add(const SessionStartTapped());
+      await Future<void>.delayed(Duration.zero);
+
+      final captured = verify(mockGateway.sendBroadcast(
+        event: 'session_started',
+        payload: captureAnyNamed('payload'),
+      )).captured;
+
+      expect(captured, hasLength(1));
+      final payload = captured.first as Map<String, dynamic>;
+      final intensity = payload['intensity'] as int;
+      expect(intensity, greaterThanOrEqualTo(4));
+      expect(intensity, lessThanOrEqualTo(7));
+      expect((payload['arm_key'] as String).endsWith('_medium'), isTrue);
+
+      await bloc.close();
+    });
+
+    test(
+        '[20.5-BLOC-007] DB error during _onStartTapped → fail-safe LOW intensity (FR24)',
+        () async {
+      // Reach lobby first (DB still intact).
+      final bloc = buildBloc();
+      await arrangeHostLobbyWith2Participants(bloc);
+
+      // Drop the behavioral_state table to force a SQL error inside _onStartTapped.
+      await db.customStatement('DROP TABLE IF EXISTS behavioral_state');
+
+      bloc.add(const SessionStartTapped());
+      await Future<void>.delayed(Duration.zero);
+
+      final captured = verify(mockGateway.sendBroadcast(
+        event: 'session_started',
+        payload: captureAnyNamed('payload'),
+      )).captured;
+
+      expect(captured, hasLength(1));
+      final payload = captured.first as Map<String, dynamic>;
+      expect(payload['intensity'] as int, equals(3));
+      expect(payload['arm_key'] as String, equals('mobility_low'));
+      expect(payload['duration_minutes'] as int, equals(20));
+
+      await bloc.close();
+    });
+
+    test(
+        '[20.5-BLOC-008] Unrecognized behavioral state string → safety cap LOW → armKey ends in _low',
+        () async {
+      // Insert a corrupt/unknown state string — _parseBehavioralState returns null
+      // → safetyCapIntensity = SessionIntensity.low → intensity 3 → _low armKey.
+      await db.into(db.behavioralState).insert(
+            BehavioralStateCompanion.insert(
+              currentState: 'zombie',
+              recordedAt: DateTime.now().toUtc(),
+              updatedAt: DateTime.now().toUtc(),
+            ),
+          );
+
+      final bloc = buildBloc();
+      await arrangeHostLobbyWith2Participants(bloc);
+      bloc.add(const SessionStartTapped());
+      await Future<void>.delayed(Duration.zero);
+
+      final captured = verify(mockGateway.sendBroadcast(
+        event: 'session_started',
+        payload: captureAnyNamed('payload'),
+      )).captured;
+
+      expect(captured, hasLength(1));
+      final payload = captured.first as Map<String, dynamic>;
+      expect(payload['intensity'] as int, equals(3));
+      expect((payload['arm_key'] as String).endsWith('_low'), isTrue);
+
+      await bloc.close();
+    });
 
     blocTest<SharedSessionBloc, SharedSessionState>(
       '[20.5-BLOC-004] sessionEnded after sessionStarted with armKey → sessionEnded(armKey: mobility_low)',

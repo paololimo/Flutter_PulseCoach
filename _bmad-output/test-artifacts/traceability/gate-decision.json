@@ -1,16 +1,16 @@
 {
   "schema_version": "0.1.0",
-  "evaluated_at": "2026-06-25T00:00:00.000Z",
+  "evaluated_at": "2026-06-29T00:00:00.000Z",
   "repo": "Flutter_PulseCoach",
   "target": {
     "type": "epic",
-    "id": "19",
-    "label": "Epic 19 — Group/Shared Session (Realtime) (Stories 19.0–19.3)"
+    "id": "20",
+    "label": "Epic 20 — Co-Located Shared Sessions (v2.4b)"
   },
   "collection_status": "COLLECTED",
   "gate_basis": "priority_thresholds",
   "gate_status": "PASS",
-  "rationale": "P0 coverage is 100%, P1 coverage is 100% (target: 90%), and overall coverage is 100% (minimum: 80%). All 21 ACs across Stories 19.0–19.3 are fully covered. One medium finding (F-19-001): 7 lifecycle tests are untracked in git and must be committed before CI.",
+  "rationale": "P0 coverage is 100% (no P0 criteria), P1 coverage is 100% (22/22, target: 90%), and overall coverage is 90% (35/39, minimum: 80%). All 4 partial-coverage items are P2 non-blocking.",
   "p0_status": "MET",
   "p1_status": "MET",
   "overall_status": "MET",

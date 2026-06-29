@@ -1,4 +1,4 @@
-// [20.4-WIDGET-001..006] _SharedInSessionView widget tests (via SharedSessionLobbyPage)
+// [20.4-WIDGET-001..008] _SharedInSessionView widget tests (via SharedSessionLobbyPage)
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -242,6 +242,36 @@ void main() {
         // Host cubit spun up: InSessionView now renders (not a blank screen).
         expect(find.byType(InSessionView), findsOneWidget);
         expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      '20.4-WIDGET-008: follower Timer.periodic ticks → _displayedElapsed '
+      'increments every second between broadcasts (AC7)',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildTestWidget(
+            const SharedSessionState.inSession(
+              stepIndex: 0,
+              elapsedSeconds: 10,
+              isHost: false,
+              steps: _kSteps,
+              participants: _kParticipants,
+            ),
+            locale: const Locale('it'),
+          ),
+        );
+        await tester.pump();
+        // Initial: elapsedSeconds=10 → "00:10"
+        expect(find.text('00:10'), findsOneWidget);
+
+        // Advance fake clock 1 second → _displayedElapsed++ via Timer.periodic
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.text('00:11'), findsOneWidget);
+
+        // Advance another second → still ticking without any new broadcast
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.text('00:12'), findsOneWidget);
       },
     );
 

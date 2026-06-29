@@ -1,211 +1,260 @@
 ---
-stepsCompleted: ['step-01-load-context', 'step-02-discover-tests', 'step-03-map-criteria', 'step-04-analyze-gaps', 'step-05-gate-decision']
-lastStep: 'step-05-gate-decision'
-lastSaved: '2026-06-25'
-workflowType: 'bmad-testarch-trace'
-scope: 'Epic 19 — Group/Shared Session (Realtime) (Stories 19.0–19.3)'
-coverageBasis: 'acceptance_criteria'
-oracleResolutionMode: 'formal_requirements'
-oracleConfidence: 'high'
+gateDecision: PASS
+stepsCompleted:
+  - step-01-load-context
+  - step-02-discover-tests
+  - step-03-map-criteria
+  - step-04-analyze-gaps
+  - step-05-gate-decision
+lastStep: step-05-gate-decision
+lastSaved: '2026-06-29'
+scope: Epic 20 — Co-Located Shared Sessions (v2.4b), Stories 20.1–20.5
+coverageBasis: acceptance_criteria
+oracleResolutionMode: formal_requirements
+oracleConfidence: high
 oracleSources:
-  - '_bmad-output/implementation-artifacts/19-0-profile-row-creation-on-signup.md'
-  - '_bmad-output/implementation-artifacts/19-1-realtime-gateway-and-supabase-broadcast-presence-channel.md'
-  - '_bmad-output/implementation-artifacts/19-2-host-authority-step-advancement-and-presence-lobby.md'
-  - '_bmad-output/implementation-artifacts/19-3-drop-out-tolerance-and-reconnect.md'
-externalPointerStatus: 'not_used'
-gateDecision: 'PASS'
-tempCoverageMatrixPath: '/private/tmp/claude-501/-Users-paololimonta-Development-Flutter-PulseCoach/0d0b7515-c565-4d45-b19d-edb69df3d94a/scratchpad/tea-trace-coverage-matrix-epic19-2026-06-25.json'
+  - _bmad-output/implementation-artifacts/20-1-shared-session-creation-join-code-card-and-lobby-navigation.md
+  - _bmad-output/implementation-artifacts/20-2-group-constraint-resolver-deterministic-group-plan-generation.md
+  - _bmad-output/implementation-artifacts/20-3-co-location-join-flow-momentary-non-blocking-confirmation.md
+  - _bmad-output/implementation-artifacts/20-4-synchronized-session-start-and-shared-in-session-view.md
+  - _bmad-output/implementation-artifacts/20-5-per-participant-rpe-and-protective-state-social-suppression.md
+externalPointerStatus: not_used
+tempCoverageMatrixPath: /private/tmp/claude-501/-Users-paololimonta-Development-Flutter-PulseCoach/4c5227c7-507f-4e83-b12b-1b7dc45173a4/scratchpad/tea-trace-coverage-matrix-epic20.json
+totalACs: 39
+totalTests: 1240
+epicBaseline: 1222
+teaAdditions: 18
 ---
 
-# Traceability Report — Epic 19
+# Traceability Report — Epic 20: Co-Located Shared Sessions (v2.4b)
 
-**Scope:** Epic 19 — Group/Shared Session (Realtime), Stories 19.0–19.3  
-**Date:** 2026-06-25  
-**Oracle:** Formal Acceptance Criteria (4 story files, confidence: high)  
-**Evaluator:** Paolo
-
----
-
-## Gate Decision: ✅ PASS
-
-**Rationale:** P0 coverage is 100%, P1 coverage is 100% (target: 90%), and overall coverage is 100% (minimum: 80%).
-
-> **⚠️ Open Finding (non-blocking):** 7 lifecycle tests (`19.1-GW-009..015`) in `test/core/cloud/realtime_gateway_lifecycle_test.dart` are **not tracked in git** (`git status: ??`). These tests pass and cover 19.1-AC1 and 19.1-AC4. The file must be committed before CI to ensure the full 1146-test count is reproducible.
+**Generated:** 2026-06-29  
+**Evaluator:** Paolo  
+**Oracle:** Formal acceptance criteria from 5 implementation artifact files (all `Status: done`)  
+**Test baseline:** 1240 tests passing (1222 post-Epic-20 baseline + 18 TEA additions on 2026-06-29)
 
 ---
 
-## Coverage Summary
+## Gate Decision: PASS
 
-| Metric | Value |
-|---|---|
-| Total ACs | 21 |
-| Fully covered | 21 (100%) |
-| Partially covered | 0 |
-| Uncovered | 0 |
-| P0 coverage | 2/2 (100%) ✅ |
-| P1 coverage | 16/16 (100%) ✅ |
-| P2 coverage | 2/2 (100%) ✅ |
-| Test files (committed) | 7 |
-| Test cases (committed) | 50 |
-| Test cases (total incl. untracked) | 57 |
-| Suite total | 1146 passing (1139 committed) |
+**Rationale:** P0 coverage is 100% (no P0 criteria), P1 coverage is 100% (22/22, target: 90%), and overall coverage is 90% (35/39, minimum: 80%). All 4 partial-coverage items are P2 (non-blocking).
 
 ### Gate Criteria
 
 | Criterion | Required | Actual | Status |
 |---|---|---|---|
-| P0 coverage | 100% | 100% | ✅ MET |
-| P1 coverage (target) | 90% | 100% | ✅ MET |
-| P1 coverage (minimum) | 80% | 100% | ✅ MET |
-| Overall coverage | 80% | 100% | ✅ MET |
+| P0 coverage | 100% | 100% (0/0) | MET |
+| P1 coverage | ≥ 90% | 100% (22/22) | MET |
+| P1 coverage minimum | ≥ 80% | 100% | MET |
+| Overall coverage | ≥ 80% | 90% (35/39) | MET |
 
 ---
 
-## Test Catalog (Epic 19)
+## Coverage Summary
 
-### Step 2 Discovery: Test Files
+| Priority | Total | FULL | PARTIAL | NONE | Coverage % |
+|---|---|---|---|---|---|
+| P0 | 0 | — | — | — | 100% |
+| P1 | 22 | 22 | 0 | 0 | **100%** |
+| P2 | 17 | 13 | 4 | 0 | 76% |
+| P3 | 0 | — | — | — | 100% |
+| **Total** | **39** | **35** | **4** | **0** | **90%** |
 
-| File | Level | Story | Tests |
-|---|---|---|---|
-| `test/data/auth/auth_repository_impl_test.dart` | Unit | 19.0 | 19.0-REPO-001..002 (2) |
-| `test/bloc/auth/sign_in_sheet_error_test.dart` | Widget/Component | 19.0 | sanity + 19.0-WIDGET-001..002 (3) |
-| `test/core/cloud/realtime_gateway_test.dart` | Unit | 19.1 | 19.1-GW-001..008 (8) |
-| `test/domain/social/shared_session/broadcast_event_test.dart` | Unit | 19.1 | 19.1-DOMAIN-001..005 (5) |
-| `test/core/cloud/realtime_gateway_lifecycle_test.dart` ⚠️ UNTRACKED | Unit | 19.1 | 19.1-GW-009..015 (7) |
-| `test/bloc/shared_session/shared_session_bloc_test.dart` | Unit | 19.2 | 19.2-BLOC-001..012 (12) |
-| `test/widget/shared_session/shared_session_lobby_page_test.dart` | Widget/Component | 19.2 | 19.2-WIDGET-001..005 (5) |
-| `test/bloc/shared_session/drop_out_tolerance_bloc_test.dart` | Unit | 19.3 | 19.3-BLOC-001..013 (13) |
-| `test/widget/shared_session/drop_out_tolerance_widget_test.dart` | Widget/Component | 19.3 | 19.3-WIDGET-001..002 (2) |
+---
 
-**Total committed:** 50 tests across 8 files  
-**Total with untracked lifecycle file:** 57 tests across 9 files
+## Test Inventory
 
-### Coverage Heuristics
+| Category | Files | Tests |
+|---|---|---|
+| Unit (bloc/cubit/use-case/domain) | 10 | 71 |
+| Component (widget) | 4 | 16 |
+| **Epic 20 total (traced)** | **15** | **87** |
+| Full suite (1240 passing) | — | 1240 |
 
-| Heuristic | Result |
-|---|---|
-| API/endpoint gaps | None (Supabase Realtime is event-driven, no REST endpoints) |
-| Auth/authz negative-path gaps | None (BLOC-006, BLOC-011 cover denied follower paths) |
-| Happy-path-only criteria | None (all P0/P1 include error/denied paths) |
-| UI journey gaps without E2E | N/A (project has no E2E layer; unit+widget is the established ceiling) |
-| UI state coverage gaps | None (loading, lobby, inSession, dropped, ended states all covered) |
-| E18R-1 fire-check (small-viewport shimmer) | ✅ Triggered and handled: WIDGET-004 at 360×640 |
-| E18R-2 fire-check (IT localized errors) | ✅ Triggered and handled: WIDGET-001/002 + drop_out widget tests |
+**Commitment status:** 4 files from TEA automation run (2026-06-29) are NOT committed — see Open Finding F-20-001.
 
 ---
 
 ## Traceability Matrix
 
-### Story 19.0 — Profile Row Creation on Signup
+### Story 20.1 — Shared Session Creation, JoinCodeCard and Lobby Navigation
 
-| AC | Priority | Title | Coverage | Test IDs |
+| AC ID | Description | Priority | Coverage | Test IDs |
 |---|---|---|---|---|
-| 19.0-AC1 | **P0** | Supabase trigger creates profiles row for every new auth user | ✅ FULL | migration artifact + live MCP verification |
-| 19.0-AC2 | P1 | handle_new_user trigger does not fail for new signups (E18R-3) | ✅ FULL | live MCP verification |
-| 19.0-AC3 | P1 | Migration idempotent; 0 back-fills at apply time | ✅ FULL | structural SQL analysis + live apply |
-| 19.0-AC4 | P1 | Localized IT error for invalid email (E18R-6) | ✅ FULL | 19.0-REPO-001, 19.0-REPO-002, 19.0-WIDGET-001, 19.0-WIDGET-002 |
-| 19.0-AC5 | P1 | Zero regressions (1094 tests pass) | ✅ FULL | flutter test suite |
+| 20.1-AC1 | Pro user creates shared session (FR68, ARCH22) | P1 | FULL | 20.1-CUBIT-002..004, 20.1-REPO-001..002† |
+| 20.1-AC2 | JoinCodeCard renders with join code + QR + refresh (UX-DR29) | P1 | FULL | join_code_card_widget_test, 20.1-BLOC-004 |
+| 20.1-AC3 | "Aggiorna codice" refreshes code without new session (UX-DR29) | P2 | FULL | 20.1-BLOC-003, 20.1-REPO-003..004† |
+| 20.1-AC4 | 5-minute wait message (UX-DR29) | P2 | PARTIAL | shared_session_lobby_page_test (partial) |
+| 20.1-AC5 | Cancel before anyone joins (FR68) | P1 | FULL | 20.1-BLOC-001..002, 20.1-BLOC-006, 20.3-REPO-005..006† |
+| 20.1-AC6 | Zero regressions | P2 | FULL | Suite-wide (1240 passing) |
 
-**Notes:** AC1/AC2/AC3 are covered by Supabase migration artifact (`supabase/migrations/0008_handle_new_user_trigger.sql`) and live MCP verification. Dart unit tests are not applicable to DB trigger logic.
+†Tests in uncommitted/untracked files — see F-20-001.
+
+**Coverage heuristics:**
+- Auth/authz negative paths: all 3 repository error paths tested (REPO-002, REPO-004, REPO-006)
+- Error paths: cancel-before-join, delete-fails-still-cancelled, refresh-guard all covered
+- UI journey: lobby widget tests cover JoinCodeCard render and cancel dialog entry point
 
 ---
 
-### Story 19.1 — RealtimeGateway + Supabase Broadcast/Presence Channel
+### Story 20.2 — GroupConstraintResolver — Deterministic Group Plan Generation
 
-| AC | Priority | Title | Coverage | Test IDs |
+| AC ID | Description | Priority | Coverage | Test IDs |
 |---|---|---|---|---|
-| 19.1-AC1 | P1 | joinChannel opens channel; streams emit typed events | ✅ FULL ⚠️ | 19.1-GW-009, GW-010, GW-013, GW-014 (lifecycle file, untracked) |
-| 19.1-AC2 | P1 | step_advanced and all broadcast types map correctly | ✅ FULL | 19.1-GW-001..008, DOMAIN-001..005 |
-| 19.1-AC3 | P2 | RealtimeGateway registered as @singleton in DI | ✅ FULL | structural (injection.config.dart) |
-| 19.1-AC4 | P1 | leaveChannel() closes channel and streams cleanly | ✅ FULL ⚠️ | 19.1-GW-011, GW-012, GW-015 (lifecycle file, untracked) |
-| 19.1-AC5 | P1 | Zero regressions (1107 tests pass after review patch) | ✅ FULL | flutter test suite |
+| 20.2-AC1 | Deterministic group rules — min/union/lowest (FR70, ARCH24) | P1 | FULL | 20.2-GCR-001..017 |
+| 20.2-AC2 | Per-user FR9 safety rules applied via pre-computed cap (FR70) | P1 | FULL | 20.2-GCR-004..005 (AtRisk → group ceiling lowered) |
+| 20.2-AC3 | Exhaustive test coverage ≥ 15 tests (ARCH24) | P1 | FULL | 20.2-GCR-001..017 (17 tests, all cases listed in AC met) |
+| 20.2-AC4 | Zero Flutter imports in resolver/profile/constraint files (ARCH24) | P2 | FULL | flutter analyze verified at story completion |
+| 20.2-AC5 | Zero regressions | P2 | FULL | Suite-wide (1183 → 1240 passing) |
 
-**Notes:** ⚠️ AC1 and AC4 are covered by tests in `realtime_gateway_lifecycle_test.dart` which is **not tracked in git**. All 7 lifecycle tests pass (1146 total). File must be committed.
-
-**Review patches applied:** `RealtimeChannelConfig(self: true)` for self-echo suppression; StateError guards on pre-join send/track; re-entry guard on joinChannel; try/finally in leaveChannel.
+**Coverage heuristics:**
+- Error paths: empty-list guard (GCR-016) tested → ArgumentError
+- Edge cases: single participant, all-same, heterogeneous, symmetric, all-null cap all covered
+- Happy path completeness: all 4 fields (intensityCeiling, fitnessLevel, movementExclusions, durationMinutes) verified independently with boundary values
 
 ---
 
-### Story 19.2 — Host Authority, Step Advancement, and Presence Lobby
+### Story 20.3 — Co-Location Join Flow — Momentary Non-Blocking Confirmation
 
-| AC | Priority | Title | Coverage | Test IDs |
+| AC ID | Description | Priority | Coverage | Test IDs |
 |---|---|---|---|---|
-| 19.2-AC1 | **P0** | Only host can advance steps and broadcast (ARCH21) | ✅ FULL | 19.2-BLOC-006, BLOC-009, BLOC-010, BLOC-011 |
-| 19.2-AC2 | P1 | Follower receives step_advanced and renders new step | ✅ FULL | 19.2-BLOC-008, WIDGET-005 |
-| 19.2-AC3 | P1 | Presence lobby + Start gated on ≥2 participants | ✅ FULL | 19.2-BLOC-004, BLOC-005, WIDGET-001..004 |
-| 19.2-AC4 | P1 | session_started → all participants → inSession | ✅ FULL | 19.2-BLOC-007 |
-| 19.2-AC5 | P2 | Semantics liveRegion on step name (accessibility) | ✅ FULL | 19.2-WIDGET-005 |
-| 19.2-AC6 | P1 | bloc.close() calls leaveChannel() | ✅ FULL | 19.2-BLOC-012 |
+| 20.3-AC1 | Join flow entry point — button in _FriendsList (FR69) | P1 | FULL | 20.3-WIDGET-001..002 |
+| 20.3-AC2 | Successful join inserts participant row, navigates to lobby (FR69, ARCH22) | P1 | FULL | 20.3-CUBIT-002..004, 20.3-REPO-007†, 20.3-JOIN-001..002 |
+| 20.3-AC3 | Session-already-started guard (FR69) | P1 | FULL | 20.3-CUBIT-005, 20.3-REPO-009†, 20.3-JOIN-003 |
+| 20.3-AC4 | Invalid/not-found join code error handling (FR69) | P1 | FULL | 20.3-CUBIT-006, 20.3-REPO-008† |
+| 20.3-AC5 | Co-location check runs once on lobby entry (FR69, NFR33) | P2 | FULL | 20.3-BLOC-001 |
+| 20.3-AC6 | Co-location boolean computed for followers (FR69, NFR33) | P2 | FULL | 20.3-BLOC-002..003 |
+| 20.3-AC7 | Co-location check is non-blocking (FR69, NFR33) | P2 | FULL | 20.3-BLOC-004..005 (GPS fail → coLocated=null, lobby proceeds) |
+| 20.3-AC8 | Soft visual cue shown only for co-located followers (NFR33) | P2 | PARTIAL | shared_session_lobby_page_test covers lobby states; no dedicated coLocated-true/false widget assertion |
+| 20.3-AC9 | Coordinates never persisted in Supabase (NFR33) | P1 | FULL | 20.3-BLOC-001..005 (verify only trackPresence receives lat/lon, no DB call) |
+| 20.3-AC10 | Zero regressions | P2 | FULL | Suite-wide (1200 → 1240 passing) |
 
-**Notes:** Single-session ownership guard added in review (prevents concurrent SharedSessionBloc instances). E18R-1 fire-check (small-viewport shimmer) satisfied by WIDGET-004 at 360×640.
+†Tests in uncommitted/untracked files — see F-20-001.
+
+**Coverage heuristics:**
+- Error paths: SessionAlreadyStartedFailure pass-through (REPO-009†), generic exception (REPO-008†), GPS failure fallback all covered
+- Auth/authz: E18R-CB2 compliance — no raw failure.message surfaced to UI; tested by CUBIT-006
+- Privacy AC (AC9): coordinates-in-presence-only contract verified by BLOC co-location tests
 
 ---
 
-### Story 19.3 — Drop-Out Tolerance and Reconnect
+### Story 20.4 — Synchronized Session Start and Shared InSessionView
 
-| AC | Priority | Title | Coverage | Test IDs |
+| AC ID | Description | Priority | Coverage | Test IDs |
 |---|---|---|---|---|
-| 19.3-AC1 | P1 | Drop-out detected; session continues; droppedHandle shown | ✅ FULL | 19.3-BLOC-001..003, WIDGET-001 |
-| 19.3-AC2 | P1 | Dropped participant reconnects; snaps to current step | ✅ FULL | 19.3-BLOC-007..009 |
-| 19.3-AC3 | P1 | Host drop-out → leadership transfer (election) | ✅ FULL | 19.3-BLOC-010..011, BLOC-013 |
-| 19.3-AC4 | P1 | SessionEndRequested → sessionEnded state + _SessionEndedView | ✅ FULL | 19.3-BLOC-012, WIDGET-002 |
-| 19.3-AC5 | P1 | Zero regressions (1139/1146 tests pass) | ✅ FULL | flutter test suite |
+| 20.4-AC1 | Simultaneous inSession transition on session_started (FR71, UX-DR29) | P1 | FULL | 20.4-BLOC-001 |
+| 20.4-AC2 | Follower step sync from broadcast (NFR31) | P1 | FULL | 20.4-BLOC-002 |
+| 20.4-AC3 | Participant count badge (UX-DR29) | P2 | FULL | 20.4-WIDGET-001..002 |
+| 20.4-AC4 | Host drives timer and broadcasts step advances (FR71) | P1 | FULL | 20.4-BLOC-003 |
+| 20.4-AC5 | Host render path reuses InSessionView (UX-DR29) | P1 | FULL | 20.4-WIDGET-003..004 |
+| 20.4-AC6 | Follower haptic on step transition (NFR4) | P2 | FULL | 20.4-WIDGET-005 |
+| 20.4-AC7 | Follower local clock ticks between broadcasts (UX-DR29) | P2 | PARTIAL | Timer.periodic behavior partially verified by widget state; no fakeAsync tick test |
+| 20.4-AC8 | sessionEnded → RPE navigation (FR72) | P1 | FULL | 20.4-BLOC-004 |
+| 20.4-AC9 | Dropped-participant notice remains (NFR31) | P2 | FULL | 20.4-WIDGET-006..007 |
+| 20.4-AC10 | Zero regressions | P2 | FULL | Suite-wide (1210 → 1240 passing) |
 
-**Notes:** Host-transfer algorithm rewritten in review to election-on-no-host-in-present rather than ordered-list fallback. BLOC-013 (review patch) covers all-hosts-drop edge case.
+**Coverage heuristics:**
+- Error paths: sessionEnded with empty armKey placeholder handled in bloc tests
+- UI state: host path (InSessionView + badge), follower path (haptic + timer), dropped-participant banner all widget-tested
+- Integration: HostStepAdvanced → broadcast flow covered by BLOC-003..004
+
+---
+
+### Story 20.5 — Per-Participant RPE and Protective-State Social Suppression
+
+| AC ID | Description | Priority | Coverage | Test IDs |
+|---|---|---|---|---|
+| 20.5-AC1 | RPE flows to per-user bandit with valid arm key (FR72) | P1 | FULL | 20.5-BLOC-001..003, 20.5-WIDGET-002 |
+| 20.5-AC2 | AtRisk/Recovering: no shared-session CTA on Today screen (UX-DR31) | P1 | FULL | 20.5-TODAY-001..004 |
+| 20.5-AC3 | AtRisk/Recovering: leaderboard rank guard for Epic 21 (UX-DR31) | P2 | PARTIAL | _suppressSharedSessionCta function tested (TODAY-001..004); Epic 21 CTA not yet built |
+| 20.5-AC4 | GroupConstraintResolver AtRisk cap applied to group plan (FR70) | P1 | FULL | 20.5-BLOC-002, 20.5-BLOC-005..007† |
+| 20.5-AC5 | Group plan params distributed via broadcast (FR71) | P1 | FULL | 20.5-BLOC-001, 20.5-BLOC-004, 20.5-GW-009..013† |
+| 20.5-AC6 | Steps generated from plan params, never empty in in-session view (UX-DR29) | P1 | FULL | 20.5-WIDGET-001, 20.5-WIDGET-003 |
+| 20.5-AC7 | Proper armKey flows through to RPE navigation (FR72) | P1 | FULL | 20.5-BLOC-003, 20.5-WIDGET-002 |
+| 20.5-AC8 | Zero regressions | P2 | FULL | Suite-wide (1240 passing) |
+
+†Tests in uncommitted/modified files — see F-20-001.
+
+**Coverage heuristics:**
+- Error paths: DB-read failure in _onStartTapped → fail-safe to LOW (BLOC-007†); unknown behavioral state string → LOW (BLOC-008†)
+- Safety-critical: AtRisk cap → group intensity LOW verified (BLOC-002, BLOC-005†)
+- Type guards: parseBroadcast wrong-type fields → fallback defaults (GW-010..012†)
+- Suppression contract: suppression=true for atRisk AND recovering, false for active (TODAY-001..003)
 
 ---
 
 ## Gap Analysis
 
-**Critical gaps (P0):** 0  
-**High gaps (P1):** 0  
-**Medium gaps (P2):** 0
+### Partial-Coverage Items (P2, Non-Blocking)
 
-### Findings (non-blocking)
+| AC ID | Root Cause | Recommended Action |
+|---|---|---|
+| 20.1-AC4 | `_LobbyViewState._waitTimer` uses real `Timer(5min)` — hard to exercise without `fakeAsync` in a widget test | Add widget test with `fakeAsync` + fake timer; assert `sharedSessionNoOneYet` text appears after 5-minute advance |
+| 20.3-AC8 | Dedicated assertion for `Icons.location_on` / `coLocated=null` hiding absent from current test suite | Add widget assertion in `shared_session_lobby_page_test.dart`: render with `coLocated=true` (follower), `coLocated=null`, and host paths |
+| 20.4-AC7 | `Timer.periodic(1s)` in follower path not tickable in current unit tests | Add `fakeAsync` widget test: advance 1 second, verify displayed elapsed increments |
+| 20.5-AC3 | AC is a process/future-work guarantee for Epic 21; Epic 21 CTA doesn't yet exist | Satisfied by TODAY-001..004 which test the guard function; verify compliance when Epic 21 adds any Today screen CTA |
 
-| ID | Severity | Description | Action |
-|---|---|---|---|
-| F-19-001 | MEDIUM | `test/core/cloud/realtime_gateway_lifecycle_test.dart` is untracked in git (`??`). 7 tests covering 19.1-AC1 and 19.1-AC4 will not run in CI until committed. | `git add pulse_coach/test/core/cloud/realtime_gateway_lifecycle_test.dart` |
+### Coverage Heuristics
+
+| Heuristic | Status | Notes |
+|---|---|---|
+| Endpoint coverage | N/A | Feature uses Supabase Realtime (broadcast/presence), not REST endpoints; not applicable |
+| Auth negative-path tests | Present | Repository error paths tested for all 4 repository methods |
+| Error-path coverage | Present | Network failures, DB errors, GPS failures, type-guard fallbacks all tested |
+| UI journey coverage | Present | Widget tests cover join entry point, lobby states, in-session views, suppression |
+| UI state coverage | Partial | 4 PARTIAL items above (timer, coLocated cue, local clock, future guard) |
 
 ---
 
-## Recommendations
+## Open Findings
 
-| Priority | Action |
-|---|---|
-| HIGH | Commit untracked lifecycle test file immediately: `git add pulse_coach/test/core/cloud/realtime_gateway_lifecycle_test.dart && git commit` |
-| LOW | Run `/bmad:tea:test-review` to assess test quality for Epic 19 bloc tests |
+### F-20-001: TEA Test Additions Not Committed (Non-Blocking)
+
+**Severity:** Medium  
+**Status:** Open  
+**Discovered:** 2026-06-29 (TEA automate run)
+
+The TEA automation run on 2026-06-29 added 18 tests across 4 files. All 18 tests pass (verified: 1240 total). However, none are committed to version control:
+
+| File | Git Status | Tests Added | Story Coverage |
+|---|---|---|---|
+| `test/bloc/shared_session/shared_session_20_5_bloc_test.dart` | M (modified) | BLOC-005..008 (4) | 20.5-AC4 (AtRisk/recovering/DB-error/unknown-state) |
+| `test/core/cloud/realtime_gateway_test.dart` | M (modified) | GW-009..013 (5) | 20.5-AC5 (parseBroadcast type-guard coverage) |
+| `test/data/social/shared_session_repository_impl_test.dart` | ?? (untracked) | REPO-001..009 (9) | 20.1-AC1/AC3/AC5, 20.3-AC2/AC3/AC4 |
+| `test/data/social/shared_session_repository_impl_test.mocks.dart` | ?? (untracked) | generated mocks | — |
+
+**Action required:** Run `git add` on all 4 files and commit before opening Epic 21 sprint. Pattern mirrors F-19-001 from Epic 19.
+
+---
+
+## Next Actions
+
+1. **[HIGH] Commit uncommitted TEA tests** — `git add` the 4 uncommitted/untracked test files listed in F-20-001 and commit with message `test(epic-20): commit TEA automation additions`.
+2. **[MEDIUM] Close 20.1-AC4 gap** — Add `fakeAsync` widget test for the 5-minute lobby wait message.
+3. **[MEDIUM] Close 20.3-AC8 gap** — Add dedicated co-located visual cue widget assertions (three cases: coLocated=true/follower, coLocated=null, isHost=true).
+4. **[LOW] Close 20.4-AC7 gap** — Add `fakeAsync` follower timer tick test.
+5. **[LOW] Run /bmad:tea:test-review** on the Epic 20 test suite to assess test quality.
 
 ---
 
 ## Gate Decision Summary
 
 ```
-✅ GATE DECISION: PASS
+✅ GATE: PASS — Epic 20 Co-Located Shared Sessions v2.4b
 
 📊 Coverage Analysis:
 - P0 Coverage: 100% (Required: 100%) → MET
 - P1 Coverage: 100% (PASS target: 90%, minimum: 80%) → MET
-- Overall Coverage: 100% (Minimum: 80%) → MET
+- Overall Coverage: 90% (Minimum: 80%) → MET
 
 ✅ Decision Rationale:
-P0 coverage is 100%, P1 coverage is 100% (target: 90%), and overall coverage
-is 100% (minimum: 80%). All 21 ACs across 4 stories are fully covered.
+P0 coverage is 100% (no P0 criteria), P1 coverage is 100% (22/22, target: 90%),
+and overall coverage is 90% (35/39, minimum: 80%).
+All 4 partial-coverage items are P2 non-blocking.
 
 ⚠️ Critical Gaps: 0
-
-⚠️ Open Finding (non-blocking):
-F-19-001 [MEDIUM]: realtime_gateway_lifecycle_test.dart is untracked in git.
-7 lifecycle tests (19.1-GW-009..015) will not run in CI until committed.
-Action: git add pulse_coach/test/core/cloud/realtime_gateway_lifecycle_test.dart
-
-📝 Recommended Actions:
-1. [HIGH] Commit untracked lifecycle test file before next CI run
-2. [LOW] Run /bmad:tea:test-review for Epic 19 bloc test quality assessment
+⚠️ Open Findings: 1 (F-20-001 — uncommitted TEA tests, non-blocking)
 
 📂 Full Report: _bmad-output/test-artifacts/traceability-matrix.md
 📂 Machine-readable: _bmad-output/test-artifacts/traceability/e2e-trace-summary.json
-📂 Gate signal: _bmad-output/test-artifacts/traceability/gate-decision.json
-
-✅ GATE: PASS — Release approved, coverage meets all thresholds
 ```

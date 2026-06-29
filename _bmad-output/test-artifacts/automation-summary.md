@@ -1,8 +1,8 @@
 ---
-stepsCompleted: ['step-01-preflight-and-context', 'step-02-identify-targets', 'step-03-generate-tests', 'step-03c-aggregate', 'step-04-validate-and-summarize', 'step-01-preflight-and-context-epic18', 'step-02-identify-targets-epic18', 'step-03-generate-tests-epic18', 'step-03c-aggregate-epic18', 'step-04-validate-epic18', 'bmad-testarch-trace-epic18', 'step-01-preflight-and-context-epic19', 'step-02-identify-targets-epic19', 'step-03-generate-tests-epic19', 'step-03c-aggregate-epic19', 'step-04-validate-and-summarize-epic19', 'gap-close-19.1-AC1']
-lastStep: 'gap-close-19.1-AC1'
-lastSaved: '2026-06-25'
-lastRunDate: '2026-06-25'
+stepsCompleted: ['step-01-preflight-and-context', 'step-02-identify-targets', 'step-03-generate-tests', 'step-03c-aggregate', 'step-04-validate-and-summarize', 'step-01-preflight-and-context-epic18', 'step-02-identify-targets-epic18', 'step-03-generate-tests-epic18', 'step-03c-aggregate-epic18', 'step-04-validate-epic18', 'bmad-testarch-trace-epic18', 'step-01-preflight-and-context-epic19', 'step-02-identify-targets-epic19', 'step-03-generate-tests-epic19', 'step-03c-aggregate-epic19', 'step-04-validate-and-summarize-epic19', 'gap-close-19.1-AC1', 'step-01-preflight-and-context-epic20', 'step-02-identify-targets-epic20', 'step-03-generate-tests-epic20', 'step-03c-aggregate-epic20', 'step-04-validate-and-summarize-epic20', 'bmad-testarch-trace-epic20']
+lastStep: 'bmad-testarch-trace-epic20'
+lastSaved: '2026-06-29'
+lastRunDate: '2026-06-29'
 inputDocuments:
   - pulse_coach/pubspec.yaml
   - pulse_coach/analysis_options.yaml
@@ -27,6 +27,112 @@ inputDocuments:
   - _bmad-output/test-artifacts/test-design-handoff.md
   - _bmad-output/test-artifacts/traceability-report.md
   - all existing test files in pulse_coach/test/
+---
+
+# TEA Automation Summary — PulseCoach (Epic 20, 2026-06-29)
+
+## Step 1: Preflight & Context
+
+### Stack Detection
+
+- **Project type**: Flutter/Dart mobile app (`pulse_coach/pubspec.yaml`)
+- **Detected stack**: `flutter/mobile`
+- **Test framework**: `flutter_test` + `bloc_test` + `mockito`
+- **Execution mode**: BMad-Integrated; PRD, traceability, and implementation artifacts present
+- **Test directory**: `pulse_coach/test/`
+- **Baseline**: 1222 tests, all passing (last TEA run: 2026-06-25, Epic 19)
+
+### TEA Config Flags
+
+- `tea_use_playwright_utils: true` → N/A (Flutter mobile)
+- `test_stack_type: auto` → resolved to `flutter/mobile`
+
+## Step 2: Coverage Analysis & Targets
+
+### Scope
+
+Epic 20 — Shared Sessions (Stories 20.1–20.5). All stories merged after the last TEA run.
+
+### Gaps Identified
+
+| Test ID | Component | Gap | Priority |
+|---|---|---|---|
+| `20.5-GW-009..013` | `RealtimeGateway.parseBroadcast` | Story 20.5 added type-guards for `session_started` fields. Existing GW-003 only checked empty-payload defaults; new paths (wrong-type fallbacks, high-intensity defaultName) untested. | P1 |
+| `20.5-BLOC-005..008` | `SharedSessionBloc._onStartTapped` | Existing BLOC-001..002 covered only `atRisk` and `active`. Missing: `recovering`/`fatigued` (medium cap), DB error fail-safe (intensity=3, FR24), unknown state string (null → LOW). | P1 |
+| `20.1/20.3-REPO-001..009` | `SharedSessionRepositoryImpl` | No direct test file existed. All 4 methods need coverage, especially `joinSharedSession` `SessionAlreadyStartedFailure` pass-through. | P2 |
+
+### Deferred
+
+- Thin use case pass-throughs (`CreateSharedSessionUseCase`, `DeleteSharedSessionUseCase`, `RefreshJoinCodeUseCase`) — P3, single-line bodies
+- AC6 haptic assertion — static call, already in deferred-work.md
+- AC7 follower timer tick — requires fake clock injection, already in deferred-work.md
+
+## Step 3: Generated Tests (Sequential)
+
+| Test ID | File | Description | Priority |
+|---|---|---|---|
+| `20.5-GW-009` | `test/core/cloud/realtime_gateway_test.dart` | `session_started` with valid full payload → all 4 fields correctly extracted | P1 |
+| `20.5-GW-010` | `test/core/cloud/realtime_gateway_test.dart` | `session_type` int → fallback 'mobility' | P1 |
+| `20.5-GW-011` | `test/core/cloud/realtime_gateway_test.dart` | `intensity` String → fallback 5, armKey='mobility_medium' | P1 |
+| `20.5-GW-012` | `test/core/cloud/realtime_gateway_test.dart` | `arm_key` int → derived from intensity=3 → 'mobility_low' | P1 |
+| `20.5-GW-013` | `test/core/cloud/realtime_gateway_test.dart` | intensity=8 → defaultName='high' → 'mobility_high' | P1 |
+| `20.5-BLOC-005` | `test/bloc/shared_session/shared_session_20_5_bloc_test.dart` | Recovering host → armKey ends in _medium | P1 |
+| `20.5-BLOC-006` | `test/bloc/shared_session/shared_session_20_5_bloc_test.dart` | Fatigued host → armKey ends in _medium | P1 |
+| `20.5-BLOC-007` | `test/bloc/shared_session/shared_session_20_5_bloc_test.dart` | DB error (DROP TABLE) → fail-safe intensity=3, 'mobility_low' (FR24) | P1 |
+| `20.5-BLOC-008` | `test/bloc/shared_session/shared_session_20_5_bloc_test.dart` | Unknown state string 'zombie' → null → LOW cap → 'mobility_low' | P1 |
+| `20.1-REPO-001` | `test/data/social/shared_session_repository_impl_test.dart` | `createSharedSession` success → Right(SharedSession) | P2 |
+| `20.1-REPO-002` | `test/data/social/shared_session_repository_impl_test.dart` | `createSharedSession` exception → Left(ServerFailure) | P2 |
+| `20.1-REPO-003` | `test/data/social/shared_session_repository_impl_test.dart` | `refreshJoinCode` success → Right(code) | P2 |
+| `20.1-REPO-004` | `test/data/social/shared_session_repository_impl_test.dart` | `refreshJoinCode` exception → Left(ServerFailure) | P2 |
+| `20.3-REPO-005` | `test/data/social/shared_session_repository_impl_test.dart` | `deleteSharedSession` success → Right(unit) | P2 |
+| `20.3-REPO-006` | `test/data/social/shared_session_repository_impl_test.dart` | `deleteSharedSession` exception → Left(ServerFailure) | P2 |
+| `20.3-REPO-007` | `test/data/social/shared_session_repository_impl_test.dart` | `joinSharedSession` success → Right(SharedSession) | P2 |
+| `20.3-REPO-008` | `test/data/social/shared_session_repository_impl_test.dart` | `joinSharedSession` generic exception → Left(ServerFailure) | P2 |
+| `20.3-REPO-009` | `test/data/social/shared_session_repository_impl_test.dart` | `joinSharedSession` SessionAlreadyStartedFailure → Left pass-through | P2 |
+
+## Step 4: Validation & Final Summary
+
+### Test Execution Results
+
+```
+flutter test test/core/cloud/realtime_gateway_test.dart \
+  test/bloc/shared_session/shared_session_20_5_bloc_test.dart \
+  test/data/social/shared_session_repository_impl_test.dart
+PASS — 22/22 targeted tests passed
+
+flutter analyze
+PASS — No issues found
+
+flutter test
+PASS — 1240/1240 tests passed
+```
+
+### Files Modified/Created
+
+| File | Modifica |
+|---|---|
+| `pulse_coach/test/core/cloud/realtime_gateway_test.dart` | Aggiunto gruppo 20.5-GW-009..013 (+5 test) |
+| `pulse_coach/test/bloc/shared_session/shared_session_20_5_bloc_test.dart` | Aggiunto BLOC-005..008 (+4 test) |
+| `pulse_coach/test/data/social/shared_session_repository_impl_test.dart` | Nuovo file, 9 test |
+| `pulse_coach/test/data/social/shared_session_repository_impl_test.mocks.dart` | Generato da build_runner |
+| `_bmad-output/test-artifacts/automation-summary.md` | Registrato questo run |
+
+### Final Test Count
+
+| Milestone | Count |
+|---|---|
+| Epic 20 (baseline post-commit) | 1222 |
+| **Dopo questo TEA run (+18)** | **1240** |
+
+### Remaining Risks
+
+- `SharedSessionRepositoryImpl` DAO injection for DB-error test: BLOC-007 uses `DROP TABLE` workaround (pragmatic for CI but slightly invasive). A refactored DAO interface would enable cleaner mocking.
+- Thin use case pass-throughs deferred: `CreateSharedSessionUseCase`, `DeleteSharedSessionUseCase`, `RefreshJoinCodeUseCase` — single-line bodies with no direct tests.
+
+### Recommended Next Workflow
+
+- `/bmad-testarch-trace` per Epic 20 per collegare i nuovi test IDs alla matrice di traceabilità formale.
+
 ---
 
 # TEA Traceability Run — PulseCoach (Epic 18, 2026-06-24)
