@@ -386,3 +386,29 @@ At `bmad-create-story` time for each Epic 19 story, scan this list and surface a
 | `E18R-4` social `ProUpsellSheet` copy | a story touches `ProUpsellSheet` / the Social locked banner | Surface; apply social-specific copy in passing (minor). |
 | `E10R-2` non-UTC week-bucketing test | a story touches week-bucketing / `_mondayOf` / `_thisWeekMinutes` / Progress weekly stats | Surface; add the non-UTC regression test. |
 | `E18R-CB2` localized-IT review check | any story surfacing a `Failure` to the user | Review-layer check; no raw `failure.message` passthrough. |
+
+---
+
+## Epic 20 Retrospective — action items & triage (2026-06-29)
+
+Epic 20 (Co-Located Shared Sessions) closed 5/5 stories. The two-device GUI gate found **3 defects invisible to 1245 tests** (D1 lobby overflow + raw UUID, D2 `_dependents.isEmpty` red screen on join, D3 follower count-up timer vs host count-down) — exactly the class `E19R-1` predicted. **All 3 fixed and re-verified live this session** (commits `07e645f` fix + `f92f1e3` docs); they are CLOSED and do not count against Cat A. Retro: `epic-20-retro-2026-06-29.md`.
+
+### New / updated action items
+
+| ID | Source | Description | Owner | Target | Cat. | Status | Notes |
+|---|---|---|---|---|---|---|---|
+| E19R-1 | Epic 19 retro → Epic 20 gate | **Automate the two-peer smoke** (was a manual gate run). Integration test: join→presence→start→`step_advanced`→`session_ended` against the real Supabase channel, two seed users. | Amelia (Dev) + Murat (TEA) | Before/within Epic 21 (21.3 again needs 2 peers) | A | open (priority) — **partially delivered:** integration test authored at `integration_test/shared_session_two_peer_smoke_test.dart`; promote to CI-gated/scheduled run | Manual run already proved its value (caught D1/D2/D3). Paolo: automate (2026-06-29). |
+| E20R-1 | Epic 20 retro (2026-06-29) | **Scheduled fix story:** wire the real `@handle` into the shared-session lobby. Root: user's own `displayHandle` is null in `SharedSessionStartArgs` at create/join (the `SocialProfileBloc.loaded` handle isn't guaranteed resolved). Resolve handle reliably (e.g. `SharedSessionBloc` resolves via `GetSocialProfileUseCase` when arg is null, then re-tracks presence) so the lobby shows `@handle`, not the generic "Participant" fallback. | Amelia (Dev) | Epic 21 prep — run `create-story` | A | open (to schedule) | Overflow/UUID-leak already fixed (D1); this is the identity-display half. Paolo chose "scheduled fix story" (2026-06-29). |
+| E20R-2 | Epic 20 retro (2026-06-29) | **Shared-session completion does NOT persist a `SessionLog`** (host `InSessionCubit` built with `sessionLogsDao: null`; follower has no cubit; RPE args carry `sessionLogId: null` + `planId: null` → `_resolveSessionLogId()` returns null). RPE + bandit reward DO fire, but the session never enters Progress history and there is **no session record for Epic 21 scoring to attach points to**. Decide + implement shared-session SessionLog persistence (per participant, on-device). | Amelia (Dev) + Murat (TEA) | **Epic 21 prerequisite** — run `create-story` (likely 21.0) before 21.1 scoring | A | open (confirmed gap) | Confirmed by code-read this session. 20.5 AC implies the session "is saved"; the SessionLog half is missing. |
+| E20R-B1 | Epic 20 retro (2026-06-29) | **Review/gate rule:** when two roles (host/follower, or any two clients) render the same shared state, a test or gate step MUST compare the two renderings against each other, not just assert internal state. D3 shipped with a GREEN test that asserted the wrong (count-up) direction because nothing compared host vs follower side-by-side. | Amelia (Dev) — code-review skill + GUI gate | Ongoing process | B | pending | Add to Edge-Case Hunter project-specific traps + the retrospective GUI-gate protocol (two-device side-by-side compare for synchronized views). |
+
+### Category A snapshot (Epic 20 retro): **6 / 5 — OVER CAP**
+
+Active deliverable debt: `E19R-1`, `E20R-1`, `E20R-2`, `E18R-1`, `E10R-2`, `E18R-4`. (D1/D2/D3 closed; `E18R-2` closed in the Epic 19 session.) **6 > cap of 5 → formal triage owed at Epic 21 kickoff** (rule: no 21.x story enters the sprint until back to ≤5). Triage guidance for kickoff:
+- **Promote to scheduled stories** (removes from floating debt): `E20R-2` (likely Story 21.0, the scoring prerequisite) and `E20R-1` (handle) — both are concrete `create-story` candidates.
+- **Drop candidate:** `E18R-4` (social `ProUpsellSheet` copy) — cosmetic, carried 3 epics; drop-with-rationale or fold into the next opportunistic `ProUpsellSheet` touch.
+- `E19R-1` is partially delivered (test authored) → close once it is wired into a scheduled/CI run.
+
+### Category B sunset review — owed at Epic 21 kickoff (2-epic cadence: Epic 19 + Epic 20)
+
+Standing rules to walk: `E6-P1` (dormant), `E7.5-P1` (dormant), `E9-K1` (canonical create-story fire-check), `E18R-CB1` (scrollable shimmer), `E18R-CB2` (localized-IT failures), `E19R-2` (UI behind unreachable route must be exercised on-device when its nav is wired — **held in Epic 20**, the gate covered the newly-reachable lobby/in-session UI), **NEW `E20R-B1`** (compare host/follower renderings). The 2-epic sunset review itself is owed at Epic 21 kickoff.

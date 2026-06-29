@@ -1,0 +1,9 @@
+# Test tags. Integration/network tests hit the live Supabase backend and require
+# --dart-define creds (SUPABASE_URL, SUPABASE_ANON_KEY, SMOKE_PASSWORD); they
+# self-skip without them. Exclude from the default offline suite with:
+#   flutter test --exclude-tags integration
+tags:
+  integration:
+    description: Hits live external services (e.g. Supabase). Requires creds.
+  network:
+    description: Performs real network I/O.
