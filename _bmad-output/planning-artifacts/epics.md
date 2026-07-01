@@ -2739,6 +2739,35 @@ So that social pressure never overrides the v1 recovery-empathy promise.
 
 **Goal:** Introduce the points system, friends-only leaderboard with medal glyphs, and shared-session point bonus with a per-day cap. Protective-State Social Suppression rules established in Epic 20 are enforced throughout. This is the final v2 epic — ship only after validating the counter-metrics (AtRisk-state session starts and group-session RPE distribution are not adversely affected by gamification).
 
+**Prerequisites (from the Epic 20 retrospective, 2026-06-29):**
+
+- **Story 21.0 must be `done` before Story 21.1 enters the sprint** (hard-block, E9-K1/E17R-3). It closes two Epic-20 gaps that scoring depends on: shared-session completion currently persists **no local `SessionLog`** (the host `InSessionCubit` is built with `sessionLogsDao: null`, the follower has none, RPE args carry `sessionLogId`/`planId` = null), so a shared session is absent from Progress history and has no local session record; and the lobby shows a generic "Participant" instead of the real `@handle` (the user's own `displayHandle` is null in `SharedSessionStartArgs`).
+- **Story 21.3 server-side dependency:** 21.3 awards shared-session points via a server-side Edge Function "when all participants submitted RPE". Today RPE is stored **on-device only** — nothing signals shared-session completion or per-participant RPE to the server. 21.3 must therefore also define a **server-visible shared-session completion + per-participant RPE signal** (e.g. persist RPE/completion to Supabase for shared sessions) for the Edge Function to read; this is intrinsic to 21.3 and should be surfaced during its `create-story`.
+
+### Story 21.0: Shared-Session Persistence and Handle Wiring (Epic 20 carryover)
+
+As a shared-session participant,
+I want my completed shared session to be recorded locally and to see real @handles in the lobby,
+So that the session appears in my history and scoring/leaderboard has a real session record and identity to build on.
+
+**Acceptance Criteria:**
+
+**Given** a shared session ends (all steps complete or host abandons) and the participant reaches the RPE screen
+**When** the RPE is submitted
+**Then** a `SessionLog` row is persisted on-device for that participant (session type, duration, armKey, timestamp, abandoned flag), and the RPE row is anchored to it (`sessionLogId` non-null) — mirroring the solo flow (closes E20R-2 local half)
+
+**Given** a participant completed a shared session
+**When** they open Progress → Cronologia
+**Then** the shared session appears in the history timeline with its RPE, exactly as a solo session does
+
+**Given** a user creates or joins a shared session
+**When** the `SharedSessionLobby` renders the participant list
+**Then** each participant is shown by their `@handle` (not a generic "Participant" fallback and never a raw userId) — the current user's own handle is resolved reliably (e.g. `SharedSessionBloc` resolves it via `GetSocialProfileUseCase` when the nav arg is null, then re-tracks presence) (closes E20R-1)
+
+**Given** `SharedSessionBloc` resolves the handle asynchronously
+**When** the handle is not yet available at lobby entry
+**Then** lobby entry is NOT blocked (non-blocking, consistent with the co-location rule); the row updates to the `@handle` once resolved
+
 ### Story 21.1: Points System and Solo Session Scoring
 
 As a user,

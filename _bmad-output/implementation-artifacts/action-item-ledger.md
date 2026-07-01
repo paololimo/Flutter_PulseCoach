@@ -412,3 +412,35 @@ Active deliverable debt: `E19R-1`, `E20R-1`, `E20R-2`, `E18R-1`, `E10R-2`, `E18R
 ### Category B sunset review — owed at Epic 21 kickoff (2-epic cadence: Epic 19 + Epic 20)
 
 Standing rules to walk: `E6-P1` (dormant), `E7.5-P1` (dormant), `E9-K1` (canonical create-story fire-check), `E18R-CB1` (scrollable shimmer), `E18R-CB2` (localized-IT failures), `E19R-2` (UI behind unreachable route must be exercised on-device when its nav is wired — **held in Epic 20**, the gate covered the newly-reachable lobby/in-session UI), **NEW `E20R-B1`** (compare host/follower renderings). The 2-epic sunset review itself is owed at Epic 21 kickoff.
+
+---
+
+## Epic 21 Kickoff Triage (2026-06-29)
+
+Entering Epic 21, Category A was **6/5 — over cap**. Per the Deferred Items Budget rule, no 21.x story enters the sprint until Cat A ≤ 5. Resolutions:
+
+| Item | Resolution | Rationale / new home |
+|---|---|---|
+| **E19R-1** two-peer smoke | **CLOSE (deliverable shipped)** | The automated two-peer transport smoke was authored and verified green against live Supabase (`test/integration/shared_session_two_peer_smoke_test.dart`, commit `cd18c80`). The remaining "run it on a schedule/CI" is an **ongoing process → moves to Cat B** (`E19R-1-CB`), not floating debt. |
+| **E20R-2** shared-session persistence/points | **PROMOTE → Story 21.0 (local half)** + **design dependency on 21.3 (server half)** | Local `SessionLog` persistence for shared sessions (history + solo-style consistency) lands in **Story 21.0**. The *server-visible* shared-session completion + per-participant RPE signal that 21.3's scoring Edge Function needs is flagged as a **21.3 design prerequisite** (see epics.md Epic 21 Prerequisites note). Exits Cat A (scheduled work). |
+| **E20R-1** lobby @handle | **PROMOTE → Story 21.0 (handle)** | Wire the real `@handle` into `SharedSessionStartArgs` (resolve `SocialProfileBloc`/`GetSocialProfileUseCase` before create/join, re-track presence). Folded into **Story 21.0** alongside E20R-2's local half. Exits Cat A (scheduled work). |
+| **E18R-1** small-viewport golden infra | **KEEP** (carried) | Still unbuilt; doubly justified now (would have caught D1/D3). Fires on next screen-adding story. |
+| **E10R-2** non-UTC week-bucketing test | **KEEP** (carried) | Fires when 21.1/21.2 touch points/week bucketing (leaderboard totals). Likely closed opportunistically in Epic 21. |
+| **E18R-4** social ProUpsell copy | **KEEP** (minor) | Cosmetic; within cap, no need to drop. Fires on next `ProUpsellSheet` touch. |
+
+**Category A after triage: 3 / 5** — `E18R-1`, `E10R-2`, `E18R-4`. **Under cap → Epic 21 sprint cleared to open** once Story 21.0 is created (it is the prerequisite; 21.1 must not enter sprint until 21.0 is `done` — hard-block via E9-K1/E17R-3).
+
+### Category B sunset review (owed at Epic 21 kickoff — 2-epic cadence 19+20)
+
+| Rule | Verdict | Note |
+|---|---|---|
+| `E6-P1` patch-validation gate (dormant) | **Keep dormant** | Low standing cost. |
+| `E7.5-P1` Flutter deprecation pre-check (dormant) | **Keep dormant** | Low cost. |
+| `E9-K1` canonical create-story fire-check (+ absorbed E7-P2, E17R-3) | **Keep** | Core enforcement; now also carries the 21.0-before-21.1 hard-block. |
+| `E18R-CB1` shimmer scrollable-like-loaded | **Keep** | Held; still fires on shimmer states. |
+| `E18R-CB2` localized-IT on failure paths | **Keep** | Held. |
+| `E19R-2` UI behind unreachable route must be exercised on-device when nav wired | **Keep — validated** | Held in Epic 20 (gate covered the newly-reachable lobby/in-session UI). |
+| `E20R-B1` compare host/follower renderings, not just internal state | **Keep (new)** | Added to Edge-Case Hunter traps + the GUI-gate protocol (two-device side-by-side). |
+| `E19R-1-CB` run the two-peer smoke on a schedule/CI (creds-gated) | **New (ongoing)** | Successor to the E19R-1 deliverable; promote the green smoke to a scheduled/gated job. |
+
+**Retired this review:** none. **Next sunset review:** Epic 23 kickoff (2-epic cadence: 21 + 22).
