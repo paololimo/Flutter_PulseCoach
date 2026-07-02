@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-06-29 # Epic 21 kickoff: added Story 21-0 (backlog) per retro triage (E20R-1/E20R-2 carryover; hard-block before 21-1)
+last_updated: 2026-07-02 # code-review: Story 21-0 -> done
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -295,8 +295,8 @@ development_status:
   # Final v2 epic. Depends on Epics 16–20.
   # Ship only after counter-metric validation (AtRisk session starts + RPE distribution).
   # ─────────────────────────────────────────
-  epic-21: backlog
-  21-0-shared-session-persistence-and-handle-wiring: backlog
+  epic-21: in-progress
+  21-0-shared-session-persistence-and-handle-wiring: done
   21-1-points-system-and-solo-session-scoring: backlog
   21-2-friends-only-leaderboard-and-rank-freeze: backlog
   21-3-shared-session-point-bonus-and-counter-metric-monitoring: backlog

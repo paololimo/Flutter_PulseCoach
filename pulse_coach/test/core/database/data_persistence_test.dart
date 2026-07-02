@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
@@ -65,7 +66,7 @@ void main() {
         );
         await db1.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 0,
             completedAt: now,
             createdAt: now,
@@ -193,13 +194,14 @@ void main() {
         addTearDown(migratedDb.close);
 
         // Prove the migration chain actually ran to completion: Drift bumps the
-        // DB's user_version to the declared schemaVersion (9) only after the full
-        // v1→v9 onUpgrade succeeds. Asserting it guards against a silently-skipped
-        // or partially-applied migration that the data-only checks below could miss.
+        // DB's user_version to the declared schemaVersion (10) only after the
+        // full v1→v10 onUpgrade succeeds. Asserting it guards against a
+        // silently-skipped or partially-applied migration that the data-only
+        // checks below could miss.
         final versionRow = await migratedDb
             .customSelect('PRAGMA user_version')
             .getSingle();
-        expect(versionRow.data.values.single, 9);
+        expect(versionRow.data.values.single, 10);
 
         final sessions = await migratedDb.sessionsDao.getAllSessions();
         final banditState = await migratedDb.banditStateDao.getLatestState();
@@ -237,7 +239,7 @@ void main() {
         await expectLater(
           db.into(db.sessionLogs).insert(
             SessionLogsCompanion.insert(
-              dailyPlanId: 999999,
+              dailyPlanId: const Value(999999),
               sessionIndex: 0,
               completedAt: now,
               createdAt: now,
@@ -263,7 +265,7 @@ void main() {
         );
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 0,
             completedAt: now,
             createdAt: now,

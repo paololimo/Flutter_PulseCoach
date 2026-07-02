@@ -26,7 +26,25 @@ class ProgressLocalDataSource {
     final entries = <SessionHistoryEntry>[];
 
     for (final log in logs) {
-      final planRow = await _dailyPlansDao.getPlanById(log.dailyPlanId);
+      if (log.dailyPlanId == null) {
+        // Shared session (Story 21.0): no DailyPlan to join against.
+        // sessionType/durationMinutes are denormalized directly on the row.
+        final feedback = await _rpeFeedbackDao.getBySessionLogId(log.id);
+        entries.add(
+          SessionHistoryEntry(
+            sessionLogId: log.id,
+            completedAt: log.completedAt,
+            sessionType: log.sessionType ?? 'mobility',
+            durationMinutes: log.durationMinutes ?? 0,
+            abandoned: log.abandoned,
+            rpeValue: feedback?.rpeValue,
+            elapsedSeconds: log.elapsedSeconds,
+          ),
+        );
+        continue;
+      }
+
+      final planRow = await _dailyPlansDao.getPlanById(log.dailyPlanId!);
       if (planRow == null) {
         AppLogger.warning(
           'SessionLog ${log.id} references missing plan ${log.dailyPlanId} - skipping',

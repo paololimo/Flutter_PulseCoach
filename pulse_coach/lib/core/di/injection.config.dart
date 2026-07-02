@@ -632,6 +632,16 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i385.SharedSessionJoinCubit>(
       () => _i385.SharedSessionJoinCubit(gh<_i31.JoinSharedSessionUseCase>()),
     );
+    gh.factory<_i596.SharedSessionBloc>(
+      () => _i596.SharedSessionBloc(
+        gh<_i281.RealtimeGateway>(),
+        gh<_i102.DeleteSharedSessionUseCase>(),
+        gh<_i1039.RefreshJoinCodeUseCase>(),
+        gh<_i160.LocationService>(),
+        gh<_i79.AppDatabase>(),
+        gh<_i1023.GetSocialProfileUseCase>(),
+      ),
+    );
     gh.factory<_i705.DataExportCubit>(
       () => _i705.DataExportCubit(gh<_i748.DataExportService>()),
     );
@@ -652,15 +662,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i209.WeatherRemoteDataSource>(),
         gh<_i206.WeatherLocalDataSource>(),
         gh<_i160.LocationService>(),
-      ),
-    );
-    gh.factory<_i596.SharedSessionBloc>(
-      () => _i596.SharedSessionBloc(
-        gh<_i281.RealtimeGateway>(),
-        gh<_i102.DeleteSharedSessionUseCase>(),
-        gh<_i1039.RefreshJoinCodeUseCase>(),
-        gh<_i160.LocationService>(),
-        gh<_i79.AppDatabase>(),
       ),
     );
     gh.factory<_i1033.GetFriendsComparisonUseCase>(

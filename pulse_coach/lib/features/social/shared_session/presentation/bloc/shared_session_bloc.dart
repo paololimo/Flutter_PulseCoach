@@ -11,6 +11,7 @@ import 'package:pulse_coach/core/cloud/realtime_gateway.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/utils/location_service.dart';
+import 'package:pulse_coach/features/social/friends/domain/usecases/get_social_profile_use_case.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/broadcast_event.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/usecases/delete_shared_session_use_case.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/usecases/refresh_join_code_use_case.dart';
@@ -25,6 +26,7 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
   final RefreshJoinCodeUseCase _refreshUseCase;
   final LocationService _locationService;
   final AppDatabase _db;
+  final GetSocialProfileUseCase _getSocialProfileUseCase;
 
   // Set in _onStartTapped (host) or from broadcast echo; used when sessionEnded fires.
   String? _armKey;
@@ -51,6 +53,7 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
     this._refreshUseCase,
     this._locationService,
     this._db,
+    this._getSocialProfileUseCase, // NEW — resolves own handle when null (E20R-1)
   ) : super(const SharedSessionState.initial()) {
     on<SharedSessionJoined>(_onJoined);
     on<SessionStartTapped>(_onStartTapped);
@@ -95,6 +98,7 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
       ));
 
       unawaited(_resolveCoLocation(event));
+      unawaited(_resolveOwnHandle(event));
     } catch (e) {
       emit(SharedSessionState.error(
         failure: RealtimeFailure('channel_join_failed: $e'),
@@ -117,7 +121,33 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
     _myLon = coords.$2;
     await _gateway.trackPresence(
       userId: event.userId,
-      displayHandle: event.displayHandle,
+      // Use the shared field, not event.displayHandle (review P1): _onJoined
+      // runs this and _resolveOwnHandle concurrently. If _resolveOwnHandle has
+      // already resolved a handle that the nav arg lacked (the E20R-1 case),
+      // event.displayHandle is still null here — re-tracking with it would
+      // clobber the resolved handle back to null and revert the lobby row to
+      // the "unknown" fallback.
+      displayHandle: _myDisplayHandle,
+      isHost: _isHost,
+      lat: _myLat,
+      lon: _myLon,
+    );
+  }
+
+  // Resolves the current user's own @handle when the nav arg didn't carry one
+  // (SocialProfileBloc hadn't finished loading at create/join time — E20R-1).
+  // Runs off the lobby-entry path so entry is never blocked (AC4), mirroring
+  // _resolveCoLocation's non-blocking pattern.
+  Future<void> _resolveOwnHandle(SharedSessionJoined event) async {
+    if (event.displayHandle != null) return;
+    final result = await _getSocialProfileUseCase.call();
+    if (isClosed || !_joined) return;
+    final handle = result.fold((_) => null, (profile) => profile.displayHandle);
+    if (handle == null) return;
+    _myDisplayHandle = handle;
+    await _gateway.trackPresence(
+      userId: event.userId,
+      displayHandle: handle,
       isHost: _isHost,
       lat: _myLat,
       lon: _myLon,

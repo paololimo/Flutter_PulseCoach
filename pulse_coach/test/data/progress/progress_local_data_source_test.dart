@@ -250,5 +250,80 @@ void main() {
         expect(result, isEmpty);
       },
     );
+
+    test(
+      '21.0-PROGRESS-001: getSessionHistory() with a dailyPlanId: null log '
+      'row returns a SessionHistoryEntry using the row\'s own '
+      'sessionType/durationMinutes, no DailyPlansDao call',
+      () async {
+        final completedAt = DateTime.utc(2026, 7, 1, 8, 30);
+        final logId = await sessionLogsDao.insertLog(
+          SessionLogsCompanion(
+            dailyPlanId: const Value(null),
+            sessionIndex: const Value(0),
+            completedAt: Value(completedAt),
+            createdAt: Value(completedAt),
+            sessionType: const Value('mobility'),
+            armKey: const Value('mobility_low'),
+            durationMinutes: const Value(20),
+          ),
+        );
+        await rpeFeedbackDao.insertFeedback(
+          RpeFeedbackCompanion.insert(
+            sessionId: 0,
+            sessionLogId: Value(logId),
+            rpeValue: 6,
+            recordedAt: completedAt,
+          ),
+        );
+
+        final result = await dataSource.getSessionHistory();
+
+        expect(result, hasLength(1));
+        expect(result.single.sessionLogId, logId);
+        expect(result.single.sessionType, 'mobility');
+        expect(result.single.durationMinutes, 20);
+        expect(result.single.rpeValue, 6);
+      },
+    );
+
+    test(
+      '21.0-PROGRESS-002: getSessionHistory() mixed solo + shared rows — '
+      'both appear, ordered by completedAt desc as before',
+      () async {
+        final planId = await seedPlan(
+          date: '2026-07-01',
+          sessions: const [
+            PlannedSession(
+              sessionType: 'cardio',
+              intensity: 5,
+              durationMinutes: 15,
+              isIndoor: true,
+            ),
+          ],
+        );
+        final soloCompletedAt = DateTime.utc(2026, 7, 1, 8);
+        await seedLog(planId: planId, completedAt: soloCompletedAt);
+
+        final sharedCompletedAt = DateTime.utc(2026, 7, 1, 9);
+        await sessionLogsDao.insertLog(
+          SessionLogsCompanion(
+            dailyPlanId: const Value(null),
+            sessionIndex: const Value(0),
+            completedAt: Value(sharedCompletedAt),
+            createdAt: Value(sharedCompletedAt),
+            sessionType: const Value('breathing'),
+            armKey: const Value('breathing_low'),
+            durationMinutes: const Value(10),
+          ),
+        );
+
+        final result = await dataSource.getSessionHistory();
+
+        expect(result, hasLength(2));
+        expect(result[0].sessionType, 'breathing');
+        expect(result[1].sessionType, 'cardio');
+      },
+    );
   });
 }

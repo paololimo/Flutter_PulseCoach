@@ -58,7 +58,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -139,6 +139,67 @@ class AppDatabase extends _$AppDatabase {
             );
           }
         }
+      }
+      if (from < 10) {
+        // SQLite cannot ALTER a column's NOT NULL/FK constraint or add it to an
+        // existing UNIQUE index in place — the table must be rebuilt. Unlike the
+        // v5→v6 migration (which safely dropped session_logs because it only
+        // held ephemeral alpha data), this table now holds real user history, so
+        // existing rows MUST be preserved via rename + recreate + copy + drop.
+        //
+        // Guarded for partial-upgrade survival (same pattern as the v8/v9 blocks
+        // above): if the process is killed mid-migration, a naive unconditional
+        // rename would throw "table session_logs_v9 already exists" on retry.
+        // Also guarded against minimal test databases that omit session_logs
+        // entirely (same reasoning as the user_profile guard in the v9 block).
+        final sessionLogsExists = await customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'session_logs'",
+        ).get();
+        final backupExists = await customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'session_logs_v9'",
+        ).get();
+        await customStatement('PRAGMA foreign_keys = OFF');
+        if (sessionLogsExists.isNotEmpty && backupExists.isEmpty) {
+          await customStatement(
+            'ALTER TABLE session_logs RENAME TO session_logs_v9',
+          );
+        }
+        final newTableExists = await customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'session_logs'",
+        ).get();
+        if (newTableExists.isEmpty) {
+          await m.createTable(sessionLogs);
+        }
+        // Idempotent copy + guarded drop (review P2): onUpgrade is NOT wrapped
+        // in a transaction, so a process kill between createTable and this copy
+        // would — under the previous code, which skipped the copy whenever
+        // session_logs already existed and then dropped the backup
+        // unconditionally — leave an empty session_logs while deleting the
+        // backup, losing all history. Re-check the backup here (not the earlier
+        // snapshot) and copy with INSERT OR IGNORE so a resumed migration
+        // re-runs harmlessly (rows whose PK id is already present are skipped);
+        // only then drop the backup.
+        final backupStillExists = await customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'session_logs_v9'",
+        ).get();
+        if (backupStillExists.isNotEmpty) {
+          await customStatement('''
+            INSERT OR IGNORE INTO session_logs (
+              id, daily_plan_id, session_index, completed_at, created_at,
+              abandoned, elapsed_seconds, current_step_index
+            )
+            SELECT
+              id, daily_plan_id, session_index, completed_at, created_at,
+              abandoned, elapsed_seconds, current_step_index
+            FROM session_logs_v9
+          ''');
+        }
+        await customStatement('DROP TABLE IF EXISTS session_logs_v9');
+        await customStatement('PRAGMA foreign_keys = ON');
       }
     },
     beforeOpen: (details) async {

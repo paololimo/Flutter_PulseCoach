@@ -10,6 +10,10 @@ import 'package:mockito/mockito.dart' as _i1;
 import 'package:pulse_coach/core/cloud/realtime_gateway.dart' as _i3;
 import 'package:pulse_coach/core/error/failures.dart' as _i8;
 import 'package:pulse_coach/core/utils/location_service.dart' as _i10;
+import 'package:pulse_coach/features/social/friends/domain/entities/social_profile.dart'
+    as _i12;
+import 'package:pulse_coach/features/social/friends/domain/usecases/get_social_profile_use_case.dart'
+    as _i11;
 import 'package:pulse_coach/features/social/shared_session/domain/entities/broadcast_event.dart'
     as _i5;
 import 'package:pulse_coach/features/social/shared_session/domain/entities/presence_state.dart'
@@ -206,4 +210,35 @@ class MockLocationService extends _i1.Mock implements _i10.LocationService {
                 ),
           )
           as _i4.Future<_i2.Either<_i8.Failure, (double, double)>>);
+}
+
+/// A class which mocks [GetSocialProfileUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetSocialProfileUseCase extends _i1.Mock
+    implements _i11.GetSocialProfileUseCase {
+  @override
+  _i4.Future<_i2.Either<_i8.SocialFailure, _i12.SocialProfile>> call() =>
+      (super.noSuchMethod(
+            Invocation.method(#call, []),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i8.SocialFailure, _i12.SocialProfile>
+                >.value(
+                  _FakeEither_0<_i8.SocialFailure, _i12.SocialProfile>(
+                    this,
+                    Invocation.method(#call, []),
+                  ),
+                ),
+            returnValueForMissingStub:
+                _i4.Future<
+                  _i2.Either<_i8.SocialFailure, _i12.SocialProfile>
+                >.value(
+                  _FakeEither_0<_i8.SocialFailure, _i12.SocialProfile>(
+                    this,
+                    Invocation.method(#call, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i8.SocialFailure, _i12.SocialProfile>>);
 }

@@ -38,7 +38,7 @@ void main() {
 
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 1,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -70,7 +70,7 @@ void main() {
 
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planA,
+            dailyPlanId: Value(planA),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -78,7 +78,7 @@ void main() {
         );
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planB,
+            dailyPlanId: Value(planB),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -109,7 +109,7 @@ void main() {
 
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -117,7 +117,7 @@ void main() {
         );
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 2,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -140,7 +140,7 @@ void main() {
 
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planA,
+            dailyPlanId: Value(planA),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -148,7 +148,7 @@ void main() {
         );
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planA,
+            dailyPlanId: Value(planA),
             sessionIndex: 1,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -156,7 +156,7 @@ void main() {
         );
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planB,
+            dailyPlanId: Value(planB),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -186,7 +186,7 @@ void main() {
         final planId = await seedPlan('2026-05-16');
         final completedAt = DateTime.utc(2026, 5, 16, 9);
         final companion = SessionLogsCompanion.insert(
-          dailyPlanId: planId,
+          dailyPlanId: Value(planId),
           sessionIndex: 0,
           completedAt: completedAt,
           createdAt: completedAt,
@@ -209,7 +209,7 @@ void main() {
         final completedAt = DateTime.utc(2026, 5, 16, 9);
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -231,7 +231,7 @@ void main() {
 
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planA,
+            dailyPlanId: Value(planA),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -239,7 +239,7 @@ void main() {
         );
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planA,
+            dailyPlanId: Value(planA),
             sessionIndex: 1,
             completedAt: completedAt.add(const Duration(minutes: 5)),
             createdAt: completedAt,
@@ -247,7 +247,7 @@ void main() {
         );
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planB,
+            dailyPlanId: Value(planB),
             sessionIndex: 1,
             completedAt: completedAt.add(const Duration(minutes: 10)),
             createdAt: completedAt,
@@ -274,7 +274,7 @@ void main() {
 
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -311,7 +311,7 @@ void main() {
 
         await db.sessionLogsDao.insertLog(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -355,7 +355,7 @@ void main() {
 
       await db.sessionLogsDao.insertLog(
         SessionLogsCompanion.insert(
-          dailyPlanId: planId,
+          dailyPlanId: Value(planId),
           sessionIndex: 0,
           completedAt: completedAt,
           createdAt: completedAt,
@@ -394,7 +394,7 @@ void main() {
         // dropped this; insertOrReplace overwrites the abandoned row.
         await db.sessionLogsDao.upsertCompletion(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 0,
             completedAt: completedAt,
             createdAt: completedAt,
@@ -407,6 +407,35 @@ void main() {
         expect(logs.single.abandoned, isFalse);
         expect(logs.single.elapsedSeconds, isNull);
         expect(logs.single.currentStepIndex, isNull);
+      },
+    );
+
+    test(
+      '21.0-DAO-001: insertLog with dailyPlanId: null (shared session) round-'
+      'trips via getAllLogsOrderedByDate with id populated, dailyPlanId null',
+      () async {
+        final completedAt = DateTime.utc(2026, 7, 1, 9);
+
+        final id = await db.sessionLogsDao.insertLog(
+          SessionLogsCompanion(
+            dailyPlanId: const Value(null),
+            sessionIndex: const Value(0),
+            completedAt: Value(completedAt),
+            createdAt: Value(completedAt),
+            sessionType: const Value('cardio'),
+            armKey: const Value('cardio_high'),
+            durationMinutes: const Value(15),
+          ),
+        );
+
+        final all = await db.sessionLogsDao.getAllLogsOrderedByDate();
+        final log = all.singleWhere((l) => l.id == id);
+
+        expect(log.id, isNot(0));
+        expect(log.dailyPlanId, isNull);
+        expect(log.sessionType, 'cardio');
+        expect(log.armKey, 'cardio_high');
+        expect(log.durationMinutes, 15);
       },
     );
   });

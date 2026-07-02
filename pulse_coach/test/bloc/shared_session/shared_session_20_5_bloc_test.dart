@@ -12,6 +12,9 @@ import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/utils/location_service.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
+import 'package:pulse_coach/features/social/friends/domain/entities/social_profile.dart';
+import 'package:pulse_coach/features/social/friends/domain/entities/visibility_tier.dart';
+import 'package:pulse_coach/features/social/friends/domain/usecases/get_social_profile_use_case.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/broadcast_event.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/presence_state.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/usecases/delete_shared_session_use_case.dart';
@@ -25,6 +28,7 @@ import 'package:pulse_coach/features/social/shared_session/presentation/bloc/sha
   MockSpec<DeleteSharedSessionUseCase>(),
   MockSpec<RefreshJoinCodeUseCase>(),
   MockSpec<LocationService>(),
+  MockSpec<GetSocialProfileUseCase>(),
 ])
 import 'shared_session_20_5_bloc_test.mocks.dart';
 
@@ -51,6 +55,7 @@ void main() {
   late MockDeleteSharedSessionUseCase mockDelete;
   late MockRefreshJoinCodeUseCase mockRefresh;
   late MockLocationService mockLocation;
+  late MockGetSocialProfileUseCase mockGetSocialProfile;
   late StreamController<BroadcastEvent> broadcastController;
   late StreamController<PresenceState> presenceController;
   late AppDatabase db;
@@ -61,6 +66,7 @@ void main() {
         mockRefresh,
         mockLocation,
         db,
+        mockGetSocialProfile,
       );
 
   setUp(() async {
@@ -68,9 +74,17 @@ void main() {
     mockDelete = MockDeleteSharedSessionUseCase();
     mockRefresh = MockRefreshJoinCodeUseCase();
     mockLocation = MockLocationService();
+    mockGetSocialProfile = MockGetSocialProfileUseCase();
     broadcastController = StreamController<BroadcastEvent>.broadcast();
     presenceController = StreamController<PresenceState>.broadcast();
 
+    when(mockGetSocialProfile.call()).thenAnswer(
+      (_) async => const Right(SocialProfile(
+        userId: 'stub',
+        displayHandle: null,
+        visibilityTier: VisibilityTier.friendsOnly,
+      )),
+    );
     when(mockLocation.getCityLevelCoordinates())
         .thenAnswer((_) async => const Left(LocationFailure('disabled')));
     when(mockGateway.broadcastEvents)

@@ -212,8 +212,8 @@ void main() {
       expect(db.migration.onUpgrade, isNotNull);
     });
 
-    test('schemaVersion is 9', () {
-      expect(db.schemaVersion, 9);
+    test('schemaVersion is 10', () {
+      expect(db.schemaVersion, 10);
     });
   });
 
@@ -492,7 +492,7 @@ void main() {
 
       await migratedDb.sessionLogsDao.insertLog(
         SessionLogsCompanion.insert(
-          dailyPlanId: planId,
+          dailyPlanId: Value(planId),
           sessionIndex: 0,
           completedAt: now,
           createdAt: now,
@@ -547,7 +547,7 @@ void main() {
       final now = DateTime.utc(2026, 5, 16, 9);
       await migratedDb.sessionLogsDao.insertLog(
         SessionLogsCompanion.insert(
-          dailyPlanId: preExisting.id,
+          dailyPlanId: Value(preExisting.id),
           sessionIndex: 0,
           completedAt: now,
           createdAt: now,
@@ -680,6 +680,217 @@ void main() {
           contains('install_cohort'),
         );
         await freshDb.close();
+      },
+    );
+  });
+
+  group('AppDatabase - real migration v9 → v10 (Story 21.0)', () {
+    test(
+      '21.0-DB-001: v9 raw schema with an existing (dailyPlanId-anchored) '
+      'session_logs row migrates to v10 with old row preserved and new '
+      'columns null, dailyPlanId unchanged',
+      () async {
+        final v9Raw = sqlite3.openInMemory();
+        final now = DateTime.utc(2026, 7, 1, 9).millisecondsSinceEpoch;
+        v9Raw.execute('''
+          CREATE TABLE IF NOT EXISTS daily_plans (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            plan_date TEXT NOT NULL UNIQUE,
+            plan_json TEXT NOT NULL,
+            generated_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL,
+            is_completed INTEGER NOT NULL DEFAULT 0
+          )
+        ''');
+        v9Raw.execute('''
+          CREATE TABLE IF NOT EXISTS session_logs (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            daily_plan_id INTEGER NOT NULL REFERENCES daily_plans (id) ON DELETE CASCADE,
+            session_index INTEGER NOT NULL,
+            completed_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL,
+            abandoned INTEGER NOT NULL DEFAULT 0,
+            elapsed_seconds INTEGER,
+            current_step_index INTEGER,
+            UNIQUE (daily_plan_id, session_index)
+          )
+        ''');
+        v9Raw.execute(
+          'INSERT INTO daily_plans '
+          '(id, plan_date, plan_json, generated_at, created_at, is_completed) '
+          'VALUES (?, ?, ?, ?, ?, ?)',
+          [1, '2026-07-01', '{"sessions":[]}', now, now, 0],
+        );
+        v9Raw.execute(
+          'INSERT INTO session_logs '
+          '(daily_plan_id, session_index, completed_at, created_at, abandoned) '
+          'VALUES (?, ?, ?, ?, ?)',
+          [1, 0, now, now, 0],
+        );
+        v9Raw.execute('PRAGMA user_version = 9');
+
+        final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(v9Raw));
+
+        final logs = await migratedDb.sessionLogsDao.getLogsForPlan(1);
+        expect(logs, hasLength(1));
+        expect(logs.single.dailyPlanId, 1);
+        expect(logs.single.sessionType, isNull);
+        expect(logs.single.armKey, isNull);
+        expect(logs.single.durationMinutes, isNull);
+
+        await migratedDb.close();
+      },
+    );
+
+    test(
+      '21.0-DB-002: fresh v10 database → insertLog with dailyPlanId: null, '
+      'sessionIndex: 0 succeeds and round-trips sessionType/armKey/'
+      'durationMinutes',
+      () async {
+        final freshDb = AppDatabase.forTesting(NativeDatabase.memory());
+        final now = DateTime.utc(2026, 7, 1, 9);
+        final id = await freshDb.sessionLogsDao.insertLog(
+          SessionLogsCompanion(
+            dailyPlanId: const Value(null),
+            sessionIndex: const Value(0),
+            completedAt: Value(now),
+            createdAt: Value(now),
+            sessionType: const Value('mobility'),
+            armKey: const Value('mobility_low'),
+            durationMinutes: const Value(20),
+          ),
+        );
+        expect(id, isNot(0));
+
+        final all = await freshDb.sessionLogsDao.getAllLogsOrderedByDate();
+        final log = all.singleWhere((l) => l.id == id);
+        expect(log.dailyPlanId, isNull);
+        expect(log.sessionType, 'mobility');
+        expect(log.armKey, 'mobility_low');
+        expect(log.durationMinutes, 20);
+
+        await freshDb.close();
+      },
+    );
+
+    test(
+      '21.0-DB-003: two separate inserts with dailyPlanId: null, '
+      'sessionIndex: 0 both succeed (UNIQUE constraint does not treat '
+      'NULL == NULL)',
+      () async {
+        final freshDb = AppDatabase.forTesting(NativeDatabase.memory());
+        final now = DateTime.utc(2026, 7, 1, 9);
+        final id1 = await freshDb.sessionLogsDao.insertLog(
+          SessionLogsCompanion(
+            dailyPlanId: const Value(null),
+            sessionIndex: const Value(0),
+            completedAt: Value(now),
+            createdAt: Value(now),
+          ),
+        );
+        final id2 = await freshDb.sessionLogsDao.insertLog(
+          SessionLogsCompanion(
+            dailyPlanId: const Value(null),
+            sessionIndex: const Value(0),
+            completedAt: Value(now),
+            createdAt: Value(now),
+          ),
+        );
+
+        expect(id1, isNot(0));
+        expect(id2, isNot(0));
+        expect(id1, isNot(id2));
+
+        await freshDb.close();
+      },
+    );
+
+    test(
+      '21.0-DB-004: resumed migration after a partial-copy kill (empty v10 '
+      'session_logs + populated session_logs_v9 backup, user_version still 9) '
+      '→ backup rows are copied, not lost, then the backup is dropped '
+      '(review P2 regression)',
+      () async {
+        // Simulates the exact data-loss window: onUpgrade is not transactional,
+        // so a kill after createTable(session_logs) committed but before the
+        // INSERT..SELECT ran leaves an empty new table alongside the still-full
+        // renamed backup. The previous code skipped the copy (new table exists)
+        // and dropped the backup unconditionally → total history loss.
+        final raw = sqlite3.openInMemory();
+        final now = DateTime.utc(2026, 7, 1, 9).millisecondsSinceEpoch;
+        raw.execute('''
+          CREATE TABLE IF NOT EXISTS daily_plans (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            plan_date TEXT NOT NULL UNIQUE,
+            plan_json TEXT NOT NULL,
+            generated_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL,
+            is_completed INTEGER NOT NULL DEFAULT 0
+          )
+        ''');
+        // The already-created (but empty) new-shape v10 table.
+        raw.execute('''
+          CREATE TABLE IF NOT EXISTS session_logs (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            daily_plan_id INTEGER REFERENCES daily_plans (id) ON DELETE CASCADE,
+            session_index INTEGER NOT NULL,
+            completed_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL,
+            abandoned INTEGER NOT NULL DEFAULT 0,
+            elapsed_seconds INTEGER,
+            current_step_index INTEGER,
+            session_type TEXT,
+            arm_key TEXT,
+            duration_minutes INTEGER,
+            UNIQUE (daily_plan_id, session_index)
+          )
+        ''');
+        // The renamed backup still holding the real (uncopied) history.
+        raw.execute('''
+          CREATE TABLE IF NOT EXISTS session_logs_v9 (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            daily_plan_id INTEGER NOT NULL REFERENCES daily_plans (id) ON DELETE CASCADE,
+            session_index INTEGER NOT NULL,
+            completed_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL,
+            abandoned INTEGER NOT NULL DEFAULT 0,
+            elapsed_seconds INTEGER,
+            current_step_index INTEGER,
+            UNIQUE (daily_plan_id, session_index)
+          )
+        ''');
+        raw.execute(
+          'INSERT INTO daily_plans '
+          '(id, plan_date, plan_json, generated_at, created_at, is_completed) '
+          'VALUES (?, ?, ?, ?, ?, ?)',
+          [1, '2026-07-01', '{"sessions":[]}', now, now, 0],
+        );
+        raw.execute(
+          'INSERT INTO session_logs_v9 '
+          '(id, daily_plan_id, session_index, completed_at, created_at, abandoned) '
+          'VALUES (?, ?, ?, ?, ?, ?)',
+          [42, 1, 0, now, now, 0],
+        );
+        raw.execute('PRAGMA user_version = 9');
+
+        final migratedDb = AppDatabase.forTesting(NativeDatabase.opened(raw));
+
+        // The backup row survived into the live table.
+        final logs = await migratedDb.sessionLogsDao.getLogsForPlan(1);
+        expect(logs, hasLength(1));
+        expect(logs.single.id, 42);
+        expect(logs.single.dailyPlanId, 1);
+
+        // The backup table was dropped only after the copy.
+        final backup = await migratedDb
+            .customSelect(
+              "SELECT name FROM sqlite_master WHERE type = 'table' "
+              "AND name = 'session_logs_v9'",
+            )
+            .get();
+        expect(backup, isEmpty);
+
+        await migratedDb.close();
       },
     );
   });

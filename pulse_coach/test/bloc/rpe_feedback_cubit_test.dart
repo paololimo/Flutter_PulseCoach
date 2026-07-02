@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:drift/drift.dart' show Value;
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/database/daos/rpe_feedback_dao.dart';
+import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/features/session/domain/entities/rpe_submit_args.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_cubit.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_state.dart';
@@ -189,6 +191,80 @@ void main() {
         reason: 'cubit stays in error state until disposed',
       );
     });
+
+    test(
+      '21.0-RPE-001: shared session (planId: null, sessionLogId: null) '
+      'submit → SessionLog row inserted with dailyPlanId: null, '
+      'sessionType: mobility, armKey: mobility_low, durationMinutes: 20; '
+      'rpe_feedback row inserted with the returned (non-null) sessionLogId',
+      () async {
+        final db = AppDatabase.forTesting(NativeDatabase.memory());
+        final sessionLogsDao = SessionLogsDao(db);
+        final rpeFeedbackDao = RpeFeedbackDao(db);
+        const args = RpeSubmitArgs(
+          planId: null,
+          sessionIndex: 0,
+          abandoned: false,
+          armKey: 'mobility_low',
+          durationMinutes: 20,
+        );
+        final cubit = RpeFeedbackCubit(
+          dao: rpeFeedbackDao,
+          args: args,
+          sessionLogsDao: sessionLogsDao,
+          animationDuration: Duration.zero,
+        );
+
+        cubit.submit(6);
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        await cubit.close();
+
+        final logs = await sessionLogsDao.getAllLogsOrderedByDate();
+        expect(logs, hasLength(1));
+        final log = logs.single;
+        expect(log.dailyPlanId, isNull);
+        expect(log.sessionType, 'mobility');
+        expect(log.armKey, 'mobility_low');
+        expect(log.durationMinutes, 20);
+
+        final feedback = await rpeFeedbackDao.getBySessionLogId(log.id);
+        expect(feedback, isNotNull);
+        expect(feedback!.rpeValue, 6);
+        expect(feedback.sessionLogId, log.id);
+
+        await db.close();
+      },
+    );
+
+    test(
+      '21.0-RPE-002: shared session with sessionLogsDao == null (not '
+      'registered) resolves to null gracefully, RPE still written with '
+      'sessionId: 0 (existing degraded-mode behavior, unchanged)',
+      () async {
+        final dao = _FakeRpeFeedbackDao();
+        const args = RpeSubmitArgs(
+          planId: null,
+          sessionIndex: 0,
+          abandoned: false,
+          armKey: 'mobility_low',
+          durationMinutes: 20,
+        );
+        final cubit = RpeFeedbackCubit(
+          dao: dao,
+          args: args,
+          animationDuration: Duration.zero,
+        );
+
+        cubit.submit(6);
+        await Future<void>.delayed(Duration.zero);
+        await cubit.close();
+
+        expect(dao.inserted, hasLength(1));
+        final row = dao.inserted.single;
+        expect(row.sessionId.value, 0);
+        expect(row.sessionLogId, const Value<int?>(null));
+      },
+    );
   });
 }
 

@@ -3966,9 +3966,9 @@ class $SessionLogsTable extends SessionLogs
   late final GeneratedColumn<int> dailyPlanId = GeneratedColumn<int>(
     'daily_plan_id',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES daily_plans (id) ON DELETE CASCADE',
     ),
@@ -4043,6 +4043,37 @@ class $SessionLogsTable extends SessionLogs
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sessionTypeMeta = const VerificationMeta(
+    'sessionType',
+  );
+  @override
+  late final GeneratedColumn<String> sessionType = GeneratedColumn<String>(
+    'session_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _armKeyMeta = const VerificationMeta('armKey');
+  @override
+  late final GeneratedColumn<String> armKey = GeneratedColumn<String>(
+    'arm_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationMinutesMeta = const VerificationMeta(
+    'durationMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> durationMinutes = GeneratedColumn<int>(
+    'duration_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4053,6 +4084,9 @@ class $SessionLogsTable extends SessionLogs
     abandoned,
     elapsedSeconds,
     currentStepIndex,
+    sessionType,
+    armKey,
+    durationMinutes,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4077,8 +4111,6 @@ class $SessionLogsTable extends SessionLogs
           _dailyPlanIdMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_dailyPlanIdMeta);
     }
     if (data.containsKey('session_index')) {
       context.handle(
@@ -4134,6 +4166,30 @@ class $SessionLogsTable extends SessionLogs
         ),
       );
     }
+    if (data.containsKey('session_type')) {
+      context.handle(
+        _sessionTypeMeta,
+        sessionType.isAcceptableOrUnknown(
+          data['session_type']!,
+          _sessionTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('arm_key')) {
+      context.handle(
+        _armKeyMeta,
+        armKey.isAcceptableOrUnknown(data['arm_key']!, _armKeyMeta),
+      );
+    }
+    if (data.containsKey('duration_minutes')) {
+      context.handle(
+        _durationMinutesMeta,
+        durationMinutes.isAcceptableOrUnknown(
+          data['duration_minutes']!,
+          _durationMinutesMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -4154,7 +4210,7 @@ class $SessionLogsTable extends SessionLogs
       dailyPlanId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}daily_plan_id'],
-      )!,
+      ),
       sessionIndex: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}session_index'],
@@ -4179,6 +4235,18 @@ class $SessionLogsTable extends SessionLogs
         DriftSqlType.int,
         data['${effectivePrefix}current_step_index'],
       ),
+      sessionType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}session_type'],
+      ),
+      armKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}arm_key'],
+      ),
+      durationMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_minutes'],
+      ),
     );
   }
 
@@ -4190,28 +4258,36 @@ class $SessionLogsTable extends SessionLogs
 
 class SessionLog extends DataClass implements Insertable<SessionLog> {
   final int id;
-  final int dailyPlanId;
+  final int? dailyPlanId;
   final int sessionIndex;
   final DateTime completedAt;
   final DateTime createdAt;
   final bool abandoned;
   final int? elapsedSeconds;
   final int? currentStepIndex;
+  final String? sessionType;
+  final String? armKey;
+  final int? durationMinutes;
   const SessionLog({
     required this.id,
-    required this.dailyPlanId,
+    this.dailyPlanId,
     required this.sessionIndex,
     required this.completedAt,
     required this.createdAt,
     required this.abandoned,
     this.elapsedSeconds,
     this.currentStepIndex,
+    this.sessionType,
+    this.armKey,
+    this.durationMinutes,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['daily_plan_id'] = Variable<int>(dailyPlanId);
+    if (!nullToAbsent || dailyPlanId != null) {
+      map['daily_plan_id'] = Variable<int>(dailyPlanId);
+    }
     map['session_index'] = Variable<int>(sessionIndex);
     map['completed_at'] = Variable<DateTime>(completedAt);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -4222,13 +4298,24 @@ class SessionLog extends DataClass implements Insertable<SessionLog> {
     if (!nullToAbsent || currentStepIndex != null) {
       map['current_step_index'] = Variable<int>(currentStepIndex);
     }
+    if (!nullToAbsent || sessionType != null) {
+      map['session_type'] = Variable<String>(sessionType);
+    }
+    if (!nullToAbsent || armKey != null) {
+      map['arm_key'] = Variable<String>(armKey);
+    }
+    if (!nullToAbsent || durationMinutes != null) {
+      map['duration_minutes'] = Variable<int>(durationMinutes);
+    }
     return map;
   }
 
   SessionLogsCompanion toCompanion(bool nullToAbsent) {
     return SessionLogsCompanion(
       id: Value(id),
-      dailyPlanId: Value(dailyPlanId),
+      dailyPlanId: dailyPlanId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dailyPlanId),
       sessionIndex: Value(sessionIndex),
       completedAt: Value(completedAt),
       createdAt: Value(createdAt),
@@ -4239,6 +4326,15 @@ class SessionLog extends DataClass implements Insertable<SessionLog> {
       currentStepIndex: currentStepIndex == null && nullToAbsent
           ? const Value.absent()
           : Value(currentStepIndex),
+      sessionType: sessionType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sessionType),
+      armKey: armKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(armKey),
+      durationMinutes: durationMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationMinutes),
     );
   }
 
@@ -4249,13 +4345,16 @@ class SessionLog extends DataClass implements Insertable<SessionLog> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SessionLog(
       id: serializer.fromJson<int>(json['id']),
-      dailyPlanId: serializer.fromJson<int>(json['dailyPlanId']),
+      dailyPlanId: serializer.fromJson<int?>(json['dailyPlanId']),
       sessionIndex: serializer.fromJson<int>(json['sessionIndex']),
       completedAt: serializer.fromJson<DateTime>(json['completedAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       abandoned: serializer.fromJson<bool>(json['abandoned']),
       elapsedSeconds: serializer.fromJson<int?>(json['elapsedSeconds']),
       currentStepIndex: serializer.fromJson<int?>(json['currentStepIndex']),
+      sessionType: serializer.fromJson<String?>(json['sessionType']),
+      armKey: serializer.fromJson<String?>(json['armKey']),
+      durationMinutes: serializer.fromJson<int?>(json['durationMinutes']),
     );
   }
   @override
@@ -4263,28 +4362,34 @@ class SessionLog extends DataClass implements Insertable<SessionLog> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'dailyPlanId': serializer.toJson<int>(dailyPlanId),
+      'dailyPlanId': serializer.toJson<int?>(dailyPlanId),
       'sessionIndex': serializer.toJson<int>(sessionIndex),
       'completedAt': serializer.toJson<DateTime>(completedAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'abandoned': serializer.toJson<bool>(abandoned),
       'elapsedSeconds': serializer.toJson<int?>(elapsedSeconds),
       'currentStepIndex': serializer.toJson<int?>(currentStepIndex),
+      'sessionType': serializer.toJson<String?>(sessionType),
+      'armKey': serializer.toJson<String?>(armKey),
+      'durationMinutes': serializer.toJson<int?>(durationMinutes),
     };
   }
 
   SessionLog copyWith({
     int? id,
-    int? dailyPlanId,
+    Value<int?> dailyPlanId = const Value.absent(),
     int? sessionIndex,
     DateTime? completedAt,
     DateTime? createdAt,
     bool? abandoned,
     Value<int?> elapsedSeconds = const Value.absent(),
     Value<int?> currentStepIndex = const Value.absent(),
+    Value<String?> sessionType = const Value.absent(),
+    Value<String?> armKey = const Value.absent(),
+    Value<int?> durationMinutes = const Value.absent(),
   }) => SessionLog(
     id: id ?? this.id,
-    dailyPlanId: dailyPlanId ?? this.dailyPlanId,
+    dailyPlanId: dailyPlanId.present ? dailyPlanId.value : this.dailyPlanId,
     sessionIndex: sessionIndex ?? this.sessionIndex,
     completedAt: completedAt ?? this.completedAt,
     createdAt: createdAt ?? this.createdAt,
@@ -4295,6 +4400,11 @@ class SessionLog extends DataClass implements Insertable<SessionLog> {
     currentStepIndex: currentStepIndex.present
         ? currentStepIndex.value
         : this.currentStepIndex,
+    sessionType: sessionType.present ? sessionType.value : this.sessionType,
+    armKey: armKey.present ? armKey.value : this.armKey,
+    durationMinutes: durationMinutes.present
+        ? durationMinutes.value
+        : this.durationMinutes,
   );
   SessionLog copyWithCompanion(SessionLogsCompanion data) {
     return SessionLog(
@@ -4316,6 +4426,13 @@ class SessionLog extends DataClass implements Insertable<SessionLog> {
       currentStepIndex: data.currentStepIndex.present
           ? data.currentStepIndex.value
           : this.currentStepIndex,
+      sessionType: data.sessionType.present
+          ? data.sessionType.value
+          : this.sessionType,
+      armKey: data.armKey.present ? data.armKey.value : this.armKey,
+      durationMinutes: data.durationMinutes.present
+          ? data.durationMinutes.value
+          : this.durationMinutes,
     );
   }
 
@@ -4329,7 +4446,10 @@ class SessionLog extends DataClass implements Insertable<SessionLog> {
           ..write('createdAt: $createdAt, ')
           ..write('abandoned: $abandoned, ')
           ..write('elapsedSeconds: $elapsedSeconds, ')
-          ..write('currentStepIndex: $currentStepIndex')
+          ..write('currentStepIndex: $currentStepIndex, ')
+          ..write('sessionType: $sessionType, ')
+          ..write('armKey: $armKey, ')
+          ..write('durationMinutes: $durationMinutes')
           ..write(')'))
         .toString();
   }
@@ -4344,6 +4464,9 @@ class SessionLog extends DataClass implements Insertable<SessionLog> {
     abandoned,
     elapsedSeconds,
     currentStepIndex,
+    sessionType,
+    armKey,
+    durationMinutes,
   );
   @override
   bool operator ==(Object other) =>
@@ -4356,18 +4479,24 @@ class SessionLog extends DataClass implements Insertable<SessionLog> {
           other.createdAt == this.createdAt &&
           other.abandoned == this.abandoned &&
           other.elapsedSeconds == this.elapsedSeconds &&
-          other.currentStepIndex == this.currentStepIndex);
+          other.currentStepIndex == this.currentStepIndex &&
+          other.sessionType == this.sessionType &&
+          other.armKey == this.armKey &&
+          other.durationMinutes == this.durationMinutes);
 }
 
 class SessionLogsCompanion extends UpdateCompanion<SessionLog> {
   final Value<int> id;
-  final Value<int> dailyPlanId;
+  final Value<int?> dailyPlanId;
   final Value<int> sessionIndex;
   final Value<DateTime> completedAt;
   final Value<DateTime> createdAt;
   final Value<bool> abandoned;
   final Value<int?> elapsedSeconds;
   final Value<int?> currentStepIndex;
+  final Value<String?> sessionType;
+  final Value<String?> armKey;
+  final Value<int?> durationMinutes;
   const SessionLogsCompanion({
     this.id = const Value.absent(),
     this.dailyPlanId = const Value.absent(),
@@ -4377,18 +4506,23 @@ class SessionLogsCompanion extends UpdateCompanion<SessionLog> {
     this.abandoned = const Value.absent(),
     this.elapsedSeconds = const Value.absent(),
     this.currentStepIndex = const Value.absent(),
+    this.sessionType = const Value.absent(),
+    this.armKey = const Value.absent(),
+    this.durationMinutes = const Value.absent(),
   });
   SessionLogsCompanion.insert({
     this.id = const Value.absent(),
-    required int dailyPlanId,
+    this.dailyPlanId = const Value.absent(),
     required int sessionIndex,
     required DateTime completedAt,
     required DateTime createdAt,
     this.abandoned = const Value.absent(),
     this.elapsedSeconds = const Value.absent(),
     this.currentStepIndex = const Value.absent(),
-  }) : dailyPlanId = Value(dailyPlanId),
-       sessionIndex = Value(sessionIndex),
+    this.sessionType = const Value.absent(),
+    this.armKey = const Value.absent(),
+    this.durationMinutes = const Value.absent(),
+  }) : sessionIndex = Value(sessionIndex),
        completedAt = Value(completedAt),
        createdAt = Value(createdAt);
   static Insertable<SessionLog> custom({
@@ -4400,6 +4534,9 @@ class SessionLogsCompanion extends UpdateCompanion<SessionLog> {
     Expression<bool>? abandoned,
     Expression<int>? elapsedSeconds,
     Expression<int>? currentStepIndex,
+    Expression<String>? sessionType,
+    Expression<String>? armKey,
+    Expression<int>? durationMinutes,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4410,18 +4547,24 @@ class SessionLogsCompanion extends UpdateCompanion<SessionLog> {
       if (abandoned != null) 'abandoned': abandoned,
       if (elapsedSeconds != null) 'elapsed_seconds': elapsedSeconds,
       if (currentStepIndex != null) 'current_step_index': currentStepIndex,
+      if (sessionType != null) 'session_type': sessionType,
+      if (armKey != null) 'arm_key': armKey,
+      if (durationMinutes != null) 'duration_minutes': durationMinutes,
     });
   }
 
   SessionLogsCompanion copyWith({
     Value<int>? id,
-    Value<int>? dailyPlanId,
+    Value<int?>? dailyPlanId,
     Value<int>? sessionIndex,
     Value<DateTime>? completedAt,
     Value<DateTime>? createdAt,
     Value<bool>? abandoned,
     Value<int?>? elapsedSeconds,
     Value<int?>? currentStepIndex,
+    Value<String?>? sessionType,
+    Value<String?>? armKey,
+    Value<int?>? durationMinutes,
   }) {
     return SessionLogsCompanion(
       id: id ?? this.id,
@@ -4432,6 +4575,9 @@ class SessionLogsCompanion extends UpdateCompanion<SessionLog> {
       abandoned: abandoned ?? this.abandoned,
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
       currentStepIndex: currentStepIndex ?? this.currentStepIndex,
+      sessionType: sessionType ?? this.sessionType,
+      armKey: armKey ?? this.armKey,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
     );
   }
 
@@ -4462,6 +4608,15 @@ class SessionLogsCompanion extends UpdateCompanion<SessionLog> {
     if (currentStepIndex.present) {
       map['current_step_index'] = Variable<int>(currentStepIndex.value);
     }
+    if (sessionType.present) {
+      map['session_type'] = Variable<String>(sessionType.value);
+    }
+    if (armKey.present) {
+      map['arm_key'] = Variable<String>(armKey.value);
+    }
+    if (durationMinutes.present) {
+      map['duration_minutes'] = Variable<int>(durationMinutes.value);
+    }
     return map;
   }
 
@@ -4475,7 +4630,10 @@ class SessionLogsCompanion extends UpdateCompanion<SessionLog> {
           ..write('createdAt: $createdAt, ')
           ..write('abandoned: $abandoned, ')
           ..write('elapsedSeconds: $elapsedSeconds, ')
-          ..write('currentStepIndex: $currentStepIndex')
+          ..write('currentStepIndex: $currentStepIndex, ')
+          ..write('sessionType: $sessionType, ')
+          ..write('armKey: $armKey, ')
+          ..write('durationMinutes: $durationMinutes')
           ..write(')'))
         .toString();
   }
@@ -6691,24 +6849,30 @@ typedef $$SyncQueueTableProcessedTableManager =
 typedef $$SessionLogsTableCreateCompanionBuilder =
     SessionLogsCompanion Function({
       Value<int> id,
-      required int dailyPlanId,
+      Value<int?> dailyPlanId,
       required int sessionIndex,
       required DateTime completedAt,
       required DateTime createdAt,
       Value<bool> abandoned,
       Value<int?> elapsedSeconds,
       Value<int?> currentStepIndex,
+      Value<String?> sessionType,
+      Value<String?> armKey,
+      Value<int?> durationMinutes,
     });
 typedef $$SessionLogsTableUpdateCompanionBuilder =
     SessionLogsCompanion Function({
       Value<int> id,
-      Value<int> dailyPlanId,
+      Value<int?> dailyPlanId,
       Value<int> sessionIndex,
       Value<DateTime> completedAt,
       Value<DateTime> createdAt,
       Value<bool> abandoned,
       Value<int?> elapsedSeconds,
       Value<int?> currentStepIndex,
+      Value<String?> sessionType,
+      Value<String?> armKey,
+      Value<int?> durationMinutes,
     });
 
 final class $$SessionLogsTableReferences
@@ -6720,9 +6884,9 @@ final class $$SessionLogsTableReferences
         $_aliasNameGenerator(db.sessionLogs.dailyPlanId, db.dailyPlans.id),
       );
 
-  $$DailyPlansTableProcessedTableManager get dailyPlanId {
-    final $_column = $_itemColumn<int>('daily_plan_id')!;
-
+  $$DailyPlansTableProcessedTableManager? get dailyPlanId {
+    final $_column = $_itemColumn<int>('daily_plan_id');
+    if ($_column == null) return null;
     final manager = $$DailyPlansTableTableManager(
       $_db,
       $_db.dailyPlans,
@@ -6776,6 +6940,21 @@ class $$SessionLogsTableFilterComposer
 
   ColumnFilters<int> get currentStepIndex => $composableBuilder(
     column: $table.currentStepIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sessionType => $composableBuilder(
+    column: $table.sessionType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get armKey => $composableBuilder(
+    column: $table.armKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationMinutes => $composableBuilder(
+    column: $table.durationMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6847,6 +7026,21 @@ class $$SessionLogsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get sessionType => $composableBuilder(
+    column: $table.sessionType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get armKey => $composableBuilder(
+    column: $table.armKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationMinutes => $composableBuilder(
+    column: $table.durationMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$DailyPlansTableOrderingComposer get dailyPlanId {
     final $$DailyPlansTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -6909,6 +7103,19 @@ class $$SessionLogsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get sessionType => $composableBuilder(
+    column: $table.sessionType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get armKey =>
+      $composableBuilder(column: $table.armKey, builder: (column) => column);
+
+  GeneratedColumn<int> get durationMinutes => $composableBuilder(
+    column: $table.durationMinutes,
+    builder: (column) => column,
+  );
+
   $$DailyPlansTableAnnotationComposer get dailyPlanId {
     final $$DailyPlansTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -6962,13 +7169,16 @@ class $$SessionLogsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<int> dailyPlanId = const Value.absent(),
+                Value<int?> dailyPlanId = const Value.absent(),
                 Value<int> sessionIndex = const Value.absent(),
                 Value<DateTime> completedAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<bool> abandoned = const Value.absent(),
                 Value<int?> elapsedSeconds = const Value.absent(),
                 Value<int?> currentStepIndex = const Value.absent(),
+                Value<String?> sessionType = const Value.absent(),
+                Value<String?> armKey = const Value.absent(),
+                Value<int?> durationMinutes = const Value.absent(),
               }) => SessionLogsCompanion(
                 id: id,
                 dailyPlanId: dailyPlanId,
@@ -6978,17 +7188,23 @@ class $$SessionLogsTableTableManager
                 abandoned: abandoned,
                 elapsedSeconds: elapsedSeconds,
                 currentStepIndex: currentStepIndex,
+                sessionType: sessionType,
+                armKey: armKey,
+                durationMinutes: durationMinutes,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                required int dailyPlanId,
+                Value<int?> dailyPlanId = const Value.absent(),
                 required int sessionIndex,
                 required DateTime completedAt,
                 required DateTime createdAt,
                 Value<bool> abandoned = const Value.absent(),
                 Value<int?> elapsedSeconds = const Value.absent(),
                 Value<int?> currentStepIndex = const Value.absent(),
+                Value<String?> sessionType = const Value.absent(),
+                Value<String?> armKey = const Value.absent(),
+                Value<int?> durationMinutes = const Value.absent(),
               }) => SessionLogsCompanion.insert(
                 id: id,
                 dailyPlanId: dailyPlanId,
@@ -6998,6 +7214,9 @@ class $$SessionLogsTableTableManager
                 abandoned: abandoned,
                 elapsedSeconds: elapsedSeconds,
                 currentStepIndex: currentStepIndex,
+                sessionType: sessionType,
+                armKey: armKey,
+                durationMinutes: durationMinutes,
               ),
           withReferenceMapper: (p0) => p0
               .map(

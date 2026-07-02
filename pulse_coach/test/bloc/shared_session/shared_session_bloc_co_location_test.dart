@@ -11,6 +11,8 @@ import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/utils/location_service.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
+import 'package:pulse_coach/features/social/friends/domain/entities/social_profile.dart';
+import 'package:pulse_coach/features/social/friends/domain/entities/visibility_tier.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/broadcast_event.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/presence_state.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_bloc.dart';
@@ -78,6 +80,7 @@ void main() {
   late MockDeleteSharedSessionUseCase mockDelete;
   late MockRefreshJoinCodeUseCase mockRefresh;
   late MockLocationService mockLocation;
+  late MockGetSocialProfileUseCase mockGetSocialProfile;
   late StreamController<BroadcastEvent> broadcastController;
   late StreamController<PresenceState> presenceController;
   late AppDatabase db;
@@ -88,6 +91,14 @@ void main() {
     mockDelete = MockDeleteSharedSessionUseCase();
     mockRefresh = MockRefreshJoinCodeUseCase();
     mockLocation = MockLocationService();
+    mockGetSocialProfile = MockGetSocialProfileUseCase();
+    when(mockGetSocialProfile.call()).thenAnswer(
+      (_) async => const Right(SocialProfile(
+        userId: 'stub',
+        displayHandle: null,
+        visibilityTier: VisibilityTier.friendsOnly,
+      )),
+    );
     broadcastController = StreamController<BroadcastEvent>.broadcast();
     presenceController = StreamController<PresenceState>.broadcast();
 
@@ -111,8 +122,8 @@ void main() {
     await db.close();
   });
 
-  SharedSessionBloc buildBloc() =>
-      SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db);
+  SharedSessionBloc buildBloc() => SharedSessionBloc(
+      mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile);
 
   group('SharedSessionBloc co-location (20.3)', () {
     blocTest<SharedSessionBloc, SharedSessionState>(

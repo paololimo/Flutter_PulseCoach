@@ -167,7 +167,7 @@ Future<int> _insertSessionLog(
 }) {
   return db.sessionLogsDao.insertLog(
     SessionLogsCompanion.insert(
-      dailyPlanId: planId,
+      dailyPlanId: Value(planId),
       sessionIndex: sessionIndex,
       completedAt: completedAt,
       createdAt: completedAt,

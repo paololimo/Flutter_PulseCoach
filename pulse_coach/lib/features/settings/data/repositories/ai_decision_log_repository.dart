@@ -47,7 +47,14 @@ class AiDecisionLogRepository {
     final sessionLog = await _sessionLogsDao.getLogById(sessionLogId);
     if (sessionLog == null) return 'unknown';
 
-    final planRow = await _dailyPlansDao.getPlanById(sessionLog.dailyPlanId);
+    final dailyPlanId = sessionLog.dailyPlanId;
+    if (dailyPlanId == null) {
+      // Shared session (Story 21.0): no DailyPlan to join against — the
+      // armKey is denormalized directly on the row.
+      return sessionLog.armKey ?? 'unknown';
+    }
+
+    final planRow = await _dailyPlansDao.getPlanById(dailyPlanId);
     if (planRow == null) return 'unknown';
 
     try {

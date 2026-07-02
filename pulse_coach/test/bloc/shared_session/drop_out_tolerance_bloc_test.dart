@@ -9,6 +9,8 @@ import 'package:drift/native.dart';
 import 'package:pulse_coach/core/database/app_database.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
+import 'package:pulse_coach/features/social/friends/domain/entities/social_profile.dart';
+import 'package:pulse_coach/features/social/friends/domain/entities/visibility_tier.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/broadcast_event.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/presence_state.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_bloc.dart';
@@ -74,6 +76,7 @@ void main() {
   late MockDeleteSharedSessionUseCase mockDelete;
   late MockRefreshJoinCodeUseCase mockRefresh;
   late MockLocationService mockLocation;
+  late MockGetSocialProfileUseCase mockGetSocialProfile;
   late StreamController<BroadcastEvent> broadcastController;
   late StreamController<PresenceState> presenceController;
   late AppDatabase db;
@@ -84,6 +87,14 @@ void main() {
     mockDelete = MockDeleteSharedSessionUseCase();
     mockRefresh = MockRefreshJoinCodeUseCase();
     mockLocation = MockLocationService();
+    mockGetSocialProfile = MockGetSocialProfileUseCase();
+    when(mockGetSocialProfile.call()).thenAnswer(
+      (_) async => const Right(SocialProfile(
+        userId: 'stub',
+        displayHandle: null,
+        visibilityTier: VisibilityTier.friendsOnly,
+      )),
+    );
     when(mockLocation.getCityLevelCoordinates())
         .thenAnswer((_) async => const Left(LocationFailure('disabled')));
     broadcastController = StreamController<BroadcastEvent>.broadcast();
@@ -122,7 +133,7 @@ void main() {
     // AC1: follower drops → droppedHandle set in inSession
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-001: follower drop-out → droppedHandle set in inSession state (AC1)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         await _bringToInSession(bloc, broadcastController, presenceController);
         // Bob drops out
@@ -162,7 +173,7 @@ void main() {
     // bob (follower) still processes the next step_advanced broadcast.
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-002: droppedHandle clears on next step_advanced (AC1)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         bloc.add(_followerJoin(userId: 'bob-uid', handle: 'bob'));
         await Future<void>.delayed(Duration.zero);
@@ -224,7 +235,7 @@ void main() {
     // AC3: host drops → follower with alphabetically-first userId becomes new host
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-003: host drop → new host elected (alphabetically first userId) (AC3)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         // bob-uid is the follower; alice-uid (host) and carol-uid also present
         bloc.add(_followerJoin(userId: 'bob-uid', handle: 'bob'));
@@ -250,7 +261,7 @@ void main() {
     // AC3: host drops → non-first follower does NOT become host
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-004: host drops → carol (alphabetically second) does NOT become host (AC3)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         bloc.add(_followerJoin(userId: 'carol-uid', handle: 'carol'));
         await Future<void>.delayed(Duration.zero);
@@ -274,7 +285,7 @@ void main() {
     // AC3: HostStepAdvanced now works after leadership transfer
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-005: promoted-host can call sendBroadcast after transfer (AC3)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         bloc.add(_followerJoin(userId: 'bob-uid', handle: 'bob'));
         await Future<void>.delayed(Duration.zero);
@@ -301,7 +312,7 @@ void main() {
     // AC2: follower reconnect — missed session_started → snaps via step_advanced
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-006: follower missed session_started → StepAdvanced while in lobby snaps to inSession (AC2)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         bloc.add(_followerJoin());
         await Future<void>.delayed(Duration.zero);
@@ -329,7 +340,7 @@ void main() {
     // AC2: host does NOT snap to inSession via step_advanced from lobby
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-007: host in lobby does NOT transition via StepAdvanced (AC2 guard)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         bloc.add(_hostJoin());
         await Future<void>.delayed(Duration.zero);
@@ -349,7 +360,7 @@ void main() {
     // AC4: SessionEnded broadcast → sessionEnded() state + leaveChannel
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-008: BroadcastEvent.sessionEnded → sessionEnded() state (AC4)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         await _bringToInSession(bloc, broadcastController, presenceController);
         broadcastController.add(const BroadcastEvent.sessionEnded());
@@ -364,7 +375,7 @@ void main() {
     // AC4: SessionEndRequested by host → sends session_ended broadcast
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-009: SessionEndRequested by host → sendBroadcast session_ended (AC4)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         await _bringToInSession(bloc, broadcastController, presenceController);
         bloc.add(const SessionEndRequested());
@@ -381,7 +392,7 @@ void main() {
     // AC4: SessionEndRequested by non-host → no-op
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-010: SessionEndRequested by follower → no sendBroadcast (AC4)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         await _bringToInSession(
           bloc,
@@ -403,7 +414,7 @@ void main() {
     // AC1: trackPresence called with isHost flag
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-011: trackPresence called with isHost=true for host (AC1/AC3)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         bloc.add(_hostJoin());
         await Future<void>.delayed(Duration.zero);
@@ -422,7 +433,7 @@ void main() {
     // shows no host flagged, and re-tracks presence so peers learn the new host.
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-013: reconnect follower with no host in presence elects + re-tracks (AC3 hardening)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         bloc.add(_followerJoin(userId: 'bob-uid', handle: 'bob'));
         await Future<void>.delayed(Duration.zero);
@@ -449,7 +460,7 @@ void main() {
     // regression: presence update in lobby still works
     blocTest<SharedSessionBloc, SharedSessionState>(
       '19.3-BLOC-012: presence update in lobby still updates lobby.participants (regression)',
-      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db),
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
       act: (bloc) async {
         bloc.add(_hostJoin());
         await Future<void>.delayed(Duration.zero);

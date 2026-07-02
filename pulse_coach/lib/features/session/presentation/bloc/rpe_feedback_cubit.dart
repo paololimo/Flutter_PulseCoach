@@ -66,11 +66,41 @@ class RpeFeedbackCubit extends Cubit<RpeFeedbackState> {
   Future<int?> _resolveSessionLogId() async {
     final explicit = _args?.sessionLogId;
     if (explicit != null) return explicit;
-    final planId = _args?.planId;
     final sessionLogsDao = _sessionLogsDao;
-    if (planId == null || sessionLogsDao == null) return null;
-    final log = await sessionLogsDao.getLogFor(planId, _args!.sessionIndex);
-    return log?.id;
+    if (sessionLogsDao == null) return null;
+
+    final planId = _args?.planId;
+    if (planId != null) {
+      final log = await sessionLogsDao.getLogFor(planId, _args!.sessionIndex);
+      return log?.id;
+    }
+
+    // Shared session (no DailyPlan, Story 21.0 — closes E20R-2 local half).
+    // Story 20.4/20.5 deliberately never wrote a SessionLog here; create a
+    // standalone row now, anchored to nothing but carrying the denormalized
+    // sessionType/armKey/durationMinutes so Progress history (Task 2) can
+    // render it without a DailyPlans join.
+    final args = _args;
+    if (args == null || args.armKey.isEmpty) return null;
+    final now = _now();
+    final id = await sessionLogsDao.insertLog(
+      SessionLogsCompanion(
+        dailyPlanId: const Value(null),
+        sessionIndex: const Value(0),
+        completedAt: Value(now),
+        createdAt: Value(now),
+        abandoned: Value(args.abandoned),
+        sessionType: Value(args.armKey.split('_').first),
+        armKey: Value(args.armKey),
+        durationMinutes: Value(args.durationMinutes),
+      ),
+    );
+    // insertLog uses InsertMode.insertOrIgnore, which returns 0 on a
+    // suppressed UNIQUE-constraint conflict. As established in Task 1.1,
+    // NULL dailyPlanId rows can never collide under UNIQUE(dailyPlanId,
+    // sessionIndex) — so `id == 0` should not happen here in practice. Guard
+    // anyway: a real conflict would otherwise silently anchor RPE to row 0.
+    return id == 0 ? null : id;
   }
 
   @override

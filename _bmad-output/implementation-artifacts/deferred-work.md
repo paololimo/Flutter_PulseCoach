@@ -553,3 +553,7 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 - `inSession.steps` field is now vestigial — the page always regenerates steps via `SessionStepGenerator` and never reads `s.steps`. Removal touches `_SharedInSessionView` ctor (out of scope per Task 3.1 note). [shared_session_state.dart]
 - `_armKey` is never reset on `SessionEnded`; on a reused bloc instance the follower `??=` path would keep the previous session's arm key. Currently safe — bloc is `@injectable` factory-scoped per route. [shared_session_bloc.dart]
 - Only the host's profile (with hardcoded `fitnessLevel: 'medium'`, `movementExclusions: {}`, `availableTimeMinutes: 20`) feeds `GroupConstraintResolver`; followers' safety caps/time constraints are ignored. Documented MVP limitation (dev notes "MVP Limitation: Only Host's Profile"). [shared_session_bloc.dart `_onStartTapped`]
+
+## Deferred from: code review of story-21.0 (2026-07-02)
+
+- **Abandoned shared-session rows report 0 weekly minutes** — `RpeFeedbackCubit._resolveSessionLogId` inserts the shared-session `SessionLog` without `elapsedSeconds`, so `ProgressLocalDataSource.getProgressStats` computes `(elapsedSeconds ?? 0) ~/ 60 == 0` for any abandoned entry. Not reachable today because shared sessions hardcode `abandoned: false`; becomes a live data-quality bug when host-abandon fidelity (a new `session_ended` broadcast field) is wired. Revisit together with that out-of-scope protocol change. [rpe_feedback_cubit.dart, progress_local_data_source.dart:143]

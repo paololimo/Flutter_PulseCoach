@@ -205,7 +205,7 @@ void main() {
         // Log pointing to the old plan
         await db.into(db.sessionLogs).insert(
           SessionLogsCompanion.insert(
-            dailyPlanId: oldPlanId,
+            dailyPlanId: Value(oldPlanId),
             sessionIndex: 0,
             completedAt: old,
             createdAt: old,
@@ -307,7 +307,7 @@ void main() {
         // ── seed SessionLogs (FK → DailyPlans) ────────────────────────────
         final logId = await db.into(db.sessionLogs).insert(
           SessionLogsCompanion.insert(
-            dailyPlanId: planId,
+            dailyPlanId: Value(planId),
             sessionIndex: 0,
             completedAt: now,
             createdAt: now,

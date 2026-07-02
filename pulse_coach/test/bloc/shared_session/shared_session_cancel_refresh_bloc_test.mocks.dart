@@ -8,6 +8,10 @@ import 'dart:async' as _i4;
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:pulse_coach/core/error/failures.dart' as _i5;
+import 'package:pulse_coach/features/social/friends/domain/entities/social_profile.dart'
+    as _i8;
+import 'package:pulse_coach/features/social/friends/domain/usecases/get_social_profile_use_case.dart'
+    as _i7;
 import 'package:pulse_coach/features/social/shared_session/domain/usecases/delete_shared_session_use_case.dart'
     as _i3;
 import 'package:pulse_coach/features/social/shared_session/domain/usecases/refresh_join_code_use_case.dart'
@@ -81,4 +85,30 @@ class MockRefreshJoinCodeUseCase extends _i1.Mock
             ),
           )
           as _i4.Future<_i2.Either<_i5.Failure, String>>);
+}
+
+/// A class which mocks [GetSocialProfileUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetSocialProfileUseCase extends _i1.Mock
+    implements _i7.GetSocialProfileUseCase {
+  MockGetSocialProfileUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.SocialFailure, _i8.SocialProfile>> call() =>
+      (super.noSuchMethod(
+            Invocation.method(#call, []),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.SocialFailure, _i8.SocialProfile>
+                >.value(
+                  _FakeEither_0<_i5.SocialFailure, _i8.SocialProfile>(
+                    this,
+                    Invocation.method(#call, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.SocialFailure, _i8.SocialProfile>>);
 }
