@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of story-21.1 (2026-07-02)
+
+- EntitlementGate defaults to `accountFree` until first `refresh()` → a genuine Pro user's award is silently dropped (no queue entry, no retry) if RPE is submitted before `refresh()` populates the cache on a cold/offline start. **[Defer — pre-existing gate-wide behavior, consistent with every other gating call site; not introduced by this change.]** [core/cloud/entitlement_gate.dart:16,40 · award_session_points_use_case.dart:19]
+- Solo `sessionLogId` can resolve null via cross-cubit write ordering (`InSessionCubit` writes the `SessionLog` on a separate async path) → award skipped with no retry. **[Defer — best-effort-by-design; spec's degraded-mode null handling is intentional.]** [rpe_feedback_cubit.dart:70-107 · rpe_page.dart:109-119]
+- Permanently-failing RPC (expired auth / RLS denial) is retried 10× then dead-lettered → award lost silently, no dead-letter table or user signal. **[Defer — inherent `SyncManager` behavior reused verbatim per ARCH26; out of this story's scope.]** [core/sync/sync_manager.dart:154-166]
+- `ScoringConstants.intensityWeightFor` maps any unknown armKey suffix to the max weight 2.0 (wrong-direction default for an anti-gaming score). **[Defer — currently unreachable (all producers emit low/medium/high) and spec-sanctioned `_high` default.]** [domain/scoring_constants.dart:19-23]
+
 ## Deferred from: code review of story-20.4 (2026-06-26)
 
 - Host abandon is recorded identically to a completed session (`abandoned: false`) — same `sessionEnded` → RPE path serves both genuine completion and host abandon. **[Defer — spec AC8 prescribes `abandoned: false`; `planId: null` disables persistence/bandit so the flag has no consumer until Story 20.5.]** [shared_session_lobby_page.dart:54-68]

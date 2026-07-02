@@ -265,6 +265,58 @@ void main() {
         expect(row.sessionLogId, const Value<int?>(null));
       },
     );
+
+    test(
+      '21.1-RPE-001: successful submit → RpeFeedbackSubmitted.sessionLogId '
+      'equals the resolved log id (non-null, solo path)',
+      () async {
+        final cubit = RpeFeedbackCubit(
+          dao: _FakeRpeFeedbackDao(),
+          args: _args,
+          animationDuration: Duration.zero,
+        );
+        final emitted = <RpeFeedbackState>[];
+        final subscription = cubit.stream.listen(emitted.add);
+
+        cubit.submit(7);
+        await Future<void>.delayed(Duration.zero);
+        await subscription.cancel();
+        await cubit.close();
+
+        final submitted = emitted.whereType<RpeFeedbackSubmitted>().single;
+        expect(submitted.sessionLogId, 9);
+      },
+    );
+
+    test(
+      '21.1-RPE-002: successful submit, sessionLogsDao null (degraded mode) '
+      '→ RpeFeedbackSubmitted.sessionLogId is null',
+      () async {
+        final dao = _FakeRpeFeedbackDao();
+        const args = RpeSubmitArgs(
+          planId: null,
+          sessionIndex: 0,
+          abandoned: false,
+          armKey: 'mobility_low',
+          durationMinutes: 20,
+        );
+        final cubit = RpeFeedbackCubit(
+          dao: dao,
+          args: args,
+          animationDuration: Duration.zero,
+        );
+        final emitted = <RpeFeedbackState>[];
+        final subscription = cubit.stream.listen(emitted.add);
+
+        cubit.submit(6);
+        await Future<void>.delayed(Duration.zero);
+        await subscription.cancel();
+        await cubit.close();
+
+        final submitted = emitted.whereType<RpeFeedbackSubmitted>().single;
+        expect(submitted.sessionLogId, isNull);
+      },
+    );
   });
 }
 

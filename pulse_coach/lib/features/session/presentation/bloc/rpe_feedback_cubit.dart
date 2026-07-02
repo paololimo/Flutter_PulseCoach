@@ -55,7 +55,11 @@ class RpeFeedbackCubit extends Cubit<RpeFeedbackState> {
           recordedAt: _now(),
         ),
       );
-      if (!isClosed) emit(RpeFeedbackSubmitted(rpeValue: rpe));
+      if (!isClosed) {
+        emit(
+          RpeFeedbackSubmitted(rpeValue: rpe, sessionLogId: resolvedLogId),
+        );
+      }
     } catch (e) {
       // D3 (review): keep `_submitted = true` after error — AC5(a) makes
       // submit() single-shot. The user must dismiss the page to retry.

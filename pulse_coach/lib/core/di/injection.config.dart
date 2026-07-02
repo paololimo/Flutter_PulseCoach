@@ -243,6 +243,14 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/social_pro
     as _i477;
 import 'package:pulse_coach/features/social/friends/presentation/bloc/visibility_cubit.dart'
     as _i613;
+import 'package:pulse_coach/features/social/leaderboard/data/datasources/leaderboard_remote_data_source.dart'
+    as _i385;
+import 'package:pulse_coach/features/social/leaderboard/data/repositories/leaderboard_repository_impl.dart'
+    as _i766;
+import 'package:pulse_coach/features/social/leaderboard/domain/repositories/leaderboard_repository.dart'
+    as _i790;
+import 'package:pulse_coach/features/social/leaderboard/domain/usecases/award_session_points_use_case.dart'
+    as _i996;
 import 'package:pulse_coach/features/social/shared_session/data/datasources/shared_session_remote_data_source.dart'
     as _i473;
 import 'package:pulse_coach/features/social/shared_session/data/repositories/shared_session_repository_impl.dart'
@@ -431,6 +439,10 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i42.SupabaseClientProvider>(),
       ),
     );
+    gh.factory<_i385.LeaderboardRemoteDataSource>(
+      () =>
+          _i385.LeaderboardRemoteDataSource(gh<_i42.SupabaseClientProvider>()),
+    );
     gh.factory<_i473.SharedSessionRemoteDataSource>(
       () => _i473.SharedSessionRemoteDataSource(
         gh<_i42.SupabaseClientProvider>(),
@@ -452,6 +464,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i160.LocationService>(
       () => _i160.LocationService(gh<_i973.GeolocatorWrapper>()),
+    );
+    gh.factory<_i790.LeaderboardRepository>(
+      () => _i766.LeaderboardRepositoryImpl(
+        gh<_i780.SyncManager>(),
+        gh<_i460.SharedPreferences>(),
+      ),
     );
     gh.factory<_i944.AcceptDisclaimer>(
       () => _i944.AcceptDisclaimer(gh<_i338.OnboardingRepository>()),
@@ -515,6 +533,12 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i396.ExerciseRepositoryImpl(
         gh<_i635.ExerciseRemoteDataSource>(),
         gh<_i91.ExerciseLocalDataSource>(),
+      ),
+    );
+    gh.factory<_i996.AwardSessionPointsUseCase>(
+      () => _i996.AwardSessionPointsUseCase(
+        gh<_i790.LeaderboardRepository>(),
+        gh<_i499.EntitlementGate>(),
       ),
     );
     gh.factory<_i472.OnboardingCubit>(

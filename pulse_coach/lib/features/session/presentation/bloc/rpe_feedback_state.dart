@@ -16,8 +16,9 @@ class RpeFeedbackAnimating extends RpeFeedbackState {
 
 class RpeFeedbackSubmitted extends RpeFeedbackState {
   final int rpeValue;
+  final int? sessionLogId;
 
-  const RpeFeedbackSubmitted({required this.rpeValue});
+  const RpeFeedbackSubmitted({required this.rpeValue, this.sessionLogId});
 }
 
 class RpeFeedbackError extends RpeFeedbackState {

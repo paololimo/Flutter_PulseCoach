@@ -16,6 +16,7 @@ import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_cubi
 import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_state.dart';
 import 'package:pulse_coach/features/session/presentation/utils/wear_bridge_service.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/rpe_input_widget.dart';
+import 'package:pulse_coach/features/social/leaderboard/domain/usecases/award_session_points_use_case.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class RpePage extends StatefulWidget {
@@ -105,6 +106,18 @@ class _RpePageState extends State<RpePage> {
                     final submitted = state as RpeFeedbackSubmitted;
                     _adaptationCubit?.triggerUpdate(submitted.rpeValue);
                     final args = widget.args;
+                    if (args != null && args.planId != null && !args.abandoned) {
+                      final logId = submitted.sessionLogId;
+                      if (logId != null) {
+                        unawaited(
+                          getIt<AwardSessionPointsUseCase>().call(
+                            sessionLogId: logId,
+                            armKey: args.armKey,
+                            durationMinutes: args.durationMinutes,
+                          ),
+                        );
+                      }
+                    }
                     final summaryArgs = args == null
                         ? null
                         : MiniSummaryArgs(

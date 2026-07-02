@@ -6,6 +6,7 @@ import 'package:pulse_coach/app.dart';
 import 'package:pulse_coach/core/cloud/secure_local_storage.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/sync/sync_manager.dart';
+import 'package:pulse_coach/features/social/leaderboard/data/datasources/leaderboard_remote_data_source.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -47,6 +48,10 @@ Future<void> main() async {
 
   try {
     await configureDependencies();
+    getIt<SyncManager>().registerHandler(
+      LeaderboardRemoteDataSource.awardEventType,
+      getIt<LeaderboardRemoteDataSource>().replayAward,
+    );
     unawaited(getIt<SyncManager>().start());
   } catch (e, st) {
     FlutterError.reportError(FlutterErrorDetails(exception: e, stack: st));
