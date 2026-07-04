@@ -581,3 +581,8 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 - Edge Function empty/non-JSON body → uncaught throw → opaque 500 instead of 400 (`index.ts:37`). Cosmetic; internal function.
 - Shared flow completing with `sessionId == null` (session ended before join) → session silently unscored (`rpe_page.dart:81-93`). Low-probability, no regression.
 - Drop-out / never-submitting participant blocks the entire group's bonus indefinitely (`score_shared_session/index.ts`). Deferred to follow-up Story 21.4 (see epics.md): needs a pg_cron server-side sweep with a grace window that scores active-only participants; not reachable from index.ts alone under the client fire-and-forget trigger.
+
+## Deferred from: code review of story-21.4 (2026-07-04)
+
+- No `LIMIT`/batching on the sweep's candidate query (`0014_shared_session_scoring_sweep.sql:33-37`). A large first-run backlog processes in one long transaction holding per-owner advisory locks + `scored` row locks for the whole batch; a run exceeding the 5-min interval lets pg_cron start an overlapping run that contends on those locks. Spec §"Known, Accepted Limitations" explicitly accepts fixed-interval/no-batching at v2.5 friends-only volumes — revisit if shared-session volume grows.
+- `CREATE EXTENSION pg_cron` + `cron.schedule` deployment caveat (`0014_shared_session_scoring_sweep.sql:11,94-98`). pg_cron must be enabled for the target Supabase project, and cron jobs run in pg_cron's home database; verify on apply that `sweep_unscored_shared_sessions()` and the `shared_sessions`/`session_participants` tables are resolvable from the cron worker's execution context. Ops/deployment verification, not a code fix.

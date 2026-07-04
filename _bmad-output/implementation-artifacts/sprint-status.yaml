@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-07-04 # code-review: Story 21-3 -> done; Story 21-4 added (backlog)
+last_updated: 2026-07-04 # code-review: Story 21-4 -> done
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -300,5 +300,5 @@ development_status:
   21-1-points-system-and-solo-session-scoring: done
   21-2-friends-only-leaderboard-and-rank-freeze: done
   21-3-shared-session-point-bonus-and-counter-metric-monitoring: done
-  21-4-shared-session-scoring-sweep-for-drop-out-participants: backlog
+  21-4-shared-session-scoring-sweep-for-drop-out-participants: done
   epic-21-retrospective: optional
