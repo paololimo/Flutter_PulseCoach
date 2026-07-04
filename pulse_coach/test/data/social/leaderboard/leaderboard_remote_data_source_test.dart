@@ -90,4 +90,25 @@ void main() {
       },
     );
   });
+
+  group('loadLeaderboard', () {
+    test(
+      '[21.2-DS-001] loadLeaderboard() → fetchLeaderboard invoked, returns its raw list verbatim',
+      () async {
+        final rawRows = [
+          {
+            'user_id': 'u1',
+            'display_handle': 'alice',
+            'total_points': 30,
+            'is_own': true,
+          },
+        ];
+        sut.fetchLeaderboard = () async => rawRows;
+
+        final result = await sut.loadLeaderboard();
+
+        expect(result, rawRows);
+      },
+    );
+  });
 }

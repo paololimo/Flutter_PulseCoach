@@ -7,4 +7,14 @@ abstract class LeaderboardRepository {
     required int basePoints,
     required DateTime awardedOnUtc,
   });
+
+  Future<
+    Either<
+      Failure,
+      List<
+        ({String userId, String displayHandle, int totalPoints, bool isOwn})
+      >
+    >
+  >
+  getFriendsLeaderboard();
 }

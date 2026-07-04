@@ -22,6 +22,9 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/social_pro
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_event.dart';
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_state.dart';
 import 'package:pulse_coach/features/social/friends/presentation/pages/social_page.dart';
+import 'package:pulse_coach/features/social/leaderboard/presentation/bloc/leaderboard_bloc.dart';
+import 'package:pulse_coach/features/social/leaderboard/presentation/bloc/leaderboard_event.dart';
+import 'package:pulse_coach/features/social/leaderboard/presentation/bloc/leaderboard_state.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_creation_cubit.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_join_cubit.dart';
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
@@ -82,6 +85,9 @@ void main() {
       getIt.registerFactory<SocialProfileBloc>(() => fakeSocial);
       getIt.registerFactory<FeedBloc>(() => fakeFeed);
       getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
+      getIt.registerFactory<LeaderboardBloc>(
+        () => _FakeLeaderboardBloc(const LeaderboardState.initial()),
+      );
       getIt.registerFactory<SharedSessionCreationCubit>(
           () => _FakeSharedSessionCreationCubit());
       getIt.registerFactory<SharedSessionJoinCubit>(
@@ -129,6 +135,9 @@ void main() {
       getIt.registerFactory<SocialProfileBloc>(() => fakeSocial);
       getIt.registerFactory<FeedBloc>(() => fakeFeed);
       getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
+      getIt.registerFactory<LeaderboardBloc>(
+        () => _FakeLeaderboardBloc(const LeaderboardState.initial()),
+      );
       getIt.registerFactory<SharedSessionCreationCubit>(
         () => _FakeSharedSessionCreationCubit(
           const SharedSessionCreationState.creating(),
@@ -175,6 +184,9 @@ void main() {
       getIt.registerFactory<SocialProfileBloc>(() => fakeSocial);
       getIt.registerFactory<FeedBloc>(() => fakeFeed);
       getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
+      getIt.registerFactory<LeaderboardBloc>(
+        () => _FakeLeaderboardBloc(const LeaderboardState.initial()),
+      );
       getIt.registerFactory<SharedSessionCreationCubit>(
           () => _FakeSharedSessionCreationCubit());
       getIt.registerFactory<SharedSessionJoinCubit>(
@@ -196,6 +208,52 @@ void main() {
 
       expect(find.text('Qualcosa è andato storto. Riprova.'), findsOneWidget);
       expect(find.text(rawMessage), findsNothing);
+    },
+  );
+
+  testWidgets(
+    '[21.2-WIDGET-005] Pro tier → 4th tab labeled "Classifica" is present in the TabBar',
+    (tester) async {
+      final fakeFriends = _FakeFriendsBloc(
+        const FriendsState.loaded(
+          friends: [],
+          pendingRequests: PendingRequests(received: [], sent: []),
+        ),
+      );
+      final fakeSocial = _FakeSocialProfileBloc(
+        const SocialProfileState.initial(),
+      );
+      final fakeFeed = _FakeFeedBloc(const FeedState.initial());
+      final fakeComparison = _FakeProgressComparisonBloc(
+        const ProgressComparisonState.initial(),
+      );
+
+      getIt.registerFactory<FriendsBloc>(() => fakeFriends);
+      getIt.registerFactory<SocialProfileBloc>(() => fakeSocial);
+      getIt.registerFactory<FeedBloc>(() => fakeFeed);
+      getIt.registerFactory<ProgressComparisonBloc>(() => fakeComparison);
+      getIt.registerFactory<LeaderboardBloc>(
+        () => _FakeLeaderboardBloc(const LeaderboardState.initial()),
+      );
+      getIt.registerFactory<SharedSessionCreationCubit>(
+          () => _FakeSharedSessionCreationCubit());
+      getIt.registerFactory<SharedSessionJoinCubit>(
+          () => _FakeSharedSessionJoinCubit());
+
+      final sub = _FakeSubscriptionBloc(
+        const SubscriptionState.loaded(tier: SubscriptionTier.pro),
+      );
+
+      await tester.pumpWidget(_wrapWithSub(sub));
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byType(TabBar),
+          matching: find.text('Classifica'),
+        ),
+        findsOneWidget,
+      );
     },
   );
 }
@@ -342,6 +400,26 @@ class _FakeSharedSessionJoinCubit extends Fake
 
   @override
   void reset() {}
+
+  @override
+  Future<void> close() async {}
+}
+
+class _FakeLeaderboardBloc extends Fake implements LeaderboardBloc {
+  final LeaderboardState _state;
+  _FakeLeaderboardBloc(this._state);
+
+  @override
+  LeaderboardState get state => _state;
+
+  @override
+  Stream<LeaderboardState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  void add(LeaderboardEvent event) {}
 
   @override
   Future<void> close() async {}

@@ -17,6 +17,7 @@ class LeaderboardRemoteDataSource {
 
   LeaderboardRemoteDataSource(this._supabase) {
     callAwardRpc = _defaultCallAwardRpc;
+    fetchLeaderboard = _defaultFetchLeaderboard;
   }
 
   @visibleForTesting
@@ -26,6 +27,16 @@ class LeaderboardRemoteDataSource {
     String awardedOnIso,
   )
   callAwardRpc;
+
+  @visibleForTesting
+  late Future<List<Map<String, dynamic>>> Function() fetchLeaderboard;
+
+  Future<List<Map<String, dynamic>>> _defaultFetchLeaderboard() async {
+    final result = await _supabase.client.rpc('get_friends_leaderboard');
+    return List<Map<String, dynamic>>.from(result as List);
+  }
+
+  Future<List<Map<String, dynamic>>> loadLeaderboard() => fetchLeaderboard();
 
   Future<void> _defaultCallAwardRpc(
     String sessionLogId,

@@ -337,6 +337,17 @@
     }
   },
   "comparisonEmptyFriends": "Nessun amico nel confronto.",
+  "leaderboardScreenTitle": "Classifica",
+  "leaderboardEmpty": "Nessun amico in classifica.",
+  "leaderboardMedalGold": "1° oro",
+  "leaderboardMedalSilver": "2° argento",
+  "leaderboardMedalBronze": "3° bronzo",
+  "leaderboardPoints": "{count} punti",
+  "@leaderboardPoints": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "sharedSessionLobbyTitle": "Sala d'attesa",
   "sharedSessionLobbyWaiting": "In attesa dei partecipanti...",
   "sharedSessionStartButton": "Avvia",

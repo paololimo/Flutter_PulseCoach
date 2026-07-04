@@ -10,9 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'leaderboard_repository_impl_test.mocks.dart';
 
-@GenerateMocks([SyncManager])
+@GenerateMocks([SyncManager, LeaderboardRemoteDataSource])
 void main() {
   late MockSyncManager mockSyncManager;
+  late MockLeaderboardRemoteDataSource mockDataSource;
   late SharedPreferences prefs;
   late LeaderboardRepositoryImpl sut;
 
@@ -20,7 +21,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
     mockSyncManager = MockSyncManager();
-    sut = LeaderboardRepositoryImpl(mockSyncManager, prefs);
+    mockDataSource = MockLeaderboardRemoteDataSource();
+    sut = LeaderboardRepositoryImpl(mockSyncManager, prefs, mockDataSource);
   });
 
   test(
@@ -94,4 +96,75 @@ void main() {
       expect(result.isLeft(), isTrue);
     },
   );
+
+  group('getFriendsLeaderboard', () {
+    test(
+      '[21.2-REPO-001] maps datasource rows to the unranked tuple list correctly',
+      () async {
+        when(mockDataSource.loadLeaderboard()).thenAnswer(
+          (_) async => [
+            {
+              'user_id': 'u1',
+              'display_handle': 'alice',
+              'total_points': 30,
+              'is_own': true,
+            },
+          ],
+        );
+
+        final result = await sut.getFriendsLeaderboard();
+
+        expect(result.isRight(), isTrue);
+        final entries = result.getOrElse(() => []);
+        expect(entries.length, 1);
+        expect(entries.first.userId, 'u1');
+        expect(entries.first.displayHandle, 'alice');
+        expect(entries.first.totalPoints, 30);
+        expect(entries.first.isOwn, isTrue);
+      },
+    );
+
+    test(
+      '[21.2-REPO-002] one malformed row among valid ones → bad row dropped, valid rows still returned',
+      () async {
+        when(mockDataSource.loadLeaderboard()).thenAnswer(
+          (_) async => [
+            {
+              'user_id': 'u1',
+              'display_handle': 'alice',
+              'total_points': 30,
+              'is_own': true,
+            },
+            {
+              // malformed: user_id has the wrong type, fromJson's cast throws
+              'user_id': 123,
+              'display_handle': 'bob',
+              'total_points': 10,
+              'is_own': false,
+            },
+          ],
+        );
+
+        final result = await sut.getFriendsLeaderboard();
+
+        expect(result.isRight(), isTrue);
+        final entries = result.getOrElse(() => []);
+        expect(entries.length, 1);
+        expect(entries.first.userId, 'u1');
+      },
+    );
+
+    test(
+      '[21.2-REPO-003] datasource throws → returns Left(SocialFailure)',
+      () async {
+        when(
+          mockDataSource.loadLeaderboard(),
+        ).thenThrow(Exception('network error'));
+
+        final result = await sut.getFriendsLeaderboard();
+
+        expect(result.isLeft(), isTrue);
+      },
+    );
+  });
 }

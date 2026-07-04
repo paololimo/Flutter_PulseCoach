@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/sync/sync_manager.dart';
 import 'package:pulse_coach/features/social/leaderboard/data/datasources/leaderboard_remote_data_source.dart';
+import 'package:pulse_coach/features/social/leaderboard/data/models/leaderboard_row_dto.dart';
 import 'package:pulse_coach/features/social/leaderboard/domain/repositories/leaderboard_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,8 +23,9 @@ class LeaderboardRepositoryImpl implements LeaderboardRepository {
 
   final SyncManager _syncManager;
   final SharedPreferences _prefs;
+  final LeaderboardRemoteDataSource _dataSource;
 
-  LeaderboardRepositoryImpl(this._syncManager, this._prefs);
+  LeaderboardRepositoryImpl(this._syncManager, this._prefs, this._dataSource);
 
   String _installId() {
     final existing = _prefs.getString(installIdKey);
@@ -61,6 +63,41 @@ class LeaderboardRepositoryImpl implements LeaderboardRepository {
       return const Right(unit);
     } catch (e) {
       return Left(SocialFailure('Failed to enqueue points award: $e'));
+    }
+  }
+
+  @override
+  Future<
+    Either<
+      Failure,
+      List<
+        ({String userId, String displayHandle, int totalPoints, bool isOwn})
+      >
+    >
+  >
+  getFriendsLeaderboard() async {
+    try {
+      final rows = await _dataSource.loadLeaderboard();
+      final entries = rows.map(_safeFromJson).whereType<LeaderboardRowDto>();
+      return Right([
+        for (final e in entries)
+          (
+            userId: e.userId,
+            displayHandle: e.displayHandle,
+            totalPoints: e.totalPoints,
+            isOwn: e.isOwn,
+          ),
+      ]);
+    } catch (e) {
+      return Left(SocialFailure('Failed to load leaderboard: $e'));
+    }
+  }
+
+  LeaderboardRowDto? _safeFromJson(Map<String, dynamic> row) {
+    try {
+      return LeaderboardRowDto.fromJson(row);
+    } catch (_) {
+      return null; // degrade a single bad row rather than crashing the whole list
     }
   }
 }

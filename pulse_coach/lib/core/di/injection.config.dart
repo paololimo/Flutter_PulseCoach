@@ -245,12 +245,18 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/visibility
     as _i613;
 import 'package:pulse_coach/features/social/leaderboard/data/datasources/leaderboard_remote_data_source.dart'
     as _i385;
+import 'package:pulse_coach/features/social/leaderboard/data/rank_freeze_store.dart'
+    as _i808;
 import 'package:pulse_coach/features/social/leaderboard/data/repositories/leaderboard_repository_impl.dart'
     as _i766;
 import 'package:pulse_coach/features/social/leaderboard/domain/repositories/leaderboard_repository.dart'
     as _i790;
 import 'package:pulse_coach/features/social/leaderboard/domain/usecases/award_session_points_use_case.dart'
     as _i996;
+import 'package:pulse_coach/features/social/leaderboard/domain/usecases/get_friends_leaderboard_use_case.dart'
+    as _i584;
+import 'package:pulse_coach/features/social/leaderboard/presentation/bloc/leaderboard_bloc.dart'
+    as _i312;
 import 'package:pulse_coach/features/social/shared_session/data/datasources/shared_session_remote_data_source.dart'
     as _i473;
 import 'package:pulse_coach/features/social/shared_session/data/repositories/shared_session_repository_impl.dart'
@@ -404,6 +410,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i540.UpsellCooldownService>(
       () => _i540.UpsellCooldownService(gh<_i460.SharedPreferences>()),
     );
+    gh.factory<_i808.RankFreezeStore>(
+      () => _i808.RankFreezeStore(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i288.LocaleCubit>(
       () => _i288.LocaleCubit(gh<_i460.SharedPreferences>()),
     );
@@ -464,12 +473,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i160.LocationService>(
       () => _i160.LocationService(gh<_i973.GeolocatorWrapper>()),
-    );
-    gh.factory<_i790.LeaderboardRepository>(
-      () => _i766.LeaderboardRepositoryImpl(
-        gh<_i780.SyncManager>(),
-        gh<_i460.SharedPreferences>(),
-      ),
     );
     gh.factory<_i944.AcceptDisclaimer>(
       () => _i944.AcceptDisclaimer(gh<_i338.OnboardingRepository>()),
@@ -535,17 +538,18 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i91.ExerciseLocalDataSource>(),
       ),
     );
-    gh.factory<_i996.AwardSessionPointsUseCase>(
-      () => _i996.AwardSessionPointsUseCase(
-        gh<_i790.LeaderboardRepository>(),
-        gh<_i499.EntitlementGate>(),
-      ),
-    );
     gh.factory<_i472.OnboardingCubit>(
       () => _i472.OnboardingCubit(
         gh<_i944.AcceptDisclaimer>(),
         gh<_i145.CheckDisclaimerStatus>(),
         gh<_i280.SaveProfile>(),
+      ),
+    );
+    gh.factory<_i790.LeaderboardRepository>(
+      () => _i766.LeaderboardRepositoryImpl(
+        gh<_i780.SyncManager>(),
+        gh<_i460.SharedPreferences>(),
+        gh<_i385.LeaderboardRemoteDataSource>(),
       ),
     );
     gh.lazySingleton<_i272.ProgressLocalDataSource>(
@@ -688,6 +692,10 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i160.LocationService>(),
       ),
     );
+    gh.factory<_i584.GetFriendsLeaderboardUseCase>(
+      () =>
+          _i584.GetFriendsLeaderboardUseCase(gh<_i790.LeaderboardRepository>()),
+    );
     gh.factory<_i1033.GetFriendsComparisonUseCase>(
       () => _i1033.GetFriendsComparisonUseCase(
         gh<_i180.ProgressComparisonRepository>(),
@@ -705,6 +713,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i73.ProgressRepository>(
       () => _i1027.ProgressRepositoryImpl(gh<_i272.ProgressLocalDataSource>()),
+    );
+    gh.factory<_i996.AwardSessionPointsUseCase>(
+      () => _i996.AwardSessionPointsUseCase(
+        gh<_i790.LeaderboardRepository>(),
+        gh<_i499.EntitlementGate>(),
+      ),
     );
     gh.factory<_i623.DeleteAccountUseCase>(
       () => _i623.DeleteAccountUseCase(gh<_i213.AuthRepository>()),
@@ -800,6 +814,13 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i664.GetWeatherContext>(
       () => _i664.GetWeatherContext(gh<_i748.WeatherRepository>()),
+    );
+    gh.factory<_i312.LeaderboardBloc>(
+      () => _i312.LeaderboardBloc(
+        gh<_i584.GetFriendsLeaderboardUseCase>(),
+        gh<_i808.RankFreezeStore>(),
+        gh<_i79.AppDatabase>(),
+      ),
     );
     gh.factory<_i412.AuthBloc>(
       () => _i412.AuthBloc(

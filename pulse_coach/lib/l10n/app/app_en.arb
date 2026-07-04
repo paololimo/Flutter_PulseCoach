@@ -337,6 +337,17 @@
     }
   },
   "comparisonEmptyFriends": "No friends have opted in to comparison yet.",
+  "leaderboardScreenTitle": "Leaderboard",
+  "leaderboardEmpty": "No friends on the leaderboard yet.",
+  "leaderboardMedalGold": "1st gold",
+  "leaderboardMedalSilver": "2nd silver",
+  "leaderboardMedalBronze": "3rd bronze",
+  "leaderboardPoints": "{count} points",
+  "@leaderboardPoints": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "sharedSessionLobbyTitle": "Waiting Room",
   "sharedSessionLobbyWaiting": "Waiting for participants...",
   "sharedSessionStartButton": "Start",

@@ -19,6 +19,8 @@ import 'package:pulse_coach/features/social/friends/presentation/bloc/social_pro
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_event.dart';
 import 'package:pulse_coach/features/social/friends/presentation/bloc/social_profile_state.dart';
 import 'package:pulse_coach/features/social/friends/presentation/widgets/friend_row.dart';
+import 'package:pulse_coach/features/social/leaderboard/presentation/bloc/leaderboard_bloc.dart';
+import 'package:pulse_coach/features/social/leaderboard/presentation/pages/leaderboard_page.dart';
 import 'package:pulse_coach/features/social/shared_session/domain/entities/shared_session_start_args.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_creation_cubit.dart';
 import 'package:pulse_coach/features/social/shared_session/presentation/bloc/shared_session_join_cubit.dart';
@@ -49,6 +51,11 @@ class SocialPage extends StatelessWidget {
           create: (_) => getIt<ProgressComparisonBloc>(),
           // Event is dispatched from _ComparisonViewState.initState — NOT here
         ),
+        BlocProvider<LeaderboardBloc>(
+          create: (_) => getIt<LeaderboardBloc>(),
+          // Event dispatched from LeaderboardPage's own initState, same
+          // convention as ProgressComparisonBloc immediately above.
+        ),
         BlocProvider<SharedSessionCreationCubit>(
           create: (_) => getIt<SharedSessionCreationCubit>(),
         ),
@@ -76,7 +83,7 @@ class _SocialViewState extends State<_SocialView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -113,6 +120,7 @@ class _SocialViewState extends State<_SocialView>
                 Tab(text: l10n.friendsScreenTitle),
                 Tab(text: l10n.feedScreenTitle),
                 Tab(text: l10n.comparisonScreenTitle),
+                Tab(text: l10n.leaderboardScreenTitle),
               ],
             ),
           ),
@@ -205,6 +213,7 @@ class _SocialViewState extends State<_SocialView>
                 _FriendsTab(searchController: _searchController),
                 const FeedPage(),
                 const ProgressComparisonPage(),
+                const LeaderboardPage(),
               ],
             ),
           ),

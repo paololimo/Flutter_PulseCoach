@@ -3,10 +3,14 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i3;
+import 'dart:async' as _i4;
 
+import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:pulse_coach/core/sync/sync_manager.dart' as _i2;
+import 'package:pulse_coach/core/error/failures.dart' as _i6;
+import 'package:pulse_coach/core/sync/sync_manager.dart' as _i3;
+import 'package:pulse_coach/features/social/leaderboard/data/datasources/leaderboard_remote_data_source.dart'
+    as _i5;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -23,53 +27,143 @@ import 'package:pulse_coach/core/sync/sync_manager.dart' as _i2;
 // ignore_for_file: subtype_of_sealed_class
 // ignore_for_file: invalid_use_of_internal_member
 
+class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
+  _FakeEither_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
 /// A class which mocks [SyncManager].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockSyncManager extends _i1.Mock implements _i2.SyncManager {
+class MockSyncManager extends _i1.Mock implements _i3.SyncManager {
   MockSyncManager() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  void registerHandler(String? eventType, _i2.SyncEventHandler? handler) =>
+  void registerHandler(String? eventType, _i3.SyncEventHandler? handler) =>
       super.noSuchMethod(
         Invocation.method(#registerHandler, [eventType, handler]),
         returnValueForMissingStub: null,
       );
 
   @override
-  _i3.Future<int> enqueue(String? eventType, String? payload) =>
+  _i4.Future<int> enqueue(String? eventType, String? payload) =>
       (super.noSuchMethod(
             Invocation.method(#enqueue, [eventType, payload]),
-            returnValue: _i3.Future<int>.value(0),
+            returnValue: _i4.Future<int>.value(0),
           )
-          as _i3.Future<int>);
+          as _i4.Future<int>);
 
   @override
-  _i3.Future<void> processQueue() =>
+  _i4.Future<void> processQueue() =>
       (super.noSuchMethod(
             Invocation.method(#processQueue, []),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i3.Future<void>);
+          as _i4.Future<void>);
 
   @override
-  _i3.Future<void> start() =>
+  _i4.Future<void> start() =>
       (super.noSuchMethod(
             Invocation.method(#start, []),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i3.Future<void>);
+          as _i4.Future<void>);
 
   @override
-  _i3.Future<void> stop() =>
+  _i4.Future<void> stop() =>
       (super.noSuchMethod(
             Invocation.method(#stop, []),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i3.Future<void>);
+          as _i4.Future<void>);
+}
+
+/// A class which mocks [LeaderboardRemoteDataSource].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockLeaderboardRemoteDataSource extends _i1.Mock
+    implements _i5.LeaderboardRemoteDataSource {
+  MockLeaderboardRemoteDataSource() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<void> Function(String, int, String) get callAwardRpc =>
+      (super.noSuchMethod(
+            Invocation.getter(#callAwardRpc),
+            returnValue:
+                (String sessionLogId, int basePoints, String awardedOnIso) =>
+                    _i4.Future<void>.value(),
+          )
+          as _i4.Future<void> Function(String, int, String));
+
+  @override
+  _i4.Future<List<Map<String, dynamic>>> Function() get fetchLeaderboard =>
+      (super.noSuchMethod(
+            Invocation.getter(#fetchLeaderboard),
+            returnValue: () => _i4.Future<List<Map<String, dynamic>>>.value(
+              <Map<String, dynamic>>[],
+            ),
+          )
+          as _i4.Future<List<Map<String, dynamic>>> Function());
+
+  @override
+  set callAwardRpc(_i4.Future<void> Function(String, int, String)? value) =>
+      super.noSuchMethod(
+        Invocation.setter(#callAwardRpc, value),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set fetchLeaderboard(
+    _i4.Future<List<Map<String, dynamic>>> Function()? value,
+  ) => super.noSuchMethod(
+    Invocation.setter(#fetchLeaderboard, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i4.Future<List<Map<String, dynamic>>> loadLeaderboard() =>
+      (super.noSuchMethod(
+            Invocation.method(#loadLeaderboard, []),
+            returnValue: _i4.Future<List<Map<String, dynamic>>>.value(
+              <Map<String, dynamic>>[],
+            ),
+          )
+          as _i4.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i4.Future<void> awardPoints({
+    required String? sessionLogId,
+    required int? basePoints,
+    required String? awardedOnIso,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#awardPoints, [], {
+              #sessionLogId: sessionLogId,
+              #basePoints: basePoints,
+              #awardedOnIso: awardedOnIso,
+            }),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  _i4.Future<_i2.Either<_i6.Failure, _i2.Unit>> replayAward(String? payload) =>
+      (super.noSuchMethod(
+            Invocation.method(#replayAward, [payload]),
+            returnValue: _i4.Future<_i2.Either<_i6.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i6.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#replayAward, [payload]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i6.Failure, _i2.Unit>>);
 }
