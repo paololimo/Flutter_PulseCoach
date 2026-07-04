@@ -369,7 +369,7 @@ void main() {
             participants: [], isHost: true, steps: _kSteps),
         const SharedSessionState.inSession(
             stepIndex: 0, elapsedSeconds: 0, isHost: true, steps: []),
-        const SharedSessionState.sessionEnded(),
+        const SharedSessionState.sessionEnded(sessionId: 'sess-1'),
       ],
     );
 
@@ -383,6 +383,25 @@ void main() {
       },
       verify: (_) {
         verify(mockGateway.leaveChannel()).called(greaterThanOrEqualTo(1));
+      },
+    );
+
+    blocTest<SharedSessionBloc, SharedSessionState>(
+      '21.3-BLOC-001: SessionEnded broadcast received after _onJoined set '
+      '_sessionId → emitted sessionEnded state carries that same sessionId',
+      build: () => SharedSessionBloc(mockGateway, mockDelete, mockRefresh, mockLocation, db, mockGetSocialProfile),
+      act: (bloc) async {
+        bloc.add(_hostJoin(sessionId: 'sess-21-3'));
+        await Future<void>.delayed(Duration.zero);
+        broadcastController.add(const BroadcastEvent.sessionStarted());
+        await Future<void>.delayed(Duration.zero);
+        broadcastController.add(const BroadcastEvent.sessionEnded());
+      },
+      verify: (bloc) {
+        expect(
+          bloc.state.mapOrNull(sessionEnded: (s) => s.sessionId),
+          'sess-21-3',
+        );
       },
     );
   });

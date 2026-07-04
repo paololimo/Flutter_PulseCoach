@@ -2844,6 +2844,14 @@ So that the social incentive reinforces doing things together — within counter
 **When** the PM reviews the counter-metrics dashboard weekly for the first month after launch
 **Then** the following conditions must hold to keep scoring live: (a) AtRisk-state session starts have NOT increased vs. the pre-leaderboard baseline, and (b) group-session RPE distribution has NOT shifted above the ≈6.5 target band. If either counter-metric regresses, the shared-session multiplier is reduced to 1.0 (same as solo) until investigated
 
+### Story 21.4: Shared-Session Scoring Sweep for Drop-Out Participants (follow-up, backlog)
+
+_Surfaced by Story 21.3 code review (2026-07-04). Not yet scheduled — run `create-story` when ready._
+
+**Gap:** `score_shared_session` only awards points once EVERY participant has a non-null `rpe_value`. A participant who joins but never submits RPE (drops out, crashes, or goes offline before RPE) leaves their row null forever, so `allSubmitted` is never true and NO participant is ever scored — a fully-completing participant silently gets zero points. The scoring trigger is client fire-and-forget, so nothing re-fires after the drop-out; a fix inside `index.ts` alone cannot be reached.
+
+**Proposed approach:** a server-side scheduled sweep (`pg_cron` or scheduled Edge Function) that, after a grace window from `shared_sessions.created_at`, scores the participants who DID submit (active-only) and ignores the pending/null rows — reusing the existing atomic `scored` claim and `award_shared_session_points` so it stays idempotent with the client-triggered path. Needs a grace-window constant, migration, and code-review-only SQL tests (no live-DB harness in repo, per 21.1/21.2 precedent).
+
 ---
 
 *End of Epic Breakdown — 21 Epics (v1: 1–14, v1.5: 7.5, v2: 15–21)*

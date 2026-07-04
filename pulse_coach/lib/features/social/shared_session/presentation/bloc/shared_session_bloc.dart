@@ -399,6 +399,7 @@ class SharedSessionBloc extends Bloc<SharedSessionEvent, SharedSessionState> {
         }
         emit(SharedSessionState.sessionEnded(
           armKey: _armKey ?? 'mobility_medium',
+          sessionId: _sessionId,
         ));
       case UnknownBroadcast():
         break;

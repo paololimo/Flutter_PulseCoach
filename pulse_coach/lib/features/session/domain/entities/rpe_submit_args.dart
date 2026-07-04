@@ -9,6 +9,7 @@ class RpeSubmitArgs {
   final String armKey;
   final int? sessionLogId;
   final int durationMinutes;
+  final String? sharedSessionId;
 
   const RpeSubmitArgs({
     this.planId,
@@ -17,5 +18,6 @@ class RpeSubmitArgs {
     required this.armKey,
     this.sessionLogId,
     this.durationMinutes = 0,
+    this.sharedSessionId,
   });
 }

@@ -17,4 +17,11 @@ abstract class LeaderboardRepository {
     >
   >
   getFriendsLeaderboard();
+
+  Future<Either<Failure, Unit>> submitSharedSessionResult({
+    required String sessionId,
+    required int rpe,
+    required String armKey,
+    required int durationMinutes,
+  });
 }

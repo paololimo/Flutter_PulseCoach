@@ -367,7 +367,10 @@ void main() {
         await Future<void>.delayed(Duration.zero);
       },
       verify: (bloc) {
-        expect(bloc.state, const SharedSessionState.sessionEnded());
+        expect(
+          bloc.state,
+          const SharedSessionState.sessionEnded(sessionId: 'sess-1'),
+        );
         verify(mockGateway.leaveChannel()).called(1);
       },
     );

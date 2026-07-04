@@ -134,7 +134,7 @@ return cancelled(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle,  String sessionType,  int intensity,  int durationMinutes)?  inSession,TResult Function( Failure failure)?  error,TResult Function( String armKey)?  sessionEnded,TResult Function()?  cancelled,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle,  String sessionType,  int intensity,  int durationMinutes)?  inSession,TResult Function( Failure failure)?  error,TResult Function( String armKey,  String? sessionId)?  sessionEnded,TResult Function()?  cancelled,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
@@ -142,7 +142,7 @@ return loading();case _Lobby() when lobby != null:
 return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick,_that.coLocated);case _InSession() when inSession != null:
 return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle,_that.sessionType,_that.intensity,_that.durationMinutes);case _Error() when error != null:
 return error(_that.failure);case _SessionEnded() when sessionEnded != null:
-return sessionEnded(_that.armKey);case _Cancelled() when cancelled != null:
+return sessionEnded(_that.armKey,_that.sessionId);case _Cancelled() when cancelled != null:
 return cancelled();case _:
   return orElse();
 
@@ -161,7 +161,7 @@ return cancelled();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)  lobby,required TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle,  String sessionType,  int intensity,  int durationMinutes)  inSession,required TResult Function( Failure failure)  error,required TResult Function( String armKey)  sessionEnded,required TResult Function()  cancelled,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)  lobby,required TResult Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle,  String sessionType,  int intensity,  int durationMinutes)  inSession,required TResult Function( Failure failure)  error,required TResult Function( String armKey,  String? sessionId)  sessionEnded,required TResult Function()  cancelled,}) {final _that = this;
 switch (_that) {
 case _Initial():
 return initial();case _Loading():
@@ -169,7 +169,7 @@ return loading();case _Lobby():
 return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick,_that.coLocated);case _InSession():
 return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle,_that.sessionType,_that.intensity,_that.durationMinutes);case _Error():
 return error(_that.failure);case _SessionEnded():
-return sessionEnded(_that.armKey);case _Cancelled():
+return sessionEnded(_that.armKey,_that.sessionId);case _Cancelled():
 return cancelled();}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -184,7 +184,7 @@ return cancelled();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult? Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle,  String sessionType,  int intensity,  int durationMinutes)?  inSession,TResult? Function( Failure failure)?  error,TResult? Function( String armKey)?  sessionEnded,TResult? Function()?  cancelled,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<ParticipantPresence> participants,  bool isHost,  List<ExerciseStep> steps,  String? joinCode,  int refreshErrorTick,  bool? coLocated)?  lobby,TResult? Function( int stepIndex,  int elapsedSeconds,  bool isHost,  List<ExerciseStep> steps,  List<ParticipantPresence> participants,  String? droppedHandle,  String sessionType,  int intensity,  int durationMinutes)?  inSession,TResult? Function( Failure failure)?  error,TResult? Function( String armKey,  String? sessionId)?  sessionEnded,TResult? Function()?  cancelled,}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
@@ -192,7 +192,7 @@ return loading();case _Lobby() when lobby != null:
 return lobby(_that.participants,_that.isHost,_that.steps,_that.joinCode,_that.refreshErrorTick,_that.coLocated);case _InSession() when inSession != null:
 return inSession(_that.stepIndex,_that.elapsedSeconds,_that.isHost,_that.steps,_that.participants,_that.droppedHandle,_that.sessionType,_that.intensity,_that.durationMinutes);case _Error() when error != null:
 return error(_that.failure);case _SessionEnded() when sessionEnded != null:
-return sessionEnded(_that.armKey);case _Cancelled() when cancelled != null:
+return sessionEnded(_that.armKey,_that.sessionId);case _Cancelled() when cancelled != null:
 return cancelled();case _:
   return null;
 
@@ -519,10 +519,11 @@ as Failure,
 
 
 class _SessionEnded implements SharedSessionState {
-  const _SessionEnded({this.armKey = 'mobility_medium'});
+  const _SessionEnded({this.armKey = 'mobility_medium', this.sessionId});
   
 
 @JsonKey() final  String armKey;
+ final  String? sessionId;
 
 /// Create a copy of SharedSessionState
 /// with the given fields replaced by the non-null parameter values.
@@ -534,16 +535,16 @@ _$SessionEndedCopyWith<_SessionEnded> get copyWith => __$SessionEndedCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SessionEnded&&(identical(other.armKey, armKey) || other.armKey == armKey));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SessionEnded&&(identical(other.armKey, armKey) || other.armKey == armKey)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,armKey);
+int get hashCode => Object.hash(runtimeType,armKey,sessionId);
 
 @override
 String toString() {
-  return 'SharedSessionState.sessionEnded(armKey: $armKey)';
+  return 'SharedSessionState.sessionEnded(armKey: $armKey, sessionId: $sessionId)';
 }
 
 
@@ -554,7 +555,7 @@ abstract mixin class _$SessionEndedCopyWith<$Res> implements $SharedSessionState
   factory _$SessionEndedCopyWith(_SessionEnded value, $Res Function(_SessionEnded) _then) = __$SessionEndedCopyWithImpl;
 @useResult
 $Res call({
- String armKey
+ String armKey, String? sessionId
 });
 
 
@@ -571,10 +572,11 @@ class __$SessionEndedCopyWithImpl<$Res>
 
 /// Create a copy of SharedSessionState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? armKey = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? armKey = null,Object? sessionId = freezed,}) {
   return _then(_SessionEnded(
 armKey: null == armKey ? _self.armKey : armKey // ignore: cast_nullable_to_non_nullable
-as String,
+as String,sessionId: freezed == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

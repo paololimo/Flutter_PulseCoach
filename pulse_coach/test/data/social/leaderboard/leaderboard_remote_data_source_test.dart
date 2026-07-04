@@ -91,6 +91,71 @@ void main() {
     );
   });
 
+  group('submitSharedResult', () {
+    test(
+      '[21.3-DS-001] submitSharedResult(...) → callSubmitSharedResultRpc '
+      'invoked with the exact 4 args',
+      () async {
+        String? capturedSessionId;
+        int? capturedRpe;
+        String? capturedArmKey;
+        int? capturedDurationMinutes;
+        sut.callSubmitSharedResultRpc =
+            (sessionId, rpe, armKey, durationMinutes) async {
+          capturedSessionId = sessionId;
+          capturedRpe = rpe;
+          capturedArmKey = armKey;
+          capturedDurationMinutes = durationMinutes;
+        };
+
+        await sut.submitSharedResult('sess-1', 7, 'mobility_medium', 20);
+
+        expect(capturedSessionId, 'sess-1');
+        expect(capturedRpe, 7);
+        expect(capturedArmKey, 'mobility_medium');
+        expect(capturedDurationMinutes, 20);
+      },
+    );
+
+    test(
+      '[21.3-DS-002] replaySubmitSharedResult(payload) → decodes JSON and '
+      'calls callSubmitSharedResultRpc with the decoded fields',
+      () async {
+        String? capturedSessionId;
+        int? capturedRpe;
+        String? capturedArmKey;
+        int? capturedDurationMinutes;
+        sut.callSubmitSharedResultRpc =
+            (sessionId, rpe, armKey, durationMinutes) async {
+          capturedSessionId = sessionId;
+          capturedRpe = rpe;
+          capturedArmKey = armKey;
+          capturedDurationMinutes = durationMinutes;
+        };
+
+        final result = await sut.replaySubmitSharedResult(
+          '{"sessionId":"sess-1","rpe":7,"armKey":"mobility_medium","durationMinutes":20}',
+        );
+
+        expect(capturedSessionId, 'sess-1');
+        expect(capturedRpe, 7);
+        expect(capturedArmKey, 'mobility_medium');
+        expect(capturedDurationMinutes, 20);
+        expect(result.isRight(), isTrue);
+      },
+    );
+
+    test(
+      '[21.3-DS-003] replaySubmitSharedResult with malformed JSON → returns '
+      'Left(ServerFailure), does not throw',
+      () async {
+        final result = await sut.replaySubmitSharedResult('not-json');
+
+        expect(result.isLeft(), isTrue);
+      },
+    );
+  });
+
   group('loadLeaderboard', () {
     test(
       '[21.2-DS-001] loadLeaderboard() → fetchLeaderboard invoked, returns its raw list verbatim',

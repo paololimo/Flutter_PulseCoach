@@ -97,6 +97,53 @@ void main() {
     },
   );
 
+  group('submitSharedSessionResult', () {
+    test(
+      '[21.3-REPO-001] submitSharedSessionResult(...) → SyncManager.enqueue '
+      'called with sharedResultEventType and a JSON payload containing all '
+      '4 fields',
+      () async {
+        when(mockSyncManager.enqueue(any, any)).thenAnswer((_) async => 1);
+
+        final result = await sut.submitSharedSessionResult(
+          sessionId: 'sess-1',
+          rpe: 7,
+          armKey: 'mobility_medium',
+          durationMinutes: 20,
+        );
+
+        expect(result.isRight(), isTrue);
+        final captured = verify(
+          mockSyncManager.enqueue(captureAny, captureAny),
+        ).captured;
+        expect(captured[0], LeaderboardRemoteDataSource.sharedResultEventType);
+        final payload =
+            jsonDecode(captured[1] as String) as Map<String, dynamic>;
+        expect(payload['sessionId'], 'sess-1');
+        expect(payload['rpe'], 7);
+        expect(payload['armKey'], 'mobility_medium');
+        expect(payload['durationMinutes'], 20);
+      },
+    );
+
+    test(
+      '[21.3-REPO-002] SyncManager.enqueue throws → returns '
+      'Left(SocialFailure)',
+      () async {
+        when(mockSyncManager.enqueue(any, any)).thenThrow(Exception('offline'));
+
+        final result = await sut.submitSharedSessionResult(
+          sessionId: 'sess-1',
+          rpe: 7,
+          armKey: 'mobility_medium',
+          durationMinutes: 20,
+        );
+
+        expect(result.isLeft(), isTrue);
+      },
+    );
+  });
+
   group('getFriendsLeaderboard', () {
     test(
       '[21.2-REPO-001] maps datasource rows to the unranked tuple list correctly',

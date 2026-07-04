@@ -352,7 +352,10 @@ void main() {
           intensity: 3,
           durationMinutes: 20,
         ),
-        const SharedSessionState.sessionEnded(armKey: 'mobility_low'),
+        const SharedSessionState.sessionEnded(
+          armKey: 'mobility_low',
+          sessionId: 'sess-1',
+        ),
       ],
     );
   });

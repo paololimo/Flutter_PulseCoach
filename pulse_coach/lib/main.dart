@@ -52,6 +52,10 @@ Future<void> main() async {
       LeaderboardRemoteDataSource.awardEventType,
       getIt<LeaderboardRemoteDataSource>().replayAward,
     );
+    getIt<SyncManager>().registerHandler(
+      LeaderboardRemoteDataSource.sharedResultEventType,
+      getIt<LeaderboardRemoteDataSource>().replaySubmitSharedResult,
+    );
     unawaited(getIt<SyncManager>().start());
   } catch (e, st) {
     FlutterError.reportError(FlutterErrorDetails(exception: e, stack: st));

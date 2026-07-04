@@ -17,6 +17,7 @@ import 'package:pulse_coach/features/session/presentation/bloc/rpe_feedback_stat
 import 'package:pulse_coach/features/session/presentation/utils/wear_bridge_service.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/rpe_input_widget.dart';
 import 'package:pulse_coach/features/social/leaderboard/domain/usecases/award_session_points_use_case.dart';
+import 'package:pulse_coach/features/social/leaderboard/domain/usecases/submit_shared_session_result_use_case.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class RpePage extends StatefulWidget {
@@ -117,6 +118,18 @@ class _RpePageState extends State<RpePage> {
                           ),
                         );
                       }
+                    } else if (args != null &&
+                        args.planId == null &&
+                        args.sharedSessionId != null &&
+                        !args.abandoned) {
+                      unawaited(
+                        getIt<SubmitSharedSessionResultUseCase>().call(
+                          sessionId: args.sharedSessionId!,
+                          rpe: submitted.rpeValue,
+                          armKey: args.armKey,
+                          durationMinutes: args.durationMinutes,
+                        ),
+                      );
                     }
                     final summaryArgs = args == null
                         ? null

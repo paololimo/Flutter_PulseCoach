@@ -13,11 +13,16 @@ class LeaderboardRemoteDataSource {
   /// under (main.dart, before SyncManager.start()).
   static const String awardEventType = 'leaderboard_points_award';
 
+  /// SyncManager event type this datasource's [replaySubmitSharedResult] is
+  /// registered under (main.dart, before SyncManager.start()).
+  static const String sharedResultEventType = 'leaderboard_shared_session_result';
+
   final SupabaseClientProvider _supabase;
 
   LeaderboardRemoteDataSource(this._supabase) {
     callAwardRpc = _defaultCallAwardRpc;
     fetchLeaderboard = _defaultFetchLeaderboard;
+    callSubmitSharedResultRpc = _defaultCallSubmitSharedResultRpc;
   }
 
   @visibleForTesting
@@ -74,6 +79,66 @@ class LeaderboardRemoteDataSource {
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure('award_session_points RPC failed: $e'));
+    }
+  }
+
+  @visibleForTesting
+  late Future<void> Function(
+    String sessionId,
+    int rpe,
+    String armKey,
+    int durationMinutes,
+  )
+  callSubmitSharedResultRpc;
+
+  Future<void> _defaultCallSubmitSharedResultRpc(
+    String sessionId,
+    int rpe,
+    String armKey,
+    int durationMinutes,
+  ) async {
+    await _supabase.client.rpc(
+      'submit_shared_session_result',
+      params: {
+        'p_session_id': sessionId,
+        'p_rpe': rpe,
+        'p_arm_key': armKey,
+        'p_duration_minutes': durationMinutes,
+      },
+    );
+    // Best-effort scoring trigger (see story Context: "Which Client Triggers
+    // the Edge Function"). Failure here is non-fatal and NOT retried by this
+    // call — another participant's own successful submission re-triggers it.
+    try {
+      await _supabase.client.functions.invoke(
+        'score_shared_session',
+        body: {'sessionId': sessionId},
+      );
+    } catch (_) {
+      // Intentionally swallowed — see Dev Notes.
+    }
+  }
+
+  Future<void> submitSharedResult(
+    String sessionId,
+    int rpe,
+    String armKey,
+    int durationMinutes,
+  ) => callSubmitSharedResultRpc(sessionId, rpe, armKey, durationMinutes);
+
+  /// Registered with `SyncManager.registerHandler` under [sharedResultEventType].
+  Future<Either<Failure, Unit>> replaySubmitSharedResult(String payload) async {
+    try {
+      final map = jsonDecode(payload) as Map<String, dynamic>;
+      await callSubmitSharedResultRpc(
+        map['sessionId'] as String,
+        map['rpe'] as int,
+        map['armKey'] as String,
+        map['durationMinutes'] as int,
+      );
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('submit_shared_session_result RPC failed: $e'));
     }
   }
 }

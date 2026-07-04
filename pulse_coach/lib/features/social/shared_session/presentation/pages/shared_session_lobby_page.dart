@@ -66,6 +66,7 @@ class _SharedSessionLobbyPageState extends State<SharedSessionLobbyPage> {
                 armKey: s.armKey,
                 durationMinutes: totalDurationMinutes,
                 sessionLogId: null,
+                sharedSessionId: s.sessionId,
               ),
             );
           },

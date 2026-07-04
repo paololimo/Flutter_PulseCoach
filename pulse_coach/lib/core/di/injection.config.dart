@@ -255,6 +255,8 @@ import 'package:pulse_coach/features/social/leaderboard/domain/usecases/award_se
     as _i996;
 import 'package:pulse_coach/features/social/leaderboard/domain/usecases/get_friends_leaderboard_use_case.dart'
     as _i584;
+import 'package:pulse_coach/features/social/leaderboard/domain/usecases/submit_shared_session_result_use_case.dart'
+    as _i18;
 import 'package:pulse_coach/features/social/leaderboard/presentation/bloc/leaderboard_bloc.dart'
     as _i312;
 import 'package:pulse_coach/features/social/shared_session/data/datasources/shared_session_remote_data_source.dart'
@@ -695,6 +697,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i584.GetFriendsLeaderboardUseCase>(
       () =>
           _i584.GetFriendsLeaderboardUseCase(gh<_i790.LeaderboardRepository>()),
+    );
+    gh.factory<_i18.SubmitSharedSessionResultUseCase>(
+      () => _i18.SubmitSharedSessionResultUseCase(
+        gh<_i790.LeaderboardRepository>(),
+      ),
     );
     gh.factory<_i1033.GetFriendsComparisonUseCase>(
       () => _i1033.GetFriendsComparisonUseCase(

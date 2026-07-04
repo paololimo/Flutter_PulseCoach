@@ -40,6 +40,7 @@ sealed class SharedSessionState with _$SharedSessionState {
 
   const factory SharedSessionState.sessionEnded({
     @Default('mobility_medium') String armKey,
+    String? sessionId,
   }) = _SessionEnded;
 
   const factory SharedSessionState.cancelled() = _Cancelled;

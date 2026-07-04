@@ -93,6 +93,30 @@ class LeaderboardRepositoryImpl implements LeaderboardRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Unit>> submitSharedSessionResult({
+    required String sessionId,
+    required int rpe,
+    required String armKey,
+    required int durationMinutes,
+  }) async {
+    try {
+      final payload = jsonEncode({
+        'sessionId': sessionId,
+        'rpe': rpe,
+        'armKey': armKey,
+        'durationMinutes': durationMinutes,
+      });
+      await _syncManager.enqueue(
+        LeaderboardRemoteDataSource.sharedResultEventType,
+        payload,
+      );
+      return const Right(unit);
+    } catch (e) {
+      return Left(SocialFailure('Failed to enqueue shared session result: $e'));
+    }
+  }
+
   LeaderboardRowDto? _safeFromJson(Map<String, dynamic> row) {
     try {
       return LeaderboardRowDto.fromJson(row);

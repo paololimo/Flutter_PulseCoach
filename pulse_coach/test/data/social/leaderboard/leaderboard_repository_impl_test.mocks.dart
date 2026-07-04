@@ -113,6 +113,21 @@ class MockLeaderboardRemoteDataSource extends _i1.Mock
           as _i4.Future<List<Map<String, dynamic>>> Function());
 
   @override
+  _i4.Future<void> Function(String, int, String, int)
+  get callSubmitSharedResultRpc =>
+      (super.noSuchMethod(
+            Invocation.getter(#callSubmitSharedResultRpc),
+            returnValue:
+                (
+                  String sessionId,
+                  int rpe,
+                  String armKey,
+                  int durationMinutes,
+                ) => _i4.Future<void>.value(),
+          )
+          as _i4.Future<void> Function(String, int, String, int));
+
+  @override
   set callAwardRpc(_i4.Future<void> Function(String, int, String)? value) =>
       super.noSuchMethod(
         Invocation.setter(#callAwardRpc, value),
@@ -124,6 +139,14 @@ class MockLeaderboardRemoteDataSource extends _i1.Mock
     _i4.Future<List<Map<String, dynamic>>> Function()? value,
   ) => super.noSuchMethod(
     Invocation.setter(#fetchLeaderboard, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set callSubmitSharedResultRpc(
+    _i4.Future<void> Function(String, int, String, int)? value,
+  ) => super.noSuchMethod(
+    Invocation.setter(#callSubmitSharedResultRpc, value),
     returnValueForMissingStub: null,
   );
 
@@ -162,6 +185,40 @@ class MockLeaderboardRemoteDataSource extends _i1.Mock
               _FakeEither_0<_i6.Failure, _i2.Unit>(
                 this,
                 Invocation.method(#replayAward, [payload]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i6.Failure, _i2.Unit>>);
+
+  @override
+  _i4.Future<void> submitSharedResult(
+    String? sessionId,
+    int? rpe,
+    String? armKey,
+    int? durationMinutes,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#submitSharedResult, [
+              sessionId,
+              rpe,
+              armKey,
+              durationMinutes,
+            ]),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  _i4.Future<_i2.Either<_i6.Failure, _i2.Unit>> replaySubmitSharedResult(
+    String? payload,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#replaySubmitSharedResult, [payload]),
+            returnValue: _i4.Future<_i2.Either<_i6.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i6.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#replaySubmitSharedResult, [payload]),
               ),
             ),
           )
