@@ -192,6 +192,24 @@ void main() {
       expect(find.text('—'), findsOneWidget);
     });
 
+    testWidgets(
+      '21.0-WIDGET-001: a shared-session entry (dailyPlanId: null shape, '
+      'no distinguishing field) renders in the history list exactly as a '
+      'solo entry does',
+      (tester) async {
+        when(mockGetSessionHistory()).thenAnswer(
+          (_) async => Right([_entry(sessionType: 'breathing')]),
+        );
+
+        await pumpProgressPage(tester);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SessionHistoryTile), findsOneWidget);
+        expect(find.text('Respirazione'), findsOneWidget);
+        expect(find.text('RPE 7'), findsOneWidget);
+      },
+    );
+
     testWidgets('10.2-WIDGET-006: charts tab shows insufficient data text', (
       tester,
     ) async {

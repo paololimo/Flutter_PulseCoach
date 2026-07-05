@@ -14,5 +14,13 @@ void main() {
     test('21.1-SCORE-003: breathing_high returns 2.0', () {
       expect(ScoringConstants.intensityWeightFor('breathing_high'), 2.0);
     });
+
+    test(
+      '21.1-SCORE-004: unrecognized suffix (neither _low nor _medium) '
+      'fail-safes to the high weight (2.0), same as an explicit _high',
+      () {
+        expect(ScoringConstants.intensityWeightFor('cardio_unknown'), 2.0);
+      },
+    );
   });
 }

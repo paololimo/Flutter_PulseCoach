@@ -186,5 +186,112 @@ void main() {
         expect(state.isFrozen, isFalse);
       },
     );
+
+    blocTest<LeaderboardBloc, LeaderboardState>(
+      '[21.2-BLOC-008] state=AtRisk, no stored freeze, own entry absent from '
+      'the live ranking (e.g. dropped from the friends list) → '
+      'setFrozenRank never called, isFrozen: false',
+      setUp: () async {
+        await insertState('AtRisk');
+        when(mockFreezeStore.getFrozenRank()).thenReturn(null);
+        when(mockUseCase.call()).thenAnswer(
+          (_) async => const Right([
+            (userId: 'a', displayHandle: 'alice', totalPoints: 100, isOwn: false),
+            (userId: 'b', displayHandle: 'bob', totalPoints: 80, isOwn: false),
+          ]),
+        );
+      },
+      build: bloc,
+      act: (bloc) => bloc.add(const LeaderboardLoaded()),
+      verify: (bloc) {
+        verifyNever(mockFreezeStore.setFrozenRank(any));
+        final state = bloc.state as dynamic;
+        expect(state.isFrozen, isFalse);
+      },
+    );
+
+    blocTest<LeaderboardBloc, LeaderboardState>(
+      '[21.2-BLOC-009] state=AtRisk, stored freeze=2, own entry absent from '
+      'this fetch (dropped mid-freeze) → ranking still returned, '
+      'isFrozen: false (stored rank exists but is not applied to anyone)',
+      setUp: () async {
+        await insertState('AtRisk');
+        when(mockFreezeStore.getFrozenRank()).thenReturn(2);
+        when(mockUseCase.call()).thenAnswer(
+          (_) async => const Right([
+            (userId: 'a', displayHandle: 'alice', totalPoints: 100, isOwn: false),
+            (userId: 'b', displayHandle: 'bob', totalPoints: 80, isOwn: false),
+          ]),
+        );
+      },
+      build: bloc,
+      act: (bloc) => bloc.add(const LeaderboardLoaded()),
+      verify: (bloc) {
+        verifyNever(mockFreezeStore.setFrozenRank(any));
+        final state = bloc.state as dynamic;
+        expect(state.isFrozen, isFalse);
+        final entries = state.entries as List;
+        expect(entries.length, 2);
+      },
+    );
+
+    blocTest<LeaderboardBloc, LeaderboardState>(
+      '[21.2-BLOC-010] freezeStore.clear() throws (e.g. a storage race) → '
+      'caught, error state emitted instead of the bloc staying wedged on '
+      'loading',
+      setUp: () async {
+        await insertState('Active');
+        when(mockFreezeStore.getFrozenRank()).thenReturn(null);
+        when(mockFreezeStore.clear()).thenThrow(Exception('storage race'));
+      },
+      build: bloc,
+      act: (bloc) => bloc.add(const LeaderboardLoaded()),
+      verify: (bloc) {
+        final isError = bloc.state.whenOrNull(error: (_) => true);
+        expect(isError, isTrue);
+      },
+    );
+
+    blocTest<LeaderboardBloc, LeaderboardState>(
+      '[21.3-BLOC-001] state=AtRisk, stored freeze=2, own totalPoints '
+      'already reflects an awarded shared-session bonus that would move '
+      'the live rank to 1 → still pinned at the frozen rank 2 (a bonus '
+      'awarded while protective produces no visible rank change per 21.3 '
+      'AC3; scoring and rank-freeze are independent concerns)',
+      setUp: () async {
+        await insertState('AtRisk');
+        when(mockFreezeStore.getFrozenRank()).thenReturn(2);
+        when(mockUseCase.call()).thenAnswer(
+          (_) async => const Right<
+            Failure,
+            List<
+              ({
+                String userId,
+                String displayHandle,
+                int totalPoints,
+                bool isOwn,
+              })
+            >
+          >([
+            (userId: 'a', displayHandle: 'alice', totalPoints: 100, isOwn: false),
+            // Own points now exceed alice's — a shared-session bonus (21.3)
+            // was awarded unconditionally while AtRisk, unaware of freeze.
+            (userId: 'me', displayHandle: 'zzz', totalPoints: 150, isOwn: true),
+            (userId: 'b', displayHandle: 'bob', totalPoints: 80, isOwn: false),
+            (userId: 'd', displayHandle: 'dave', totalPoints: 10, isOwn: false),
+          ]),
+        );
+      },
+      build: bloc,
+      act: (bloc) => bloc.add(const LeaderboardLoaded()),
+      verify: (bloc) {
+        verifyNever(mockFreezeStore.setFrozenRank(any));
+        final state = bloc.state as dynamic;
+        expect(state.isFrozen, isTrue);
+        final entries = state.entries as List;
+        // Live rank for 150 points would be 1st; frozen rank keeps it at 2.
+        expect(entries.firstWhere((e) => e.isOwn).rank, 2);
+      },
+    );
   });
 }

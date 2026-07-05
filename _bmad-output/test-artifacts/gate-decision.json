@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "evaluated_at": "2026-07-05T00:00:00.000Z",
+  "repo": "Flutter_PulseCoach",
+  "target": {
+    "type": "epic",
+    "id": "21",
+    "label": "Epic 21 — Leaderboard & Scoring (v2.5)"
+  },
+  "collection_status": "COLLECTED",
+  "gate_basis": "priority_thresholds",
+  "gate_status": "PASS",
+  "rationale": "P0, P1, and overall coverage are all 100%. The 3 pgTAP files (supabase/tests/database/) were executed against a real local Postgres via `supabase start && supabase test db`, closing the 5 remaining acceptance criteria. Executing them required fixing a test-fixture bug (profiles rows already auto-created by the 0008 trigger) and a schema-wide missing-GRANT defect (migration 0015_grant_missing_table_privileges.sql) unrelated to Epic 21's own logic but blocking any live-DB execution.",
+  "p0_status": "MET",
+  "p1_status": "MET",
+  "overall_status": "MET",
+  "critical_open": 0,
+  "links": {
+    "trace_report_path": "_bmad-output/test-artifacts/traceability-matrix.md",
+    "trace_report_url": "",
+    "artifact_url": "",
+    "journey_evidence_url": ""
+  }
+}

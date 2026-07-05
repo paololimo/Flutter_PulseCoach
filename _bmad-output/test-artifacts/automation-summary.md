@@ -1,32 +1,120 @@
 ---
-stepsCompleted: ['step-01-preflight-and-context', 'step-02-identify-targets', 'step-03-generate-tests', 'step-03c-aggregate', 'step-04-validate-and-summarize', 'step-01-preflight-and-context-epic18', 'step-02-identify-targets-epic18', 'step-03-generate-tests-epic18', 'step-03c-aggregate-epic18', 'step-04-validate-epic18', 'bmad-testarch-trace-epic18', 'step-01-preflight-and-context-epic19', 'step-02-identify-targets-epic19', 'step-03-generate-tests-epic19', 'step-03c-aggregate-epic19', 'step-04-validate-and-summarize-epic19', 'gap-close-19.1-AC1', 'step-01-preflight-and-context-epic20', 'step-02-identify-targets-epic20', 'step-03-generate-tests-epic20', 'step-03c-aggregate-epic20', 'step-04-validate-and-summarize-epic20', 'bmad-testarch-trace-epic20']
-lastStep: 'bmad-testarch-trace-epic20'
-lastSaved: '2026-06-29'
-lastRunDate: '2026-06-29'
+stepsCompleted: ['step-01-preflight-and-context', 'step-02-identify-targets', 'step-03-generate-tests', 'step-03c-aggregate', 'step-04-validate-and-summarize', 'step-01-preflight-and-context-epic18', 'step-02-identify-targets-epic18', 'step-03-generate-tests-epic18', 'step-03c-aggregate-epic18', 'step-04-validate-epic18', 'bmad-testarch-trace-epic18', 'step-01-preflight-and-context-epic19', 'step-02-identify-targets-epic19', 'step-03-generate-tests-epic19', 'step-03c-aggregate-epic19', 'step-04-validate-and-summarize-epic19', 'gap-close-19.1-AC1', 'step-01-preflight-and-context-epic20', 'step-02-identify-targets-epic20', 'step-03-generate-tests-epic20', 'step-03c-aggregate-epic20', 'step-04-validate-and-summarize-epic20', 'bmad-testarch-trace-epic20', 'step-01-preflight-and-context-epic21', 'step-02-identify-targets-epic21', 'step-03-generate-tests-epic21', 'step-04-validate-and-summarize-epic21']
+lastStep: 'step-04-validate-and-summarize-epic21'
+lastSaved: '2026-07-04'
+lastRunDate: '2026-07-04'
 inputDocuments:
   - pulse_coach/pubspec.yaml
   - pulse_coach/analysis_options.yaml
   - _bmad/tea/config.yaml
   - _bmad-output/project-context.md
-  - _bmad-output/planning-artifacts/prd.md
-  - _bmad-output/planning-artifacts/architecture.md
-  - _bmad-output/planning-artifacts/epics.md
-  - .agents/skills/bmad-testarch-automate/resources/tea-index.csv
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/test-levels-framework.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/test-priorities-matrix.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/data-factories.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/selective-testing.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/ci-burn-in.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/test-quality.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/overview.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/api-request.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/auth-session.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/recurse.md
-  - .agents/skills/bmad-testarch-automate/resources/knowledge/playwright-cli.md
-  - .agents/skills/bmad-testarch-automate/steps-c/step-01-preflight-and-context.md
-  - _bmad-output/test-artifacts/test-design-handoff.md
-  - _bmad-output/test-artifacts/traceability-report.md
-  - all existing test files in pulse_coach/test/
+  - _bmad-output/implementation-artifacts/21-0-shared-session-persistence-and-handle-wiring.md
+  - _bmad-output/implementation-artifacts/21-1-points-system-and-solo-session-scoring.md
+  - _bmad-output/implementation-artifacts/21-2-friends-only-leaderboard-and-rank-freeze.md
+  - _bmad-output/implementation-artifacts/21-3-shared-session-point-bonus-and-counter-metric-monitoring.md
+  - _bmad-output/implementation-artifacts/21-4-shared-session-scoring-sweep-for-drop-out-participants.md
+  - .claude/skills/bmad-testarch-automate/resources/tea-index.csv
+  - .claude/skills/bmad-testarch-automate/resources/knowledge/test-levels-framework.md
+  - .claude/skills/bmad-testarch-automate/resources/knowledge/test-priorities-matrix.md
+  - .claude/skills/bmad-testarch-automate/resources/knowledge/data-factories.md
+  - .claude/skills/bmad-testarch-automate/resources/knowledge/test-quality.md
+  - .claude/skills/bmad-testarch-automate/steps-c/step-01-preflight-and-context.md
+  - all existing test files in pulse_coach/test/ under leaderboard/shared-session scope
+---
+
+# TEA Automation Summary — PulseCoach (Epic 21, 2026-07-04)
+
+## Step 1: Preflight & Context
+
+### Stack Detection
+
+- **Project type**: Flutter/Dart mobile app (`pulse_coach/pubspec.yaml`)
+- **Detected stack**: `flutter/mobile`
+- **Test framework**: `flutter_test` + `bloc_test` + `mockito`
+- **Execution mode**: BMad-Integrated; stories 21.0–21.4 found in `_bmad-output/implementation-artifacts/`
+- **Test directory**: `pulse_coach/test/`
+- **Baseline**: 1315 tests passed, 1 skipped (per story 21.4 commit, 2026-07-04)
+
+### Scope
+
+Epic 21 — Shared-Session Scoring (Stories 21.0–21.4): shared-session persistence, points system + solo scoring, friends-only leaderboard + rank freeze, shared-session point bonus, and the server-side drop-out scoring sweep.
+
+## Step 2: Coverage Analysis & Targets
+
+Read through all Epic 21 production code (`scoring_constants.dart`, `award_session_points_use_case.dart`, `submit_shared_session_result_use_case.dart`, `rank_pinning.dart`, `leaderboard_repository_impl.dart`, `leaderboard_remote_data_source.dart`, `rank_freeze_store.dart`, `leaderboard_bloc.dart`, `leaderboard_row.dart`/`medal_colors.dart`, `rpe_page.dart`) against the existing test files. Prior TEA/ATDD passes on this epic were already unusually thorough (each use case, repository method, and RPE-page branch has dedicated tests). Only 4 real gaps survived scrutiny:
+
+| Test ID | Component | Gap | Priority |
+|---|---|---|---|
+| `21.1-SCORE-004` | `ScoringConstants.intensityWeightFor` | Only the 3 canonical suffixes (`_low`/`_medium`/`_high`) were tested; the fail-safe default branch for an unrecognized suffix (falls through to the high weight) was untested. | P2 |
+| `21.2-BLOC-008` | `LeaderboardBloc._onLoaded` | Protective state + no stored freeze + own entry absent from the live ranking (dropped from friends list) → `ownLive == null`, so `setFrozenRank` must never be called. Untested branch. | P1 |
+| `21.2-BLOC-009` | `LeaderboardBloc._onLoaded` | Protective state + freeze already stored, but own entry absent from *this* fetch → `isFrozen` must flip to `false` even though a stored rank exists. Untested branch. | P1 |
+| `21.2-BLOC-010` | `LeaderboardBloc._onLoaded` | The outer `try/catch` around the DB read + freeze-store writes (added specifically to avoid the bloc getting wedged on `loading` after a race) had no test forcing a throw. | P1 |
+
+### Deferred (not real gaps, by design)
+
+- Story 21.4 (`sweep_unscored_shared_sessions`) is pure server-side plpgsql (pg_cron) — not unit-testable in Dart; already validated live via MCP SQL per the story's dev notes (same pattern as the Epic 19 DB-trigger precedent).
+- `LeaderboardRemoteDataSource._defaultCallSubmitSharedResultRpc`'s best-effort `score_shared_session` edge-function invoke (swallowed try/catch) is intentionally bypassed by test doubles (`callSubmitSharedResultRpc` override) to avoid `Supabase.initialize()` in tests — same convention as every other datasource default-impl in this codebase.
+- `AwardSessionPointsUseCase`'s `basePoints <= 0` guard: the negative-duration branch is arithmetically identical to the already-tested `durationMinutes: 0` case (same guard, same code path) — duplicate coverage, skipped per the Duplicate Coverage Guard.
+
+## Step 3: Generated Tests
+
+| Test ID | File | Description | Priority |
+|---|---|---|---|
+| `21.1-SCORE-004` | `test/domain/social/leaderboard/scoring_constants_test.dart` | Unrecognized armKey suffix → fail-safes to 2.0 (high) | P2 |
+| `21.2-BLOC-008` | `test/bloc/leaderboard_bloc_test.dart` | AtRisk, no stored freeze, own absent from live ranking → `setFrozenRank` never called, `isFrozen: false` | P1 |
+| `21.2-BLOC-009` | `test/bloc/leaderboard_bloc_test.dart` | AtRisk, stored freeze=2, own absent from this fetch → `isFrozen: false` despite stored rank | P1 |
+| `21.2-BLOC-010` | `test/bloc/leaderboard_bloc_test.dart` | `freezeStore.clear()` throws → caught, error state emitted | P1 |
+
+## Step 4: Validation & Final Summary
+
+### Test Execution Results
+
+```
+flutter test test/bloc/leaderboard_bloc_test.dart test/domain/social/leaderboard/scoring_constants_test.dart
+PASS — 15/15 tests passed
+
+flutter analyze
+PASS — No issues found
+
+flutter test
+PASS — 1319/1320 tests passed, 1 skipped (pre-existing Story 21.3 baseline skip, zero regressions)
+```
+
+### Files Modified
+
+| File | Change |
+|---|---|
+| `pulse_coach/test/domain/social/leaderboard/scoring_constants_test.dart` | +1 test (21.1-SCORE-004) |
+| `pulse_coach/test/bloc/leaderboard_bloc_test.dart` | +3 tests (21.2-BLOC-008/009/010) |
+| `_bmad-output/test-artifacts/automation-summary.md` | Registered this run |
+
+### Final Test Count
+
+| Milestone | Count |
+|---|---|
+| Epic 21 baseline (post story-21.4 commit) | 1315 passed, 1 skipped |
+| **After this TEA run (+4)** | **1319 passed, 1 skipped** |
+
+### Checklist Validation (Flutter-adapted)
+
+| Check | Status |
+|---|---|
+| Framework ready (`flutter_test`, `bloc_test`, `mockito`) | PASS |
+| BMad-Integrated mode — stories 21.0–21.4 loaded | PASS |
+| Duplicate coverage avoided (negative-duration case skipped) | PASS |
+| Test levels correct (unit for scoring, bloc for leaderboard freeze logic) | PASS |
+| Deterministic, isolated, no hard waits | PASS |
+| Full suite passing, zero regressions | PASS ✅ |
+
+### Remaining Risks / Notes
+
+- Story 21.4's sweep function remains untestable from Dart by design (server-side cron); its correctness rests on the live MCP SQL validation recorded in the story file, not on this suite.
+- `rpe_page.dart` calling `AwardSessionPointsUseCase`/`SubmitSharedSessionResultUseCase` directly (bypassing a Bloc) is a pre-existing architectural exception from Stories 21.1/21.3, already fully branch-tested in `rpe_page_test.dart` — out of scope for this run.
+
+### Recommended Next Workflow
+
+- `/bmad-testarch-trace` for Epic 21 to fold the new test IDs into the formal traceability matrix.
+
 ---
 
 # TEA Automation Summary — PulseCoach (Epic 20, 2026-06-29)
