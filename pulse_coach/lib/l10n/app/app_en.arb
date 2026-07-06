@@ -20,6 +20,14 @@
   "errorLoadingPlan": "Unable to load the plan.",
   "allDoneTitle": "Great work!",
   "allDoneBody": "All sessions are complete for today.",
+  "activeDaysCaption": "{count, plural, one{1 active day in the last 30} other{{count} active days in the last 30}}",
+  "@activeDaysCaption": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "heroCardSemanticPreamble": "Next session: {displayName}, {durationLabel}",
   "@heroCardSemanticPreamble": {
     "placeholders": {

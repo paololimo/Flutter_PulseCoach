@@ -20,6 +20,7 @@ class TodaySessionState {
   final int totalSessions;
   final Failure? persistenceError;
   final WeatherContext? weatherContext;
+  final int activeDaysCount;
 
   const TodaySessionState({
     this.heroIndex = 0,
@@ -27,6 +28,7 @@ class TodaySessionState {
     this.totalSessions = 0,
     this.persistenceError,
     this.weatherContext,
+    this.activeDaysCount = 0,
   });
 
   int get completedCount => completedIndices.length;
@@ -39,6 +41,7 @@ class TodaySessionState {
     int? totalSessions,
     Object? persistenceError = _sentinel,
     WeatherContext? weatherContext,
+    int? activeDaysCount,
   }) => TodaySessionState(
     heroIndex: heroIndex ?? this.heroIndex,
     completedIndices: completedIndices ?? this.completedIndices,
@@ -47,6 +50,7 @@ class TodaySessionState {
         ? this.persistenceError
         : persistenceError as Failure?,
     weatherContext: weatherContext ?? this.weatherContext,
+    activeDaysCount: activeDaysCount ?? this.activeDaysCount,
   );
 }
 
@@ -54,11 +58,18 @@ class TodaySessionState {
 class TodaySessionCubit extends Cubit<TodaySessionState> {
   final SessionLogsDao _sessionLogsDao;
   final GetWeatherContext _getWeatherContext;
+  // Injectable for tests: makes the 30-day window boundary deterministically
+  // testable without real-clock flakiness (mirrors InSessionCubit's _now).
+  final DateTime Function() _now;
   int? _currentPlanId;
   StreamSubscription<List<SessionLog>>? _logsSubscription;
 
-  TodaySessionCubit(this._sessionLogsDao, this._getWeatherContext)
-    : super(const TodaySessionState());
+  TodaySessionCubit(
+    this._sessionLogsDao,
+    this._getWeatherContext, {
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now,
+       super(const TodaySessionState());
 
   /// Exposes the active plan ID for navigation handoff to InSessionPage.
   int? get currentPlanId => _currentPlanId;
@@ -84,6 +95,41 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
     }
   }
 
+  Future<int> _fetchActiveDaysCount() async {
+    // Mirror _fetchWeather's degradation contract: this is a passive readout,
+    // so any DB failure must degrade to 0 rather than reject planLoaded's
+    // future (which would suppress the core heroIndex/completedIndices emit)
+    // or surface as an unhandled async error on the staleness early-return
+    // paths where activeDaysFuture is never awaited.
+    try {
+      final logs = await _sessionLogsDao.getAllLogsOrderedByDate();
+      return _countActiveDaysInWindow(logs, _now());
+    } catch (e, st) {
+      AppLogger.error(
+        '_fetchActiveDaysCount failed',
+        name: 'TodaySessionCubit',
+        error: e,
+        stackTrace: st,
+      );
+      return 0;
+    }
+  }
+
+  static int _countActiveDaysInWindow(List<SessionLog> logs, DateTime now) {
+    final today = DateTime(now.year, now.month, now.day);
+    final windowStart = today.subtract(const Duration(days: 29));
+    final activeDays = <DateTime>{};
+    for (final log in logs) {
+      if (log.abandoned) continue;
+      final local = log.completedAt.toLocal();
+      final day = DateTime(local.year, local.month, local.day);
+      if (!day.isBefore(windowStart) && !day.isAfter(today)) {
+        activeDays.add(day);
+      }
+    }
+    return activeDays.length;
+  }
+
   Future<void> planLoaded(int totalSessions, int? planId) async {
     // Fire-and-forget so the null-planId branch below stays synchronous on the
     // first emit (avoids a microtask gap that would let a caller's seed() race
@@ -99,6 +145,7 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
 
     _currentPlanId = planId;
     final weatherFuture = _fetchWeather();
+    final activeDaysFuture = _fetchActiveDaysCount();
     final logs = await _sessionLogsDao.getLogsForPlan(planId);
     if (isClosed) return;
     // Discard the result if a newer planLoaded landed while we were awaiting —
@@ -108,6 +155,7 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
     final completed = _completedFromLogs(logs, totalSessions);
     final heroIndex = _pickHeroIndex(completed, totalSessions, after: -1);
     final weather = await weatherFuture;
+    final activeDaysCount = await activeDaysFuture;
     if (isClosed) return;
     if (_currentPlanId != planId) return;
     emit(
@@ -116,6 +164,7 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
         completedIndices: completed,
         totalSessions: totalSessions,
         weatherContext: weather,
+        activeDaysCount: activeDaysCount,
       ),
     );
 
@@ -130,7 +179,11 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
         .listen((logs) => _onLogsChanged(planId, totalSessions, logs));
   }
 
-  void _onLogsChanged(int planId, int totalSessions, List<SessionLog> logs) {
+  Future<void> _onLogsChanged(
+    int planId,
+    int totalSessions,
+    List<SessionLog> logs,
+  ) async {
     if (isClosed || _currentPlanId != planId) return;
     final completed = _completedFromLogs(logs, totalSessions);
     if (setEquals(completed, state.completedIndices)) return;
@@ -139,7 +192,15 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
     final hero = completed.contains(state.heroIndex)
         ? _pickHeroIndex(completed, totalSessions, after: state.heroIndex)
         : state.heroIndex;
-    emit(state.copyWith(completedIndices: completed, heroIndex: hero));
+    final activeDaysCount = await _fetchActiveDaysCount();
+    if (isClosed || _currentPlanId != planId) return;
+    emit(
+      state.copyWith(
+        completedIndices: completed,
+        heroIndex: hero,
+        activeDaysCount: activeDaysCount,
+      ),
+    );
   }
 
   static Set<int> _completedFromLogs(List<SessionLog> logs, int totalSessions) {

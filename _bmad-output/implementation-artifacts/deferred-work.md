@@ -590,3 +590,7 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 ## Deferred from: code review of story-22.1 (2026-07-06)
 
 - `trackWidth <= 0` unguarded in `_MilestonePainter.paint` (`milestone_progress_bar.dart:141`). When available width < 16dp (`2 * _finishMarkerRadius`), `trackWidth = size.width - 16` goes negative, producing a negative-width rail `RRect` and a left-of-origin finish marker. No crash (the `fillWidth > 0` guard suppresses the fill path), and unreachable in the current `InSessionView` layout where the bar sits in a padded bounded `Column`/`Expanded`. Robustness-only — add a `trackWidth <= 0` early-return if the widget is ever reused in a tighter container.
+
+## Deferred from: code review of story-22.3 (2026-07-07)
+
+- Live update in `TodaySessionCubit._onLogsChanged` is narrower than "any completion": the `setEquals` early-return precedes the `activeDaysCount` recompute, so a completion that doesn't change the current plan's completed-index set — or a shared-session completion (`dailyPlanId == null`, never observed by `watchLogsForPlan(planId)`) — won't live-refresh the active-days count until the next `planLoaded`. AC5 is satisfied for the specified hero-session-completion scenario. Broadening would require a full-table query on every no-op log event or a new subscription the story explicitly forbids.

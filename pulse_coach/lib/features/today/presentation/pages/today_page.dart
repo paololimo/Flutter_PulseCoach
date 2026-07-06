@@ -14,6 +14,7 @@ import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart'
 import 'package:pulse_coach/features/session/domain/entities/session_start_args.dart';
 import 'package:pulse_coach/features/session/presentation/utils/session_step_generator.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
+import 'package:pulse_coach/features/today/presentation/widgets/active_days_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/compact_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/completed_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/completion_ring.dart';
@@ -171,6 +172,8 @@ class TodayPage extends StatelessWidget {
                           },
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      ActiveDaysCard(count: sessionState.activeDaysCount),
                       if (upcomingEntries.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Text(

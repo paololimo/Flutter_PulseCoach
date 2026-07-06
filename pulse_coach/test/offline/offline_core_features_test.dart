@@ -515,6 +515,9 @@ class _ThrowingTodaySessionLogsDao extends Fake implements SessionLogsDao {
   Future<List<SessionLog>> getLogsForPlan(int planId) async => [];
 
   @override
+  Future<List<SessionLog>> getAllLogsOrderedByDate() async => [];
+
+  @override
   Stream<List<SessionLog>> watchLogsForPlan(int planId) =>
       const Stream<List<SessionLog>>.empty();
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
 import 'package:drift/drift.dart' hide isNotNull, isNull;
@@ -19,8 +21,8 @@ void main() {
   late MockSessionLogsDao sessionLogsDao;
   late MockGetWeatherContext getWeatherContext;
 
-  TodaySessionCubit buildCubit() =>
-      TodaySessionCubit(sessionLogsDao, getWeatherContext);
+  TodaySessionCubit buildCubit({DateTime Function()? now}) =>
+      TodaySessionCubit(sessionLogsDao, getWeatherContext, now: now);
 
   setUp(() {
     sessionLogsDao = MockSessionLogsDao();
@@ -28,6 +30,9 @@ void main() {
     when(sessionLogsDao.getLogsForPlan(any)).thenAnswer((_) async => []);
     when(sessionLogsDao.insertLog(any)).thenAnswer((_) async => 1);
     when(sessionLogsDao.upsertCompletion(any)).thenAnswer((_) async => 1);
+    when(
+      sessionLogsDao.getAllLogsOrderedByDate(),
+    ).thenAnswer((_) async => []);
     when(
       sessionLogsDao.watchLogsForPlan(any),
     ).thenAnswer((_) => const Stream<List<SessionLog>>.empty());
@@ -464,8 +469,182 @@ void main() {
         verifyNever(getWeatherContext());
       },
     );
+
+    final fixedNow = DateTime(2026, 7, 6, 9, 30);
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.3-CUBIT-001: logs on 3 distinct days within the last 30 → '
+      'activeDaysCount == 3',
+      build: () {
+        when(sessionLogsDao.getAllLogsOrderedByDate()).thenAnswer(
+          (_) async => [
+            _logAt(planId: 20, sessionIndex: 0, completedAt: fixedNow),
+            _logAt(
+              planId: 20,
+              sessionIndex: 1,
+              completedAt: DateTime(2026, 7, 1, 8),
+            ),
+            _logAt(
+              planId: 20,
+              sessionIndex: 2,
+              completedAt: DateTime(2026, 6, 10, 18),
+            ),
+          ],
+        );
+        return buildCubit(now: () => fixedNow);
+      },
+      act: (cubit) => cubit.planLoaded(3, 20),
+      expect: () => [
+        isA<TodaySessionState>().having(
+          (state) => state.activeDaysCount,
+          'activeDaysCount',
+          3,
+        ),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.3-CUBIT-002: two logs on the same calendar day count once',
+      build: () {
+        when(sessionLogsDao.getAllLogsOrderedByDate()).thenAnswer(
+          (_) async => [
+            _logAt(
+              planId: 20,
+              sessionIndex: 0,
+              completedAt: DateTime(2026, 7, 6, 8),
+            ),
+            _logAt(
+              planId: 20,
+              sessionIndex: 1,
+              completedAt: DateTime(2026, 7, 6, 20),
+            ),
+          ],
+        );
+        return buildCubit(now: () => fixedNow);
+      },
+      act: (cubit) => cubit.planLoaded(3, 20),
+      expect: () => [
+        isA<TodaySessionState>().having(
+          (state) => state.activeDaysCount,
+          'activeDaysCount',
+          1,
+        ),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.3-CUBIT-003: a log 29 days before now is included; 30 days '
+      'before is excluded (trailing-30-day boundary)',
+      build: () {
+        when(sessionLogsDao.getAllLogsOrderedByDate()).thenAnswer(
+          (_) async => [
+            _logAt(
+              planId: 20,
+              sessionIndex: 0,
+              completedAt: DateTime(2026, 6, 7, 10),
+            ),
+            _logAt(
+              planId: 20,
+              sessionIndex: 1,
+              completedAt: DateTime(2026, 6, 6, 10),
+            ),
+          ],
+        );
+        return buildCubit(now: () => fixedNow);
+      },
+      act: (cubit) => cubit.planLoaded(3, 20),
+      expect: () => [
+        isA<TodaySessionState>().having(
+          (state) => state.activeDaysCount,
+          'activeDaysCount',
+          1,
+        ),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.3-CUBIT-004: an abandoned log does not count toward activeDaysCount',
+      build: () {
+        when(sessionLogsDao.getAllLogsOrderedByDate()).thenAnswer(
+          (_) async => [
+            _logAt(
+              planId: 20,
+              sessionIndex: 0,
+              completedAt: fixedNow,
+              abandoned: true,
+            ),
+          ],
+        );
+        return buildCubit(now: () => fixedNow);
+      },
+      act: (cubit) => cubit.planLoaded(3, 20),
+      expect: () => [
+        isA<TodaySessionState>().having(
+          (state) => state.activeDaysCount,
+          'activeDaysCount',
+          0,
+        ),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.3-CUBIT-005: planLoaded(n, null) never calls '
+      'getAllLogsOrderedByDate; activeDaysCount stays 0',
+      build: buildCubit,
+      act: (cubit) => cubit.planLoaded(3, null),
+      expect: () => [
+        isA<TodaySessionState>().having(
+          (state) => state.activeDaysCount,
+          'activeDaysCount',
+          0,
+        ),
+      ],
+      verify: (_) {
+        verifyNever(sessionLogsDao.getAllLogsOrderedByDate());
+      },
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.3-CUBIT-006: a live logs-stream update recomputes activeDaysCount',
+      build: () {
+        final controller = StreamController<List<SessionLog>>();
+        addTearDown(controller.close);
+        when(
+          sessionLogsDao.watchLogsForPlan(20),
+        ).thenAnswer((_) => controller.stream);
+        _liveLogsController = controller;
+        return buildCubit(now: () => fixedNow);
+      },
+      act: (cubit) async {
+        await cubit.planLoaded(3, 20);
+        // The cubit's subscription applies `.skip(1)`, so the first event
+        // is dropped — it exists only to satisfy that skip.
+        _liveLogsController.add(const []);
+        when(sessionLogsDao.getAllLogsOrderedByDate()).thenAnswer(
+          (_) async => [
+            _logAt(planId: 20, sessionIndex: 0, completedAt: fixedNow),
+          ],
+        );
+        _liveLogsController.add([_log(planId: 20, sessionIndex: 0)]);
+        await Future<void>.delayed(Duration.zero);
+      },
+      expect: () => [
+        isA<TodaySessionState>().having(
+          (state) => state.activeDaysCount,
+          'activeDaysCount',
+          0,
+        ),
+        isA<TodaySessionState>().having(
+          (state) => state.activeDaysCount,
+          'activeDaysCount',
+          1,
+        ),
+      ],
+    );
   });
 }
+
+late StreamController<List<SessionLog>> _liveLogsController;
 
 WeatherContext _weather() => WeatherContext(
   temperature: 15.0,
@@ -486,6 +665,22 @@ SessionLog _log({
     sessionIndex: sessionIndex,
     completedAt: now,
     createdAt: now,
+    abandoned: abandoned,
+  );
+}
+
+SessionLog _logAt({
+  required int planId,
+  required int sessionIndex,
+  required DateTime completedAt,
+  bool abandoned = false,
+}) {
+  return SessionLog(
+    id: sessionIndex + 1,
+    dailyPlanId: planId,
+    sessionIndex: sessionIndex,
+    completedAt: completedAt,
+    createdAt: completedAt,
     abandoned: abandoned,
   );
 }

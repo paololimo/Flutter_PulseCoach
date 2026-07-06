@@ -20,6 +20,14 @@
   "errorLoadingPlan": "Impossibile caricare il piano.",
   "allDoneTitle": "Ottimo lavoro!",
   "allDoneBody": "Tutte le sessioni completate per oggi.",
+  "activeDaysCaption": "{count, plural, one{1 giorno attivo negli ultimi 30} other{{count} giorni attivi negli ultimi 30}}",
+  "@activeDaysCaption": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "heroCardSemanticPreamble": "Prossima sessione: {displayName}, {durationLabel}",
   "@heroCardSemanticPreamble": {
     "placeholders": {
