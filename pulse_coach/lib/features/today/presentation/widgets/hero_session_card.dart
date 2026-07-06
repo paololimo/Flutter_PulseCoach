@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
+import 'package:pulse_coach/features/today/presentation/widgets/factor_icon_row.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
+import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class HeroSessionCard extends StatelessWidget {
@@ -10,6 +12,7 @@ class HeroSessionCard extends StatelessWidget {
   final VoidCallback? onStart;
   final String? heroTag;
   final VoidCallback? onRegenerate;
+  final WeatherContext? weatherContext;
 
   const HeroSessionCard({
     super.key,
@@ -17,6 +20,7 @@ class HeroSessionCard extends StatelessWidget {
     this.onStart,
     this.heroTag,
     this.onRegenerate,
+    this.weatherContext,
   });
 
   @override
@@ -140,6 +144,8 @@ class HeroSessionCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 8),
+                FactorIconRow(session: session, weather: weatherContext),
               ],
               const SizedBox(height: 16),
               SizedBox(

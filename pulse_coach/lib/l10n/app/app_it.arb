@@ -74,6 +74,16 @@
   "intensityLow": "Leggera",
   "intensityMedium": "Moderata",
   "intensityHigh": "Intensa",
+  "factorLabelTemperature": "Temperatura: {value}°",
+  "@factorLabelTemperature": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "factorLabelPrecipitation": "Possibilità di pioggia",
+  "factorLabelAqi": "Qualità dell'aria non ottimale",
   "countdownSemanticAnnounce": "Inizia tra {count}",
   "@countdownSemanticAnnounce": {
     "placeholders": {

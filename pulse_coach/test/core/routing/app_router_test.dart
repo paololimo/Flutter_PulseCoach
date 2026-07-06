@@ -2,12 +2,14 @@
 // Tests the onboarding gate: no profile → /onboarding, profile → /today
 // Strategy: pump PulseCoachApp with controlled database state,
 // let GoRouter redirect settle, then assert the correct page renders.
+import 'package:dartz/dartz.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/daily_plan.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
@@ -29,6 +31,9 @@ import 'package:pulse_coach/features/onboarding/presentation/bloc/profile_cubit.
 import 'package:pulse_coach/features/settings/presentation/bloc/locale_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
+import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart';
+import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart';
+import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<SharedPreferences> _testThemePrefs() async {
@@ -72,7 +77,10 @@ void _registerOnboardingDeps() {
 void _registerTodayDeps() {
   getIt.registerFactory<DailyPlanBloc>(() => _StubDailyPlanBloc());
   getIt.registerFactory<TodaySessionCubit>(
-    () => TodaySessionCubit(getIt<AppDatabase>().sessionLogsDao),
+    () => TodaySessionCubit(
+      getIt<AppDatabase>().sessionLogsDao,
+      GetWeatherContext(_FakeWeatherRepository()),
+    ),
   );
 }
 
@@ -320,6 +328,12 @@ class _StubDailyPlanBloc extends Bloc<DailyPlanEvent, DailyPlanState>
     on<DailyPlanGenerateRequested>((event, emit) {});
     on<DailyPlanRegenerateRequested>((event, emit) {});
   }
+}
+
+class _FakeWeatherRepository implements WeatherRepository {
+  @override
+  Future<Either<Failure, WeatherContext>> getWeatherContext() async =>
+      const Left(ServerFailure('not_available_in_test'));
 }
 
 DailyPlan _todayPlan() => DailyPlan(

@@ -5,12 +5,18 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i6;
 
+import 'package:dartz/dartz.dart' as _i7;
 import 'package:drift/drift.dart' as _i3;
 import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i7;
+import 'package:mockito/src/dummies.dart' as _i8;
 import 'package:pulse_coach/core/database/app_database.dart' as _i2;
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart' as _i5;
+import 'package:pulse_coach/core/error/failures.dart' as _i10;
+import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart'
+    as _i11;
+import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart'
+    as _i9;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -133,6 +139,11 @@ class _FakeGenerationContext_17 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
+class _FakeEither_18<L, R> extends _i1.SmartFake implements _i7.Either<L, R> {
+  _FakeEither_18(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
 /// A class which mocks [SessionLogsDao].
 ///
 /// See the documentation for Mockito's code generation for more information.
@@ -178,7 +189,7 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
   _i3.SqlTypes get typeMapping =>
       (super.noSuchMethod(
             Invocation.getter(#typeMapping),
-            returnValue: _i7.dummyValue<_i3.SqlTypes>(
+            returnValue: _i8.dummyValue<_i3.SqlTypes>(
               this,
               Invocation.getter(#typeMapping),
             ),
@@ -333,7 +344,7 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
   T alias<T, D>(_i3.ResultSetImplementation<T, D>? table, String? alias) =>
       (super.noSuchMethod(
             Invocation.method(#alias, [table, alias]),
-            returnValue: _i7.dummyValue<T>(
+            returnValue: _i8.dummyValue<T>(
               this,
               Invocation.method(#alias, [table, alias]),
             ),
@@ -370,8 +381,8 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
       (super.noSuchMethod(
             Invocation.method(#doWhenOpened, [fn]),
             returnValue:
-                _i7.ifNotNull(
-                  _i7.dummyValueOrNull<T>(
+                _i8.ifNotNull(
+                  _i8.dummyValueOrNull<T>(
                     this,
                     Invocation.method(#doWhenOpened, [fn]),
                   ),
@@ -586,8 +597,8 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
               {#requireNew: requireNew},
             ),
             returnValue:
-                _i7.ifNotNull(
-                  _i7.dummyValueOrNull<T>(
+                _i8.ifNotNull(
+                  _i8.dummyValueOrNull<T>(
                     this,
                     Invocation.method(
                       #transaction,
@@ -613,8 +624,8 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
       (super.noSuchMethod(
             Invocation.method(#exclusively, [action]),
             returnValue:
-                _i7.ifNotNull(
-                  _i7.dummyValueOrNull<T>(
+                _i8.ifNotNull(
+                  _i8.dummyValueOrNull<T>(
                     this,
                     Invocation.method(#exclusively, [action]),
                   ),
@@ -648,8 +659,8 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
               {#interceptor: interceptor},
             ),
             returnValue:
-                _i7.ifNotNull(
-                  _i7.dummyValueOrNull<T>(
+                _i8.ifNotNull(
+                  _i8.dummyValueOrNull<T>(
                     this,
                     Invocation.method(
                       #runWithInterceptor,
@@ -723,7 +734,7 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
   String $expandVar(int? start, int? amount) =>
       (super.noSuchMethod(
             Invocation.method(#$expandVar, [start, amount]),
-            returnValue: _i7.dummyValue<String>(
+            returnValue: _i8.dummyValue<String>(
               this,
               Invocation.method(#$expandVar, [start, amount]),
             ),
@@ -738,4 +749,27 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
             returnValueForMissingStub: _i6.Future<void>.value(),
           )
           as _i6.Future<void>);
+}
+
+/// A class which mocks [GetWeatherContext].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetWeatherContext extends _i1.Mock implements _i9.GetWeatherContext {
+  MockGetWeatherContext() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i6.Future<_i7.Either<_i10.Failure, _i11.WeatherContext>> call() =>
+      (super.noSuchMethod(
+            Invocation.method(#call, []),
+            returnValue:
+                _i6.Future<_i7.Either<_i10.Failure, _i11.WeatherContext>>.value(
+                  _FakeEither_18<_i10.Failure, _i11.WeatherContext>(
+                    this,
+                    Invocation.method(#call, []),
+                  ),
+                ),
+          )
+          as _i6.Future<_i7.Either<_i10.Failure, _i11.WeatherContext>>);
 }

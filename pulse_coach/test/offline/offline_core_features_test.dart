@@ -33,6 +33,7 @@ import 'package:pulse_coach/features/sessions_catalog/data/datasources/exercise_
 import 'package:pulse_coach/features/sessions_catalog/data/repositories/exercise_repository_impl.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
 import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart';
+import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 
 import 'offline_core_features_test.mocks.dart';
@@ -378,7 +379,10 @@ void main() {
           );
         };
         final dao = _ThrowingTodaySessionLogsDao();
-        final cubit = TodaySessionCubit(dao);
+        final cubit = TodaySessionCubit(
+          dao,
+          GetWeatherContext(weatherRepository),
+        );
         addTearDown(cubit.close);
 
         await cubit.planLoaded(1, 42);

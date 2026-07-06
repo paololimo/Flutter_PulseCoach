@@ -5,15 +5,21 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i6;
 
+import 'package:dartz/dartz.dart' as _i7;
 import 'package:drift/drift.dart' as _i3;
 import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
-import 'package:flutter_bloc/flutter_bloc.dart' as _i9;
+import 'package:flutter_bloc/flutter_bloc.dart' as _i10;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i8;
+import 'package:mockito/src/dummies.dart' as _i9;
 import 'package:pulse_coach/core/database/app_database.dart' as _i2;
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart' as _i5;
+import 'package:pulse_coach/core/error/failures.dart' as _i12;
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart'
-    as _i7;
+    as _i8;
+import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart'
+    as _i13;
+import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart'
+    as _i11;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -136,10 +142,15 @@ class _FakeGenerationContext_17 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
+class _FakeEither_18<L, R> extends _i1.SmartFake implements _i7.Either<L, R> {
+  _FakeEither_18(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
 /// A class which mocks [DailyPlanBloc].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDailyPlanBloc extends _i1.Mock implements _i7.DailyPlanBloc {
+class MockDailyPlanBloc extends _i1.Mock implements _i8.DailyPlanBloc {
   MockDailyPlanBloc() {
     _i1.throwOnMissingStub(this);
   }
@@ -150,46 +161,46 @@ class MockDailyPlanBloc extends _i1.Mock implements _i7.DailyPlanBloc {
           as bool);
 
   @override
-  _i7.DailyPlanState get state =>
+  _i8.DailyPlanState get state =>
       (super.noSuchMethod(
             Invocation.getter(#state),
-            returnValue: _i8.dummyValue<_i7.DailyPlanState>(
+            returnValue: _i9.dummyValue<_i8.DailyPlanState>(
               this,
               Invocation.getter(#state),
             ),
           )
-          as _i7.DailyPlanState);
+          as _i8.DailyPlanState);
 
   @override
-  _i6.Stream<_i7.DailyPlanState> get stream =>
+  _i6.Stream<_i8.DailyPlanState> get stream =>
       (super.noSuchMethod(
             Invocation.getter(#stream),
-            returnValue: _i6.Stream<_i7.DailyPlanState>.empty(),
+            returnValue: _i6.Stream<_i8.DailyPlanState>.empty(),
           )
-          as _i6.Stream<_i7.DailyPlanState>);
+          as _i6.Stream<_i8.DailyPlanState>);
 
   @override
-  void add(_i7.DailyPlanEvent? event) => super.noSuchMethod(
+  void add(_i8.DailyPlanEvent? event) => super.noSuchMethod(
     Invocation.method(#add, [event]),
     returnValueForMissingStub: null,
   );
 
   @override
-  void onEvent(_i7.DailyPlanEvent? event) => super.noSuchMethod(
+  void onEvent(_i8.DailyPlanEvent? event) => super.noSuchMethod(
     Invocation.method(#onEvent, [event]),
     returnValueForMissingStub: null,
   );
 
   @override
-  void emit(_i7.DailyPlanState? state) => super.noSuchMethod(
+  void emit(_i8.DailyPlanState? state) => super.noSuchMethod(
     Invocation.method(#emit, [state]),
     returnValueForMissingStub: null,
   );
 
   @override
-  void on<E extends _i7.DailyPlanEvent>(
-    _i9.EventHandler<E, _i7.DailyPlanState>? handler, {
-    _i9.EventTransformer<E>? transformer,
+  void on<E extends _i8.DailyPlanEvent>(
+    _i10.EventHandler<E, _i8.DailyPlanState>? handler, {
+    _i10.EventTransformer<E>? transformer,
   }) => super.noSuchMethod(
     Invocation.method(#on, [handler], {#transformer: transformer}),
     returnValueForMissingStub: null,
@@ -197,7 +208,7 @@ class MockDailyPlanBloc extends _i1.Mock implements _i7.DailyPlanBloc {
 
   @override
   void onTransition(
-    _i9.Transition<_i7.DailyPlanEvent, _i7.DailyPlanState>? transition,
+    _i10.Transition<_i8.DailyPlanEvent, _i8.DailyPlanState>? transition,
   ) => super.noSuchMethod(
     Invocation.method(#onTransition, [transition]),
     returnValueForMissingStub: null,
@@ -205,7 +216,7 @@ class MockDailyPlanBloc extends _i1.Mock implements _i7.DailyPlanBloc {
 
   @override
   void onDone(
-    _i7.DailyPlanEvent? event, [
+    _i8.DailyPlanEvent? event, [
     Object? error,
     StackTrace? stackTrace,
   ]) => super.noSuchMethod(
@@ -223,7 +234,7 @@ class MockDailyPlanBloc extends _i1.Mock implements _i7.DailyPlanBloc {
           as _i6.Future<void>);
 
   @override
-  void onChange(_i9.Change<_i7.DailyPlanState>? change) => super.noSuchMethod(
+  void onChange(_i10.Change<_i8.DailyPlanState>? change) => super.noSuchMethod(
     Invocation.method(#onChange, [change]),
     returnValueForMissingStub: null,
   );
@@ -286,7 +297,7 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
   _i3.SqlTypes get typeMapping =>
       (super.noSuchMethod(
             Invocation.getter(#typeMapping),
-            returnValue: _i8.dummyValue<_i3.SqlTypes>(
+            returnValue: _i9.dummyValue<_i3.SqlTypes>(
               this,
               Invocation.getter(#typeMapping),
             ),
@@ -441,7 +452,7 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
   T alias<T, D>(_i3.ResultSetImplementation<T, D>? table, String? alias) =>
       (super.noSuchMethod(
             Invocation.method(#alias, [table, alias]),
-            returnValue: _i8.dummyValue<T>(
+            returnValue: _i9.dummyValue<T>(
               this,
               Invocation.method(#alias, [table, alias]),
             ),
@@ -478,8 +489,8 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
       (super.noSuchMethod(
             Invocation.method(#doWhenOpened, [fn]),
             returnValue:
-                _i8.ifNotNull(
-                  _i8.dummyValueOrNull<T>(
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
                     this,
                     Invocation.method(#doWhenOpened, [fn]),
                   ),
@@ -694,8 +705,8 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
               {#requireNew: requireNew},
             ),
             returnValue:
-                _i8.ifNotNull(
-                  _i8.dummyValueOrNull<T>(
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
                     this,
                     Invocation.method(
                       #transaction,
@@ -721,8 +732,8 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
       (super.noSuchMethod(
             Invocation.method(#exclusively, [action]),
             returnValue:
-                _i8.ifNotNull(
-                  _i8.dummyValueOrNull<T>(
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
                     this,
                     Invocation.method(#exclusively, [action]),
                   ),
@@ -756,8 +767,8 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
               {#interceptor: interceptor},
             ),
             returnValue:
-                _i8.ifNotNull(
-                  _i8.dummyValueOrNull<T>(
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
                     this,
                     Invocation.method(
                       #runWithInterceptor,
@@ -831,7 +842,7 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
   String $expandVar(int? start, int? amount) =>
       (super.noSuchMethod(
             Invocation.method(#$expandVar, [start, amount]),
-            returnValue: _i8.dummyValue<String>(
+            returnValue: _i9.dummyValue<String>(
               this,
               Invocation.method(#$expandVar, [start, amount]),
             ),
@@ -846,4 +857,27 @@ class MockSessionLogsDao extends _i1.Mock implements _i5.SessionLogsDao {
             returnValueForMissingStub: _i6.Future<void>.value(),
           )
           as _i6.Future<void>);
+}
+
+/// A class which mocks [GetWeatherContext].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetWeatherContext extends _i1.Mock implements _i11.GetWeatherContext {
+  MockGetWeatherContext() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i6.Future<_i7.Either<_i12.Failure, _i13.WeatherContext>> call() =>
+      (super.noSuchMethod(
+            Invocation.method(#call, []),
+            returnValue:
+                _i6.Future<_i7.Either<_i12.Failure, _i13.WeatherContext>>.value(
+                  _FakeEither_18<_i12.Failure, _i13.WeatherContext>(
+                    this,
+                    Invocation.method(#call, []),
+                  ),
+                ),
+          )
+          as _i6.Future<_i7.Either<_i12.Failure, _i13.WeatherContext>>);
 }

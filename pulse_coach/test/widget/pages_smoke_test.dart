@@ -73,6 +73,9 @@ import 'package:pulse_coach/features/settings/presentation/pages/privacy_page.da
 import 'package:pulse_coach/features/settings/presentation/pages/settings_page.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
 import 'package:pulse_coach/features/today/presentation/pages/today_page.dart';
+import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart';
+import 'package:pulse_coach/features/weather/domain/repositories/weather_repository.dart';
+import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -373,10 +376,20 @@ TodaySessionCubit _todaySessionCubit(int totalSessions) {
   return cubit;
 }
 
+class _FakeWeatherRepository implements WeatherRepository {
+  @override
+  Future<Either<Failure, WeatherContext>> getWeatherContext() async =>
+      const Left(ServerFailure('not_available_in_test'));
+}
+
 class _TestingTodaySessionCubit extends TodaySessionCubit {
   final AppDatabase _db;
 
-  _TestingTodaySessionCubit(this._db) : super(_db.sessionLogsDao);
+  _TestingTodaySessionCubit(this._db)
+    : super(
+        _db.sessionLogsDao,
+        GetWeatherContext(_FakeWeatherRepository()),
+      );
 
   @override
   Future<void> close() async {

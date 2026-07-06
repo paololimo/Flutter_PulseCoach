@@ -4,8 +4,10 @@ import 'package:pulse_coach/core/theme/app_theme.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/compact_session_card.dart';
+import 'package:pulse_coach/features/today/presentation/widgets/factor_icon_row.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/hero_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
+import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
@@ -287,6 +289,41 @@ void main() {
 
       expect(taps, equals(1));
     });
+  });
+
+  group('HeroSessionCard FactorIconRow wiring (Story 22.2)', () {
+    testWidgets(
+      '22.2-HERO-001: weatherContext passed with isAqiHigh=true is forwarded to FactorIconRow',
+      (tester) async {
+        final weather = WeatherContext(
+          temperature: 18.0,
+          precipitationProbability: 10.0,
+          aqiValue: 120,
+          cachedAt: DateTime(2026, 7, 6),
+        );
+
+        await tester.pumpWidget(
+          _wrap(
+            HeroSessionCard(session: _session(), weatherContext: weather),
+          ),
+        );
+
+        final factorIconRow = tester.widget<FactorIconRow>(
+          find.byType(FactorIconRow),
+        );
+        expect(factorIconRow.weather, same(weather));
+      },
+    );
+
+    testWidgets(
+      '22.2-HERO-002: weatherContext omitted (existing call sites) still renders without exception',
+      (tester) async {
+        await tester.pumpWidget(_wrap(HeroSessionCard(session: _session())));
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(FactorIconRow), findsOneWidget);
+      },
+    );
   });
 
   group('CompactSessionCard content (AC3)', () {

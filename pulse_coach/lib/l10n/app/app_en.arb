@@ -74,6 +74,16 @@
   "intensityLow": "Light",
   "intensityMedium": "Moderate",
   "intensityHigh": "Intense",
+  "factorLabelTemperature": "Temperature: {value}°",
+  "@factorLabelTemperature": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "factorLabelPrecipitation": "Chance of rain",
+  "factorLabelAqi": "Air quality not ideal",
   "countdownSemanticAnnounce": "Starting in {count}",
   "@countdownSemanticAnnounce": {
     "placeholders": {

@@ -20,6 +20,7 @@ import 'package:pulse_coach/features/today/presentation/widgets/completion_ring.
 import 'package:pulse_coach/features/today/presentation/widgets/hero_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/state_indicator.dart';
+import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
@@ -158,6 +159,7 @@ class TodayPage extends StatelessWidget {
                           ),
                           plan: plan,
                           heroIndex: heroIndex,
+                          weatherContext: sessionState.weatherContext,
                           onRegenerate: () {
                             final bloc = context.read<DailyPlanBloc>();
                             // Guard against rapid double-taps while
@@ -234,12 +236,14 @@ class _HeroZone extends StatelessWidget {
   final DailyPlan plan;
   final int heroIndex;
   final VoidCallback? onRegenerate;
+  final WeatherContext? weatherContext;
 
   const _HeroZone({
     super.key,
     required this.plan,
     required this.heroIndex,
     this.onRegenerate,
+    this.weatherContext,
   });
 
   @override
@@ -261,6 +265,7 @@ class _HeroZone extends StatelessWidget {
         ),
       ),
       onRegenerate: onRegenerate,
+      weatherContext: weatherContext,
     );
   }
 }

@@ -465,9 +465,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i227.BehavioralStateDao>(),
       ),
     );
-    gh.factory<_i491.TodaySessionCubit>(
-      () => _i491.TodaySessionCubit(gh<_i30.SessionLogsDao>()),
-    );
     gh.factory<_i123.SharedSessionRepository>(
       () => _i195.SharedSessionRepositoryImpl(
         gh<_i473.SharedSessionRemoteDataSource>(),
@@ -827,6 +824,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i584.GetFriendsLeaderboardUseCase>(),
         gh<_i808.RankFreezeStore>(),
         gh<_i79.AppDatabase>(),
+      ),
+    );
+    gh.factory<_i491.TodaySessionCubit>(
+      () => _i491.TodaySessionCubit(
+        gh<_i30.SessionLogsDao>(),
+        gh<_i664.GetWeatherContext>(),
       ),
     );
     gh.factory<_i412.AuthBloc>(

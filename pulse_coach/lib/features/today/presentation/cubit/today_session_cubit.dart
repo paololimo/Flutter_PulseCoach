@@ -9,6 +9,8 @@ import 'package:pulse_coach/core/database/app_database.dart'
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/logging/app_logger.dart';
+import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart';
+import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart';
 
 const Object _sentinel = Object();
 
@@ -17,12 +19,14 @@ class TodaySessionState {
   final Set<int> completedIndices;
   final int totalSessions;
   final Failure? persistenceError;
+  final WeatherContext? weatherContext;
 
   const TodaySessionState({
     this.heroIndex = 0,
     this.completedIndices = const <int>{},
     this.totalSessions = 0,
     this.persistenceError,
+    this.weatherContext,
   });
 
   int get completedCount => completedIndices.length;
@@ -34,6 +38,7 @@ class TodaySessionState {
     Set<int>? completedIndices,
     int? totalSessions,
     Object? persistenceError = _sentinel,
+    WeatherContext? weatherContext,
   }) => TodaySessionState(
     heroIndex: heroIndex ?? this.heroIndex,
     completedIndices: completedIndices ?? this.completedIndices,
@@ -41,19 +46,43 @@ class TodaySessionState {
     persistenceError: identical(persistenceError, _sentinel)
         ? this.persistenceError
         : persistenceError as Failure?,
+    weatherContext: weatherContext ?? this.weatherContext,
   );
 }
 
 @injectable
 class TodaySessionCubit extends Cubit<TodaySessionState> {
   final SessionLogsDao _sessionLogsDao;
+  final GetWeatherContext _getWeatherContext;
   int? _currentPlanId;
   StreamSubscription<List<SessionLog>>? _logsSubscription;
 
-  TodaySessionCubit(this._sessionLogsDao) : super(const TodaySessionState());
+  TodaySessionCubit(this._sessionLogsDao, this._getWeatherContext)
+    : super(const TodaySessionState());
 
   /// Exposes the active plan ID for navigation handoff to InSessionPage.
   int? get currentPlanId => _currentPlanId;
+
+  Future<WeatherContext?> _fetchWeather() async {
+    // Weather is a purely informational overlay — any failure must degrade to
+    // "no factors", never suppress the core Today emit. Catch both the Left
+    // path AND a thrown exception (geolocator permission/platform error, or a
+    // non-ServerException escaping the repository), so a stray weather glitch
+    // can't take down heroIndex/completedIndices or leave planLoaded's future
+    // rejecting unhandled.
+    try {
+      final result = await _getWeatherContext();
+      return result.fold((_) => null, (w) => w);
+    } catch (e, st) {
+      AppLogger.error(
+        '_fetchWeather failed',
+        name: 'TodaySessionCubit',
+        error: e,
+        stackTrace: st,
+      );
+      return null;
+    }
+  }
 
   Future<void> planLoaded(int totalSessions, int? planId) async {
     // Fire-and-forget so the null-planId branch below stays synchronous on the
@@ -69,6 +98,7 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
     }
 
     _currentPlanId = planId;
+    final weatherFuture = _fetchWeather();
     final logs = await _sessionLogsDao.getLogsForPlan(planId);
     if (isClosed) return;
     // Discard the result if a newer planLoaded landed while we were awaiting —
@@ -77,11 +107,15 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
 
     final completed = _completedFromLogs(logs, totalSessions);
     final heroIndex = _pickHeroIndex(completed, totalSessions, after: -1);
+    final weather = await weatherFuture;
+    if (isClosed) return;
+    if (_currentPlanId != planId) return;
     emit(
       TodaySessionState(
         heroIndex: heroIndex,
         completedIndices: completed,
         totalSessions: totalSessions,
+        weatherContext: weather,
       ),
     );
 

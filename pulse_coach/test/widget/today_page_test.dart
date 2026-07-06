@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,15 +21,17 @@ import 'package:pulse_coach/features/today/presentation/widgets/compact_session_
 import 'package:pulse_coach/features/today/presentation/widgets/completion_ring.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/hero_session_card.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/state_indicator.dart';
+import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 import 'today_page_test.mocks.dart';
 
-@GenerateMocks([DailyPlanBloc, SessionLogsDao])
+@GenerateMocks([DailyPlanBloc, SessionLogsDao, GetWeatherContext])
 void main() {
   late MockDailyPlanBloc dailyPlanBloc;
   late MockSessionLogsDao sessionLogsDao;
+  late MockGetWeatherContext getWeatherContext;
 
   setUpAll(() {
     provideDummy<DailyPlanState>(const DailyPlanState.initial());
@@ -37,8 +40,12 @@ void main() {
   setUp(() {
     dailyPlanBloc = MockDailyPlanBloc();
     sessionLogsDao = MockSessionLogsDao();
+    getWeatherContext = MockGetWeatherContext();
     when(dailyPlanBloc.stream).thenAnswer((_) => const Stream.empty());
     when(dailyPlanBloc.close()).thenAnswer((_) async {});
+    when(
+      getWeatherContext(),
+    ).thenAnswer((_) async => const Left(ServerFailure('not_available_in_test')));
   });
 
   Widget wrap({
@@ -48,7 +55,7 @@ void main() {
   }) {
     when(dailyPlanBloc.state).thenReturn(planState);
 
-    final cubit = _TestingTodaySessionCubit(sessionLogsDao);
+    final cubit = _TestingTodaySessionCubit(sessionLogsDao, getWeatherContext);
     final total = switch (planState) {
       DailyPlanLoaded(:final plan) => plan.sessions.length,
       _ => sessionState?.totalSessions ?? 0,
@@ -76,7 +83,7 @@ void main() {
   Widget wrapWithRouter({required DailyPlanState planState}) {
     when(dailyPlanBloc.state).thenReturn(planState);
 
-    final cubit = _TestingTodaySessionCubit(sessionLogsDao);
+    final cubit = _TestingTodaySessionCubit(sessionLogsDao, getWeatherContext);
     final total = switch (planState) {
       DailyPlanLoaded(:final plan) => plan.sessions.length,
       _ => 0,
@@ -481,7 +488,7 @@ PlannedSession _session({
 );
 
 class _TestingTodaySessionCubit extends TodaySessionCubit {
-  _TestingTodaySessionCubit(super.sessionLogsDao);
+  _TestingTodaySessionCubit(super.sessionLogsDao, super.getWeatherContext);
 
   void seed(TodaySessionState state) => emit(state);
 }

@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:drift/drift.dart' hide isNotNull;
+import 'package:dartz/dartz.dart';
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -8,23 +9,31 @@ import 'package:pulse_coach/core/database/app_database.dart'
 import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart';
+import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart';
+import 'package:pulse_coach/features/weather/domain/usecases/get_weather_context.dart';
 
 import 'today_session_cubit_test.mocks.dart';
 
-@GenerateMocks([SessionLogsDao])
+@GenerateMocks([SessionLogsDao, GetWeatherContext])
 void main() {
   late MockSessionLogsDao sessionLogsDao;
+  late MockGetWeatherContext getWeatherContext;
 
-  TodaySessionCubit buildCubit() => TodaySessionCubit(sessionLogsDao);
+  TodaySessionCubit buildCubit() =>
+      TodaySessionCubit(sessionLogsDao, getWeatherContext);
 
   setUp(() {
     sessionLogsDao = MockSessionLogsDao();
+    getWeatherContext = MockGetWeatherContext();
     when(sessionLogsDao.getLogsForPlan(any)).thenAnswer((_) async => []);
     when(sessionLogsDao.insertLog(any)).thenAnswer((_) async => 1);
     when(sessionLogsDao.upsertCompletion(any)).thenAnswer((_) async => 1);
     when(
       sessionLogsDao.watchLogsForPlan(any),
     ).thenAnswer((_) => const Stream<List<SessionLog>>.empty());
+    when(getWeatherContext()).thenAnswer(
+      (_) async => const Left(ServerFailure('weather_unavailable')),
+    );
   });
 
   group('TodaySessionCubit', () {
@@ -208,7 +217,7 @@ void main() {
         when(
           sessionLogsDao.getLogsForPlan(21),
         ).thenAnswer((_) async => [_log(planId: 21, sessionIndex: 2)]);
-        return TodaySessionCubit(sessionLogsDao);
+        return buildCubit();
       },
       act: (cubit) async {
         await cubit.planLoaded(3, 20);
@@ -412,8 +421,58 @@ void main() {
             .having((state) => state.completedCount, 'completedCount', 2),
       ],
     );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.2-CUBIT-001: planLoaded with weather Right emits that weatherContext',
+      build: () {
+        when(getWeatherContext()).thenAnswer((_) async => Right(_weather()));
+        return buildCubit();
+      },
+      act: (cubit) => cubit.planLoaded(3, 20),
+      expect: () => [
+        isA<TodaySessionState>().having(
+          (state) => state.weatherContext?.temperature,
+          'weatherContext.temperature',
+          _weather().temperature,
+        ),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.2-CUBIT-002: planLoaded with weather Left emits null weatherContext',
+      build: () {
+        when(getWeatherContext()).thenAnswer(
+          (_) async => const Left(ServerFailure('weather_unavailable')),
+        );
+        return buildCubit();
+      },
+      act: (cubit) => cubit.planLoaded(3, 20),
+      expect: () => [
+        isA<TodaySessionState>().having(
+          (state) => state.weatherContext,
+          'weatherContext',
+          isNull,
+        ),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.2-CUBIT-003: planLoaded with null planId never calls GetWeatherContext',
+      build: buildCubit,
+      act: (cubit) => cubit.planLoaded(3, null),
+      verify: (_) {
+        verifyNever(getWeatherContext());
+      },
+    );
   });
 }
+
+WeatherContext _weather() => WeatherContext(
+  temperature: 15.0,
+  precipitationProbability: 10.0,
+  aqiValue: 40,
+  cachedAt: DateTime.utc(2026, 7, 6),
+);
 
 SessionLog _log({
   required int planId,
