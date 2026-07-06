@@ -31,10 +31,16 @@ classification:
   projectContext: "greenfield"
 workflowType: 'prd'
 status: "v2-final"
-updated: "2026-06-20"
+updated: "2026-07-06"
 v2Update:
   date: "2026-06-20"
   signal: "v2 features: navigation fix, accounts + subscriptions, Strava-like social with co-located live shared sessions and friends leaderboard"
+  decisionLog: "_bmad-output/planning-artifacts/.decision-log.md"
+  addendum: "_bmad-output/planning-artifacts/addendum.md"
+v1PolishUpdate:
+  date: "2026-07-06"
+  signal: "v1 Experience Polish: in-session progress milestones + finish flag, ongoing session notification (pause + auto-abandon), Today active-days indicator, decision-factor iconography"
+  requirements: "FR78-FR82, NFR38-NFR39"
   decisionLog: "_bmad-output/planning-artifacts/.decision-log.md"
   addendum: "_bmad-output/planning-artifacts/addendum.md"
 ---
@@ -629,6 +635,16 @@ PulseCoach is a Flutter/Dart cross-platform mobile application targeting Android
 - **FR51:** User can view an AI Decision Log showing bandit decision history (state vector → action → reward)
 - **FR52:** User can export session history and AI decisions as CSV/JSON
 
+### Experience Polish (v1)
+
+Motivational and explanatory UI enhancements layered on the existing v1 core (in-session, Today, explainability). No new AI/domain behavior — presentation-layer polish plus one new platform capability (the ongoing session notification).
+
+- **FR78:** The guided-session progress bar displays intermediate milestone markers at each session-step boundary and a distinct final "finish" marker (checkered flag), giving the user visible checkpoints and a clear end goal as the session advances. Reaching the final marker on completion plays a brief celebratory animation. For single-step sessions (no intermediate boundaries), only the start and finish markers are shown.
+- **FR79:** When the app is backgrounded during an active session, the system posts a session notification showing the session name and paused timer. Tapping the notification returns the user to the paused session — or to Today if the session has already been auto-abandoned per FR80. The notification tolerates user dismissal without orphaning session state (dismissing it does not itself abandon the session). **Platform scope (decision, not assumption):** a live-updating, pinned/ongoing notification is an Android-only capability; iOS does not support it, so on iOS the notification is a one-shot informational post without a guaranteed live-updating timer, while the session still pauses per FR80.
+- **FR80:** On backgrounding during an active session, the session timer pauses (freezes at the current time, shown in the FR79 notification). If the app is not resumed within a configurable inactivity timeout (**default 5 minutes**), the session is abandoned via the existing abandon flow (FR20) and the notification is cancelled; the abandonment is reconciled on the next app resume. Resuming before the timeout expires resumes the paused session and cancels the pending abandon. Rapid background/foreground toggling does not accumulate: each resume cancels the pending timeout and each new backgrounding restarts it.
+- **FR81:** The Today tab displays a calm "active-days" indicator — the number of days **within the trailing 30-day window** (device local timezone) that have at least one completed session — presented as a gentle piece of continuity state, not a streak. The count is **windowed, not consecutive**: a rest day silently ages out of the 30-day window rather than resetting the count to zero, so there is no chain to break and no reset event. After an absence the indicator simply reads a lower value, with no "streak lost" messaging, badge, flame glyph, or reset notification. `[ASSUMPTION]` The active-days count reuses the underlying activity signal already tracked by the behavioral state machine (FR23) rather than introducing a second source of truth.
+- **FR82:** Session explanations (FR13/FR14) are reinforced with animated icons/visual glyphs representing the exercise and the decision factors that drove the recommendation — exercise type, intensity, and the environmental factors already captured (temperature, precipitation, air-quality/AQI). No new environmental data is introduced (humidity explicitly excluded — decided 2026-07-06).
+
 ## Non-Functional Requirements
 
 ### Performance
@@ -671,6 +687,11 @@ PulseCoach is a Flutter/Dart cross-platform mobile application targeting Android
 - **NFR24:** All interactive elements meet minimum touch target size (48x48dp per Material Design guidelines)
 - **NFR25:** Color contrast ratios meet WCAG 2.1 AA minimum (4.5:1 for normal text, 3:1 for large text) in both light and dark mode
 - **NFR26:** Minimum accessibility requirements (NFR24-NFR25) met in MVP; full semantic accessibility (VoiceOver/TalkBack screen reader support) deferred to Growth phase per Product Scope
+
+### Experience Polish (v1)
+
+- **NFR38:** New animated elements (session milestone markers and finish animation per FR78, and decision-factor icons per FR82) honor the NFR2 60fps / ≤ 16ms frame budget and respect the OS "reduce motion" accessibility setting, degrading to static equivalents when reduced motion is enabled. The FR81 active-days indicator carries no bespoke animation beyond the standard card reveal and is therefore intentionally excluded from this list.
+- **NFR39:** The session notification (FR79) exposes only non-sensitive content — session name and timer — and never biometric/HR data, consistent with NFR7. Notification permission is requested with a clear rationale on both platforms (Android 13+ `POST_NOTIFICATIONS`, iOS notification authorization); if denied, the session still pauses in-app per FR80 with no notification, preserving the NFR9 graceful-degradation posture. **Lock-screen visibility (decided 2026-07-06):** the full session name is shown on the lock screen — session names are generic exercise-category labels (mobility / cardio / breathing) with low disclosure sensitivity, and no biometric/HR data ever appears; users needing stricter privacy rely on the OS per-app lock-screen redaction setting.
 
 ---
 

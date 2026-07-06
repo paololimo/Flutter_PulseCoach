@@ -1,11 +1,12 @@
 ---
 name: PulseCoach
-description: Adaptive AI movement companion. Dark-canvas, living-accents. Calm energy, never gym aggression. No streaks, no badges, no exclamation marks. v1 free/offline core + v2 optional accounts, Pro, and calm social.
+description: Adaptive AI movement companion. Dark-canvas, living-accents. Calm energy, never gym aggression. No streak-guilt, no badges, no exclamation marks. v1 free/offline core + v2 optional accounts, Pro, and calm social.
 status: final
-updated: 2026-06-20
+updated: 2026-07-06
 sources:
   - {planning_artifacts}/ux-design-specification.md
   - {planning_artifacts}/prd.md
+  - {planning_artifacts}/addendum.md
   - pulse_coach/lib/core/theme/pulse_coach_theme.dart
 colors:
   surface: '#0F1119'
@@ -101,11 +102,14 @@ components:
   - CompactSessionCard
   - CompletedSessionCard
   - InSessionView
+  - MilestoneProgressBar
   - CountdownOverlay
   - CompletionRing
   - RPEInput
   - StateIndicator
   - ExplanationLine
+  - FactorIconRow
+  - ActiveDaysCard
   - MiniSummary
   - SignInSheet
   - ProUpsellSheet
@@ -124,6 +128,8 @@ components:
 PulseCoach is the calm counter-statement to the fitness category. Where most movement apps shout — bright reds, streak counters, "AMAZING JOB!", push nudges at 10pm — PulseCoach is quiet on purpose. The product decides, explains in one line, executes as a ritual, and resolves itself. The visual language is "Calm meets Oura": a premium wellness companion, not a personal trainer behind glass.
 
 The governing metaphor is **dark canvas, living accents**. The dark surface is a restful canvas; color appears only where action, state, or completion lives. Color is never decorative. Generous whitespace, soft rounded geometry, and a calm motion register carry the brand more than any single element. There is **one emotional temperature across every screen, and it never raises its voice** — no screen is louder or more energetic than another, and that discipline holds even where v2 introduces accounts, a paywall, and social.
+
+**Streak-counter vs. active-days (a deliberate distinction).** The brand rejects the *gym streak counter* — the flame glyph, the don't-break-the-chain mechanic, the reset-shame nudge that weaponizes guilt. It does **not** reject a plain, calm record of continuity. The Today **active-days** indicator (FR81) shows a **rolling 30-day window** count of days with a completed session as a *gentle piece of state* — caption-weight, no flame, no big glowing number, no "you lost your streak" message. Crucially it is **windowed, not consecutive**: a rest day silently ages out of the window rather than snapping the count to zero, so there is no chain to break and no guilt event. After an absence it simply reads a lower value. It is continuity made visible, never a chain to protect. *(This reframes FR81's original "consecutive calendar days, resets to zero" definition — see the 2026-07-06 decision log; FR81 needs a matching PRD correct-course.)*
 
 **v2 holds the line.** Accounts, the Pro upsell, friends, and the leaderboard inherit the same calm. The paywall is contextual and silent (never a persistent banner). The leaderboard shows ranking among friends with restrained podium medals — recognition, not a trophy room. Social adds warmth (training *together*), never competitive pressure.
 
@@ -175,7 +181,7 @@ No all-caps display, no exclamation marks anywhere in type. Section labels like 
 - **Tablet (≥600dp):** 12-column. Today uses a ~60/40 master-detail split (hero left, Coming Up + ring right); Progress uses a dashboard grid; Sessions uses a 2-column card grid per category.
 - **In-session (any):** single centered column, no grid — focused and immersive.
 
-**Today (phone) vertical rhythm:** State bar → Hero card (above the fold, zero-scroll) → COMING UP list → CompletionRing (secondary). The first/hero session is always visible without scrolling; the rest require a light scroll by design.
+**Today (phone) vertical rhythm:** State bar → Hero card (above the fold, zero-scroll) → ActiveDaysCard → COMING UP list → CompletionRing (secondary). The first/hero session is always visible without scrolling; the ActiveDaysCard and the rest require a light scroll by design (the calm active-days count is intentionally *not* competing with the hero above the fold).
 
 ## Elevation & Depth
 
@@ -196,15 +202,18 @@ Imagery and Lottie containers follow the corner radius of their card exactly.
 Visual specs. Behavioral rules live in `EXPERIENCE.md.Component Patterns`. Rendered key-screen references (Today, In-Session, Social/Leaderboard+Feed, Pro upsell, Shared-session lobby): [`mockups/key-screens.html`](mockups/key-screens.html). The spine wins on conflict with any mock.
 
 **v1 — Core (custom, identity-defining):**
-- **HeroSessionCard** — `surface-container`, `rounded/card`, soft gradient hero wash. Holds StateIndicator badge (top-left), Lottie session-type icon (top-right, 32dp), title (H2), meta row (duration · indoor/outdoor · intensity, caption), ExplanationLine (always visible), and a full-width primary Start button.
+- **HeroSessionCard** — `surface-container`, `rounded/card`, soft gradient hero wash. Holds StateIndicator badge (top-left), Lottie session-type icon (top-right, 32dp), title (H2), meta row (duration · indoor/outdoor · intensity, caption), ExplanationLine (always visible), the FactorIconRow directly beneath it, and a full-width primary Start button.
 - **CompactSessionCard** — `surface-container`, 56dp tall. Session-type dot + title + meta (caption) + chevron. The "COMING UP" list item.
 - **CompletedSessionCard** — muted (`on-surface-variant`), checkmark, no Start. Stays visible (progress made visible), excluded from focus order.
-- **InSessionView** — full-screen `surface`, no AppBar/nav. Centered Timer Display (Mono 48), current step (H2 + Body), Primary `LinearProgressIndicator`, HR top-right (Mono, coral), "End session" recessive at bottom.
+- **InSessionView** — full-screen `surface`, no AppBar/nav. Centered Timer Display (Mono 48), current step (H2 + Body), the MilestoneProgressBar (replacing the plain Primary `LinearProgressIndicator`), HR top-right (Mono, coral), "End session" recessive at bottom.
+- **MilestoneProgressBar** — the in-session progress track (FR78). A thin `rounded/full` Primary fill over an `on-surface-variant`-at-low-opacity rail. Each **step boundary is a 2dp notch/gap in the Primary fill** (plus an `on-surface-variant` tick on the still-unfilled rail), so a boundary stays visible as the fill passes it — never a same-hue tick lost on the fill (avoids the ~1.6:1 primary-on-primary contrast failure). The **finish marker** is a small neutral end glyph (a soft filled dot / check, **not** a checkered flag — no racing/victory metaphor): `on-surface-variant` **outline** while unreached, becoming an `{on-primary}` **filled** glyph when reached (≥3:1 on the Primary fill), so reached-vs-unreached differs by **shape**, never hue alone. Single-step sessions show only start + finish markers (no intermediate notches). On completion the finish marker **settles quietly into place** (~300–400ms ease-out position/scale) — **no glow, no confetti, no particles, no sound.** The single emotional close of the session is the CompletionRing pulse in the MiniSummary, *not* this marker; the two completion beats must never stack. Reduce-Motion → static filled state (no settle tween).
 - **CountdownOverlay** — full-screen, Countdown numeral (Mono 72) over `surface`. The 3-2-1 ritual; calm, no aggressive color.
 - **CompletionRing** — full-round Primary arc. Small/secondary on Today (shows n/3); its emotional pulse belongs to the post-session summary, not Today.
 - **RPEInput** — single row of 10 full-round buttons (Mono 20). 40dp visual / 48dp target; degrades to two rows of five below ~516dp available width. Selection *is* submission — no submit button.
 - **StateIndicator** — chip-like, state-colored (Active=primary, Fatigued=secondary, AtRisk=tertiary, Recovering=secondary@70%). Always carries a text label beside the color.
 - **ExplanationLine** — Body Small in `on-surface-variant`. The one-line AI reason; styled distinctly but quiet. The product's signature element.
+- **FactorIconRow** — a single quiet row of ~16dp Lucide glyphs (1.5px stroke, `on-surface-variant`) sitting directly under the ExplanationLine on the HeroSessionCard, making the decision factors behind the recommendation visible (FR82): exercise type, intensity, temperature, precipitation, AQI. **Humidity is deliberately excluded** (not captured by `WeatherContext`). Each glyph is tappable to reveal its one-line textual factor; the **visual glyph is ~16dp but its tap target is a ≥48dp transparent hit-area** (the row spaces glyphs so hit-areas don't overlap, and **wraps to a second line** — never truncates — when 5 targets + 2.0× text won't fit the dense hero on a small phone). Icons never carry meaning by shape alone (always a text detail on tap + a semantics label). Only factors that actually influenced the choice are shown — no fixed five-slot row. Purely informational, never an action surface. AQI glyph may tint `{tertiary}` amber when attention-worthy, reusing the AtRisk/attention token; all others stay recessive. (Verify the thin 1.5px glyphs hold ≥3:1 over the hero gradient wash.)
+- **ActiveDaysCard** — small `surface-container`, `rounded/card`, placed directly below the HeroSessionCard on Today (FR81). Holds a Mono count and a caption label of the **windowed** active-days metric: **"N giorni attivi negli ultimi 30"** (a rolling 30-day window, **not** a consecutive-day streak — a rest day silently ages out of the window, it never triggers a reset-to-zero drop). Deliberately calm: caption-weight framing, **no flame glyph, no glowing hero number, no progress-to-next chip, no reset banner**. Reads as gentle continuity state, not a trophy or a chain (see Brand & Style → Streak-counter vs. active-days). A low count renders identically to any other value, without commentary. Caption text ≥ Caption 11sp; exposed as a single semantics node. No animation beyond the standard card reveal.
 - **MiniSummary** — centered auto-dismissing overlay (3s): type + duration + RPE + one feedback line; CompletionRing animates here.
 
 **v1 — Material 3 (structural, theme-tokens only):** `NavigationBar`, `NavigationRail`, `AppBar`, `Card`, `FilterChip`, `FilledButton`, `TextButton`, `BottomSheet`, `Switch`, `SnackBar` (no action button), `Dialog` (destructive only), `LinearProgressIndicator`, `PageView`. **Not used:** Material Icons (→ Lucide), `Slider` (→ RPEInput), `FloatingActionButton`, M2 `BottomNavigationBar`, `TabBar`.
@@ -230,6 +239,8 @@ Visual specs. Behavioral rules live in `EXPERIENCE.md.Component Patterns`. Rende
 | Surface-tint for elevation (3 levels) | Drop shadows for routine hierarchy |
 | Shimmer placeholders matching the content layout | `CircularProgressIndicator` / spinners |
 | Quiet completion: ring closes with a gentle pulse | Confetti, badges, sound, "AMAZING JOB!" |
+| A neutral finish marker that settles quietly at session end (~300–400ms, no glow) | Checkered-flag/victory glyphs, glow, confetti, sound, or two completion beats stacking |
+| Calm windowed active-days count as gentle continuity state | Consecutive-day streaks, reset-to-zero, flame glyphs, don't-break-the-chain |
 | Contextual, silent Pro prompt on locked-feature tap | Persistent paywall banner or proactive popups |
 | Restrained podium medals reusing accent tokens | Metallic-gradient trophies, shine, celebration animation |
 | Friends-only ranking + points | Global boards, biometric detail, "you've been overtaken" |

@@ -1,7 +1,7 @@
 ---
 name: PulseCoach
 status: final
-updated: 2026-06-20
+updated: 2026-07-06
 references: DESIGN.md
 sources:
   - {planning_artifacts}/ux-design-specification.md
@@ -25,7 +25,7 @@ UI system: **Material 3** (`useMaterial3: true`) as structural foundation; custo
 
 | Surface | Reached from | Tier | Purpose |
 |---|---|---|---|
-| **Today** | App open (cold), tab (index 1) | Free | Hero session + COMING UP + CompletionRing. The home. Default landing on every open. |
+| **Today** | App open (cold), tab (index 1) | Free | Hero session (+ FactorIconRow) + ActiveDaysCard + COMING UP + CompletionRing. The home. Default landing on every open. |
 | **Sessions** | Tab | Free | Static catalog by category (Mobility, Cardio, Strength, Breathing). The manual override valve. |
 | **Progress** | Tab | Free + Pro | Free: most-recent session + current weekly goal. Pro: full history + all charts. |
 | **Social** *(v2)* | Tab (4th) | Free view / Pro create | Friends & requests, activity feed, leaderboard, friend progress comparison (FR67, friends-only, same no-pressure rules — no biometric detail), shared-session CTA. |
@@ -51,7 +51,8 @@ Microcopy. Brand voice and aesthetic posture live in `DESIGN.md.Brand & Style`. 
 | "Sto usando i dati salvati." (rare, inline, recessive) | "Errore di rete" / "Qualcosa è andato storto" |
 | "Lo storico completo è una funzione Pro." + "non ora" | A persistent "Upgrade!" banner |
 | "Adattata per tutti — intensità più bassa, niente carico sul ginocchio." | "Plan downgraded for group" |
-| Short, complete sentences. State observed, then act. | Streak counts, motivational quotes, urgency. |
+| "4 giorni attivi negli ultimi 30." (windowed state, no chain to protect) | "🔥 4 giorni di fila! Non fermarti ora!" |
+| Short, complete sentences. State observed, then act. | Streak-guilt, don't-break-the-chain urgency, motivational quotes. |
 
 State-driven tone (Today explanation + StateIndicator): Active = neutral/business-as-usual; Fatigued = observational/factual; AtRisk = caring/protective; Recovering = encouraging/competent.
 
@@ -65,12 +66,15 @@ Behavioral. Visual specs live in `DESIGN.md.Components`.
 | **CompactSessionCard** | Today COMING UP | Tap → in-place {HeroSessionCard} swap (no navigation); previous hero animates down into the list. |
 | **StateIndicator** | Today / hero | Reflects behavioral state; always pairs state color with a text label. Read-only. |
 | **ExplanationLine** | Hero / cards | The one-line AI reason. Always visible, never behind a tap. |
+| **FactorIconRow** | Hero (under {ExplanationLine}) | Shows the decision factors that shaped the recommendation (exercise type, intensity, temperature, precipitation, AQI; humidity excluded). Only factors that actually applied are shown. Each glyph taps to reveal its one-line textual factor; the tap target is a **≥48dp transparent hit-area** around the ~16dp glyph, and the row **wraps** (never truncates) when targets + 2.0× text don't fit. Read-only, never an action. Presentation-only over the existing explainability (FR13/FR14) — introduces no new inference. |
+| **ActiveDaysCard** | Today (below hero) | Shows the **windowed** active-days count ("N giorni attivi negli ultimi 30") as calm continuity state — **not a consecutive streak**: a rest day ages out of the rolling window instead of resetting the count to zero, so there is no chain and no guilt event. Reads its current value silently — no reset banner, no "streak lost" copy, no nudge. Single source of truth: the FR23 activity signal already tracked by the behavioral state machine (no parallel counter). Read-only. |
+| **MilestoneProgressBar** | InSessionView | Marks each session-step boundary (as a notch in the fill + rail tick) and the end with a distinct, **neutral** finish marker (soft dot/check, not a flag), giving visible checkpoints and a clear end goal. Single-step sessions show only start + finish. On completion the finish marker **settles quietly** (~300–400ms, **no glow**); Reduce-Motion → static. The single emotional close is the {CompletionRing} pulse in {MiniSummary} — the two beats never stack. No confetti, no sound. |
 | **JoinCodeCard** *(v2)* | Shared session create | Shows join code + QR for in-person join. No expiry countdown pressure; refreshable. |
 | **CompletedSessionCard** | Today | Read-only, stays visible (progress made visible). Excluded from focus order. |
 | **RPEInput** | Post-session | One tap = submission. No confirm, no submit. Offered even after abandonment (abandonment is data, not failure). |
 | **CompletionRing** | Today + MiniSummary | Informational on Today (n/3); emotional pulse only in MiniSummary at 3/3. |
 | **CountdownOverlay** | Session start | 3-2-1, non-interruptible, non-skippable (psychological readiness). |
-| **InSessionView** | Session | Linear, zero branching. Auto-advance on timer; haptic on step transition (`HapticFeedback.mediumImpact()`, <200ms, never via Bloc). Only control: recessive "End session". |
+| **InSessionView** | Session | Linear, zero branching. Auto-advance on timer; haptic on step transition (`HapticFeedback.mediumImpact()`, <200ms, never via Bloc). Progress shown via the {MilestoneProgressBar} (step ticks + finish marker). Only control: recessive "End session". |
 | **MiniSummary** | Post-session | Auto-dismiss after 3s → auto-return to Today. No "back", no "what's next" prompt. |
 | **SignInSheet** *(v2)* | Account entry | Optional always. Apple / Google / email. Dismissible; never blocks the free core. |
 | **ProUpsellSheet** *(v2)* | Locked-feature tap | Appears **only** on tapping a Pro feature. One line + `Scopri Pro` + `non ora`, then resolves. No proactive triggers. |
@@ -88,7 +92,7 @@ Behavioral. Visual specs live in `DESIGN.md.Components`.
 | Loading (any async) | Any | Shimmer placeholder matching content. Bloc emits `loading` first. |
 | Empty (day 1 Progress) | Progress | One line: "Completa la prima sessione per vedere i progressi." No illustration, no CTA. |
 | Sensor/API unavailable | Any | Silent degradation. At most a recessive inline "Sto usando i dati salvati." Never modal, never red, never a retry button. |
-| Return after absence | Today | Empathetic state message (Fatigued/AtRisk/Recovering). No welcome banner, no missed-day counter, no streak reset. AtRisk reduces to 2 sessions. |
+| Return after absence | Today | Empathetic state message (Fatigued/AtRisk/Recovering). No welcome banner, no missed-day counter, no streak-reset drama. The {ActiveDaysCard} simply reflects fewer active days in its rolling window — a gentle lower number, never a snap-to-zero reset or "streak lost" copy. AtRisk reduces to 2 sessions. |
 | Error (genuine) | Repository → state | `Left(Failure)` → Bloc `error` state → quiet UI. No exception reaches the UI. |
 | Offline (v2 cloud) | Social / Account | v1 core fully usable. Social/cloud degrade gracefully; sync on next foreground. Surface sync issues only in Settings → Account, never blocking. |
 | Signed-out (v2) | Social / Backup | Calm prompt to sign in at the point of need; never forced. Free core unaffected. |
@@ -105,7 +109,7 @@ Behavioral. Visual specs live in `DESIGN.md.Components`.
 - **Swipe** reserved for secondary actions only (dismiss summary, onboarding advance). No long-press for critical functions.
 - **Haptics** on step transitions only; direct, <200ms.
 - **QR scan / join code** (v2) for friends and shared-session join — in-person, calm, no countdown.
-- **Banned:** streaks, badges, notification re-engagement (v1 has zero push), success toasts, error modals during normal use, "Are you sure?" for non-destructive actions, confetti/celebration, global leaderboards, "you've been overtaken" alerts, persistent paywall banners.
+- **Banned:** streak *mechanics* (flame glyphs, don't-break-the-chain, reset-shame — the calm active-days count in {ActiveDaysCard} is explicitly *not* this), badges, notification re-engagement (v1 has zero push), success toasts, error modals during normal use, "Are you sure?" for non-destructive actions, confetti / celebration theater (the one restrained finish-marker micro-animation in {MilestoneProgressBar} is the sole sanctioned exception), global leaderboards, "you've been overtaken" alerts, persistent paywall banners.
 
 ## Account, Privacy & Consent Patterns *(v2)* `[ASSUMPTION]`
 
@@ -149,11 +153,11 @@ These rules are testable (state is already a first-class on-device signal) and s
 Behavioral. Visual contrast lives in `DESIGN.md`. Target **WCAG 2.1 AA**.
 
 - **Contrast — On Primary (BLOCKER fixed):** the Start button (and any text/icon on aqua `{primary}`) uses `{on-primary}` dark teal (~12:1). White/light-grey on aqua is banned. Behavioral states Fatigued vs Recovering differ only by violet opacity — so the **text label is mandatory** as the disambiguator (never hue alone).
-- **Color independence:** session type, behavioral state, completion (n/3 text), RPE values, and **podium medals** never rely on color alone. Medals carry three redundant cues — **prominent rank number (primary)** + shape-distinct glyph + text label ("1° oro / 2° argento / 3° bronzo") — because silver collides with the disabled grey and amber↔coral collapse under red-green CVD.
+- **Color independence:** session type, behavioral state, completion (n/3 text), RPE values, **podium medals**, and the **FactorIconRow** never rely on color alone. Medals carry three redundant cues — **prominent rank number (primary)** + shape-distinct glyph + text label ("1° oro / 2° argento / 3° bronzo") — because silver collides with the disabled grey and amber↔coral collapse under red-green CVD. Factor icons are shape-distinct Lucide glyphs, each tappable to a text factor and each labeled in the semantics tree; the AQI amber tint is a redundant emphasis, never the sole carrier of the "attention" meaning. On the {MilestoneProgressBar}, step boundaries are notches in the fill (not same-hue ticks that fail contrast on the Primary fill), and reached-vs-unreached on the finish marker is carried by **shape** (outline→filled) with an `{on-primary}` fill ≥3:1, never by hue alone.
 - **Calm ≠ inaudible (silent degradation must stay AT-reachable):** the "silent" degradation, AtRisk session reduction, and group-adaptation reason are *visually* recessive but must be present as **readable text** in the semantics tree (e.g. "Sto usando i dati salvati", "Solo 2 sessioni oggi — riavvio dolce", the group-plan reason). Quiet to the eye, never absent to a screen reader.
-- **Touch targets ≥ 48dp** — incl. v2 surfaces: LeaderboardRow, FriendRow, feed reaction tap, and the JoinCodeCard QR/code action. RPE 40dp visual / 48dp target, two-row degrade <~516dp width (48dp must hold in the degraded layout). Dense rows (LeaderboardRow/FriendRow) wrap rather than truncate at 2.0× text scale.
-- **Screen reader (in-scope for the v2 store launch):** full VoiceOver/TalkBack coverage is a v2 requirement, not deferred. Every custom component wrapped in `Semantics` with explicit labels (see the component semantics map in the source spec); each interactive element labeled with role + state. Live regions for CountdownOverlay, in-session step transitions, **and group-pushed step advances in shared sessions** (BLOCKER fixed). Decorative elements (Lottie, shimmer, ring arc) use `ExcludeSemantics`. v2 social/Pro surfaces (SignInSheet, ProUpsellSheet, LeaderboardRow incl. medal rank, SharedSessionLobby) carry labels from the start.
-- **Reduce Motion:** all durations → 0; countdown becomes static number swap (timing preserved); hero swap and ring update instant; shimmer → static; Lottie → first frame.
+- **Touch targets ≥ 48dp** — incl. the FactorIconRow glyphs (~16dp visual / ≥48dp transparent hit-area, non-overlapping) and v2 surfaces: LeaderboardRow, FriendRow, feed reaction tap, and the JoinCodeCard QR/code action. RPE 40dp visual / 48dp target, two-row degrade <~516dp width (48dp must hold in the degraded layout). Dense rows (LeaderboardRow/FriendRow) **and the FactorIconRow** wrap rather than truncate at 2.0× text scale (the row spills to a second line before it clips or pushes the Start button off the hero).
+- **Screen reader (in-scope for the v2 store launch):** full VoiceOver/TalkBack coverage is a v2 requirement, not deferred. Every custom component wrapped in `Semantics` with explicit labels (see the component semantics map in the source spec); each interactive element labeled with role + state. New v1-polish elements carry labels: each FactorIconRow glyph exposes its textual factor (icon is not the only carrier), the ActiveDaysCard reads its count as text ("N giorni attivi negli ultimi 30"), and the MilestoneProgressBar exposes step position + finish reached; the finish-marker settle animation uses `ExcludeSemantics`. Live regions for CountdownOverlay, in-session step transitions, **and group-pushed step advances in shared sessions** (BLOCKER fixed). Decorative elements (Lottie, shimmer, ring arc) use `ExcludeSemantics`. v2 social/Pro surfaces (SignInSheet, ProUpsellSheet, LeaderboardRow incl. medal rank, SharedSessionLobby) carry labels from the start.
+- **Reduce Motion:** all durations → 0; countdown becomes static number swap (timing preserved); hero swap and ring update instant; shimmer → static; Lottie → first frame; the {MilestoneProgressBar} finish-marker settle → static filled state. (NFR38: milestone notches, finish-marker settle, and factor icons all honor the 60fps / ≤16ms budget and degrade to static equivalents under reduce-motion.)
 - **Text scale** honored to 2.0× without overflow; Timer numerals capped at 2.0×.
 - **Focus traversal** follows reading order on every surface.
 
@@ -171,8 +175,8 @@ Behavioral. Visual contrast lives in `DESIGN.md`. Target **WCAG 2.1 AA**.
 - **Lifted from Duolingo (linear flow):** in-session has no menus, no branching — step → timer → haptic → next.
 - **Lifted from Things 3 (clean resolution):** post-session self-resolves; completion is minimal and final.
 - **Lifted from Headspace (calm ritual):** countdown and transitions are thresholds, not interruptions.
-- **Rejected — streaks / missed-day counters:** weaponize guilt; break the recovery-empathy promise. Absence is physiological data, not failure.
-- **Rejected — celebration theater (confetti/badges/"AMAZING JOB!"):** disproportionate praise patronizes; competence > congratulation.
+- **Rejected — streak *mechanics* / missed-day counters:** flame glyphs, don't-break-the-chain, reset-shame weaponize guilt and break the recovery-empathy promise. Absence is physiological data, not failure. (The calm {ActiveDaysCard} count is continuity made visible — no chain to protect — and is *not* this anti-pattern.)
+- **Rejected — celebration theater (confetti/badges/"AMAZING JOB!"):** disproportionate praise patronizes; competence > congratulation. (The single restrained finish-marker micro-animation in {MilestoneProgressBar} is a quiet checkpoint close, not theater.)
 - **Rejected — aggressive gym aesthetic & multi-metric dashboards (phone):** conflict with calm energy and warmth-over-metrics.
 - **Rejected — push re-engagement nudges:** silence is respect (v1 has none).
 - **v2 guardrail — Strava-style competitive pressure:** adopt the *together* of social (shared sessions, friends), reject the *more* of competition. Leaderboard is friends-only, podium medals are restrained, no global boards, no overtaken alerts. Protect the counter-metrics: gamification must not raise AtRisk-state session starts or push RPE above ≈6.5.
@@ -186,11 +190,11 @@ Behavioral. Visual contrast lives in `DESIGN.md`. Target **WCAG 2.1 AA**.
 4. **Climax:** Today opens with a calibrated hero session and "Partiamo piano — imparo le tue preferenze strada facendo." Zero-to-plan under 90s.
 
 ### Flow 2 — Daily loop (Marco, a gap between meetings) *(v1)*
-1. Open → Today, hero already there with state + explanation.
-2. Tap Start → 3-2-1 countdown → full-screen InSessionView (timer, step, HR, haptics).
-3. Session ends → RPE tap (one touch).
+1. Open → Today, hero already there with state + explanation; the FactorIconRow beneath quietly shows *why* (e.g. indoor + mild temp + clear air).
+2. Tap Start → 3-2-1 countdown → full-screen InSessionView (timer, step, HR, haptics); the MilestoneProgressBar shows step ticks advancing toward the finish flag.
+3. Last step completes → the neutral finish marker settles quietly (no glow, no confetti) → RPE tap (one touch).
 4. 3s MiniSummary (type + duration + RPE + "Fatto. Domani regolo l'intensità.") → auto-return.
-5. **Climax:** next session auto-promotes to hero; ring ticks 1/3. The app resolved itself — Marco did something real in 5 minutes and made no navigation decisions.
+5. **Climax:** the CompletionRing pulse in the MiniSummary is the one emotional close; next session auto-promotes to hero; ring ticks 1/3 and the ActiveDaysCard reads "N giorni attivi negli ultimi 30" as calm state — not a chain to protect. The app resolved itself — Marco did something real in 5 minutes and made no navigation decisions.
 
 ### Flow 3 — Return after absence (Marco, 3 days away) *(v1)*
 1. Open after absence → state check → AtRisk.

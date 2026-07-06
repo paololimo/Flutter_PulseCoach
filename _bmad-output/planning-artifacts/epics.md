@@ -4,6 +4,7 @@ stepsCompleted:
   - "step-02-extract-requirements"
   - "step-03-create-epics-and-stories"
   - "step-03-v2-extend-epics"
+  - "step-03-v3-extend-epics-v1-polish"
 inputDocuments:
   - "_bmad-output/planning-artifacts/prd.md"
   - "_bmad-output/planning-artifacts/architecture.md"
@@ -11,7 +12,11 @@ inputDocuments:
   - "_bmad-output/planning-artifacts/ux-designs/ux-Flutter_PulseCoach-2026-06-20/DESIGN.md"
   - "_bmad-output/planning-artifacts/ux-designs/ux-Flutter_PulseCoach-2026-06-20/EXPERIENCE.md"
   - "_bmad-output/planning-artifacts/addendum.md"
+  - "_bmad-output/planning-artifacts/sprint-change-proposal-2026-07-06.md"
+  - "_bmad-output/planning-artifacts/review-delta-rubric.md"
+  - "_bmad-output/planning-artifacts/review-delta-notification.md"
 v2ExtendedAt: "2026-06-20"
+v3ExtendedAt: "2026-07-06"
 ---
 
 # Flutter_PulseCoach - Epic Breakdown
@@ -120,6 +125,13 @@ FR76: User can view the friends leaderboard ranking
 **v2.1 — In-App Account Deletion (store-blocking, ships with accounts)**
 FR77: User can delete their account and all associated server data from within the app (not only via a web flow); deletion is initiated in-app, confirmed, and cascades per NFR30
 
+**Experience Polish (v1, added 2026-07-06)**
+FR78: The guided-session progress bar shows intermediate milestone markers at each session-step boundary plus a distinct neutral finish marker, playing a brief quiet finish animation on completion; single-step sessions show only start + finish markers
+FR79: When the app is backgrounded during an active session, a session notification shows the session name and paused timer (Android ongoing / best-effort non-dismissible; iOS one-shot informational, no guaranteed live timer); tapping it returns to the paused session — or to Today if already auto-abandoned per FR80 — and dismissing it does not itself abandon the session
+FR80: On backgrounding the session timer pauses (freezes); if not resumed within a configurable inactivity timeout (default 5 min) the session is abandoned via the existing FR20 flow and the notification cancelled, reconciled on next resume/cold start; resuming before timeout cancels the pending abandon; rapid background/foreground toggling does not accumulate (each resume cancels the pending timeout, each backgrounding restarts it)
+FR81: The Today tab displays a calm windowed "active-days" indicator — the number of days within the trailing 30-day window (device-local) with at least one completed session — non-consecutive and non-resetting (a rest day silently ages out, no streak/reset/flame mechanic); reuses the FR23 activity signal as single source of truth
+FR82: Session explanations (FR13/FR14) are reinforced with animated icons/glyphs for the decision factors that drove the recommendation — exercise type, intensity, temperature, precipitation, AQI (humidity deliberately excluded); no new environmental data is introduced
+
 ### NonFunctional Requirements
 
 NFR1: Daily plan generation completes in < 30 seconds from app open, including AI computation on a background thread isolated from the UI thread
@@ -169,6 +181,10 @@ NFR34: Social/cloud features degrade gracefully when offline; the v1 core experi
 
 **Store & Billing Compliance**
 NFR32: Subscription billing complies with App Store and Play Store policies — platform IAP for the Pro subscription; Sign in with Apple offered alongside Google/email per Apple guidelines; required privacy disclosures provided
+
+**Experience Polish (v1, added 2026-07-06)**
+NFR38: New animated elements (FR78 milestone markers + finish animation, FR82 decision-factor icons) honor the NFR2 60fps / ≤ 16ms frame budget and respect the OS "reduce motion" setting, degrading to static equivalents; the FR81 active-days indicator carries no bespoke animation beyond the standard card reveal and is excluded
+NFR39: The FR79 session notification exposes only non-sensitive content (session name + timer), never biometric/HR (consistent with NFR7); notification permission (Android 13+ `POST_NOTIFICATIONS`, iOS authorization) is requested with a clear rationale and degrades gracefully on denial (the session still pauses per FR80 with no notification); the full session name is shown on the lock screen (generic exercise-category labels, low disclosure sensitivity)
 
 ### Additional Requirements (Architecture)
 
@@ -297,6 +313,10 @@ UX-DR33: Accessibility for v2 social components: LeaderboardRow/FriendRow/feed r
 - **Epic 19: Real-Time Session Transport (v2.4a)** — Supabase Realtime Broadcast/Presence channel, RealtimeGateway Dart stream, host-authority step advancement, drop-out tolerance; prerequisite for Epic 20
 - **Epic 20: Co-Located Shared Sessions (v2.4b)** — JoinCodeCard/QR invite, GroupConstraintResolver (pure Dart deterministic rules), momentary co-location check, SharedSessionLobby, per-participant RPE, Protective-State Social Suppression enforcement
 - **Epic 21: Leaderboard & Scoring (v2.5)** — Points system, friends-only leaderboard with medal glyphs, shared-session point bonus, per-day points cap; rank frozen in AtRisk/Recovering state
+
+**— v1 Experience Polish Epic (added 2026-07-06) —**
+
+- **Epic 22: Experience Polish (v1)** — In-session MilestoneProgressBar + neutral finish marker (FR78), decision-factor FactorIconRow (FR82), Today windowed ActiveDaysCard (FR81), ongoing session notification with background pause + inactivity auto-abandon + deep-link reconciliation (FR79/FR80/NFR39); all honor the reduce-motion / 60fps budget (NFR38)
 
 ---
 
@@ -2862,4 +2882,184 @@ _Surfaced by the Epic 21 retrospective GUI gate (2026-07-05, action item **E21R-
 
 ---
 
-*End of Epic Breakdown — 21 Epics (v1: 1–14, v1.5: 7.5, v2: 15–21) · + Story 21.5 backlog follow-up (E21R-1)*
+## Epic 22: Experience Polish (v1)
+
+**Goal:** Deliver the four experiential refinements of the 2026-07-06 "Experience Polish (v1)" PRD delta (FR78–FR82, NFR38–NFR39) — the in-session MilestoneProgressBar, the decision-factor FactorIconRow, the Today windowed ActiveDaysCard, and the ongoing session notification with background pause + inactivity auto-abandon. Every item sits at the presentation/platform layer over the existing v1 core (session steps, FR13/FR14 explainability, FR23 activity signal, FR20 abandon flow) and must match the ratified UX contract in `ux-designs/ux-Flutter_PulseCoach-2026-06-20/DESIGN.md` + `EXPERIENCE.md` and the two 2026-07-06 delta reviews (`review-delta-rubric.md`, `review-delta-notification.md`). All new motion honors the NFR2 60fps / reduce-motion budget (NFR38). This epic carries **no streak/guilt mechanic** — the active-days indicator is windowed continuity, not a chain to protect.
+
+**Prerequisites / notes:**
+
+- **Net-new dependency (Stories 22.4/22.5):** no notification stack exists today. Add `flutter_local_notifications` (Android ongoing + iOS local). **No foreground service** is used (the timer pauses on background, so nothing runs) — therefore no `foregroundServiceType` declaration and no Play Console FGS justification (addendum, review-delta-notification 1b).
+- **Single source of truth (Story 22.3):** the active-days count reads the FR23 activity signal already computed by `BehavioralStateMachine`; do NOT introduce a parallel counter.
+- **Presentation-only (Story 22.2):** FactorIconRow surfaces existing FR13/FR14 explainability + existing `WeatherContext` fields; it introduces no new inference and no new environmental data (humidity excluded — decided 2026-07-06).
+
+### Story 22.1: In-Session Milestone Progress Bar and Finish Marker
+
+As a user in an active session,
+I want the progress bar to show each step boundary and a clear end marker,
+So that I have visible checkpoints and a clear end goal as the session advances.
+
+**Acceptance Criteria:**
+
+**Given** a multi-step guided session is in progress
+**When** the `InSessionView` renders the progress track
+**Then** the plain `LinearProgressIndicator` is replaced by a `MilestoneProgressBar` in which each session-step boundary is a 2dp notch/gap in the Primary fill plus an `on-surface-variant` tick on the still-unfilled rail, so a boundary stays visible as the fill passes it (FR78, DESIGN.md MilestoneProgressBar)
+
+**Given** the session progresses through its steps
+**When** the fill passes a step boundary
+**Then** the boundary notch remains distinguishable by shape/gap (never a same-hue tick lost on the fill), and the finish marker renders as a small neutral end glyph (soft filled dot / check — **not** a checkered flag or any racing/victory metaphor)
+
+**Given** the final step completes
+**When** the finish marker is reached
+**Then** it transitions from an `on-surface-variant` outline (unreached) to an `{on-primary}` filled glyph (reached) — reached-vs-unreached differs by shape, not hue alone — and settles quietly into place (~300–400ms ease-out position/scale) with **no glow, no confetti, no particles, no sound** (FR78, DESIGN.md)
+
+**Given** the finish-marker settle and the MiniSummary CompletionRing pulse
+**When** the session ends
+**Then** the two completion beats never stack — the single emotional close remains the CompletionRing pulse, and the finish marker is a quiet checkpoint close only (EXPERIENCE.md)
+
+**Given** a single-step session (no intermediate step boundaries)
+**When** the `MilestoneProgressBar` renders
+**Then** only the start and finish markers are shown (no intermediate notches) (FR78)
+
+**Given** the OS "reduce motion" setting is enabled
+**When** the finish marker is reached
+**Then** the settle tween is skipped and the marker renders directly in its static filled state; the milestone bar honors the NFR2 60fps / ≤ 16ms budget (NFR38)
+
+**Given** a screen reader is active
+**When** the `MilestoneProgressBar` is focused
+**Then** it exposes the current step position + whether the finish is reached as text, and the finish-marker settle animation is wrapped in `ExcludeSemantics` (EXPERIENCE.md Accessibility Floor)
+
+### Story 22.2: Decision-Factor Iconography (FactorIconRow)
+
+As a user reading a session recommendation,
+I want to see quiet icons for the factors that drove it,
+So that the reasoning behind the recommendation is visible at a glance.
+
+**Acceptance Criteria:**
+
+**Given** a hero session recommendation with its `ExplanationLine`
+**When** the `HeroSessionCard` renders
+**Then** a `FactorIconRow` of ~16dp Lucide glyphs (1.5px stroke, `on-surface-variant`) is shown directly beneath the `ExplanationLine`, reinforcing the existing FR13/FR14 explanation without introducing any new inference (FR82, DESIGN.md FactorIconRow)
+
+**Given** the decision factors that actually influenced the recommendation
+**When** the row is built
+**Then** only the applicable factors are shown from: exercise type, intensity, temperature, precipitation, AQI — there is no fixed five-slot row, and **humidity is never shown** (not captured by `WeatherContext`; excluded 2026-07-06) (FR82)
+
+**Given** each factor glyph
+**When** the user taps it
+**Then** its one-line textual factor is revealed; the visual glyph is ~16dp but its tap target is a ≥48dp transparent hit-area, and hit-areas do not overlap (FR82, NFR24, EXPERIENCE.md)
+
+**Given** a small phone at 2.0× text scale where 5 targets will not fit the dense hero
+**When** the row lays out
+**Then** it wraps to a second line (never truncates, never pushes the Start button off the hero) (EXPERIENCE.md Accessibility Floor)
+
+**Given** the AQI factor is attention-worthy
+**When** its glyph renders
+**Then** it may tint `{tertiary}` amber as a redundant emphasis only — color is never the sole carrier; every glyph is shape-distinct, exposes its textual factor on tap, and carries a semantics label (FR82, NFR25, EXPERIENCE.md color-independence)
+
+**Given** any animation on the factor glyphs
+**When** reduce-motion is enabled
+**Then** the icons degrade to static equivalents and honor the NFR2 60fps / ≤ 16ms budget (NFR38); the row is purely informational and never an action surface
+
+### Story 22.3: Today Active-Days Indicator (ActiveDaysCard)
+
+As a user opening Today,
+I want a calm record of how active I've recently been,
+So that I see gentle continuity without any pressure to protect a streak.
+
+**Acceptance Criteria:**
+
+**Given** the Today screen renders
+**When** the layout is built
+**Then** an `ActiveDaysCard` (small `surface-container`, `rounded/card`) is placed directly below the `HeroSessionCard`, showing a Mono count and the caption label **"N giorni attivi negli ultimi 30"** (FR81, DESIGN.md ActiveDaysCard, Today vertical rhythm)
+
+**Given** the active-days metric
+**When** the count is computed
+**Then** it is the number of days within the trailing 30-day rolling window (device-local timezone) with at least one completed session — **windowed, not consecutive**: a rest day silently ages out of the window and never resets the count to zero (FR81)
+
+**Given** the source of the activity signal
+**When** the count is derived
+**Then** it reuses the FR23 activity signal already tracked by `BehavioralStateMachine` (single source of truth) rather than introducing a parallel counter (FR81, addendum)
+
+**Given** the user returns after an absence
+**When** the card renders
+**Then** it simply reads a lower value with no "streak lost" message, no reset banner, no flame glyph, no glowing hero number, and no progress-to-next chip; a low count renders identically to any other value, without commentary (FR81, EXPERIENCE.md, DESIGN.md Do's and Don'ts)
+
+**Given** the card is on screen
+**When** it appears
+**Then** it carries no animation beyond the standard card reveal (excluded from NFR38's animated set), and is exposed as a single semantics node reading its count as text "N giorni attivi negli ultimi 30" at ≥ Caption 11sp (NFR38, EXPERIENCE.md Accessibility Floor)
+
+### Story 22.4: Session Notification — Infrastructure, Permissions and Background Pause
+
+As a user who backgrounds the app mid-session,
+I want the timer to pause and a notification to show the session and paused time,
+So that I know a session is still open and can get back to it.
+
+**Acceptance Criteria:**
+
+**Given** no notification stack exists in the project
+**When** the notification capability is added
+**Then** `flutter_local_notifications` is integrated with **no foreground service** — no `foregroundServiceType` declaration and no Play Console FGS justification (the timer pauses on background, so nothing runs) (addendum, review-delta-notification 1b)
+
+**Given** an active session
+**When** the app is backgrounded
+**Then** the session timer pauses (freezes at the current time) and a session notification is posted showing the session name and the frozen/paused timer, using a single fixed notification ID (FR79, FR80, review-delta-notification 4d)
+
+**Given** the platform is Android
+**When** the notification is posted
+**Then** it is an ongoing notification (best-effort non-dismissible; on Android 14+ the OS permits user swipe-dismissal) — and dismissing it does NOT abandon the session (the FR80 timeout governs abandonment independently) (FR79, review-delta-notification 1a)
+
+**Given** the platform is iOS
+**When** the notification is posted
+**Then** it is a one-shot informational local notification with no guaranteed live-updating timer (the session still pauses reliably); a continuously updating pinned timer is explicitly out of scope (Live Activities deferred) (FR79)
+
+**Given** notification permission has not yet been granted
+**When** the user first starts a session (contextual prompt, not at app launch)
+**Then** permission is requested with a clear rationale (Android 13+ `POST_NOTIFICATIONS`, iOS `UNUserNotificationCenter` authorization) (NFR39, review-delta-notification 1d/2b)
+
+**Given** notification permission is denied
+**When** the app is backgrounded mid-session
+**Then** the session still pauses in-app with no notification posted — graceful degradation, no error surfaced (NFR9, NFR39)
+
+**Given** the notification renders on the lock screen
+**When** its content is shown
+**Then** it exposes only the session name (a generic exercise-category label) and the paused timer, and **never** biometric/HR data (NFR39, NFR7)
+
+### Story 22.5: Inactivity Auto-Abandon, Resume and Deep-Link Reconciliation
+
+As a user who left a session backgrounded,
+I want the session to resume when I return in time, or be cleanly abandoned if I don't,
+So that stale sessions never orphan state and returning always lands me somewhere sensible.
+
+**Acceptance Criteria:**
+
+**Given** a session was paused on backgrounding
+**When** the app is resumed before the configurable inactivity timeout (default 5 minutes) expires
+**Then** the paused session resumes, the pending abandon is cancelled, and the notification is cleared (FR80)
+
+**Given** a session was paused on backgrounding
+**When** the inactivity timeout elapses without the app being resumed
+**Then** the abandon is authoritatively committed on next resume/cold start via reconcile-on-resume (store a monotonic/`elapsedRealtime`-based `backgroundedAt`; on resume, if elapsed ≥ timeout → abandon through the existing FR20 flow), and a scheduled notification cancel/replace handles the visual dismissal at the timeout instant (FR80, review-delta-notification 1c/4e)
+
+**Given** the user taps the notification
+**When** the session is still paused (not yet timed out)
+**Then** the tap deep-links back into the in-session route and resumes the paused timer (distinct from a plain app relaunch) (FR79, review-delta-notification 4a)
+
+**Given** the user taps the notification
+**When** the session has already been auto-abandoned by the timeout
+**Then** the tap lands on Today (not a dead session), reconciling the abandon first on cold-start taps (FR79, review-delta-notification 4a)
+
+**Given** rapid background/foreground toggling
+**When** the app switches states repeatedly
+**Then** pause/resume is idempotent and debounced: the inactivity clock measures time since the most-recent backgrounding (each resume cancels the pending timeout, each backgrounding restarts it), with no timer drift and no duplicate notifications (FR80, review-delta-notification 4b)
+
+**Given** the app/process is force-killed while a session is backgrounded (orphaned notification)
+**When** the app next cold-starts
+**Then** it reconciles session state from the surviving DB (NFR15), finalizes the pending abandon if the timeout had passed, and clears any stale notification (single active-session guarantee) (review-delta-notification 4d)
+
+**Given** a timeout-driven auto-abandon vs. an explicit user abandon
+**When** the abandon is recorded
+**Then** the behavioral-state impact follows the FR20 flow as today; whether timeout-abandon is tagged distinctly from explicit abandon (to avoid over-penalizing the state machine when the user merely pocketed the phone) is resolved during `create-story` (review-delta-notification 4c — open decision, surface at story creation)
+
+---
+
+*End of Epic Breakdown — 22 Epics (v1: 1–14, v1.5: 7.5, v2: 15–21, v1-polish: 22) · + Story 21.5 backlog follow-up (E21R-1)*

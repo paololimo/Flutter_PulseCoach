@@ -58,11 +58,25 @@
     justify-content:center;margin-left:auto}
   .ring span{width:24px;height:24px;border-radius:999px;background:var(--surface);display:flex;
     align-items:center;justify-content:center;font-size:10px}
+  /* factor icon row (FR82) */
+  .factors{display:flex;gap:14px;align-items:center;margin:-2px 0 14px}
+  .fico{font-size:14px;color:var(--on-var);display:inline-flex;align-items:center;gap:4px;line-height:1}
+  .fico.attn{color:var(--tertiary)}
+  /* active-days card (FR81) */
+  .actdays{display:flex;align-items:center;gap:12px;background:var(--container);
+    border-radius:var(--r-card);padding:13px 15px;margin-bottom:16px}
+  .actdays .num{font-size:22px;color:var(--on)}
+  .actdays .lbl{font-size:12px;color:var(--on-var)}
   /* in-session */
   .timer{font-size:52px;text-align:center;margin:30px 0 6px}
   .hr{position:absolute;top:18px;right:18px;color:var(--coral);font-size:14px}
-  .progress{height:4px;background:#262b38;border-radius:999px;margin:26px 0}
+  /* milestone progress bar (FR78) */
+  .progress{position:relative;height:6px;background:#262b38;border-radius:999px;margin:30px 0 34px}
   .progress i{display:block;height:100%;width:46%;background:var(--primary);border-radius:999px}
+  .progress .tick{position:absolute;top:0;width:2px;height:6px;background:var(--surface);opacity:.9} /* notch in the fill */
+  .progress .flag{position:absolute;right:-5px;top:-8px;font-size:12px;color:var(--on-var)} /* neutral outline marker, unreached */
+  .progress .flag.done{color:#06231d;background:var(--primary);border-radius:999px;width:14px;height:14px;
+    display:flex;align-items:center;justify-content:center;top:-4px;right:-7px} /* reached: filled, on-primary glyph, no glow */
   /* leaderboard */
   .lbrow{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r-chip);margin-bottom:6px}
   .lbrow.me{background:var(--container-high)}
@@ -98,7 +112,18 @@
     <div class="title">Mobilità mattutina</div>
     <div class="meta">5 min · Indoor · Bassa</div>
     <div class="explain">Sonno breve + HR a riposo elevata. Partiamo piano.</div>
+    <div class="factors" title="Fattori della scelta — tocca per il dettaglio">
+      <span class="fico">🧘 mobilità</span>
+      <span class="fico">◐ bassa</span>
+      <span class="fico">🌡 14°</span>
+      <span class="fico">☁ asciutto</span>
+      <span class="fico attn">≋ AQI</span>
+    </div>
     <button class="btn">Inizia sessione</button>
+  </div>
+  <div class="actdays">
+    <div class="num mono">4</div>
+    <div class="lbl">giorni attivi negli ultimi 30</div>
   </div>
   <div class="seclabel">PROSSIME</div>
   <div class="compact"><div class="cdot" style="background:var(--secondary)"></div>
@@ -123,7 +148,13 @@
   <div class="small" style="text-align:center">PASSO 2 DI 4</div>
   <div class="title" style="text-align:center;margin-top:18px">Cerchi con le anche</div>
   <div class="explain" style="text-align:center">Movimento lento e controllato. Respira.</div>
-  <div class="progress"><i></i></div>
+  <div class="progress" title="Marker per passo + bandiera finale (FR78)">
+    <i></i>
+    <span class="tick" style="left:25%"></span>
+    <span class="tick" style="left:50%"></span>
+    <span class="tick" style="left:75%"></span>
+    <span class="flag">○</span>
+  </div>
   <div style="flex:1"></div>
   <button class="btn ghost" style="margin-bottom:22px">Termina sessione</button>
 </div>

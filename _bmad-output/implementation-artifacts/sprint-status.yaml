@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-07-06 # Story 21-5 (E21R-1) all 6 tasks done, moved to review. AC1/4/5 fully green; AC2/3 confirmed for joiner path only. 2 live-only defects found & documented (not patched): D1 join-dialog red screen (recoverable), D2 shared-session host never scored (High severity, needs product/eng decision)
+last_updated: 2026-07-06 # Sprint planning refresh: added Epic 22 (Experience Polish v1, 5 stories, backlog) from the 2026-07-06 PRD delta. Story 21-5 (E21R-1) all 6 tasks done, moved to review. AC1/4/5 fully green; AC2/3 confirmed for joiner path only. 2 live-only defects found & documented (not patched): D1 join-dialog red screen (recoverable), D2 shared-session host never scored (High severity, needs product/eng decision)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -305,3 +305,19 @@ development_status:
   # story: no new Dart/SQL code expected unless a live-only defect is found.
   21-5-shared-session-scoring-live-deployment-and-two-device-verification: review
   epic-21-retrospective: done
+
+  # ─────────────────────────────────────────
+  # Epic 22: Experience Polish (v1)
+  # Added 2026-07-06 per "Experience Polish (v1)" PRD delta (FR78-FR82, NFR38-NFR39).
+  # No dependency on Epics 15-21 (v2 social/scoring line); layers on the v1 core
+  # (session steps, FR13/FR14 explainability, FR23 activity signal, FR20 abandon flow).
+  # Stories 22.4/22.5 add a net-new dependency: flutter_local_notifications (no
+  # foreground service).
+  # ─────────────────────────────────────────
+  epic-22: backlog
+  22-1-in-session-milestone-progress-bar-and-finish-marker: backlog
+  22-2-decision-factor-iconography-factoriconrow: backlog
+  22-3-today-active-days-indicator-activedayscard: backlog
+  22-4-session-notification-infrastructure-permissions-and-background-pause: backlog
+  22-5-inactivity-auto-abandon-resume-and-deep-link-reconciliation: backlog
+  epic-22-retrospective: optional
