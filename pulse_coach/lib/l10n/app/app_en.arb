@@ -106,6 +106,28 @@
       }
     }
   },
+  "milestoneProgressBarUnreachedLabel": "Step {current} of {total}, finish not reached",
+  "@milestoneProgressBarUnreachedLabel": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "milestoneProgressBarReachedLabel": "Step {current} of {total}, finish reached",
+  "@milestoneProgressBarReachedLabel": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
   "inSessionHrDisplay": "♥ {bpm} bpm",
   "@inSessionHrDisplay": {
     "placeholders": {

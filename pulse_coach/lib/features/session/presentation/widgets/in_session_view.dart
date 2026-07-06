@@ -3,6 +3,7 @@ import 'package:pulse_coach/core/theme/app_text_styles.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.dart';
+import 'package:pulse_coach/features/session/presentation/widgets/milestone_progress_bar.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class InSessionView extends StatelessWidget {
@@ -75,12 +76,10 @@ class InSessionView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                LinearProgressIndicator(
-                  value:
-                      (sessionState.currentStepIndex + 1) /
-                      sessionState.totalSteps,
-                  backgroundColor: pulseTheme.surfaceContainerHigh,
-                  color: pulseTheme.primaryColor,
+                MilestoneProgressBar(
+                  currentStepIndex: sessionState.currentStepIndex,
+                  totalSteps: sessionState.totalSteps,
+                  isComplete: sessionState.isComplete,
                 ),
                 const SizedBox(height: 32),
                 Text(
@@ -165,12 +164,10 @@ class InSessionView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value:
-                            (sessionState.currentStepIndex + 1) /
-                            sessionState.totalSteps,
-                        backgroundColor: pulseTheme.surfaceContainerHigh,
-                        color: pulseTheme.primaryColor,
+                      MilestoneProgressBar(
+                        currentStepIndex: sessionState.currentStepIndex,
+                        totalSteps: sessionState.totalSteps,
+                        isComplete: sessionState.isComplete,
                       ),
                     ],
                   ),

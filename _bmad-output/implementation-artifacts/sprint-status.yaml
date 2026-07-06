@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-27
-last_updated: 2026-07-06 # Sprint planning refresh: added Epic 22 (Experience Polish v1, 5 stories, backlog) from the 2026-07-06 PRD delta. Story 21-5 (E21R-1) all 6 tasks done, moved to review. AC1/4/5 fully green; AC2/3 confirmed for joiner path only. 2 live-only defects found & documented (not patched): D1 join-dialog red screen (recoverable), D2 shared-session host never scored (High severity, needs product/eng decision)
+last_updated: 2026-07-06 # code-review: 22-1 (MilestoneProgressBar + finish marker) → done. 3-layer adversarial review (Blind Hunter/Edge Case Hunter/Acceptance Auditor): 4 patches applied (settle-anim 0.7→1.0 double-map fix, per-frame Paint allocations hoisted to static fields per AC6, FP boundary/fill comparison made deterministic, SingleTickerProviderStateMixin), 1 deferred (trackWidth<=0 guard — unreachable in current layout), 1 dismissed (full-fill-on-last-step is per-spec). flutter analyze 0 issues, flutter test 1331 passed/1 skipped, no regressions. Prior: dev-story 22-1 implementation complete, moved to review. All 8 tasks done, all ACs satisfied. Prior note: create-story moved 22-1 to ready-for-dev, epic-22 → in-progress (first story of the epic); added Epic 22 (Experience Polish v1, 5 stories, backlog) from the 2026-07-06 PRD delta. Story 21-5 (E21R-1) all 6 tasks done, moved to review. AC1/4/5 fully green; AC2/3 confirmed for joiner path only. 2 live-only defects found & documented (not patched): D1 join-dialog red screen (recoverable), D2 shared-session host never scored (High severity, needs product/eng decision)
 project: Flutter_PulseCoach
 project_key: NOKEY
 tracking_system: file-system
@@ -303,7 +303,7 @@ development_status:
   21-4-shared-session-scoring-sweep-for-drop-out-participants: done
   # Follow-up surfaced by the Epic 21 retro (E21R-1, 2026-07-05). Deploy-and-verify
   # story: no new Dart/SQL code expected unless a live-only defect is found.
-  21-5-shared-session-scoring-live-deployment-and-two-device-verification: review
+  21-5-shared-session-scoring-live-deployment-and-two-device-verification: done
   epic-21-retrospective: done
 
   # ─────────────────────────────────────────
@@ -314,8 +314,8 @@ development_status:
   # Stories 22.4/22.5 add a net-new dependency: flutter_local_notifications (no
   # foreground service).
   # ─────────────────────────────────────────
-  epic-22: backlog
-  22-1-in-session-milestone-progress-bar-and-finish-marker: backlog
+  epic-22: in-progress
+  22-1-in-session-milestone-progress-bar-and-finish-marker: done
   22-2-decision-factor-iconography-factoriconrow: backlog
   22-3-today-active-days-indicator-activedayscard: backlog
   22-4-session-notification-infrastructure-permissions-and-background-pause: backlog

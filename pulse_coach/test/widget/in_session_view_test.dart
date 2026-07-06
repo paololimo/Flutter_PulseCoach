@@ -6,6 +6,7 @@ import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/features/session/domain/entities/exercise_step.dart';
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/in_session_view.dart';
+import 'package:pulse_coach/features/session/presentation/widgets/milestone_progress_bar.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 const _steps = [
@@ -40,16 +41,21 @@ Widget _wrap(Widget child) => MaterialApp(
   home: child,
 );
 
-InSessionView _view({int step = 0, int seconds = 60, int? liveHr}) =>
-    InSessionView(
-      sessionState: InSessionState(
-        steps: _steps,
-        currentStepIndex: step,
-        secondsRemaining: seconds,
-        liveHr: liveHr,
-      ),
-      onAbandon: () {},
-    );
+InSessionView _view({
+  int step = 0,
+  int seconds = 60,
+  int? liveHr,
+  bool isComplete = false,
+}) => InSessionView(
+  sessionState: InSessionState(
+    steps: _steps,
+    currentStepIndex: step,
+    secondsRemaining: seconds,
+    liveHr: liveHr,
+    isComplete: isComplete,
+  ),
+  onAbandon: () {},
+);
 
 InSessionView _longContentView() => InSessionView(
   sessionState: const InSessionState(
@@ -85,14 +91,29 @@ void main() {
       expect(find.text('01:30'), findsOneWidget);
     });
 
-    testWidgets('8.2-WIDGET-003: LinearProgressIndicator is present', (
-      tester,
-    ) async {
-      await tester.pumpWidget(_wrap(_view()));
-      await tester.pump();
+    testWidgets(
+      '22.1-WIDGET-000: MilestoneProgressBar replaces LinearProgressIndicator',
+      (tester) async {
+        await tester.pumpWidget(_wrap(_view()));
+        await tester.pump();
 
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
-    });
+        expect(find.byType(LinearProgressIndicator), findsNothing);
+        expect(find.byType(MilestoneProgressBar), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '22.1-WIDGET-001: isComplete true is forwarded to MilestoneProgressBar',
+      (tester) async {
+        await tester.pumpWidget(_wrap(_view(isComplete: true)));
+        await tester.pump();
+
+        final bar = tester.widget<MilestoneProgressBar>(
+          find.byType(MilestoneProgressBar),
+        );
+        expect(bar.isComplete, isTrue);
+      },
+    );
 
     testWidgets('8.2-WIDGET-004: abandon button is muted', (tester) async {
       await tester.pumpWidget(_wrap(_view()));
