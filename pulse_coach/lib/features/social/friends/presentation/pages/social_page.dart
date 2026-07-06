@@ -496,14 +496,18 @@ class _FriendsList extends StatelessWidget {
               );
               if (userId == null) return;
               final joinCubit = context.read<SharedSessionJoinCubit>();
-              // Dismiss the keyboard, then defer the join (and the lobby
-              // navigation it triggers) until after the dialog has fully popped.
-              // Navigating while the autofocus TextField's IME focus is still
-              // tearing down trips a `_dependents.isEmpty` framework assertion
-              // (red screen) on the joiner.
+              // Dismiss the keyboard, then defer BOTH the dialog pop and the
+              // join (and the lobby navigation it triggers) to the next frame.
+              // D1 fix (Story 21.5 review): the earlier version unfocused and
+              // deferred only the join, but popped the dialog synchronously —
+              // popping the route while the autofocus TextField's IME focus was
+              // still tearing down in the same frame still tripped a
+              // `_dependents.isEmpty` framework assertion (red screen) on the
+              // joiner on real device timing. Deferring the pop too lets the
+              // focus teardown fully settle before the dialog route is removed.
               FocusManager.instance.primaryFocus?.unfocus();
-              Navigator.of(ctx).pop();
               WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.of(ctx).pop();
                 joinCubit.join(joinCode: code, userId: userId);
               });
             },

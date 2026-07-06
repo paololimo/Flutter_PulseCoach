@@ -36,7 +36,18 @@ class SharedSessionRemoteDataSource {
             })
             .select()
             .single();
-        return SharedSessionDto.fromJson(data);
+        final dto = SharedSessionDto.fromJson(data);
+        // D2 fix (Story 21.5 review): register the host as a participant too.
+        // createSharedSession previously inserted only the shared_sessions row,
+        // so the host had no session_participants row and was therefore never
+        // scored by score_shared_session/sweep_unscored_shared_sessions (both
+        // key off session_participants) — the host earned zero points for a
+        // completed shared session. Mirrors joinSharedSession's upsert.
+        await _supabase.client.from('session_participants').upsert({
+          'session_id': dto.id,
+          'user_id': hostUserId,
+        });
+        return dto;
       } catch (e) {
         if (attempt == 1) rethrow;
         final msg = e.toString();

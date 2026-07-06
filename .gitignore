@@ -106,6 +106,7 @@ firebase-debug.log
 # Delivery artifacts — source/release archives for v1 and later
 PulseCoach-v*.zip
 .claude/.story-automator-active
+Design Document & Test Campaign/
 
 # Local MCP server config + agent-skills lockfile (personal/local tooling, not shared)
 .mcp.json
