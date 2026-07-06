@@ -2852,6 +2852,14 @@ _Surfaced by Story 21.3 code review (2026-07-04). Not yet scheduled — run `cre
 
 **Proposed approach:** a server-side scheduled sweep (`pg_cron` or scheduled Edge Function) that, after a grace window from `shared_sessions.created_at`, scores the participants who DID submit (active-only) and ignores the pending/null rows — reusing the existing atomic `scored` claim and `award_shared_session_points` so it stays idempotent with the client-triggered path. Needs a grace-window constant, migration, and code-review-only SQL tests (no live-DB harness in repo, per 21.1/21.2 precedent).
 
+### Story 21.5: Shared-Session Scoring — Live Deployment & Two-Device End-to-End Verification (follow-up, backlog)
+
+_Surfaced by the Epic 21 retrospective GUI gate (2026-07-05, action item **E21R-1**). Not yet scheduled — run `create-story` when ready._
+
+**Gap:** the entire shared-session scoring **server path** is verified only at the unit/SQL layer — `score_shared_session/index.ts` by `index_test.ts`, and the RPCs/sweep (`submit_shared_session_result`, `award_shared_session_points`, `sweep_unscored_shared_sessions`) by pgTAP. It has **never been exercised against a live deployment end-to-end**: at the Epic 21 gate the Edge Function deploy was blocked by the harness production-deploy guard, and `pg_cron` (first-ever `CREATE EXTENSION` + first-ever `service_role` grant in this repo, migrations `0013`/`0014`) was applied to a test project but its scheduled execution + "jobs run in pg_cron's home database" caveat (21.4 deferred item) were not confirmed live. This is the one concrete unverified path at v2 close.
+
+**Proposed approach:** deploy `score_shared_session` + apply `0012`–`0015` to a real project, then run a two-device live verification: complete a co-located shared session on both devices → both submit RPE → confirm the client-triggered Edge Function awards `base × 1.5` to each participant on the leaderboard; separately, force the drop-out path (one participant never submits RPE) and confirm the `pg_cron` sweep scores the submitter after the grace window (and that a never-submitted session is left unclaimed). Also confirm the rank-freeze **release** on a real device (return to Active/Fatigued clears the pin) — deferred at the Epic 21 gate for lack of on-device `sqlite3`. Reuses the two-peer smoke harness (`test/integration/shared_session_two_peer_smoke_test.dart`, E19R-1) where possible.
+
 ---
 
-*End of Epic Breakdown — 21 Epics (v1: 1–14, v1.5: 7.5, v2: 15–21)*
+*End of Epic Breakdown — 21 Epics (v1: 1–14, v1.5: 7.5, v2: 15–21) · + Story 21.5 backlog follow-up (E21R-1)*

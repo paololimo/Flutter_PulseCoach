@@ -444,3 +444,31 @@ Entering Epic 21, Category A was **6/5 — over cap**. Per the Deferred Items Bu
 | `E19R-1-CB` run the two-peer smoke on a schedule/CI (creds-gated) | **New (ongoing)** | Successor to the E19R-1 deliverable; promote the green smoke to a scheduled/gated job. |
 
 **Retired this review:** none. **Next sunset review:** Epic 23 kickoff (2-epic cadence: 21 + 22).
+
+---
+
+## Epic 21 Retrospective — action items & triage (2026-07-05)
+
+Epic 21 (Leaderboard & Scoring, v2.5) closed 5/5 stories — **final epic of v2**. Two-device GUI gate **PASS** (`test-artifacts/epic-verification-history.md`, 2026-07-05). Retro: `epic-21-retro-2026-07-05.md`. **No Epic 22 exists**, so there is no next-epic sprint gate; the cap is tracked for a hypothetical v3.
+
+### Epic 21 closures recorded
+
+- `E20R-1` (lobby `@handle`) — **done** (Story 21.0 AC3).
+- `E20R-2` (shared-session `SessionLog` persistence) — **done** (Story 21.0 AC1).
+- `E10R-2` — **still open** (Epic 21 leaderboard totals did not touch `_mondayOf`/week bucketing; not closed opportunistically as hoped).
+
+### New / updated action items
+
+| ID | Source | Description | Owner | Target | Cat. | Status | Notes |
+|---|---|---|---|---|---|---|---|
+| E21R-1 | Epic 21 retro / GUI gate (2026-07-05) | **Live deployment + two-device end-to-end verification of shared-session scoring:** deploy `score_shared_session` Edge Function + apply `0012`–`0015` to a real project; verify complete shared session → both submit RPE → `base × 1.5` bonus on leaderboard, the `pg_cron` drop-out sweep, and the rank-freeze **release** on a real device. | Amelia (Dev) + Murat (TEA) | **Story 21.5** (`epics.md`, backlog) — run `create-story` | A | open (priority) — **homed as Story 21.5** | Edge-Function deploy was blocked by the harness prod-deploy guard at the gate; server path proven only unit/SQL. Paolo chose priority action item (2026-07-05). |
+| E21R-2 | Epic 21 retro / GUI gate (2026-07-05) | Migrate Epic-10 **Progress** screen hardcoded Italian strings ("Cronologia", "Grafici", "abbandonata", "…questa settimana") to ARB (EN/IT). | Amelia (Dev) + Sally (UX) | Next Progress-touching work / i18n pass | A | open | Surfaced on EN-locale host at the gate: Epic-10 screen predates the Epic 7.5 ARB migration. Not Epic-21-introduced. |
+| E21R-B1 | Epic 21 retro / GUI gate (2026-07-05) | **Gate rule:** when a verification step edits on-device `SharedPreferences`/drift DB, pull a verified backup of the file BEFORE any overwrite. Staging is shell→app only (`adb push`→`/data/local/tmp`→`run-as cp` into app dir); `run-as cp` **into** `/data/local/tmp` is denied and silently produced an empty-file overwrite this session (recovered; only upsell-cooldown + install-id prefs lost). | Amelia (Dev) — GUI gate protocol | Ongoing process | B | pending | Add to the retrospective GUI-verification doc's cleanup section. |
+
+### Category A snapshot (post Epic 21 retro): **5 / 5 — at cap**
+
+Active: `E21R-1` (→ Story 21.5), `E21R-2`, `E18R-1` (small-viewport golden infra, carried), `E10R-2` (non-UTC week-bucketing test, carried), `E18R-4` (social ProUpsell copy, carried-minor). Closed this epic: `E20R-1`, `E20R-2` (Story 21.0); `E19R-1` deliverable closed at Epic 21 kickoff (CI-wiring is Cat B `E19R-1-CB`). **No Epic 22 → no sprint gate**; if v3 opens, triage back to ≤5 before the first v3 story enters the sprint.
+
+### v2 close — open threads
+
+The highest-leverage v2 residuals are the **test-automation debt** (`E18R-1` real-viewport goldens, `E19R-1-CB` CI-gated two-peer smoke) — closing them would have covered E21R-1's freeze-release and Edge-Function loop automatically instead of by hand — and the **undeployed shared-session scoring server path** (`E21R-1`). Counter-metric monitoring (21.3-AC4) is a manual, dashboard-less ship-gate with the kill switch ready (`SHARED_SESSION_MULTIPLIER`).
