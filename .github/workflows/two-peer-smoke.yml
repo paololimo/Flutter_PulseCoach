@@ -1,0 +1,48 @@
+name: Two-peer smoke (live Supabase)
+
+# E19R-1-CB: run the shared-session two-peer realtime smoke against the live
+# Supabase EU project on a cadence. Kept OUT of the main PR CI (ci.yml) because
+# it needs network + secrets + seed users; a hand-mocked unit suite stays green
+# even when the real channel contract is violated (the "host-echo" bug class),
+# so this is the only automated check of the real transport.
+#
+# Required repository secrets: SUPABASE_URL, SUPABASE_ANON_KEY, SMOKE_PASSWORD.
+# The test self-skips if any dart-define is empty, so a missing/misconfigured
+# secret degrades to a skipped test rather than a red build.
+on:
+  schedule:
+    - cron: '0 3 * * *' # nightly at 03:00 UTC
+  workflow_dispatch: {}
+
+defaults:
+  run:
+    working-directory: pulse_coach
+
+jobs:
+  two-peer-smoke:
+    name: Two-peer realtime smoke
+    runs-on: ubuntu-latest
+    # Never runs on forks (which have no secrets) — only the canonical repo.
+    if: github.repository == 'paololimo/Flutter_PulseCoach'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.6
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Two-peer realtime smoke
+        run: |
+          flutter test test/integration/shared_session_two_peer_smoke_test.dart \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            --dart-define=SMOKE_PASSWORD="$SMOKE_PASSWORD"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
