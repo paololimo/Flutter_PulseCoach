@@ -105,7 +105,12 @@ class _SocialViewState extends State<_SocialView>
 
         if (tier != SubscriptionTier.pro) {
           return _LockedBanner(
-            onTap: () => ProUpsellSheet.show(context),
+            // E18R-4: social-specific upsell copy (friends/leaderboard),
+            // not the generic Progress "history and charts" body.
+            onTap: () => ProUpsellSheet.show(
+              context,
+              body: AppLocalizations.of(context)!.proUpsellBodySocial,
+            ),
           );
         }
 

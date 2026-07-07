@@ -191,6 +191,52 @@ void main() {
       expect(result.minutesPerWeek.single.totalMinutes, 35);
     });
 
+    test(
+      'E10R-2: week bucketing is UTC — a Sun-late-UTC session (= Mon-early '
+      'local for a CET/CEST user) buckets into the PRIOR week, not the '
+      "local-perceived week",
+      () async {
+        // 2026-05-31 22:30 UTC is Sunday 22:30 UTC == Monday 2026-06-01 00:30
+        // in CEST (UTC+2), the actual target user's timezone. _mondayOf works
+        // on the UTC instant (project rule: "DateTime UTC internally"), so this
+        // session buckets to the week of Monday 2026-05-25, NOT the Monday
+        // 2026-06-01 week the user experienced. This test LOCKS that deliberate
+        // UTC behavior so a future switch to local-week bucketing is a visible,
+        // intentional change rather than a silent regression (Story 10.3 unified
+        // _mondayOf to UTC; no non-UTC coverage existed until now).
+        final sundayLateUtc = DateTime.utc(2026, 5, 31, 22, 30);
+        final mondayNoonUtc = DateTime.utc(2026, 6, 1, 12);
+        expect(sundayLateUtc.toUtc().weekday, DateTime.sunday);
+        expect(mondayNoonUtc.toUtc().weekday, DateTime.monday);
+
+        await seedSession(
+          sessionType: 'cardio',
+          completedAt: sundayLateUtc,
+          durationMinutes: 20,
+        );
+        await seedSession(
+          sessionType: 'mobility',
+          completedAt: mondayNoonUtc,
+          durationMinutes: 15,
+        );
+
+        final result = await dataSource.getProgressStats();
+
+        // Two distinct week buckets, split across the UTC Sun/Mon boundary.
+        expect(result.minutesPerWeek, hasLength(2));
+        // Prior week (Monday 25/05) holds the Sunday-late-UTC session.
+        final prior = result.minutesPerWeek.firstWhere(
+          (w) => w.weekLabel == '25/05',
+        );
+        expect(prior.totalMinutes, 20);
+        // The Monday-noon-UTC session is in its own week (Monday 01/06).
+        final current = result.minutesPerWeek.firstWhere(
+          (w) => w.weekLabel == '01/06',
+        );
+        expect(current.totalMinutes, 15);
+      },
+    );
+
     test('10.2-DATA-005: minutesPerWeek keeps at most 8 weeks', () async {
       for (var i = 0; i < 10; i++) {
         await seedSession(

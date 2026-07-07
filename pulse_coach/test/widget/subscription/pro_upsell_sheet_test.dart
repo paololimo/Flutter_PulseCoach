@@ -136,6 +136,46 @@ void main() {
     );
 
     testWidgets(
+      'E18R-4-WIDGET-001: body override shows social copy, not the generic body',
+      (tester) async {
+        when(mockCooldown.isCoolingDown()).thenReturn(false);
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: const Locale('it'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (ctx) => TextButton(
+                onPressed: () => ProUpsellSheet.show(
+                  ctx,
+                  body: AppLocalizations.of(ctx)!.proUpsellBodySocial,
+                  cooldownOverride: mockCooldown,
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(
+            'Aggiungi amici, condividi i progressi e scala la classifica con PulseCoach Pro.',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.text(
+            'Accedi a tutto lo storico e ai grafici con PulseCoach Pro.',
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
       '17.3-WIDGET-005: dismissing via the barrier records the cooldown',
       (tester) async {
         when(mockCooldown.isCoolingDown()).thenReturn(false);

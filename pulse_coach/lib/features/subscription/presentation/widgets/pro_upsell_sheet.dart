@@ -6,10 +6,16 @@ import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class ProUpsellSheet extends StatelessWidget {
-  const ProUpsellSheet._();
+  const ProUpsellSheet._({this.body});
+
+  /// Optional context-specific body copy. When null, the generic
+  /// (Progress-oriented) `proUpsellBody` is shown. The Social locked banner
+  /// passes a friends/leaderboard-oriented string (E18R-4).
+  final String? body;
 
   static void show(
     BuildContext context, {
+    String? body,
     @visibleForTesting UpsellCooldownService? cooldownOverride,
   }) {
     final cooldown = cooldownOverride ?? getIt<UpsellCooldownService>();
@@ -19,7 +25,7 @@ class ProUpsellSheet extends StatelessWidget {
     // arms the cooldown, so the sheet does not re-nag for the rest of the day.
     showModalBottomSheet<bool>(
       context: context,
-      builder: (_) => const ProUpsellSheet._(),
+      builder: (_) => ProUpsellSheet._(body: body),
     ).then((intent) {
       if (intent != true) {
         cooldown.recordDismissal();
@@ -43,7 +49,7 @@ class ProUpsellSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                l10n.proUpsellBody,
+                body ?? l10n.proUpsellBody,
                 style: theme.textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),

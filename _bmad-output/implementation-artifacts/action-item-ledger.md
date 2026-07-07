@@ -571,3 +571,16 @@ This is exactly the **`E17R-3` "annotation ≠ enforcement"** anti-pattern the l
 **Category A impact:** `E21R-D2` opened and closed in-session (fix pre-existed; only regression coverage + DB hardening were owed). Category A remains **2 / 5** (`E10R-2`, `E18R-4`). The two layers are idempotent with each other (`UNIQUE(session_id, user_id)` + `ON CONFLICT DO NOTHING`), so no duplicate-participant risk.
 
 **Process note (for the v3-kickoff Category B sunset):** D2 slipping out of the ledger despite being a High-severity live-verified fix is evidence that **review-note `[Review][Decision]` items closed in-story must be reconciled into the ledger at the next retro**, not left only in the story file. Candidate SOP to ratify at v3 kickoff.
+
+---
+
+## Final Category A drain — pre-v3 consolidation close (2026-07-07)
+
+The two remaining carried Category A items were closed in-session:
+
+| Item | Closure |
+|---|---|
+| `E10R-2` non-UTC week-bucketing regression test | **done.** Added `progress_stats_data_source_test.dart` test `E10R-2`: a session at `2026-05-31 22:30 UTC` (Sunday late UTC = Monday 00:30 CEST for the target user) buckets into the PRIOR week (Monday 25/05), not the local-perceived week (Monday 01/06). Locks the deliberate UTC bucketing (`_mondayOf`, project "DateTime UTC internally" rule) so a future switch to local-week bucketing is a visible decision, not a silent regression. Test green. |
+| `E18R-4` social-specific `ProUpsellSheet` copy | **done.** Added optional `body` override to `ProUpsellSheet.show`/widget (defaults to generic `proUpsellBody`); `social_page.dart` locked banner now passes new ARB key `proUpsellBodySocial` (IT/EN: friends/leaderboard copy, not the Progress "history and charts" body). Regression-locked by `pro_upsell_sheet_test.dart` E18R-4-WIDGET-001. |
+
+**Category A: 2/5 → 0/5.** All deliverable debt cleared. The only standing residuals are Category B ongoing-process rules (durably homed — see E22R-3) and the v3-kickoff sunset review. **v3 opens with an empty Category A.**
