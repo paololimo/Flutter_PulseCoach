@@ -35,6 +35,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # `flutter analyze` descends into the nested wear/ package; it needs its
+      # own package resolution for `package:pulse_coach_wear/...` self-imports.
+      - name: Install wear module dependencies
+        working-directory: pulse_coach/wear
+        run: flutter pub get
+
       - name: Analyze
         run: flutter analyze
 
@@ -60,6 +66,20 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      # The Google Services Gradle plugin requires google-services.json at build
+      # time (gitignored). A placeholder is sufficient for a debug build; the
+      # GOOGLE_SERVICES_JSON secret carries it (base64) so the file never lands
+      # in git. Swap in a real config later by updating the secret.
+      - name: Provision google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::GOOGLE_SERVICES_JSON secret is not set — the Android build cannot run."
+            exit 1
+          fi
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
 
       # The core check: exercises the real Android/Gradle build so desugaring,
       # AGP, and manifest regressions fail here instead of on a physical device.
