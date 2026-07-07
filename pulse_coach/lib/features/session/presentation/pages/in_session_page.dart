@@ -14,22 +14,27 @@ import 'package:pulse_coach/features/session/presentation/bloc/in_session_cubit.
 import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.dart';
 import 'package:pulse_coach/features/session/presentation/utils/haptic_service.dart';
 import 'package:pulse_coach/features/session/presentation/utils/live_hr_service.dart';
+import 'package:pulse_coach/features/session/presentation/utils/session_notification_service.dart';
 import 'package:pulse_coach/features/session/presentation/utils/session_step_generator.dart';
 import 'package:pulse_coach/features/session/presentation/utils/wear_bridge_service.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/countdown_overlay.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/in_session_view.dart';
+import 'package:pulse_coach/features/session/presentation/widgets/session_notification_rationale_dialog.dart';
 import 'package:pulse_coach/features/today/presentation/widgets/session_card_helpers.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class InSessionPage extends StatefulWidget {
   final PlannedSession? session;
   final int? planId;
   final int sessionIndex;
+  final SessionNotificationService? notificationService;
 
   const InSessionPage({
     this.session,
     this.planId,
     this.sessionIndex = 0,
+    this.notificationService,
     super.key,
   });
 
@@ -37,9 +42,17 @@ class InSessionPage extends StatefulWidget {
   State<InSessionPage> createState() => _InSessionPageState();
 }
 
-class _InSessionPageState extends State<InSessionPage> {
+class _InSessionPageState extends State<InSessionPage>
+    with WidgetsBindingObserver {
+  // Suppresses re-prompting the rationale dialog once the user has been asked.
+  // Persisted because the plugin (flutter_local_notifications v21) cannot
+  // distinguish "denied" from "never asked" — both resolve to `undetermined`,
+  // so without this flag a declined user would be re-prompted every session.
+  static const String _kRationaleShownKey = 'notification_rationale_shown';
+
   final VibrationHapticService _hapticService = VibrationHapticService();
   HealthLiveHrService? _liveHrService;
+  late final SessionNotificationService _notificationService;
   bool _countdownDone = false;
   InSessionCubit? _cubit;
   WearBridgeService? _wearBridge;
@@ -47,6 +60,10 @@ class _InSessionPageState extends State<InSessionPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _notificationService =
+        widget.notificationService ?? LocalSessionNotificationService();
+    unawaited(_notificationService.init());
     _hapticService.init();
     if (getIt.isRegistered<Health>()) {
       _liveHrService = HealthLiveHrService(getIt<Health>());
@@ -77,10 +94,54 @@ class _InSessionPageState extends State<InSessionPage> {
       _cubit = cubit;
       _countdownDone = true;
     });
+
+    unawaited(_maybeShowNotificationRationale());
+  }
+
+  Future<void> _maybeShowNotificationRationale() async {
+    final status = await _notificationService.permissionStatus();
+    if (status != NotificationPermissionStatus.undetermined) return;
+
+    final prefs = getIt.isRegistered<SharedPreferences>()
+        ? getIt<SharedPreferences>()
+        : null;
+    if (prefs?.getBool(_kRationaleShownKey) ?? false) return;
+
+    if (!mounted) return;
+    final allow = await showDialog<bool>(
+      context: context,
+      builder: (_) => const SessionNotificationRationaleDialog(),
+    );
+    // Record that we asked (regardless of the answer) so a declined user is
+    // not re-prompted on every subsequent session — see judgment call #2.
+    await prefs?.setBool(_kRationaleShownKey, true);
+    if (allow == true) {
+      await _notificationService.requestPermission();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.paused) return;
+    if (!mounted) return;
+    final cubit = _cubit;
+    final session = widget.session;
+    if (cubit == null || session == null) return;
+    if (cubit.state.isComplete || cubit.state.isAbandoned) return;
+
+    cubit.pauseTimers();
+    final l10n = AppLocalizations.of(context)!;
+    unawaited(
+      _notificationService.showSessionPaused(
+        sessionName: sessionDisplayName(session.sessionType, l10n),
+        secondsRemaining: cubit.state.secondsRemaining,
+      ),
+    );
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     unawaited(_wearBridge?.stop());
     _cubit?.close();
     super.dispose();

@@ -113,6 +113,10 @@
   "inSessionAbandonConfirmBody": "Il progresso parziale verrà registrato.",
   "inSessionAbandonConfirmButton": "Abbandona sessione",
   "inSessionAbandonKeepGoingButton": "Continua",
+  "sessionNotificationRationaleTitle": "Resta aggiornato sulla sessione",
+  "sessionNotificationRationaleBody": "Attiva le notifiche per vedere lo stato della sessione in pausa quando l'app è in background.",
+  "sessionNotificationRationaleAllowButton": "Consenti",
+  "sessionNotificationRationaleNotNowButton": "Non ora",
   "inSessionStepLabel": "{current} di {total}",
   "@inSessionStepLabel": {
     "placeholders": {
