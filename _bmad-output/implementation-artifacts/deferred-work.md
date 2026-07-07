@@ -1,5 +1,24 @@
 # Deferred Work
 
+## Triage — Epic 22 pre-v3 consolidation (2026-07-07)
+
+v1 is complete (Epic 22 closed). This is a non-destructive reconciliation pass over the deferral log: entries below are **retained verbatim as historical record**; this header records dispositions rather than deleting rows.
+
+**Verified CLOSED against current code:**
+- *"`weather_cache` table grows unbounded"* (from the 4-1 review) → **resolved.** `WeatherCacheDao.replaceCache` deletes-then-inserts inside a transaction (`weather_cache_dao.dart:23-29`); the single-entry cache never accumulates rows.
+
+**Reconciled with the action-item ledger — formally KILLED (won't-do) at the Epic 17 kickoff triage (2026-06-22), so no longer actionable here:**
+- *"AssetBundle JSON re-parsed on every `loadFallbackExercisesByType` call — memoize the decoded list"* (from the 6-2 review) = ledger **E6-T8**. Killed: premature optimization; no measured cold-start issue across 22 epics on the SM-A520F.
+- *"Substring-matching false positives in `_deriveSessionType` / ExerciseDB remote mapping revisit"* (from the 6-1 review) = ledger **E6-T7**. Killed: heuristic mapping shipped through 22 epics with no reported defect; bundled fallback covers offline; no v2/v3 epic touches exercise mapping. Paolo-vetoable — reopen if a mapping defect is reported.
+- *AI Decision Log query perf* = ledger **E14R-4a**. Killed: the Decision Log is a `kDebugMode`-only screen, never in the release path.
+
+**New findings logged this session (NOT fixed — out of E22R-2's auth/social/leaderboard scope):**
+- Raw `failure.message` / `e.toString()` still reaches the UI (English in both locales) at four non-scoped sites: `onboarding_page.dart:51`, `profile_page.dart:74`, `disclaimer_screen.dart:29` (all `OnboardingError.message`, fed by `CacheFailure(e.toString())` in `onboarding_repository_impl.dart`), and `rpe_page.dart:164` (`error.failure.message`). Same defect class as **E22R-2**; deferred to a future i18n pass under the standing Cat-B rule **E18R-CB2** (localized-IT on every backend-failure path). Per the Epic 22 retro Cat-B lesson, closing this systemic i18n debt in-session vs. storizing it is the Project Lead's call.
+
+**Scope note:** the ~75 remaining entries are legitimately-deferred conditional code-review findings (triggers: measured perf, future schema change, a11y pass, RTL/locale unlock, etc.). They are intentionally retained and NOT force-closed.
+
+---
+
 ## Deferred from: code review of story-21.1 (2026-07-02)
 
 - EntitlementGate defaults to `accountFree` until first `refresh()` → a genuine Pro user's award is silently dropped (no queue entry, no retry) if RPE is submitted before `refresh()` populates the cache on a cold/offline start. **[Defer — pre-existing gate-wide behavior, consistent with every other gating call site; not introduced by this change.]** [core/cloud/entitlement_gate.dart:16,40 · award_session_points_use_case.dart:19]

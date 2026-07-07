@@ -472,3 +472,50 @@ Active: `E21R-1` (→ Story 21.5), `E21R-2`, `E18R-1` (small-viewport golden inf
 ### v2 close — open threads
 
 The highest-leverage v2 residuals are the **test-automation debt** (`E18R-1` real-viewport goldens, `E19R-1-CB` CI-gated two-peer smoke) — closing them would have covered E21R-1's freeze-release and Edge-Function loop automatically instead of by hand — and the **undeployed shared-session scoring server path** (`E21R-1`). Counter-metric monitoring (21.3-AC4) is a manual, dashboard-less ship-gate with the kill switch ready (`SHARED_SESSION_MULTIPLIER`).
+
+---
+
+## Epic 22 Retrospective — action items & triage (2026-07-07)
+
+Epic 22 (Experience Polish, v1) closed 5/5 stories — **terminal epic of v1** (no Epic 23 exists). Tests 1323 → **1403 passed / 1 skipped**; `flutter analyze` 0 throughout; new dependency `flutter_local_notifications 21.0.0`. Two-device/on-device GUI gate **FAIL → PASS**: two real defects found on-device and fixed in-session (build blocker: `flutter_local_notifications` needs Android core-library desugaring, never enabled — invisible to `flutter test` which runs on the host VM; layout bug: FactorIconRow glyphs stacked vertically at full width, missed because widget tests mounted the glyph in isolation). Retro: `epic-22-retro-2026-07-07.md`.
+
+### Epic 22 closures recorded
+
+- `E21R-1` (shared-session live deploy + 2-device verify) — **done** (Story 21.5).
+- `E21R-2` (Progress screen hardcoded-Italian → ARB) — **done this session**, and expanded into an app-wide i18n sweep (Progress + Sessions catalog + Paywall + AI Decision Log) once the audit revealed the gap was far larger than one screen. Project-Lead scope call made consciously at the gate (Paolo).
+- `E7.5-T1` (AI explanation localization — open since Epic 7.5) — **done this session**. Closed cleanly via key-based localization with a raw-text fallback; no migration because the explanation is not persisted.
+- `E18R-1` (real-viewport golden test infra) — **folded into `E22R-1`** (CI hardening); would have caught **both** of today's gate defects.
+- `E18R-2` (Amici raw-English `failure.message`) — **carried forward as `E22R-2`** (broadened to all data-layer error paths).
+
+### Category A triage
+
+| Item | Disposition | Rationale / new home |
+|---|---|---|
+| `E22R-1` **CI hardening** (build APK step + real-viewport golden infra) | 🔵 **NEW — active (HIGH priority)** | Closes the root cause of both Epic 22 gate bugs — the recurring "verification automation lags the code" theme (E18R-1/E10R-2/E19R-1/E21R-1 lineage). (a) add `flutter build apk --debug` to CI; (b) stand up real-viewport golden infra (~360×640 + device profile). Subsumes long-carried `E18R-1`. |
+| `E22R-2` **data-layer error-string i18n** | 🔵 **NEW — active** | Map failure types → l10n at the UI layer for auth/social/leaderboard repos, which currently show hardcoded English `Failure('…')` raw in both locales. Last remaining i18n gap after this session's sweep. Supersedes/broadens `E18R-2`. |
+| `E10R-2` non-UTC week-bucketing regression test | 🔵 **KEEP — active (carried)** | Legitimate correctness-adjacent gap for the CET/CEST target user (`_mondayOf` + `_thisWeekMinutes`). Fires on next Progress-touching work. |
+| `E18R-4` social `ProUpsellSheet` copy | 🔵 **KEEP — active (minor, carried)** | Cosmetic copy inconsistency; low priority, no cap pressure. Fires on next `ProUpsellSheet` touch. |
+
+**Category A outcome: 5/5 at Epic 21 close → 4 active after this retro (4 / 5, under cap).** Active: `E22R-1`, `E22R-2`, `E10R-2`, `E18R-4`. Closed/folded: `E21R-1` (Story 21.5), `E21R-2` (this session), `E7.5-T1` (this session), `E18R-1` (→ E22R-1), `E18R-2` (→ E22R-2). **No Epic 23 exists → no next-epic sprint gate**; per the Deferred Items Budget rule, triage back to ≤5 before the first v3 story enters a sprint.
+
+**Category A update — pre-v3 consolidation session (2026-07-07): `E22R-1` + `E22R-2` closed `done` (see rows above). Category A now 2 / 5** — active: `E10R-2` (non-UTC week-bucketing test), `E18R-4` (social `ProUpsellSheet` copy, minor). Well under cap; v3 is cleared to open on the Category-A axis. The two Epic 22 gate-bug root causes are now closed in CI (Android build exercised; real-viewport surface helper available). Remaining pre-v3 residual per the retro is the **Category B sunset review at v3 kickoff**.
+
+### Category B sunset review
+
+Not owed at this retro — 2-epic cadence lands the next formal sunset at **v3 kickoff** (Epic 21 kickoff was the last, covering 19+20). Standing set held unchanged: `E6-P1` (dormant), `E7.5-P1` (dormant), `E9-K1` (canonical create-story fire-check, absorbing E7-P2 + E17R-3), `E18R-CB1` (shimmer scrollable-like-loaded), `E18R-CB2` (localized-IT on backend-failure paths), `E19R-2` (UI behind unreachable route exercised on-device when nav wired), `E19R-1-CB` (two-peer smoke on schedule/CI), `E20R-B1` (compare host/follower renderings), `E21R-B1` (pref/DB backup before on-device overwrite).
+
+**New Category B lesson (candidate SOP):** when a gate reveals systemic debt (e.g. app-wide i18n), the **decision to close it in-session vs. storize it is the Project Lead's** — surface it explicitly rather than silently expanding scope. Paolo made this call consciously for the i18n sweep. To be ratified/retired at the v3-kickoff sunset review.
+
+### New / updated action items
+
+| ID | Source | Description | Owner | Target | Cat. | Status | Notes |
+|---|---|---|---|---|---|---|---|
+| E22R-1 | Epic 22 retro (2026-07-07) | CI hardening: (a) `flutter build apk --debug` CI step; (b) real-viewport golden-test infra (~360×640 + device profile) | Amelia (Dev) + Murat (TEA) | Pre-v3 consolidation (priority) | A | **done (2026-07-07)** | Subsumes `E18R-1`. (a) `.github/workflows/ci.yml` added: `analyze-and-test` job + a dedicated `build-android` job running `flutter build apk --debug` (with Temurin 17) — the Android build is now exercised in CI, closing the desugaring-blocker class; local `flutter build apk --debug` verified green (exit 0). (b) `test/helpers/viewport_helper.dart` gained reusable `set360x640Surface` / `setPhoneSurface` device-profile helpers; `factor_icon_row_test.dart` (22.2-FACTOR-008) rewired to the helper. Note: the project has used layout-assertion tests over pixel goldens across all 22 epics (0 `matchesGoldenFile`); the "golden infra" is the real-viewport surface helper, not flaky pixel baselines. |
+| E22R-2 | Epic 22 retro (2026-07-07) | Localize data-layer error strings: map `Failure` types → l10n IT/EN at the UI layer for auth/social/leaderboard repos | Amelia (Dev) + Sally (UX) | Pre-v3 consolidation | A | **done (2026-07-07)** | Supersedes `E18R-2`. Social + leaderboard were already localized (feed/social/leaderboard/comparison pages use `l10n.socialGenericError`); the remaining raw leaks were the two auth sites in `account_page.dart` — `AuthError` → new `authErrorGeneric` ARB key (IT/EN), `ExportDataError` → existing `exportDataErrorGeneric`. Regression-locked by `test/widget/account_page_error_test.dart` (E22R-2-WIDGET-001/002). Related out-of-scope leaks (onboarding ×3 + `rpe_page`) logged to `deferred-work.md` under E18R-CB2 for a future i18n pass. |
+
+### Direction — v1 close (pre-v3 consolidation)
+
+Epic 22 is the terminal v1 epic. Because there is no successor sprint to act as a natural gate, the retro recommends a **pre-v3 consolidation pass** before any v3 opens, in leverage order:
+1. **E22R-1** — CI hardening (build APK + golden viewport). Highest leverage: closes the recurring "verification lags code" theme.
+2. **E22R-2** — data-layer error-string i18n (last i18n gap).
+3. Category B sunset review at v3 kickoff.
