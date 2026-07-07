@@ -69,8 +69,11 @@ class _AccountPageContentState extends State<_AccountPageContent> {
             listenWhen: (_, current) => current is AuthError,
             listener: (context, state) {
               if (state is AuthError) {
+                // Never surface the raw failure code/exception string — this
+                // listener is shared by sign-out and account-deletion, so use
+                // a neutral localized message (E22R-2).
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.failure.message)),
+                  SnackBar(content: Text(l10n.authErrorGeneric)),
                 );
               }
             },
@@ -81,7 +84,7 @@ class _AccountPageContentState extends State<_AccountPageContent> {
                 Share.share(state.json, subject: l10n.exportDataShareSubject);
               } else if (state is ExportDataError) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.failure.message)),
+                  SnackBar(content: Text(l10n.exportDataErrorGeneric)),
                 );
               }
             },

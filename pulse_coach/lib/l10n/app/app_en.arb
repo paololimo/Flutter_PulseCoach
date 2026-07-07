@@ -321,6 +321,7 @@
   "exportDataTileLabel": "Export My Data",
   "exportDataShareSubject": "My PulseCoach Data",
   "exportDataErrorGeneric": "Error exporting data. Please try again.",
+  "authErrorGeneric": "Something went wrong. Please try again.",
   "navTabSocial": "Social",
   "visibilityTierPrivate": "Private",
   "visibilityTierFriendsOnly": "Friends only",

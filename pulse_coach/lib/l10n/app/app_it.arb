@@ -321,6 +321,7 @@
   "exportDataTileLabel": "Esporta i miei dati",
   "exportDataShareSubject": "I miei dati PulseCoach",
   "exportDataErrorGeneric": "Errore durante l'esportazione dei dati. Riprova.",
+  "authErrorGeneric": "Operazione non riuscita. Riprova.",
   "navTabSocial": "Social",
   "visibilityTierPrivate": "Privato",
   "visibilityTierFriendsOnly": "Solo amici",
