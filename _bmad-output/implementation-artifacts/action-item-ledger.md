@@ -519,3 +519,36 @@ Epic 22 is the terminal v1 epic. Because there is no successor sprint to act as 
 1. **E22R-1** — CI hardening (build APK + golden viewport). Highest leverage: closes the recurring "verification lags code" theme.
 2. **E22R-2** — data-layer error-string i18n (last i18n gap).
 3. Category B sunset review at v3 kickoff.
+
+---
+
+## Category B Sunset Review — pre-v3 consolidation (2026-07-07)
+
+Run during the pre-v3 consolidation session (pulled forward from the v3-kickoff cadence at Paolo's request). Covers Epics 21–22. Walks the standing Category B set against triggers in those epics and this session's work.
+
+| Rule | Triggered in Epic 21–22 / this session? | Verdict | Rationale |
+|---|---|---|---|
+| `E6-P1` patch-validation gate after DI/lifecycle/cross-cutting review patches | Partially — Epic 22 review patches touched cubit error paths (22.2/22.3 `_fetchWeather`/`_fetchActiveDaysCount` try/catch, 22.5 lifecycle guards) but were caught in adversarial review | **Keep dormant** | Clear future trigger, low standing cost; no cross-cutting patch escaped review. |
+| `E7.5-P1` Flutter deprecation / SDK-sensitive pre-check at create-story | **Yes — triggered and honored.** Story 22.4 added `flutter_local_notifications 21.0.0` (new plugin, SDK-sensitive) and verified its API against package source before implementing; 22.5 flagged the no-precedent pre-`runApp` `.go()` pattern | **Keep — validated effective** | The rule worked: SDK-sensitive surfaces got a pre-check. Re-relevant whenever a spec touches plugins/build/deprecated APIs. |
+| `E9-K1` canonical create-story fire-check (absorbs `E7-P2`, `E17R-3`) | Yes — fired across Epic 21/22 story creation; hard-block enforced (21.0 before 21.1) | **Keep — core enforcement** | Single create-story fire-check; still the load-bearing Cat-B rule. **But see the durable-home finding below.** |
+| `E18R-CB1` shimmer layout must be scrollable like its loaded state | No new shimmer screens in Epic 21–22 | **Keep** (review rule) | Fires on the next shimmer/loading state. **Durable home missing — see below.** |
+| `E18R-CB2` localized-IT on every backend-failure path (no raw `failure.message`) | **Yes — deliverable closed app-wide this session** (E22R-2 auth sites + onboarding/profile/disclaimer/rpe leaks). 0 remaining `Text(...message)` render sites | **Keep — validated/enforced** (review rule) | Now clean app-wide; the rule guards regressions on new `Failure` surfaces. **Durable home missing — see below.** |
+| `E19R-2` UI behind an unreachable route must be exercised on-device when its nav is wired | Arguably — Story 22.5 wired a new notification deep-link nav path; the on-device gate covered it | **Keep — validated** | Held/validated again in Epic 22. |
+| `E19R-1-CB` run the two-peer smoke on a schedule/CI (creds-gated) | Not run in 21.5/22, **but the blocker changed:** a CI pipeline now exists (`E22R-1` → `.github/workflows/ci.yml`) and the smoke test exists (`pulse_coach/test/integration/shared_session_two_peer_smoke_test.dart`) | **Keep — now unblocked; promote next** | Previously "no CI to host it." That's gone. Remaining step: add a creds-gated (Supabase secrets) job to `ci.yml`. Highest-value open Cat-B action. |
+| `E20R-B1` compare host/follower renderings, not just internal state | Epic 21.5 two-device gate exercised synchronized views | **Keep** (review rule) | Still fires on any two-client synchronized view. **Durable home missing — see below.** |
+| `E21R-B1` pull a verified pref/DB backup before any on-device overwrite | Not triggered this session (no on-device pref/DB overwrite) | **Keep** | GUI-gate protocol rule; low cost. |
+| **NEW** Epic 22 candidate SOP: when a gate reveals systemic debt, close-in-session vs. storize is the **Project Lead's** call | **Yes — exercised this session** (Paolo authorized closing the onboarding/rpe i18n leaks in-session rather than deferring) | **Ratify — active** | Validated in its first application. Adopt as a standing Cat-B rule. |
+
+**No items retired.** All standing rules have live future triggers.
+
+### ⚠️ Material finding — Cat-B review-rules have no durable home
+
+The ledger repeatedly records that the project-specific **review rules** (`E7-P3` Hero-in-`AnimatedSwitcher`, `E18R-CB1` scrollable-shimmer, `E18R-CB2` localized-IT-on-failure, `E20R-B1` host/follower-compare) were "formalized into the Edge-Case Hunter prompt / Step 2 amended with a *Project-specific recurring traps* block." **Verified this session: `.claude/skills/bmad-review-edge-case-hunter/SKILL.md` is a generic 67-line file with zero project-specific content** — the traps block is absent. The session-start `MCPmarket sync: 1 baseline skill(s) synced` is the likely cause (baseline sync overwrote the customization), though it may also never have persisted.
+
+This is exactly the **`E17R-3` "annotation ≠ enforcement"** anti-pattern the ledger warns about, one layer up: the *review rules themselves* live only as ledger prose, not in the tool that runs the review. Consequence: none of the four project-specific review traps are actually enforced by the Edge-Case Hunter today.
+
+**New action item `E22R-3` (Category A — deliverable):** re-materialize the four project-specific review traps into a **sync-durable home** — either a `bmad-customize` override that survives MCPmarket baseline sync, or a repo-local review checklist referenced by the review skill — not a direct edit to `SKILL.md` (which the next sync would wipe again). Owner: Amelia (code-review skill maintenance). Target: before the first v3 code review. Until done, treat E18R-CB1/CB2/E20R-B1/E7-P3 as **tracked-but-unenforced**.
+
+**Category A impact:** adding `E22R-3` brings Category A to **3 / 5** (`E10R-2`, `E18R-4`, `E22R-3`). Under cap.
+
+**Next sunset review:** v3 kickoff (or +2 epics from Epic 22, whichever comes first).
