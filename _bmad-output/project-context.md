@@ -218,6 +218,26 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ---
 
+## Project-Specific Code-Review Traps
+
+Recurring defect classes found repeatedly in this codebase's reviews. Reviewers (and the Edge-Case Hunter via `also_consider`) MUST check every changed diff against this list. Each trap cites its origin so the pattern is traceable. Ledger IDs: E7-P3, E8-P1, E18R-CB1, E18R-CB2, E20R-B1 (durably homed here per E22R-3, 2026-07-07 — the prior "formalized into the skill prompt" claim did not survive MCPmarket baseline skill sync).
+
+1. **`Hero` inside `AnimatedSwitcher` (or any cross-fade) — tag collision.** During the cross-fade, the outgoing and incoming children coexist for one+ frame; two `Hero`s with the same tag alive at once throws a Hero-collision assertion / flickers. Check any `Hero` whose ancestor animates children in/out. _(Origin: Story 7.3, caught at 7.4 review.)_
+
+2. **Cubit/BLoC lifecycle invariants** (any Cubit/BLoC with timers, streams, or async I/O):
+   - `start()` / init is **idempotent** — a second call is a no-op (must `_timer?.cancel()` / guard before re-subscribing), else leaked `Timer.periodic` / phantom side effects.
+   - `dispose()` / `close()` cancels **all** timers and stream subscriptions.
+   - Persistence/DAO error paths emit an **explicit observable state** (e.g. `persistenceError`), never `debugPrint`/`AppLogger`-only-then-swallow.
+   - Abandon vs. complete navigation is **mutually exclusive** (separate flags) — a completion `BlocListener` must not fire `go(rpe)` after `abandon()` already navigated. _(Origin: Stories 8.2/8.3/8.4; standardized as E8-P1.)_
+
+3. **Shimmer / loading layout must be scrollable exactly like its loaded state.** A non-scrollable `Column` skeleton overflows on small viewports (≈360×640) where the loaded state (inside a `ListView`/scrollable) would not. Mount shimmer states at a real phone viewport, not the default 800×600 test surface. _(Origin: `_FriendsShimmer`; 4-epic small-device-overflow family — 9/16/17/18.)_
+
+4. **Localized-IT on every backend-failure path — no raw `failure.message` passthrough.** Any UI that surfaces a `Failure` (SnackBar, body error view) must map it to a localized ARB string in BOTH locales; never render `failure.message` / `e.toString()` (English SDK/exception text). _(Origin: E17R-1 → E18R-2 Amici raw English; closed app-wide 2026-07-07.)_
+
+5. **Two clients rendering the same shared state must be compared against each other.** When host/follower (or any two peers) render one synchronized state, a test or GUI-gate step MUST diff the two renderings side-by-side, not merely assert each client's internal state — a GREEN test can still assert the wrong shared direction. _(Origin: Story 20.x D3 follower count-up vs host count-down shipped GREEN.)_
+
+---
+
 ## Usage Guidelines
 
 **For AI Agents:**
