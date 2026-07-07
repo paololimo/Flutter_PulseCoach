@@ -25,7 +25,7 @@ jobs:
     # Never runs on forks (which have no secrets) — only the canonical repo.
     if: github.repository == 'paololimo/Flutter_PulseCoach'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
