@@ -18,6 +18,7 @@ import 'package:pulse_coach/features/progress/presentation/widgets/weekly_goal_i
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/features/subscription/presentation/widgets/pro_upsell_sheet.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 class ProgressPage extends StatelessWidget {
@@ -61,8 +62,7 @@ class _ProgressView extends StatelessWidget {
         return BlocBuilder<SubscriptionBloc, SubscriptionState>(
           builder: (context, subState) {
             final tier = subState.whenOrNull(loaded: (t) => t);
-            final showFull =
-                isGrandfathered || tier == SubscriptionTier.pro;
+            final showFull = isGrandfathered || tier == SubscriptionTier.pro;
             // While entitlement is still resolving, don't flash the locked
             // banner at a (possibly Pro) user — show shimmer until the
             // SubscriptionBloc settles on loaded/error.
@@ -83,7 +83,10 @@ class _ProgressView extends StatelessWidget {
                       );
                     }
                     return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       child: ShimmerPlaceholder(height: 56),
                     );
                   },
@@ -110,14 +113,18 @@ class _FullProgressContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DefaultTabController(
+    final l10n = AppLocalizations.of(context)!;
+    return DefaultTabController(
       length: 2,
       child: Column(
         children: [
           TabBar(
-            tabs: [Tab(text: 'Cronologia'), Tab(text: 'Grafici')],
+            tabs: [
+              Tab(text: l10n.progressTabHistory),
+              Tab(text: l10n.progressTabCharts),
+            ],
           ),
-          Expanded(
+          const Expanded(
             child: TabBarView(children: [_HistoryTab(), _ChartsTab()]),
           ),
         ],
@@ -150,11 +157,11 @@ class _ProgressLockedBanner extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Text(
-          'Lo storico completo è una funzione Pro.',
+          AppLocalizations.of(context)!.progressLockedPro,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                decoration: TextDecoration.underline,
-              ),
+            color: Theme.of(context).colorScheme.primary,
+            decoration: TextDecoration.underline,
+          ),
           textAlign: TextAlign.center,
         ),
       ),
@@ -205,7 +212,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Nessuna sessione ancora. Inizia la tua prima oggi!',
+        AppLocalizations.of(context)!.progressHistoryEmpty,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
@@ -239,7 +246,7 @@ class _HistoryErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Impossibile caricare la cronologia',
+        AppLocalizations.of(context)!.progressHistoryError,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Theme.of(context).colorScheme.error,
         ),
@@ -292,7 +299,7 @@ class _InsufficientDataState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Completa più sessioni per vedere i tuoi progressi',
+        AppLocalizations.of(context)!.progressInsufficientData,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
@@ -309,7 +316,7 @@ class _ChartsErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Impossibile caricare i grafici',
+        AppLocalizations.of(context)!.progressChartsError,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Theme.of(context).colorScheme.error,
         ),
@@ -325,7 +332,7 @@ class _RpeEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Nessun dato RPE ancora disponibile',
+        AppLocalizations.of(context)!.progressRpeEmpty,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
@@ -343,17 +350,18 @@ class _ChartsDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Minuti per settimana', style: textTheme.titleSmall),
+        Text(l10n.progressChartMinutesPerWeek, style: textTheme.titleSmall),
         const SizedBox(height: 8),
         SizedBox(
           height: 200,
           child: MinutesPerWeekChart(minutesPerWeek: stats.minutesPerWeek),
         ),
         const SizedBox(height: 24),
-        Text('Tasso di completamento', style: textTheme.titleSmall),
+        Text(l10n.progressChartCompletionRate, style: textTheme.titleSmall),
         const SizedBox(height: 8),
         SizedBox(
           height: 200,
@@ -363,7 +371,7 @@ class _ChartsDashboard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Text('Andamento RPE', style: textTheme.titleSmall),
+        Text(l10n.progressChartRpeTrend, style: textTheme.titleSmall),
         const SizedBox(height: 8),
         SizedBox(
           height: 200,
@@ -372,7 +380,7 @@ class _ChartsDashboard extends StatelessWidget {
               : RpeTrendChart(rpeTrend: stats.rpeTrend),
         ),
         const SizedBox(height: 24),
-        Text('Tipologie di sessione', style: textTheme.titleSmall),
+        Text(l10n.progressChartSessionTypes, style: textTheme.titleSmall),
         const SizedBox(height: 8),
         SizedBox(
           height: 200,

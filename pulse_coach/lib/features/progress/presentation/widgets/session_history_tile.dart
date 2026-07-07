@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pulse_coach/features/progress/domain/entities/session_history_entry.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
+import 'package:pulse_coach/shared/utils/session_type_label.dart';
 
 class SessionHistoryTile extends StatelessWidget {
   const SessionHistoryTile({super.key, required this.entry});
@@ -10,6 +12,7 @@ class SessionHistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final isAbandoned = entry.abandoned;
 
     return Opacity(
@@ -17,11 +20,11 @@ class SessionHistoryTile extends StatelessWidget {
       child: ListTile(
         leading: _SessionTypeIcon(sessionType: entry.sessionType),
         title: Text(
-          _sessionLabel(entry.sessionType),
+          sessionTypeLabel(entry.sessionType, l10n),
           style: textTheme.bodyLarge,
         ),
         subtitle: Text(
-          _subtitleText(entry),
+          _subtitleText(entry, l10n),
           style: textTheme.bodySmall?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
@@ -31,14 +34,7 @@ class SessionHistoryTile extends StatelessWidget {
     );
   }
 
-  String _sessionLabel(String sessionType) => switch (sessionType) {
-    'mobility' => 'Mobilità',
-    'cardio' => 'Cardio',
-    'breathing' => 'Respirazione',
-    _ => sessionType,
-  };
-
-  String _subtitleText(SessionHistoryEntry entry) {
+  String _subtitleText(SessionHistoryEntry entry, AppLocalizations l10n) {
     final date = _formatDate(entry.completedAt);
     if (entry.abandoned) {
       // Always mark abandoned sessions, even when no elapsed time was recorded.
@@ -50,7 +46,7 @@ class SessionHistoryTile extends StatelessWidget {
           : elapsed < 60
           ? '<1min '
           : '${elapsed ~/ 60}min ';
-      return '$date · $elapsedLabel(abbandonata)';
+      return '$date · $elapsedLabel(${l10n.sessionHistoryAbandoned})';
     }
     return '$date · ${entry.durationMinutes}min';
   }

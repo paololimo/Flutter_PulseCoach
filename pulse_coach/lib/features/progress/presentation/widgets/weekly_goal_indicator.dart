@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class WeeklyGoalIndicator extends StatelessWidget {
   const WeeklyGoalIndicator({
@@ -14,6 +15,7 @@ class WeeklyGoalIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final progress = weeklyTarget > 0
         ? (completedThisWeek / weeklyTarget).clamp(0.0, 1.0)
         : 0.0;
@@ -25,7 +27,7 @@ class WeeklyGoalIndicator extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '$completedThisWeek di $weeklyTarget sessioni questa settimana',
+            l10n.weeklyGoalProgress(completedThisWeek, weeklyTarget),
             style: textTheme.titleSmall,
           ),
           const SizedBox(height: 6),
@@ -39,7 +41,7 @@ class WeeklyGoalIndicator extends StatelessWidget {
           if (completedThisWeek == 0) ...[
             const SizedBox(height: 6),
             Text(
-              'Inizia la tua prima sessione questa settimana!',
+              l10n.weeklyGoalFirstSession,
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -47,7 +49,7 @@ class WeeklyGoalIndicator extends StatelessWidget {
           ] else if (isComplete) ...[
             const SizedBox(height: 6),
             Text(
-              'Obiettivo raggiunto!',
+              l10n.weeklyGoalReached,
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.primary,
                 fontWeight: FontWeight.bold,

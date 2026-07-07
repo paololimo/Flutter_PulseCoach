@@ -1,5 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
+import 'package:pulse_coach/shared/utils/session_type_label.dart';
 
 class SessionTypeBreakdownChart extends StatelessWidget {
   const SessionTypeBreakdownChart({super.key, required this.sessionTypeCounts});
@@ -12,15 +14,10 @@ class SessionTypeBreakdownChart extends StatelessWidget {
     'breathing': Color(0xFFE8C87A),
   };
 
-  static const _typeLabels = {
-    'mobility': 'Mobilità',
-    'cardio': 'Cardio',
-    'breathing': 'Respirazione',
-  };
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final total = sessionTypeCounts.values.fold(0, (sum, count) => sum + count);
 
     final sections = <PieChartSectionData>[];
@@ -75,7 +72,7 @@ class SessionTypeBreakdownChart extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        _typeLabels[type] ?? type,
+                        sessionTypeLabel(type, l10n),
                         style: Theme.of(context).textTheme.labelSmall,
                         overflow: TextOverflow.ellipsis,
                       ),

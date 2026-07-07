@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/weekly_goal_indicator.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 import '../../helpers/viewport_helper.dart';
 
-Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
+Widget _wrap(Widget child) => MaterialApp(
+  locale: const Locale('it'),
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  home: Scaffold(body: child),
+);
 
 void main() {
   group('WeeklyGoalIndicator', () {

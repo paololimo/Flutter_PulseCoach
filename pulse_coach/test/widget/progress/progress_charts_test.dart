@@ -6,11 +6,15 @@ import 'package:pulse_coach/features/progress/presentation/widgets/completion_ra
 import 'package:pulse_coach/features/progress/presentation/widgets/minutes_per_week_chart.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/rpe_trend_chart.dart';
 import 'package:pulse_coach/features/progress/presentation/widgets/session_type_breakdown_chart.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 import '../../helpers/viewport_helper.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: AppTheme.darkTheme,
+  locale: const Locale('it'),
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(body: SizedBox(height: 200, child: child)),
 );
 
