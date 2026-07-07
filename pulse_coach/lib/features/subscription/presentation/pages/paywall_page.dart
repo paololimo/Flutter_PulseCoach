@@ -5,6 +5,7 @@ import 'package:pulse_coach/features/subscription/domain/entities/pro_offer.dart
 import 'package:pulse_coach/features/subscription/domain/entities/subscription_tier.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/paywall_cubit.dart';
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 import 'package:pulse_coach/shared/widgets/shimmer_placeholder.dart';
 
 class PaywallPage extends StatelessWidget {
@@ -33,8 +34,8 @@ class PaywallPage extends StatelessWidget {
             // restore, or entitlement not yet active): keep the user on the
             // paywall and tell them, rather than silently dismissing it.
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Nessun abbonamento Pro attivo da sbloccare.'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!.paywallNoActiveSub),
               ),
             );
           }
@@ -44,8 +45,13 @@ class PaywallPage extends StatelessWidget {
               current.maybeWhen(error: (_) => true, orElse: () => false),
           listener: (context, state) {
             state.maybeWhen(
+              // Show a localized generic message rather than the raw
+              // failure.message, which may be a store SDK exception in another
+              // language (Epic-17 finding).
               error: (failure) => ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(failure.message)),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context)!.subActionError),
+                ),
               ),
               orElse: () {},
             );
@@ -68,7 +74,7 @@ class _PaywallBody extends StatelessWidget {
         builder: (context, state) {
           return state.when(
             loading: () => const _PaywallShimmer(),
-            error: (msg) => _PaywallError(message: msg),
+            error: (msg) => const _PaywallError(),
             loaded: (offers) => _PaywallLoaded(offers: offers),
           );
         },
@@ -78,22 +84,22 @@ class _PaywallBody extends StatelessWidget {
 }
 
 class _PaywallError extends StatelessWidget {
-  final String message;
-  const _PaywallError({required this.message});
+  const _PaywallError();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, textAlign: TextAlign.center),
+            Text(l10n.paywallLoadError, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: () => context.read<PaywallCubit>().loadOfferings(),
-              child: const Text('Riprova'),
+              child: Text(l10n.paywallRetry),
             ),
           ],
         ),
@@ -132,19 +138,22 @@ class _PaywallLoaded extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SubscriptionBloc, SubscriptionState>(
       builder: (context, subState) {
-        final isLoading =
-            subState.maybeWhen(loading: () => true, orElse: () => false);
+        final isLoading = subState.maybeWhen(
+          loading: () => true,
+          orElse: () => false,
+        );
+        final l10n = AppLocalizations.of(context)!;
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
             Text(
-              'Sblocca l\'esperienza completa',
+              l10n.paywallHeadline,
               style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Storico completo, tutti i grafici e le funzioni social.',
+              l10n.paywallSubhead,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -165,9 +174,9 @@ class _PaywallLoaded extends StatelessWidget {
               onPressed: isLoading
                   ? null
                   : () => context.read<SubscriptionBloc>().add(
-                        const SubscriptionEvent.restoreRequested(),
-                      ),
-              child: const Text('Ripristina acquisti'),
+                      const SubscriptionEvent.restoreRequested(),
+                    ),
+              child: Text(l10n.paywallRestore),
             ),
           ],
         );
@@ -195,7 +204,7 @@ class _PlanCard extends StatelessWidget {
         subtitle: Text(offer.priceString),
         trailing: FilledButton(
           onPressed: isLoading ? null : onPurchase,
-          child: const Text('Acquista'),
+          child: Text(AppLocalizations.of(context)!.paywallPurchase),
         ),
       ),
     );

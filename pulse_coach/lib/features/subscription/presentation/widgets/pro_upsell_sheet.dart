@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_service.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class ProUpsellSheet extends StatelessWidget {
   const ProUpsellSheet._();
@@ -31,8 +32,9 @@ class ProUpsellSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Semantics(
-      label: 'PulseCoach Pro — upsell sheet',
+      label: 'PulseCoach Pro',
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -41,7 +43,7 @@ class ProUpsellSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Accedi a tutto lo storico e ai grafici con PulseCoach Pro.',
+                l10n.proUpsellBody,
                 style: theme.textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),
@@ -50,21 +52,21 @@ class ProUpsellSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Semantics(
-                      label: 'non ora — chiudi',
+                      label: l10n.proUpsellNotNow,
                       child: TextButton(
                         onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('non ora'),
+                        child: Text(l10n.proUpsellNotNow),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Semantics(
-                      label: 'Scopri Pro',
+                      label: l10n.proUpsellDiscover,
                       child: FilledButton(
                         // Story 17.4 will wire the purchase flow.
                         onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('Scopri Pro'),
+                        child: Text(l10n.proUpsellDiscover),
                       ),
                     ),
                   ),

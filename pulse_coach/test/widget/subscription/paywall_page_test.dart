@@ -239,7 +239,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Acquisto non riuscito'), findsOneWidget);
+        // The paywall now surfaces a localized generic message rather than the
+        // raw failure.message (which may be a store SDK string in another
+        // language). IT locale -> subActionError.
+        expect(find.text('Operazione non riuscita. Riprova.'), findsOneWidget);
         await stateController.close();
       },
     );

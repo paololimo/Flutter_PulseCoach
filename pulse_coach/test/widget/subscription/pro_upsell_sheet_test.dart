@@ -6,6 +6,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pulse_coach/features/subscription/data/services/upsell_cooldown_service.dart';
 import 'package:pulse_coach/features/subscription/presentation/widgets/pro_upsell_sheet.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 import 'pro_upsell_sheet_test.mocks.dart';
 
@@ -41,13 +42,23 @@ void main() {
           ),
         ],
       );
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          locale: const Locale('it'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
+      );
       await tester.pumpAndSettle();
     }
 
     Future<void> pumpScaffold(WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('it'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Builder(
             builder: (ctx) => TextButton(
               onPressed: () => ProUpsellSheet.show(
