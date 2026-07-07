@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:injectable/injectable.dart';
+import 'package:meta/meta.dart';
 import 'package:pulse_coach/core/cloud/supabase_client.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/features/social/shared_session/data/models/shared_session_dto.dart';
@@ -8,10 +9,41 @@ import 'package:pulse_coach/features/social/shared_session/data/models/shared_se
 @injectable
 class SharedSessionRemoteDataSource {
   final SupabaseClientProvider _supabase;
-  const SharedSessionRemoteDataSource(this._supabase);
+
+  SharedSessionRemoteDataSource(this._supabase) {
+    insertSharedSession = _defaultInsertSharedSession;
+    upsertParticipant = _defaultUpsertParticipant;
+  }
 
   static const _codeChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   static const _codeLength = 6;
+
+  // Test seams (same pattern as AuthRemoteDataSource). The Supabase fluent
+  // client is not unit-testable without a brittle chain mock, so the two write
+  // operations are extracted behind overridable function fields. This lets
+  // tests assert the D2 invariant — createSharedSession registers the host as a
+  // session_participants row — without touching a live backend.
+  @visibleForTesting
+  late Future<Map<String, dynamic>> Function(String hostUserId, String code)
+      insertSharedSession;
+
+  @visibleForTesting
+  late Future<void> Function(String sessionId, String userId) upsertParticipant;
+
+  Future<Map<String, dynamic>> _defaultInsertSharedSession(
+    String hostUserId,
+    String code,
+  ) => _supabase.client
+      .from('shared_sessions')
+      .insert({'host_user_id': hostUserId, 'join_code': code})
+      .select()
+      .single();
+
+  Future<void> _defaultUpsertParticipant(String sessionId, String userId) =>
+      _supabase.client.from('session_participants').upsert({
+        'session_id': sessionId,
+        'user_id': userId,
+      });
 
   String _generateJoinCode() {
     final rng = Random.secure();
@@ -28,14 +60,7 @@ class SharedSessionRemoteDataSource {
     for (var attempt = 0; attempt < 2; attempt++) {
       final code = _generateJoinCode();
       try {
-        final data = await _supabase.client
-            .from('shared_sessions')
-            .insert({
-              'host_user_id': hostUserId,
-              'join_code': code,
-            })
-            .select()
-            .single();
+        final data = await insertSharedSession(hostUserId, code);
         final dto = SharedSessionDto.fromJson(data);
         // D2 fix (Story 21.5 review): register the host as a participant too.
         // createSharedSession previously inserted only the shared_sessions row,
@@ -43,10 +68,8 @@ class SharedSessionRemoteDataSource {
         // scored by score_shared_session/sweep_unscored_shared_sessions (both
         // key off session_participants) — the host earned zero points for a
         // completed shared session. Mirrors joinSharedSession's upsert.
-        await _supabase.client.from('session_participants').upsert({
-          'session_id': dto.id,
-          'user_id': hostUserId,
-        });
+        // Regression-locked by shared_session_remote_data_source_test.dart.
+        await upsertParticipant(dto.id, hostUserId);
         return dto;
       } catch (e) {
         if (attempt == 1) rethrow;
@@ -111,10 +134,7 @@ class SharedSessionRemoteDataSource {
     if (session.status != 'waiting') {
       throw const SessionAlreadyStartedFailure();
     }
-    await _supabase.client.from('session_participants').upsert({
-      'session_id': session.id,
-      'user_id': userId,
-    });
+    await upsertParticipant(session.id, userId);
     return session;
   }
 }

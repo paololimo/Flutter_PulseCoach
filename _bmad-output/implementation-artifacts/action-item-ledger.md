@@ -552,3 +552,22 @@ This is exactly the **`E17R-3` "annotation ≠ enforcement"** anti-pattern the l
 **Category A impact:** `E22R-3` opened and closed in-session → Category A remains **2 / 5** (`E10R-2`, `E18R-4`). Under cap.
 
 **Next sunset review:** v3 kickoff (or +2 epics from Epic 22, whichever comes first).
+
+---
+
+## D2 (Story 21.5 host-scoring) reconciliation + defense-in-depth (2026-07-07)
+
+**Why this entry exists:** the Story 21.5 defect **D2 — "shared-session host never scored"** (a completed 2-person session left the *host* with zero `leaderboard_entries`, because `createSharedSession` inserted only a `shared_sessions` row and never a `session_participants` row, so `score_shared_session`/`sweep_unscored_shared_sessions` — which key off `session_participants` — skipped the host) was **fixed and live-verified on 2026-07-06 but was never reconciled into this ledger or the Epic 21 retro.** It lived only as a `[Review][Decision]` note inside `21-5-…​.md`. This entry closes that tracking gap and records the hardening added this session.
+
+**Status of the fix (confirmed against current code):** `createSharedSession()` upserts a host `session_participants` row (`shared_session_remote_data_source.dart`, comment "D2 fix (Story 21.5 review)"). Story 21.5 records `[Review VERIFIED LIVE 2026-07-06 — CLOSED]`: host `marco_r` (`c776170d`) went from 0 → 30 pts (`20 × 1.0 mobility_low × 1.5`) end-to-end on two real devices. **The user-facing bug is closed.**
+
+**Residual this session found and closed — the fix had no regression protection** (Story 21.5 explicitly shipped it with "no new automated test; datasource has no unit-test harness"). Same "verification lags code" class as E22R-1. Added defense-in-depth at both layers:
+
+| ID | Layer | What | Status |
+|---|---|---|---|
+| `E21R-D2` (client) | Dart | Extracted `SharedSessionRemoteDataSource`'s two writes behind `@visibleForTesting` seams (`insertSharedSession`, `upsertParticipant`, same pattern as `AuthRemoteDataSource`); added `shared_session_remote_data_source_test.dart` (E21R-D2-001/002) asserting `createSharedSession` registers the host as a participant. | **done** — 2 tests green; full suite 1407 passed/1 skipped; analyze 0. |
+| `E21R-D2` (DB) | Postgres | Migration `0016_shared_session_host_participant_trigger.sql`: `AFTER INSERT ON shared_sessions` trigger (`SECURITY DEFINER`, mirrors `handle_new_user`) that upserts the host participant `ON CONFLICT DO NOTHING`, + back-fill. Server-authoritative guarantee even if a future client refactor drops the upsert; idempotent with the client upsert. | **done + deployed** to `vdltxqeyrqgivgmfvbjc` (verified: trigger present + `SECURITY DEFINER`; back-fill → 0 host-less sessions; end-to-end insert proved the host row is auto-created; test session cleaned up via CASCADE). |
+
+**Category A impact:** `E21R-D2` opened and closed in-session (fix pre-existed; only regression coverage + DB hardening were owed). Category A remains **2 / 5** (`E10R-2`, `E18R-4`). The two layers are idempotent with each other (`UNIQUE(session_id, user_id)` + `ON CONFLICT DO NOTHING`), so no duplicate-participant risk.
+
+**Process note (for the v3-kickoff Category B sunset):** D2 slipping out of the ledger despite being a High-severity live-verified fix is evidence that **review-note `[Review][Decision]` items closed in-story must be reconciled into the ledger at the next retro**, not left only in the story file. Candidate SOP to ratify at v3 kickoff.

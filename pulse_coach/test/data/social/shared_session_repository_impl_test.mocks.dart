@@ -43,6 +43,40 @@ class MockSharedSessionRemoteDataSource extends _i1.Mock
   }
 
   @override
+  _i4.Future<Map<String, dynamic>> Function(String, String)
+  get insertSharedSession =>
+      (super.noSuchMethod(
+            Invocation.getter(#insertSharedSession),
+            returnValue: (String hostUserId, String code) =>
+                _i4.Future<Map<String, dynamic>>.value(<String, dynamic>{}),
+          )
+          as _i4.Future<Map<String, dynamic>> Function(String, String));
+
+  @override
+  _i4.Future<void> Function(String, String) get upsertParticipant =>
+      (super.noSuchMethod(
+            Invocation.getter(#upsertParticipant),
+            returnValue: (String sessionId, String userId) =>
+                _i4.Future<void>.value(),
+          )
+          as _i4.Future<void> Function(String, String));
+
+  @override
+  set insertSharedSession(
+    _i4.Future<Map<String, dynamic>> Function(String, String)? value,
+  ) => super.noSuchMethod(
+    Invocation.setter(#insertSharedSession, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set upsertParticipant(_i4.Future<void> Function(String, String)? value) =>
+      super.noSuchMethod(
+        Invocation.setter(#upsertParticipant, value),
+        returnValueForMissingStub: null,
+      );
+
+  @override
   _i4.Future<_i2.SharedSessionDto> createSharedSession({
     required String? hostUserId,
   }) =>
