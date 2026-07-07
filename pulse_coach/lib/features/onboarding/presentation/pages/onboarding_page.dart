@@ -8,6 +8,7 @@ import 'package:pulse_coach/features/onboarding/presentation/bloc/onboarding_sta
 import 'package:pulse_coach/features/onboarding/presentation/widgets/disclaimer_screen.dart';
 import 'package:pulse_coach/features/onboarding/presentation/widgets/onboarding_carousel.dart';
 import 'package:pulse_coach/features/onboarding/presentation/widgets/profile_setup_form.dart';
+import 'package:pulse_coach/l10n/app_localizations.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -48,7 +49,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           }
           if (state is OnboardingError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!.errorGenericRetry),
+              ),
             );
           }
         },

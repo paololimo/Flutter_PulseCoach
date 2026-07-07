@@ -12,8 +12,13 @@ v1 is complete (Epic 22 closed). This is a non-destructive reconciliation pass o
 - *"Substring-matching false positives in `_deriveSessionType` / ExerciseDB remote mapping revisit"* (from the 6-1 review) = ledger **E6-T7**. Killed: heuristic mapping shipped through 22 epics with no reported defect; bundled fallback covers offline; no v2/v3 epic touches exercise mapping. Paolo-vetoable — reopen if a mapping defect is reported.
 - *AI Decision Log query perf* = ledger **E14R-4a**. Killed: the Decision Log is a `kDebugMode`-only screen, never in the release path.
 
-**New findings logged this session (NOT fixed — out of E22R-2's auth/social/leaderboard scope):**
-- Raw `failure.message` / `e.toString()` still reaches the UI (English in both locales) at four non-scoped sites: `onboarding_page.dart:51`, `profile_page.dart:74`, `disclaimer_screen.dart:29` (all `OnboardingError.message`, fed by `CacheFailure(e.toString())` in `onboarding_repository_impl.dart`), and `rpe_page.dart:164` (`error.failure.message`). Same defect class as **E22R-2**; deferred to a future i18n pass under the standing Cat-B rule **E18R-CB2** (localized-IT on every backend-failure path). Per the Epic 22 retro Cat-B lesson, closing this systemic i18n debt in-session vs. storizing it is the Project Lead's call.
+**New findings — surfaced AND fixed this session (Project-Lead call, 2026-07-07):** the remaining raw `failure.message` / `e.toString()` UI leaks (English in both locales), same defect class as **E22R-2** but outside its auth/social/leaderboard scope, were fixed rather than deferred:
+- `onboarding_page.dart` (`OnboardingError`) → `errorGenericRetry`
+- `profile_page.dart` — both the snackbar listener (`ProfileError`) *and* the body error view → `errorGenericRetry`
+- `disclaimer_screen.dart` (`OnboardingError`) → `errorGenericRetry`
+- `rpe_page.dart` (`RpeFeedbackError`) → new `rpeSaveError`
+
+Two new ARB keys added (`errorGenericRetry`, `rpeSaveError`, IT+EN). Regression assertions updated in `profile_page_test.dart` (2.4-WIDGET-005) and `rpe_page_test.dart` (9.1-PAGE-003) to lock the localized copy and forbid the raw message. Closes the raw-`failure.message` class app-wide (0 remaining `Text(...message)` render sites). Satisfies the standing Cat-B rule **E18R-CB2**.
 
 **Scope note:** the ~75 remaining entries are legitimately-deferred conditional code-review findings (triggers: measured perf, future schema change, a11y pass, RTL/locale unlock, etc.). They are intentionally retained and NOT force-closed.
 

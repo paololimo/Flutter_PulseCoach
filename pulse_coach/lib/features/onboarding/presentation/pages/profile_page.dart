@@ -69,9 +69,11 @@ class _ProfilePageState extends State<ProfilePage> {
             });
           }
           if (state is ProfileError) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!.errorGenericRetry),
+              ),
+            );
           }
         },
         builder: (context, state) {
@@ -85,7 +87,9 @@ class _ProfilePageState extends State<ProfilePage> {
               appBar: AppBar(
                 title: Text(AppLocalizations.of(context)!.profileEditTitle),
               ),
-              body: Center(child: Text(state.message)),
+              body: Center(
+                child: Text(AppLocalizations.of(context)!.errorGenericRetry),
+              ),
             );
           }
           return _buildForm(context);

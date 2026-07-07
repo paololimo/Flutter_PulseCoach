@@ -138,13 +138,15 @@ void main() {
       ).thenAnswer((_) async => const Left(CacheFailure('Profile not found')));
       await tester.pumpWidget(buildPage());
       await tester.pumpAndSettle();
+      // Localized generic copy — never the raw failure.message (E22R-2 class).
       expect(
         find.descendant(
           of: find.byType(SnackBar),
-          matching: find.text('Profile not found'),
+          matching: find.text('Something went wrong. Please try again.'),
         ),
         findsOneWidget,
       );
+      expect(find.text('Profile not found'), findsNothing);
     });
 
     testWidgets(

@@ -26,7 +26,7 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
       listener: (context, state) {
         if (state is OnboardingError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
+            SnackBar(content: Text(l10n.errorGenericRetry)),
           );
         }
       },

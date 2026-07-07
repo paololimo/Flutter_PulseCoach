@@ -158,7 +158,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pump();
 
-    expect(find.textContaining('db full'), findsOneWidget);
+    // Localized generic copy — never the raw failure.message (E22R-2 class).
+    expect(
+      find.text('Impossibile salvare la valutazione. Riprova.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('db full'), findsNothing);
   });
 
   testWidgets(

@@ -154,14 +154,15 @@ class _RpePageState extends State<RpePage> {
                       previous is! RpeFeedbackError,
                   listener: (context, state) {
                     if (!context.mounted) return;
-                    final error = state as RpeFeedbackError;
                     // The cubit is single-shot after error (D3), so the page
                     // cannot offer an in-place retry. Show the failure on the
                     // next surface and bounce out — losing this RPE row is the
                     // explicit cost of the spec-correct idempotency choice.
                     final messenger = ScaffoldMessenger.of(context);
                     messenger.showSnackBar(
-                      SnackBar(content: Text(error.failure.message)),
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!.rpeSaveError),
+                      ),
                     );
                     context.go(AppRouter.today);
                   },

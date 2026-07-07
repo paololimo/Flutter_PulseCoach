@@ -322,6 +322,8 @@
   "exportDataShareSubject": "I miei dati PulseCoach",
   "exportDataErrorGeneric": "Errore durante l'esportazione dei dati. Riprova.",
   "authErrorGeneric": "Operazione non riuscita. Riprova.",
+  "errorGenericRetry": "Qualcosa è andato storto. Riprova.",
+  "rpeSaveError": "Impossibile salvare la valutazione. Riprova.",
   "navTabSocial": "Social",
   "visibilityTierPrivate": "Privato",
   "visibilityTierFriendsOnly": "Solo amici",
