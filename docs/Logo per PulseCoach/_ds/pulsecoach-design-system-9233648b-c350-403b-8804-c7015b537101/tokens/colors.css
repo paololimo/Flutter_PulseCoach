@@ -1,0 +1,71 @@
+/* ─────────────────────────────────────────────────────────────
+   PulseCoach — Color tokens
+   Ground-truthed against pulse_coach/lib/core/theme/pulse_coach_theme.dart
+   Metaphor: "dark canvas, living accents". Dark is the default surface;
+   light is a setting. Brand accents are identical across themes; only
+   surfaces and on-colors flip.
+   Every colored element must INVITE ACTION (primary), COMMUNICATE STATE
+   (secondary/tertiary/coral) or CONFIRM COMPLETION (primary). Never decorative.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  /* — Base surfaces (dark, default) — */
+  --pc-surface:                #0F1119; /* app background / lowest surface */
+  --pc-surface-container:      #171B26; /* cards & elevated surfaces (tonal lift, not shadow) */
+  --pc-surface-container-high: #1E2333; /* active/selected, inputs, sheets over a scrim */
+
+  /* — Brand accents (identical in light & dark) — */
+  --pc-primary:      #7DD3C0; /* Aqua — action, completion, active, Mobility accent */
+  --pc-on-primary:   #06231D; /* dark teal — the ONLY legible text/icon on aqua (~12:1) */
+  --pc-secondary:    #A78BDA; /* Violet — Fatigued/Recovering state, Breathing accent, 2nd actions */
+  --pc-tertiary:     #E8C87A; /* Amber — AtRisk state, attention items. Never a generic warning fill */
+  --pc-coral:        #F0A1B0; /* Soft Coral — Cardio accent & in-session HR value */
+
+  /* — Text / foreground (dark) — */
+  --pc-on-surface:         #E2E4EA; /* primary text — not pure white (~15:1 AAA) */
+  --pc-on-surface-variant: #9498A6; /* secondary text, captions, the AI explanation line (~6.5:1 AA) */
+  --pc-error:              #F28B82; /* genuine errors only — never shame, never warnings */
+
+  /* — Podium medals (v2 leaderboard top-3) — reuse accent tokens, no metallics — */
+  --pc-medal-gold:   #E8C87A; /* = tertiary */
+  --pc-medal-silver: #9498A6; /* = on-surface-variant */
+  --pc-medal-bronze: #F0A1B0; /* = coral */
+
+  /* — Session-type accents (map a session to its color) — */
+  --pc-accent-mobility:  #7DD3C0; /* = primary */
+  --pc-accent-cardio:    #F0A1B0; /* = coral */
+  --pc-accent-breathing: #A78BDA; /* = secondary */
+
+  /* — Common alpha usages (from the widgets) — */
+  --pc-track:            rgba(148, 152, 166, 0.20); /* ring track, dividers: on-surface-variant @ .2 */
+  --pc-shimmer-base:     #171B26;                    /* = surface-container */
+  --pc-shimmer-highlight:rgba(148, 152, 166, 0.10); /* on-surface-variant @ .1 */
+  --pc-hairline:         #20242F;                    /* row dividers, nav top border */
+  --pc-outline:          #3A4250;                    /* input/segmented borders */
+
+  /* — Semantic aliases (prefer these in product UI) — */
+  --pc-bg:            var(--pc-surface);
+  --pc-surface-card:  var(--pc-surface-container);
+  --pc-surface-raised:var(--pc-surface-container-high);
+  --pc-text:          var(--pc-on-surface);
+  --pc-text-muted:    var(--pc-on-surface-variant);
+  --pc-action:        var(--pc-primary);
+  --pc-on-action:     var(--pc-on-primary);
+}
+
+/* — Light mode (secondary; a setting). Same accents; surfaces & on-colors flip.
+     Caution: aqua/amber/coral fail as text on the near-white surface — use them
+     only as fills with dark text, or as ≥3:1 icons/graphics, never small body text. — */
+:root[data-theme="light"],
+.pc-theme-light {
+  --pc-surface:                #F8FFFE;
+  --pc-surface-container:      #EEF6F4;
+  --pc-surface-container-high: #E1F0ED;
+  --pc-on-surface:             #1A1C1E;
+  --pc-on-surface-variant:     #42474E;
+  --pc-error:                  #BA1A1A;
+  --pc-track:            rgba(66, 71, 78, 0.18);
+  --pc-shimmer-base:     #EEF6F4;
+  --pc-shimmer-highlight:rgba(66, 71, 78, 0.10);
+  --pc-hairline:         #DCE7E4;
+  --pc-outline:          #C3D3CF;
+}

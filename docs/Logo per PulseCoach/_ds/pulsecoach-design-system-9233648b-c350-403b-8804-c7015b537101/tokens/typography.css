@@ -1,0 +1,49 @@
+/* ─────────────────────────────────────────────────────────────
+   PulseCoach — Typography tokens
+   Pairing: Plus Jakarta Sans (everything readable) + JetBrains Mono
+   (everything numeric). Mono is NEVER used for body text.
+   Ground-truthed against app_text_styles.dart. Sizes in px, line = multiplier.
+   Hard rule: 11px (caption) is the absolute minimum — never smaller.
+   No all-caps display, no exclamation marks. Section labels (COMING UP /
+   PROSSIME) are the one small-caps tracking exception.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --pc-font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --pc-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* weights */
+  --pc-w-regular: 400; /* @kind font */
+  --pc-w-medium:  500; /* @kind font */
+  --pc-w-semibold:600; /* @kind font */
+  --pc-w-bold:    700; /* @kind font */
+
+  /* — Readable scale (Plus Jakarta Sans) — [size / weight / line-height] */
+  --pc-display-size: 28px; --pc-display-weight: 600; --pc-display-line: 1.2;  /* @kind font */
+  --pc-h1-size:      24px; --pc-h1-weight:      600; --pc-h1-line:      1.25; /* @kind font */
+  --pc-h2-size:      20px; --pc-h2-weight:      600; --pc-h2-line:      1.3;  /* @kind font */
+  --pc-h3-size:      17px; --pc-h3-weight:      500; --pc-h3-line:      1.35; /* @kind font */
+  --pc-body-size:    15px; --pc-body-weight:    400; --pc-body-line:    1.5;  /* @kind font */
+  --pc-body-sm-size: 13px; --pc-body-sm-weight: 400; --pc-body-sm-line: 1.45; /* @kind font */
+  --pc-caption-size: 11px; --pc-caption-weight: 400; --pc-caption-line: 1.4; /* @kind font */
+
+  /* — Numeric scale (JetBrains Mono) — */
+  --pc-countdown-size:  72px; --pc-countdown-line:  1.0; /* @kind font */
+  --pc-timer-size:      48px; --pc-timer-line:      1.0; /* @kind font */
+  --pc-timer-2-size:    24px; --pc-timer-2-line:    1.0; /* @kind font */
+  --pc-rpe-size:        20px; --pc-rpe-line:        1.0; /* @kind font */
+  --pc-ring-size:       11px; --pc-ring-weight:     500; /* @kind font */
+
+  /* — Section label (the small-caps tracking exception) — */
+  --pc-label-size: 11px; --pc-label-weight: 400; --pc-label-tracking: 0.14em; /* @kind font */
+}
+
+/* Optional utility classes mirroring AppTextStyles — product UI may use tokens directly. */
+.pc-display  { font-family: var(--pc-font-sans); font-size: var(--pc-display-size); font-weight: var(--pc-display-weight); line-height: var(--pc-display-line); }
+.pc-h1       { font-family: var(--pc-font-sans); font-size: var(--pc-h1-size);      font-weight: var(--pc-h1-weight);      line-height: var(--pc-h1-line); }
+.pc-h2       { font-family: var(--pc-font-sans); font-size: var(--pc-h2-size);      font-weight: var(--pc-h2-weight);      line-height: var(--pc-h2-line); }
+.pc-h3       { font-family: var(--pc-font-sans); font-size: var(--pc-h3-size);      font-weight: var(--pc-h3-weight);      line-height: var(--pc-h3-line); }
+.pc-body     { font-family: var(--pc-font-sans); font-size: var(--pc-body-size);    font-weight: var(--pc-body-weight);    line-height: var(--pc-body-line); }
+.pc-body-sm  { font-family: var(--pc-font-sans); font-size: var(--pc-body-sm-size); font-weight: var(--pc-body-sm-weight); line-height: var(--pc-body-sm-line); }
+.pc-caption  { font-family: var(--pc-font-sans); font-size: var(--pc-caption-size); font-weight: var(--pc-caption-weight); line-height: var(--pc-caption-line); }
+.pc-label    { font-family: var(--pc-font-sans); font-size: var(--pc-label-size); font-weight: var(--pc-label-weight); letter-spacing: var(--pc-label-tracking); text-transform: uppercase; }
+.pc-mono     { font-family: var(--pc-font-mono); }

@@ -1,0 +1,19 @@
+/* ─────────────────────────────────────────────────────────────
+   PulseCoach — Spacing tokens (app_spacing.dart)
+   Base unit 8dp; a 4-based scale. Density is "airy" — content breathes.
+   Cards carry md (16) internal padding, are separated by md (16); screen
+   edges use lg (24) horizontal padding.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --pc-space-xs:  4px;  /* tight: icon+label, caption lines */
+  --pc-space-sm:  8px;  /* compact: within a card, related elements */
+  --pc-space-md:  16px; /* standard: between cards, sections, card padding */
+  --pc-space-lg:  24px; /* generous: major sections, screen titles, screen edges */
+  --pc-space-xl:  32px; /* breathing: top/bottom screen padding */
+  --pc-space-2xl: 48px; /* major: onboarding, in-session steps */
+
+  /* layout conventions */
+  --pc-screen-pad-x: 24px; /* lg horizontal screen padding */
+  --pc-card-pad:     16px; /* md card internal padding */
+  --pc-card-gap:     16px; /* md between cards */
+}

@@ -1,0 +1,449 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/catalog/**",
+              "components/core/**",
+              "components/feedback/**",
+              "components/session/**",
+              "components/social/**",
+              "components/today/**",
+              "ui_kits/pulsecoach_app/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Plus Jakarta Sans|JetBrains Mono))/i]",
+        "message": "Font not provided by the design system. Available: Plus Jakarta Sans, JetBrains Mono."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ActivityFeedCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:handle|sessionType|durationMinutes|relativeTime|isOwn|reacted|onReact|onRevoke|style|key|ref|className|style|children)$/]",
+        "message": "<ActivityFeedCard> doesn't accept that prop. Declared props: handle, sessionType, durationMinutes, relativeTime, isOwn, reacted, onReact, onRevoke, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|tone|variant|dot|icon|style|key|ref|className|style|children)$/]",
+        "message": "<Badge> doesn't accept that prop. Declared props: children, tone, variant, dot, icon, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:primary|secondary|tertiary|coral|neutral|error)$/]",
+        "message": "<Badge> tone must be one of 'primary' | 'secondary' | 'tertiary' | 'coral' | 'neutral' | 'error'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:soft|solid)$/]",
+        "message": "<Badge> variant must be one of 'soft' | 'solid'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|size|fullWidth|disabled|leadingIcon|style|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: children, variant, size, fullWidth, disabled, leadingIcon, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:filled|tonal|text|danger)$/]",
+        "message": "<Button> variant must be one of 'filled' | 'tonal' | 'text' | 'danger'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Button> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|accent|interactive|selected|style|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: children, variant, accent, interactive, selected, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:container|high|hero)$/]",
+        "message": "<Card> variant must be one of 'container' | 'high' | 'hero'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Chip'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|selectable|selected|pill|tone|leadingDot|leadingIcon|style|key|ref|className|style|children)$/]",
+        "message": "<Chip> doesn't accept that prop. Declared props: children, selectable, selected, pill, tone, leadingDot, leadingIcon, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Chip'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:default|primary|secondary|tertiary|coral)$/]",
+        "message": "<Chip> tone must be one of 'default' | 'primary' | 'secondary' | 'tertiary' | 'coral'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='CompactSessionCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:sessionType|title|durationMinutes|selected|onTap|style|key|ref|className|style|children)$/]",
+        "message": "<CompactSessionCard> doesn't accept that prop. Declared props: sessionType, title, durationMinutes, selected, onTap, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ComparisonRow'] > JSXAttribute > JSXIdentifier[name!=/^(?:handle|sessionsThisWeek|minutesThisWeek|weeklyTarget|isOwn|style|key|ref|className|style|children)$/]",
+        "message": "<ComparisonRow> doesn't accept that prop. Declared props: handle, sessionsThisWeek, minutesThisWeek, weeklyTarget, isOwn, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='CompletedSessionCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:title|durationMinutes|style|key|ref|className|style|children)$/]",
+        "message": "<CompletedSessionCard> doesn't accept that prop. Declared props: title, durationMinutes, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='CompletionRing'] > JSXAttribute > JSXIdentifier[name!=/^(?:completed|total|size|style|key|ref|className|style|children)$/]",
+        "message": "<CompletionRing> doesn't accept that prop. Declared props: completed, total, size, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='CountdownOverlay'] > JSXAttribute > JSXIdentifier[name!=/^(?:sessionTitle|onComplete|autoStart|style|key|ref|className|style|children)$/]",
+        "message": "<CountdownOverlay> doesn't accept that prop. Declared props: sessionTitle, onComplete, autoStart, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='FriendRow'] > JSXAttribute > JSXIdentifier[name!=/^(?:handle|variant|requestSent|onPrimary|onSecondary|style|key|ref|className|style|children)$/]",
+        "message": "<FriendRow> doesn't accept that prop. Declared props: handle, variant, requestSent, onPrimary, onSecondary, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='HeroSessionCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:sessionType|title|durationMinutes|intensity|location|explanation|onStart|onRegenerate|startLabel|style|key|ref|className|style|children)$/]",
+        "message": "<HeroSessionCard> doesn't accept that prop. Declared props: sessionType, title, durationMinutes, intensity, location, explanation, onStart, onRegenerate, startLabel, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Icon'] > JSXAttribute > JSXIdentifier[name!=/^(?:name|size|color|strokeWidth|title|key|ref|className|style|children)$/]",
+        "message": "<Icon> doesn't accept that prop. Declared props: name, size, color, strokeWidth, title."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='JoinCodeCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:joinCode|onRefresh|size|style|key|ref|className|style|children)$/]",
+        "message": "<JoinCodeCard> doesn't accept that prop. Declared props: joinCode, onRefresh, size, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='LeaderboardRow'] > JSXAttribute > JSXIdentifier[name!=/^(?:rank|handle|points|isOwn|style|key|ref|className|style|children)$/]",
+        "message": "<LeaderboardRow> doesn't accept that prop. Declared props: rank, handle, points, isOwn, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ProUpsellSheet'] > JSXAttribute > JSXIdentifier[name!=/^(?:message|detail|onDiscover|onDismiss|style|key|ref|className|style|children)$/]",
+        "message": "<ProUpsellSheet> doesn't accept that prop. Declared props: message, detail, onDiscover, onDismiss, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='RPEInput'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|onSelect|style|key|ref|className|style|children)$/]",
+        "message": "<RPEInput> doesn't accept that prop. Declared props: value, onSelect, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SessionCatalogCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:name|category|difficulty|durationMinutes|onTap|style|key|ref|className|style|children)$/]",
+        "message": "<SessionCatalogCard> doesn't accept that prop. Declared props: name, category, difficulty, durationMinutes, onTap, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SessionCatalogCard'] > JSXAttribute[name.name='difficulty'] > Literal[value!=/^(?:low|medium|high)$/]",
+        "message": "<SessionCatalogCard> difficulty must be one of 'low' | 'medium' | 'high'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SessionHistoryTile'] > JSXAttribute > JSXIdentifier[name!=/^(?:sessionType|date|durationMinutes|rpe|abandoned|style|key|ref|className|style|children)$/]",
+        "message": "<SessionHistoryTile> doesn't accept that prop. Declared props: sessionType, date, durationMinutes, rpe, abandoned, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ShimmerPlaceholder'] > JSXAttribute > JSXIdentifier[name!=/^(?:height|width|borderRadius|style|key|ref|className|style|children)$/]",
+        "message": "<ShimmerPlaceholder> doesn't accept that prop. Declared props: height, width, borderRadius, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SignInSheet'] > JSXAttribute > JSXIdentifier[name!=/^(?:title|subtitle|onApple|onGoogle|onEmail|onSkip|style|key|ref|className|style|children)$/]",
+        "message": "<SignInSheet> doesn't accept that prop. Declared props: title, subtitle, onApple, onGoogle, onEmail, onSkip, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StateIndicator'] > JSXAttribute > JSXIdentifier[name!=/^(?:state|label|message|style|key|ref|className|style|children)$/]",
+        "message": "<StateIndicator> doesn't accept that prop. Declared props: state, label, message, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Switch'] > JSXAttribute > JSXIdentifier[name!=/^(?:checked|disabled|onChange|style|key|ref|className|style|children)$/]",
+        "message": "<Switch> doesn't accept that prop. Declared props: checked, disabled, onChange, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='VisibilityOption'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|label|key|ref|className|style|children)$/]",
+        "message": "<VisibilityOption> doesn't accept that prop. Declared props: value, label."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='WeeklyGoalIndicator'] > JSXAttribute > JSXIdentifier[name!=/^(?:completedThisWeek|weeklyTarget|style|key|ref|className|style|children)$/]",
+        "message": "<WeeklyGoalIndicator> doesn't accept that prop. Declared props: completedThisWeek, weeklyTarget, style."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "ActivityFeedCard": {
+        "replaces": []
+      },
+      "Badge": {
+        "replaces": []
+      },
+      "Button": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "Chip": {
+        "replaces": []
+      },
+      "CompactSessionCard": {
+        "replaces": []
+      },
+      "ComparisonRow": {
+        "replaces": []
+      },
+      "CompletedSessionCard": {
+        "replaces": []
+      },
+      "CompletionRing": {
+        "replaces": []
+      },
+      "CountdownOverlay": {
+        "replaces": []
+      },
+      "FriendRow": {
+        "replaces": []
+      },
+      "HeroSessionCard": {
+        "replaces": []
+      },
+      "Icon": {
+        "replaces": []
+      },
+      "JoinCodeCard": {
+        "replaces": []
+      },
+      "LeaderboardRow": {
+        "replaces": []
+      },
+      "ProUpsellSheet": {
+        "replaces": []
+      },
+      "RPEInput": {
+        "replaces": []
+      },
+      "SessionCatalogCard": {
+        "replaces": []
+      },
+      "SessionHistoryTile": {
+        "replaces": []
+      },
+      "ShimmerPlaceholder": {
+        "replaces": []
+      },
+      "SignInSheet": {
+        "replaces": []
+      },
+      "StateIndicator": {
+        "replaces": []
+      },
+      "Switch": {
+        "replaces": []
+      },
+      "VisibilityOption": {
+        "replaces": []
+      },
+      "WeeklyGoalIndicator": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--pc-accent-breathing",
+      "--pc-accent-cardio",
+      "--pc-accent-mobility",
+      "--pc-action",
+      "--pc-bg",
+      "--pc-body-line",
+      "--pc-body-size",
+      "--pc-body-sm-line",
+      "--pc-body-sm-size",
+      "--pc-body-sm-weight",
+      "--pc-body-weight",
+      "--pc-caption-line",
+      "--pc-caption-size",
+      "--pc-caption-weight",
+      "--pc-card-gap",
+      "--pc-card-pad",
+      "--pc-coral",
+      "--pc-countdown-line",
+      "--pc-countdown-size",
+      "--pc-display-line",
+      "--pc-display-size",
+      "--pc-display-weight",
+      "--pc-elev-0",
+      "--pc-elev-1",
+      "--pc-elev-2",
+      "--pc-error",
+      "--pc-font-mono",
+      "--pc-font-sans",
+      "--pc-h1-line",
+      "--pc-h1-size",
+      "--pc-h1-weight",
+      "--pc-h2-line",
+      "--pc-h2-size",
+      "--pc-h2-weight",
+      "--pc-h3-line",
+      "--pc-h3-size",
+      "--pc-h3-weight",
+      "--pc-hairline",
+      "--pc-hero-wash-primary",
+      "--pc-label-size",
+      "--pc-label-tracking",
+      "--pc-label-weight",
+      "--pc-medal-bronze",
+      "--pc-medal-gold",
+      "--pc-medal-silver",
+      "--pc-on-action",
+      "--pc-on-primary",
+      "--pc-on-surface",
+      "--pc-on-surface-variant",
+      "--pc-outline",
+      "--pc-primary",
+      "--pc-radius-button",
+      "--pc-radius-card",
+      "--pc-radius-chip",
+      "--pc-radius-full",
+      "--pc-ring-size",
+      "--pc-ring-weight",
+      "--pc-rpe-line",
+      "--pc-rpe-size",
+      "--pc-screen-pad-x",
+      "--pc-scrim",
+      "--pc-secondary",
+      "--pc-shadow-sheet",
+      "--pc-shimmer-base",
+      "--pc-shimmer-highlight",
+      "--pc-space-2xl",
+      "--pc-space-lg",
+      "--pc-space-md",
+      "--pc-space-sm",
+      "--pc-space-xl",
+      "--pc-space-xs",
+      "--pc-surface",
+      "--pc-surface-card",
+      "--pc-surface-container",
+      "--pc-surface-container-high",
+      "--pc-surface-raised",
+      "--pc-tertiary",
+      "--pc-text",
+      "--pc-text-muted",
+      "--pc-timer-2-line",
+      "--pc-timer-2-size",
+      "--pc-timer-line",
+      "--pc-timer-size",
+      "--pc-track",
+      "--pc-w-bold",
+      "--pc-w-medium",
+      "--pc-w-regular",
+      "--pc-w-semibold"
+    ],
+    "tokenKinds": {
+      "--pc-surface": "color",
+      "--pc-surface-container": "color",
+      "--pc-surface-container-high": "color",
+      "--pc-primary": "color",
+      "--pc-on-primary": "color",
+      "--pc-secondary": "color",
+      "--pc-tertiary": "color",
+      "--pc-coral": "color",
+      "--pc-on-surface": "color",
+      "--pc-on-surface-variant": "color",
+      "--pc-error": "color",
+      "--pc-medal-gold": "color",
+      "--pc-medal-silver": "color",
+      "--pc-medal-bronze": "color",
+      "--pc-accent-mobility": "color",
+      "--pc-accent-cardio": "color",
+      "--pc-accent-breathing": "color",
+      "--pc-track": "color",
+      "--pc-shimmer-base": "color",
+      "--pc-shimmer-highlight": "color",
+      "--pc-hairline": "color",
+      "--pc-outline": "color",
+      "--pc-bg": "color",
+      "--pc-surface-card": "color",
+      "--pc-surface-raised": "color",
+      "--pc-text": "font",
+      "--pc-text-muted": "font",
+      "--pc-action": "color",
+      "--pc-on-action": "color",
+      "--pc-font-sans": "font",
+      "--pc-font-mono": "font",
+      "--pc-w-regular": "font",
+      "--pc-w-medium": "font",
+      "--pc-w-semibold": "font",
+      "--pc-w-bold": "font",
+      "--pc-display-size": "spacing",
+      "--pc-display-weight": "font",
+      "--pc-display-line": "font",
+      "--pc-h1-size": "spacing",
+      "--pc-h1-weight": "font",
+      "--pc-h1-line": "font",
+      "--pc-h2-size": "spacing",
+      "--pc-h2-weight": "font",
+      "--pc-h2-line": "font",
+      "--pc-h3-size": "spacing",
+      "--pc-h3-weight": "font",
+      "--pc-h3-line": "font",
+      "--pc-body-size": "spacing",
+      "--pc-body-weight": "font",
+      "--pc-body-line": "font",
+      "--pc-body-sm-size": "spacing",
+      "--pc-body-sm-weight": "font",
+      "--pc-body-sm-line": "font",
+      "--pc-caption-size": "spacing",
+      "--pc-caption-weight": "font",
+      "--pc-caption-line": "font",
+      "--pc-countdown-size": "spacing",
+      "--pc-countdown-line": "font",
+      "--pc-timer-size": "spacing",
+      "--pc-timer-line": "font",
+      "--pc-timer-2-size": "spacing",
+      "--pc-timer-2-line": "font",
+      "--pc-rpe-size": "spacing",
+      "--pc-rpe-line": "font",
+      "--pc-ring-size": "spacing",
+      "--pc-ring-weight": "font",
+      "--pc-label-size": "spacing",
+      "--pc-label-weight": "font",
+      "--pc-label-tracking": "font",
+      "--pc-space-xs": "spacing",
+      "--pc-space-sm": "spacing",
+      "--pc-space-md": "spacing",
+      "--pc-space-lg": "spacing",
+      "--pc-space-xl": "spacing",
+      "--pc-space-2xl": "spacing",
+      "--pc-screen-pad-x": "spacing",
+      "--pc-card-pad": "spacing",
+      "--pc-card-gap": "spacing",
+      "--pc-radius-chip": "radius",
+      "--pc-radius-button": "radius",
+      "--pc-radius-card": "radius",
+      "--pc-radius-full": "radius",
+      "--pc-elev-0": "shadow",
+      "--pc-elev-1": "shadow",
+      "--pc-elev-2": "shadow",
+      "--pc-shadow-sheet": "shadow",
+      "--pc-scrim": "color",
+      "--pc-hero-wash-primary": "color"
+    },
+    "fontFamilies": [
+      "JetBrains Mono",
+      "Plus Jakarta Sans"
+    ]
+  }
+}

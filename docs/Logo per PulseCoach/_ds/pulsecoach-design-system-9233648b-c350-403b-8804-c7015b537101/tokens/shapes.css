@@ -1,0 +1,27 @@
+/* ─────────────────────────────────────────────────────────────
+   PulseCoach — Shape & elevation tokens (app_shapes.dart)
+   Consistently rounded; NO sharp corners anywhere. Softer than Material's
+   defaults, matching the Oura/Calm feel.
+   Elevation is expressed as SURFACE TINT, not shadow (shadows are nearly
+   invisible on dark). Three levels only. Shadows reserved for the rare
+   literal-physical moment (modal sheet over a scrim).
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --pc-radius-chip:   8px;    /* chips, inputs, segmented controls, join-code field */
+  --pc-radius-button: 12px;   /* filled & text buttons */
+  --pc-radius-card:   16px;   /* cards, sheets, the in-session surface */
+  --pc-radius-full:   9999px; /* ring, RPE buttons, state dots, avatars, medal glyphs */
+
+  /* Elevation = surface tint (see colors.css). Level 0 → surface,
+     Level 1 → surface-container (cards), Level 2 → surface-container-high. */
+  --pc-elev-0: var(--pc-surface);
+  --pc-elev-1: var(--pc-surface-container);
+  --pc-elev-2: var(--pc-surface-container-high);
+
+  /* The single rare physical shadow — a bottom sheet lifting over a scrim. */
+  --pc-shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.45);
+  --pc-scrim:        rgba(6, 7, 11, 0.70);
+
+  /* The one gradient in the app: the Today hero-zone wash (accent @ .12 → card). */
+  --pc-hero-wash-primary: linear-gradient(160deg, rgba(125,211,192,0.12) 0%, var(--pc-surface-container) 55%);
+}
