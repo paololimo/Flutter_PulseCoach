@@ -84,24 +84,13 @@ Future<void> main() async {
   // tapping the session-paused notification (AC3/AC4). Must never block
   // startup — mirrors the Supabase/RevenueCat try/catch style above.
   try {
-    final reconciliationService = SessionReconciliationService(
-      getIt<SharedPreferences>(),
-      getIt<SessionLogsDao>(),
+    await reconcileSessionOnColdStart(
+      reconciliationService: SessionReconciliationService(
+        getIt<SharedPreferences>(),
+        getIt<SessionLogsDao>(),
+      ),
+      notificationService: LocalSessionNotificationService(),
     );
-    final notificationService = LocalSessionNotificationService();
-    final result = await reconciliationService.reconcile();
-    // A force-kill + plain icon relaunch after the timeout finalizes the
-    // abandon but would otherwise leave the ongoing (autoCancel:false) paused
-    // notification orphaned on the status bar — clear it (AC6, review F5).
-    if (result == SessionReconciliationResult.abandonedByTimeout) {
-      unawaited(notificationService.cancel());
-    }
-    if (await notificationService.didLaunchFromNotification()) {
-      await handleNotificationTap(
-        reconciliationService: reconciliationService,
-        notificationService: notificationService,
-      );
-    }
   } catch (e) {
     debugPrint('Session reconciliation failed: $e — continuing cold start');
   }

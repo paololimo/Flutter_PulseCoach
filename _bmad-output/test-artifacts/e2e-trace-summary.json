@@ -1,16 +1,16 @@
 {
   "schema_version": "0.1.0",
-  "snapshot_at": "2026-07-05T00:00:00.000Z",
+  "snapshot_at": "2026-07-07T00:00:00.000Z",
   "repo": "Flutter_PulseCoach",
   "collection_mode": "static",
   "collection_status": "COLLECTED",
   "inventory_basis": "acceptance_criteria",
   "gate_basis": "priority_thresholds",
-  "source_sha": "222d32f",
+  "source_sha": "910e845",
   "target": {
     "type": "epic",
-    "id": "21",
-    "label": "Epic 21 — Leaderboard & Scoring (v2.5)"
+    "id": "22",
+    "label": "Epic 22 — Experience Polish (v1)"
   },
   "decision_mode": "deterministic",
   "evaluator": "Paolo",
@@ -19,72 +19,81 @@
     "resolution_mode": "formal_requirements",
     "confidence": "high",
     "sources": [
-      "_bmad-output/planning-artifacts/epics.md#Epic 21",
-      "_bmad-output/implementation-artifacts/21-0-shared-session-persistence-and-handle-wiring.md",
-      "_bmad-output/implementation-artifacts/21-3-shared-session-point-bonus-and-counter-metric-monitoring.md",
-      "_bmad-output/implementation-artifacts/21-4-shared-session-scoring-sweep-for-drop-out-participants.md"
+      "_bmad-output/planning-artifacts/epics.md#Epic 22",
+      "_bmad-output/implementation-artifacts/22-1-in-session-milestone-progress-bar-and-finish-marker.md",
+      "_bmad-output/implementation-artifacts/22-2-decision-factor-iconography-factoriconrow.md",
+      "_bmad-output/implementation-artifacts/22-3-today-active-days-indicator-activedayscard.md",
+      "_bmad-output/implementation-artifacts/22-4-session-notification-infrastructure-permissions-and-background-pause.md",
+      "_bmad-output/implementation-artifacts/22-5-inactivity-auto-abandon-resume-and-deep-link-reconciliation.md"
     ],
     "external_pointer_status": "not_used",
     "synthetic": false
   },
   "coverage": {
     "inventory": {
-      "covered": 21,
-      "total": 21,
-      "pct": 100
+      "covered": 37,
+      "total": 43,
+      "pct": 86
     },
     "priority_breakdown": {
-      "P0": { "total": 1, "covered": 1, "pct": 100 },
-      "P1": { "total": 12, "covered": 12, "pct": 100 },
-      "P2": { "total": 8, "covered": 8, "pct": 100 },
+      "P0": { "total": 0, "covered": 0, "pct": 100 },
+      "P1": { "total": 23, "covered": 21, "pct": 91 },
+      "P2": { "total": 20, "covered": 16, "pct": 80 },
       "P3": { "total": 0, "covered": 0, "pct": 100 }
     },
     "by_level": {
       "e2e": { "tests": 0, "criteria_covered": 0 },
-      "api": { "tests": 3, "criteria_covered": 2 },
-      "component": { "tests": 19, "criteria_covered": 7 },
-      "unit": { "tests": 64, "criteria_covered": 14 },
-      "other": { "tests": 18, "criteria_covered": 5 }
+      "api": { "tests": 0, "criteria_covered": 0 },
+      "component": { "tests": 37, "criteria_covered": 22 },
+      "unit": { "tests": 28, "criteria_covered": 18 },
+      "other": { "tests": 0, "criteria_covered": 0 }
     }
   },
   "tests": {
-    "files": 24,
-    "cases": 104,
+    "files": 11,
+    "cases": 65,
     "skipped_cases": 0,
     "fixme_cases": 0,
     "pending_cases": 0
   },
   "risk_summary": {
     "critical_open": 0,
-    "high_open": 0,
-    "medium_open": 0,
+    "high_open": 2,
+    "medium_open": 4,
     "low_open": 0
   },
   "heuristics": {
     "endpoint_gaps": 0,
-    "auth_negative_path_status": "present",
-    "error_path_status": "present",
-    "ui_journey_status": "not_applicable",
-    "ui_state_status": "not_applicable"
+    "auth_negative_path_status": "not_applicable",
+    "error_path_status": "partial",
+    "ui_journey_status": "present",
+    "ui_state_status": "present"
   },
   "blockers": [],
-  "out_of_scope_findings": [
-    {
-      "id": "supabase/migrations/0015_grant_missing_table_privileges.sql",
-      "severity": "high",
-      "reason": "Schema-wide: none of the 6 public tables (profiles, friendships, activity_feed, leaderboard_entries, shared_sessions, session_participants) had base SELECT/INSERT/UPDATE/DELETE privileges granted to `authenticated`, despite RLS policies existing for those operations. RLS does not substitute for a base GRANT. Confirmed the Flutter datasources call these tables directly (not exclusively via RPC), so a database built purely from committed migrations 0001-0014 would reject those calls with permission denied. Fixed via migration 0015, granting only what each table's existing RLS policies already gate. Discovered as a side effect of running the Epic 21 pgTAP suite for the first time against a clean `supabase start` instance — not an Epic 21 defect, predates it.",
-      "recommendation": "Confirm production's live grants already match 0015 (likely set out-of-band). Add a CI check that runs `supabase db reset` and a smoke query as `authenticated` so this class of gap fails fast in the future."
-    }
-  ],
   "recommendations": [
     {
+      "priority": "HIGH",
+      "action": "Add a main.dart-level or isolated-function test for the cold-start 'cancel stale notification without a tap' path (Story 22.5 AC6 review-fix)",
+      "requirements": ["22.5-AC6-coldstart-cancel"]
+    },
+    {
+      "priority": "HIGH",
+      "action": "Add a unit test stubbing SessionLogsDao.getAllLogsOrderedByDate() to throw, asserting TodaySessionCubit degrades to activeDaysCount == 0 (mirrors 22.2-CUBIT-002)",
+      "requirements": ["22.3-fetchActiveDaysCount-degrade"]
+    },
+    {
       "priority": "MEDIUM",
-      "action": "Confirm production Supabase project's live table grants match supabase/migrations/0015_grant_missing_table_privileges.sql, and add a CI smoke check for base-table grants",
-      "requirements": []
+      "action": "Add a widget test asserting ActiveDaysCard(count: 1) renders the ICU singular form",
+      "requirements": ["22.3-ICU-plural"]
+    },
+    {
+      "priority": "MEDIUM",
+      "action": "Add a throwing-exception unit test for GetWeatherContext (not just the Left failure case)",
+      "requirements": ["22.2-fetchWeather-degrade"]
     },
     {
       "priority": "LOW",
-      "action": "Run /bmad-testarch-test-review to assess overall test quality",
+      "action": "Run /bmad-testarch-test-review to assess overall test quality across the 11 files touched by this epic",
       "requirements": []
     }
   ],
@@ -101,10 +110,10 @@
     "p0_status": "MET",
     "p1_coverage_target": "90%",
     "p1_coverage_minimum": "80%",
-    "p1_coverage_actual": "100%",
+    "p1_coverage_actual": "91%",
     "p1_status": "MET",
     "overall_coverage_minimum": "80%",
-    "overall_coverage_actual": "100%",
+    "overall_coverage_actual": "86%",
     "overall_status": "MET"
   }
 }

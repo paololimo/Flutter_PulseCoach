@@ -211,6 +211,63 @@ void main() {
       );
       expect(windIcon.color, equals(PulseCoachTheme.dark.tertiary));
     });
+
+    testWidgets(
+      '22.2-FACTOR-011: reveal state does not leak onto a different factor at '
+      'the same index when the factor set changes (ValueKey(factor) regression)',
+      (tester) async {
+        Widget host(WeatherContext? weather) => MaterialApp(
+          locale: const Locale('it'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.darkTheme,
+          home: MediaQuery(
+            data: const MediaQueryData(disableAnimations: true),
+            child: Scaffold(
+              body: Padding(
+                padding: const EdgeInsets.all(16),
+                child: FactorIconRow(session: _session(), weather: weather),
+              ),
+            ),
+          ),
+        );
+
+        // cold weather -> factors: [exerciseType, intensity, temperature]
+        final cold = _weather(
+          temperature: 5.0,
+          precipitationProbability: 10.0,
+          aqiValue: 40,
+        );
+        await tester.pumpWidget(host(cold));
+
+        // Reveal the 3rd glyph (temperature, index 2).
+        await tester.tap(find.byType(GestureDetector).at(2));
+        await tester.pump();
+
+        final l10n = await AppLocalizations.delegate.load(const Locale('it'));
+        final temperatureLabel = l10n.factorLabelTemperature(
+          cold.temperature.round(),
+        );
+        expect(find.text(temperatureLabel), findsOneWidget);
+
+        // Rain weather -> factors: [exerciseType, intensity, precipitation]
+        // (temperature drops out, precipitation takes its place at index 2).
+        final rainy = _weather(
+          temperature: 18.0,
+          precipitationProbability: 80.0,
+          aqiValue: 40,
+        );
+        await tester.pumpWidget(host(rainy));
+        await tester.pump();
+
+        // Without ValueKey(factor), Flutter would reuse the index-2 element's
+        // State (previously `_revealed: true`) for the new precipitation
+        // glyph, incorrectly showing its label already revealed. With the
+        // key, the precipitation glyph is a fresh State, starting unrevealed.
+        expect(find.text(l10n.factorLabelPrecipitation), findsNothing);
+        expect(find.text(temperatureLabel), findsNothing);
+      },
+    );
   });
 }
 

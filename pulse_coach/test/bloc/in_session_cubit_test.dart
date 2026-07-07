@@ -389,6 +389,45 @@ void main() {
     );
 
     testWidgets(
+      '22.5-CUBIT-006: reseedElapsed re-anchors elapsedSeconds, discarding '
+      'wall-clock time accrued while backgrounded (review F2 fix)',
+      (tester) async {
+        final dao = _FakeSessionLogsDao();
+        final clock = _ManualClock(DateTime.utc(2026, 7, 7, 9));
+        final cubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 42,
+          now: clock.call,
+        )..start();
+
+        // 10s elapsed pre-background.
+        clock.advance(const Duration(seconds: 10));
+        expect(cubit.elapsedSeconds, 10);
+
+        // App backgrounded for a long, unrelated wall-clock stretch (e.g. 3
+        // minutes) — without reseedElapsed, elapsedSeconds would inflate by
+        // the full background duration on resume.
+        clock.advance(const Duration(minutes: 3));
+
+        // Warm resume re-anchors to the snapshot's persisted elapsedSeconds
+        // (10, taken at the moment of backgrounding), not the 190s that
+        // wall-clock math alone would now report.
+        cubit.reseedElapsed(10);
+
+        expect(cubit.elapsedSeconds, 10);
+
+        clock.advance(const Duration(seconds: 5));
+        expect(cubit.elapsedSeconds, 15);
+
+        await cubit.abandon();
+        expect(dao.insertedLogs.single.elapsedSeconds, const Value(15));
+
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
       '22.5-CUBIT-001: constructed with initialStepIndex/'
       'initialSecondsRemaining → initial state reflects those values, not '
       'step 0 / full duration',

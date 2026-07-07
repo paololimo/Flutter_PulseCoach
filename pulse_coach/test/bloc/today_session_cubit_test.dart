@@ -462,6 +462,22 @@ void main() {
     );
 
     blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.2-CUBIT-004: GetWeatherContext throwing (not just Left) still '
+      'emits with weatherContext null and no unhandled error (review-fix '
+      'regression guard)',
+      build: () {
+        when(getWeatherContext()).thenThrow(Exception('platform channel'));
+        return buildCubit();
+      },
+      act: (cubit) => cubit.planLoaded(3, 20),
+      expect: () => [
+        isA<TodaySessionState>()
+            .having((state) => state.weatherContext, 'weatherContext', isNull)
+            .having((state) => state.totalSessions, 'totalSessions', 3),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
       '22.2-CUBIT-003: planLoaded with null planId never calls GetWeatherContext',
       build: buildCubit,
       act: (cubit) => cubit.planLoaded(3, null),
@@ -588,6 +604,24 @@ void main() {
     );
 
     blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.3-CUBIT-008: getAllLogsOrderedByDate throwing (not just returning '
+      'no logs) still emits with activeDaysCount 0 and no unhandled error '
+      '(review-fix regression guard, mirrors 22.2-CUBIT-004)',
+      build: () {
+        when(
+          sessionLogsDao.getAllLogsOrderedByDate(),
+        ).thenThrow(Exception('disk full'));
+        return buildCubit(now: () => fixedNow);
+      },
+      act: (cubit) => cubit.planLoaded(3, 20),
+      expect: () => [
+        isA<TodaySessionState>()
+            .having((state) => state.activeDaysCount, 'activeDaysCount', 0)
+            .having((state) => state.totalSessions, 'totalSessions', 3),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
       '22.3-CUBIT-005: planLoaded(n, null) never calls '
       'getAllLogsOrderedByDate; activeDaysCount stays 0',
       build: buildCubit,
@@ -639,6 +673,35 @@ void main() {
           'activeDaysCount',
           1,
         ),
+      ],
+    );
+
+    blocTest<TodaySessionCubit, TodaySessionState>(
+      '22.3-CUBIT-007: weatherContext and activeDaysCount both populate '
+      'correctly from a single planLoaded call when fetched concurrently',
+      build: () {
+        when(getWeatherContext()).thenAnswer((_) async => Right(_weather()));
+        when(sessionLogsDao.getAllLogsOrderedByDate()).thenAnswer(
+          (_) async => [
+            _logAt(planId: 20, sessionIndex: 0, completedAt: fixedNow),
+            _logAt(
+              planId: 20,
+              sessionIndex: 1,
+              completedAt: DateTime(2026, 7, 1, 8),
+            ),
+          ],
+        );
+        return buildCubit(now: () => fixedNow);
+      },
+      act: (cubit) => cubit.planLoaded(3, 20),
+      expect: () => [
+        isA<TodaySessionState>()
+            .having(
+              (state) => state.weatherContext?.temperature,
+              'weatherContext.temperature',
+              _weather().temperature,
+            )
+            .having((state) => state.activeDaysCount, 'activeDaysCount', 2),
       ],
     );
   });

@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeSessionNotificationService implements SessionNotificationService {
   int cancelCallCount = 0;
+  bool launchedFromNotification = false;
 
   @override
   Future<void> init() async {}
@@ -32,7 +33,7 @@ class _FakeSessionNotificationService implements SessionNotificationService {
   }
 
   @override
-  Future<bool> didLaunchFromNotification() async => false;
+  Future<bool> didLaunchFromNotification() async => launchedFromNotification;
 }
 
 const _session = PlannedSession(
@@ -341,6 +342,150 @@ void main() {
           AppRouter.today,
         );
         expect(notificationService.cancelCallCount, 0);
+      },
+    );
+
+    test(
+      '22.5-SVC-008: inSessionPageActive true → short-circuits, no navigation, '
+      'no reconcile side effect, no cancel (warm double-handling guard, review F1)',
+      () async {
+        final now = DateTime.utc(2026, 7, 7, 12);
+        final service = SessionReconciliationService(
+          prefs,
+          db.sessionLogsDao,
+          now: () => now,
+          timeout: const Duration(minutes: 5),
+        );
+        await service.writeSnapshot(
+          _snapshot(
+            planId: planId,
+            backgroundedAt: now.subtract(const Duration(minutes: 1)),
+          ),
+        );
+        final notificationService = _FakeSessionNotificationService();
+        AppRouter.router.go(AppRouter.today);
+
+        inSessionPageActive = true;
+        try {
+          await handleNotificationTap(
+            reconciliationService: service,
+            notificationService: notificationService,
+          );
+        } finally {
+          inSessionPageActive = false;
+        }
+
+        expect(
+          AppRouter.router.routeInformationProvider.value.uri.path,
+          AppRouter.today,
+        );
+        // reconcile() was never called: snapshot is untouched (still within
+        // window, not cleared), unlike the not-guarded path in the sibling test.
+        expect(service.readSnapshot(), isNotNull);
+        expect(notificationService.cancelCallCount, 0);
+      },
+    );
+  });
+
+  group('reconcileSessionOnColdStart', () {
+    test(
+      '22.5-SVC-009: abandonedByTimeout on plain icon launch (no tap) still '
+      'cancels the orphaned notification (review F5 regression guard)',
+      () async {
+        final now = DateTime.utc(2026, 7, 7, 12);
+        final service = SessionReconciliationService(
+          prefs,
+          db.sessionLogsDao,
+          now: () => now,
+          timeout: const Duration(minutes: 5),
+        );
+        await service.writeSnapshot(
+          _snapshot(
+            planId: planId,
+            backgroundedAt: now.subtract(const Duration(minutes: 10)),
+          ),
+        );
+        final notificationService = _FakeSessionNotificationService()
+          ..launchedFromNotification = false;
+
+        await reconcileSessionOnColdStart(
+          reconciliationService: service,
+          notificationService: notificationService,
+        );
+
+        expect(notificationService.cancelCallCount, 1);
+        expect(service.readSnapshot(), isNull);
+      },
+    );
+
+    test(
+      '22.5-SVC-010: stillWithinWindow on plain icon launch (no tap) does '
+      'not cancel the notification, does not navigate',
+      () async {
+        final now = DateTime.utc(2026, 7, 7, 12);
+        final service = SessionReconciliationService(
+          prefs,
+          db.sessionLogsDao,
+          now: () => now,
+          timeout: const Duration(minutes: 5),
+        );
+        await service.writeSnapshot(
+          _snapshot(
+            planId: planId,
+            backgroundedAt: now.subtract(const Duration(minutes: 1)),
+          ),
+        );
+        final notificationService = _FakeSessionNotificationService()
+          ..launchedFromNotification = false;
+        AppRouter.router.go(AppRouter.today);
+
+        await reconcileSessionOnColdStart(
+          reconciliationService: service,
+          notificationService: notificationService,
+        );
+
+        expect(notificationService.cancelCallCount, 0);
+        expect(
+          AppRouter.router.routeInformationProvider.value.uri.path,
+          AppRouter.today,
+        );
+      },
+    );
+
+    test(
+      '22.5-SVC-011: didLaunchFromNotification true delegates to '
+      'handleNotificationTap and still cancels on abandonedByTimeout',
+      () async {
+        final now = DateTime.utc(2026, 7, 7, 12);
+        final service = SessionReconciliationService(
+          prefs,
+          db.sessionLogsDao,
+          now: () => now,
+          timeout: const Duration(minutes: 5),
+        );
+        await service.writeSnapshot(
+          _snapshot(
+            planId: planId,
+            backgroundedAt: now.subtract(const Duration(minutes: 10)),
+          ),
+        );
+        final notificationService = _FakeSessionNotificationService()
+          ..launchedFromNotification = true;
+
+        await reconcileSessionOnColdStart(
+          reconciliationService: service,
+          notificationService: notificationService,
+        );
+
+        // Both the cold-start-level cancel (result == abandonedByTimeout) and
+        // handleNotificationTap's own already-abandoned → go(today) path run;
+        // cancel is only invoked once here since handleNotificationTap only
+        // cancels on the still-within-window branch (snapshot already null).
+        expect(notificationService.cancelCallCount, 1);
+        expect(
+          AppRouter.router.routeInformationProvider.value.uri.path,
+          AppRouter.today,
+        );
       },
     );
   });

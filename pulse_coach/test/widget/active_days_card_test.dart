@@ -45,6 +45,23 @@ void main() {
     );
 
     testWidgets(
+      '22.3-CARD-004: count=1 renders the ICU singular form, not "1 giorni '
+      'attivi" (review-fix regression guard)',
+      (tester) async {
+        await tester.pumpWidget(_wrap(const ActiveDaysCard(count: 1)));
+
+        expect(
+          find.bySemanticsLabel('1 giorno attivo negli ultimi 30'),
+          findsOneWidget,
+        );
+        expect(
+          find.bySemanticsLabel('1 giorni attivi negli ultimi 30'),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
       '22.3-CARD-003: inner text is not independently reachable as a '
       'separate semantics node',
       (tester) async {

@@ -179,3 +179,27 @@ Future<void> handleNotificationTap({
     AppRouter.router.go(AppRouter.today);
   }
 }
+
+/// Reconciles any backgrounded session left over from before this cold start
+/// (AC2/AC6), then checks whether this launch was triggered by tapping the
+/// session-paused notification (AC3/AC4). Extracted from `main()` so the
+/// cold-start reconciliation sequence is unit-testable without a full app
+/// bootstrap (Supabase/RevenueCat/DI).
+Future<void> reconcileSessionOnColdStart({
+  required SessionReconciliationService reconciliationService,
+  required SessionNotificationService notificationService,
+}) async {
+  final result = await reconciliationService.reconcile();
+  // A force-kill + plain icon relaunch after the timeout finalizes the
+  // abandon but would otherwise leave the ongoing (autoCancel:false) paused
+  // notification orphaned on the status bar — clear it (AC6, review F5).
+  if (result == SessionReconciliationResult.abandonedByTimeout) {
+    unawaited(notificationService.cancel());
+  }
+  if (await notificationService.didLaunchFromNotification()) {
+    await handleNotificationTap(
+      reconciliationService: reconciliationService,
+      notificationService: notificationService,
+    );
+  }
+}
