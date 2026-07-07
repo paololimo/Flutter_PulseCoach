@@ -68,7 +68,9 @@ void main() {
         buildPage(AiDecisionLogState(isLoading: false, decisions: decisions)),
       );
 
-      expect(find.text('Mobilità / Media'), findsOneWidget);
+      // Arm intensity now reuses the shared intensity labels (Leggera /
+      // Moderata / Intensa) for consistency with the rest of the app.
+      expect(find.text('Mobilità / Moderata'), findsOneWidget);
       expect(find.text('StateVector non disponibile'), findsOneWidget);
       expect(find.text('RPE 6'), findsOneWidget);
     });

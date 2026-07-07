@@ -5,6 +5,7 @@ import 'package:pulse_coach/features/settings/data/models/ai_decision_record.dar
 import 'package:pulse_coach/features/settings/presentation/bloc/ai_decision_log_cubit.dart';
 import 'package:pulse_coach/features/settings/presentation/bloc/ai_decision_log_state.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
+import 'package:pulse_coach/shared/utils/session_type_label.dart';
 
 class AiDecisionLogPage extends StatelessWidget {
   const AiDecisionLogPage({super.key});
@@ -52,6 +53,7 @@ class _DecisionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final dateText = DateFormat('dd/MM/yyyy HH:mm').format(record.decidedAt);
 
     return ExpansionTile(
@@ -60,8 +62,8 @@ class _DecisionTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_humanizedArmKey(record.armKey)),
-          const Text('StateVector non disponibile'),
+          Text(_humanizedArmKey(record.armKey, l10n)),
+          Text(l10n.aiLogStateVectorUnavailable),
         ],
       ),
       trailing: Chip(label: Text('RPE ${record.rpeValue}')),
@@ -82,11 +84,12 @@ class _DecisionDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final rows = <MapEntry<String, String>>[
       MapEntry('decidedAt', record.decidedAt.toIso8601String()),
       MapEntry('armKey', record.armKey),
       MapEntry('rpeValue', record.rpeValue.toString()),
-      const MapEntry('stateVector', 'StateVector non disponibile'),
+      MapEntry('stateVector', l10n.aiLogStateVectorUnavailable),
     ];
 
     return Column(
@@ -122,15 +125,15 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-String _humanizedArmKey(String armKey) => switch (armKey) {
-  'mobility_low' => 'Mobilità / Bassa',
-  'mobility_medium' => 'Mobilità / Media',
-  'mobility_high' => 'Mobilità / Alta',
-  'cardio_low' => 'Cardio / Bassa',
-  'cardio_medium' => 'Cardio / Media',
-  'cardio_high' => 'Cardio / Alta',
-  'breathing_low' => 'Respirazione / Bassa',
-  'breathing_medium' => 'Respirazione / Media',
-  'breathing_high' => 'Respirazione / Alta',
-  _ => 'Dati non disponibili',
-};
+String _humanizedArmKey(String armKey, AppLocalizations l10n) {
+  final parts = armKey.split('_');
+  if (parts.length != 2) return l10n.aiLogDataUnavailable;
+  final type = sessionTypeLabel(parts[0], l10n);
+  final intensity = switch (parts[1]) {
+    'low' => l10n.intensityLow,
+    'medium' => l10n.intensityMedium,
+    'high' => l10n.intensityHigh,
+    _ => parts[1],
+  };
+  return '$type / $intensity';
+}
