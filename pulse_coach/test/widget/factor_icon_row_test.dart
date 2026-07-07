@@ -7,6 +7,8 @@ import 'package:pulse_coach/features/today/presentation/widgets/factor_icon_row.
 import 'package:pulse_coach/features/weather/domain/entities/weather_context.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
+import '../helpers/viewport_helper.dart';
+
 Widget _wrap(Widget child, {double textScaleFactor = 1.0}) => MaterialApp(
   locale: const Locale('it'),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -162,9 +164,7 @@ void main() {
     testWidgets(
       '22.2-FACTOR-008: 5 glyphs at 360x640 + 2.0 textScale -> no overflow, all icons found',
       (tester) async {
-        tester.view.physicalSize = const Size(360, 640);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.reset);
+        set360x640Surface(tester);
 
         await tester.pumpWidget(
           _wrap(
