@@ -116,93 +116,98 @@ class TodayPage extends StatelessWidget {
           );
         }
 
+        // IntrinsicHeight is only needed by the `allDone` branch, whose
+        // Expanded/Center requires a bounded height inside the scroll view.
+        // Applying it on the hero path breaks Wrap's intrinsic-width
+        // computation (FactorIconRow would stack vertically instead of
+        // laying out as a row), so scope it to the allDone case only.
+        final content = Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: StateIndicator(
+                      state: loaded.behavioralState,
+                      transitionKey: loaded.transitionKey,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  CompletionRing(completed: completedCount, total: total),
+                ],
+              ),
+              const SizedBox(height: 16),
+              for (final entry in completedEntries) ...[
+                CompletedSessionCard(session: entry.session),
+                const SizedBox(height: 8),
+              ],
+              if (allDone)
+                const Expanded(
+                  child: Center(
+                    child: AnimatedSwitcher(
+                      duration: Duration(milliseconds: 300),
+                      child: _AllDoneWidget(key: ValueKey('all-done')),
+                    ),
+                  ),
+                )
+              else ...[
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: _HeroZone(
+                    key: ValueKey(
+                      'hero-${sessions[heroIndex].sessionType}-$heroIndex',
+                    ),
+                    plan: plan,
+                    heroIndex: heroIndex,
+                    weatherContext: sessionState.weatherContext,
+                    onRegenerate: () {
+                      final bloc = context.read<DailyPlanBloc>();
+                      // Guard against rapid double-taps while
+                      // AnimatedSwitcher is cross-fading the old hero
+                      // card out.
+                      if (bloc.state is DailyPlanLoaded) {
+                        bloc.add(DailyPlanRegenerateRequested());
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ActiveDaysCard(count: sessionState.activeDaysCount),
+                if (upcomingEntries.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.comingUpHeader,
+                    style: AppTextStyles.caption.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).extension<PulseCoachTheme>()!.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final entry in upcomingEntries) ...[
+                    CompactSessionCard(
+                      session: entry.session,
+                      heroTag:
+                          'session-compact-${entry.session.sessionType}-${entry.index}',
+                      onTap: () => context.read<TodaySessionCubit>().swapHero(
+                        entry.index,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ],
+              ],
+            ],
+          ),
+        );
+
         return SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: StateIndicator(
-                            state: loaded.behavioralState,
-                            transitionKey: loaded.transitionKey,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        CompletionRing(completed: completedCount, total: total),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    for (final entry in completedEntries) ...[
-                      CompletedSessionCard(session: entry.session),
-                      const SizedBox(height: 8),
-                    ],
-                    if (allDone)
-                      const Expanded(
-                        child: Center(
-                          child: AnimatedSwitcher(
-                            duration: Duration(milliseconds: 300),
-                            child: _AllDoneWidget(key: ValueKey('all-done')),
-                          ),
-                        ),
-                      )
-                    else ...[
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: _HeroZone(
-                          key: ValueKey(
-                            'hero-${sessions[heroIndex].sessionType}-$heroIndex',
-                          ),
-                          plan: plan,
-                          heroIndex: heroIndex,
-                          weatherContext: sessionState.weatherContext,
-                          onRegenerate: () {
-                            final bloc = context.read<DailyPlanBloc>();
-                            // Guard against rapid double-taps while
-                            // AnimatedSwitcher is cross-fading the old hero
-                            // card out.
-                            if (bloc.state is DailyPlanLoaded) {
-                              bloc.add(DailyPlanRegenerateRequested());
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ActiveDaysCard(count: sessionState.activeDaysCount),
-                      if (upcomingEntries.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          l10n.comingUpHeader,
-                          style: AppTextStyles.caption.copyWith(
-                            color: Theme.of(
-                              context,
-                            ).extension<PulseCoachTheme>()!.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        for (final entry in upcomingEntries) ...[
-                          CompactSessionCard(
-                            session: entry.session,
-                            heroTag:
-                                'session-compact-${entry.session.sessionType}-${entry.index}',
-                            onTap: () => context
-                                .read<TodaySessionCubit>()
-                                .swapHero(entry.index),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                      ],
-                    ],
-                  ],
-                ),
-              ),
-            ),
+            child: allDone ? IntrinsicHeight(child: content) : content,
           ),
         );
       },
@@ -447,7 +452,7 @@ class _TabletSessionDetailPanel extends StatelessWidget {
           if (session.explanation.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              session.explanation,
+              explanationText(session.explanation, l10n),
               style: AppTextStyles.bodySmall.copyWith(
                 color: pulseTheme.onSurfaceVariant,
               ),
