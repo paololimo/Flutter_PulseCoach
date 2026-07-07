@@ -60,6 +60,7 @@ class FactorIconRow extends StatelessWidget {
     }
 
     return Wrap(
+      alignment: WrapAlignment.start,
       spacing: 4,
       runSpacing: 0,
       children: [
@@ -160,7 +161,14 @@ class _FactorGlyphState extends State<_FactorGlyph> {
           onTap: () => setState(() => _revealed = !_revealed),
           child: ConstrainedBox(
             constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-            child: Center(
+            // widthFactor/heightFactor: 1.0 make this Align size to its child
+            // (clamped to the 48x48 min tap target) instead of expanding to
+            // fill the Wrap's available width — a plain Center would stretch
+            // each glyph to full width and force a vertical stack.
+            child: Align(
+              alignment: Alignment.center,
+              widthFactor: 1.0,
+              heightFactor: 1.0,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

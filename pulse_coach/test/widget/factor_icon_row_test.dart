@@ -61,7 +61,11 @@ void main() {
       () {
         final factors = deriveDecisionFactors(
           _session(),
-          _weather(temperature: 5.0, precipitationProbability: 20, aqiValue: 40),
+          _weather(
+            temperature: 5.0,
+            precipitationProbability: 20,
+            aqiValue: 40,
+          ),
         );
         expect(
           factors,
@@ -86,7 +90,10 @@ void main() {
     );
 
     test('22.2-FACTOR-004: isAqiHigh=true -> aqi factor present', () {
-      final factors = deriveDecisionFactors(_session(), _weather(aqiValue: 120));
+      final factors = deriveDecisionFactors(
+        _session(),
+        _weather(aqiValue: 120),
+      );
       expect(factors, contains(DecisionFactor.aqi));
     });
 
@@ -178,23 +185,22 @@ void main() {
       },
     );
 
-    testWidgets(
-      '22.2-FACTOR-009: each glyph tap target meets 48dp minimum',
-      (tester) async {
-        await tester.pumpWidget(
-          _wrap(FactorIconRow(session: _session(), weather: null)),
-        );
+    testWidgets('22.2-FACTOR-009: each glyph tap target meets 48dp minimum', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(FactorIconRow(session: _session(), weather: null)),
+      );
 
-        final boxes = tester.widgetList<ConstrainedBox>(
-          find.byType(ConstrainedBox),
-        );
-        for (final box in boxes) {
-          final constraints = box.constraints;
-          expect(constraints.minWidth, greaterThanOrEqualTo(48));
-          expect(constraints.minHeight, greaterThanOrEqualTo(48));
-        }
-      },
-    );
+      final boxes = tester.widgetList<ConstrainedBox>(
+        find.byType(ConstrainedBox),
+      );
+      for (final box in boxes) {
+        final constraints = box.constraints;
+        expect(constraints.minWidth, greaterThanOrEqualTo(48));
+        expect(constraints.minHeight, greaterThanOrEqualTo(48));
+      }
+    });
 
     testWidgets('22.2-FACTOR-010: AQI glyph tinted PulseCoachTheme.tertiary', (
       tester,
@@ -266,6 +272,55 @@ void main() {
         // key, the precipitation glyph is a fresh State, starting unrevealed.
         expect(find.text(l10n.factorLabelPrecipitation), findsNothing);
         expect(find.text(temperatureLabel), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '22.2-FACTOR-012: glyphs lay out as a horizontal row, not a full-width '
+      'vertical stack (regression: Center expanded each glyph to full width)',
+      (tester) async {
+        // Bounded, wide container mirrors the hero card. The bug only appears
+        // under a bounded width: a plain Center inside each glyph expanded to
+        // fill it, forcing one glyph per Wrap run (vertical stack).
+        await tester.pumpWidget(
+          _wrap(
+            SizedBox(
+              width: 400,
+              child: FactorIconRow(
+                session: _session(),
+                weather: _weather(temperature: 5.0),
+              ),
+            ),
+          ),
+        );
+
+        // 3 factors: exerciseType, intensity, temperature.
+        final icons = find.byType(Icon);
+        expect(icons, findsNWidgets(3));
+
+        final first = tester.getRect(icons.at(0));
+        final second = tester.getRect(icons.at(1));
+
+        // Same row: the first two glyphs share a vertical center.
+        expect(
+          (first.center.dy - second.center.dy).abs(),
+          lessThan(1.0),
+          reason: 'glyphs should sit on the same row, not stack vertically',
+        );
+        // Progressing horizontally: the second glyph is to the right.
+        expect(second.center.dx, greaterThan(first.center.dx));
+
+        // No glyph occupies the full container width (the stack signature).
+        final glyphBox = tester.getSize(
+          find
+              .ancestor(of: icons.at(0), matching: find.byType(ConstrainedBox))
+              .first,
+        );
+        expect(
+          glyphBox.width,
+          lessThan(120),
+          reason: 'each glyph should be tap-target sized, not full width',
+        );
       },
     );
   });
