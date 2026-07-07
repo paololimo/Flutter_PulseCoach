@@ -54,5 +54,17 @@ void main() {
         await expectLater(service.cancel(), completes);
       },
     );
+
+    test(
+      '22.5-SVC-007: didLaunchFromNotification() resolves to false (not '
+      'throw) with no platform channel present',
+      () async {
+        final service = LocalSessionNotificationService();
+
+        final result = await service.didLaunchFromNotification();
+
+        expect(result, isFalse);
+      },
+    );
   });
 }

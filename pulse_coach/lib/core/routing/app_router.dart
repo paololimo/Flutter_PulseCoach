@@ -132,6 +132,9 @@ class AppRouter {
               session: extra.session,
               planId: extra.planId,
               sessionIndex: extra.sessionIndex,
+              resumeStepIndex: extra.resumeStepIndex,
+              resumeSecondsRemaining: extra.resumeSecondsRemaining,
+              resumeElapsedSeconds: extra.resumeElapsedSeconds,
             );
           }
           return InSessionPage(session: extra as PlannedSession?);

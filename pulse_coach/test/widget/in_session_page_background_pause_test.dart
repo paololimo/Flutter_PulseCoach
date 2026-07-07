@@ -49,6 +49,9 @@ class _FakeSessionNotificationService implements SessionNotificationService {
 
   @override
   Future<void> cancel() async {}
+
+  @override
+  Future<bool> didLaunchFromNotification() async => false;
 }
 
 GoRouter _router({

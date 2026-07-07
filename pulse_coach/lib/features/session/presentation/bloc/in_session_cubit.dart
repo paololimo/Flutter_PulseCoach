@@ -31,6 +31,10 @@ class InSessionCubit extends Cubit<InSessionState> {
   DateTime? _startedAt;
   bool _abandonRequested = false;
 
+  // Story 22.5: seeds a deep-linked resume at its frozen step/second instead
+  // of always starting fresh at step 0 (see `start()`'s `_startedAt` seeding).
+  final int? _initialElapsedSeconds;
+
   InSessionCubit({
     required List<ExerciseStep> steps,
     SessionLogsDao? sessionLogsDao,
@@ -39,24 +43,32 @@ class InSessionCubit extends Cubit<InSessionState> {
     HapticService? hapticService,
     LiveHrService? liveHrService,
     DateTime Function()? now,
+    int? initialStepIndex,
+    int? initialSecondsRemaining,
+    int? initialElapsedSeconds,
   }) : _sessionLogsDao = sessionLogsDao,
        _planId = planId,
        _sessionIndex = sessionIndex,
        _hapticService = hapticService,
        _liveHrService = liveHrService,
        _now = now ?? DateTime.now,
+       _initialElapsedSeconds = initialElapsedSeconds,
        super(
          InSessionState(
            steps: steps,
-           currentStepIndex: 0,
-           secondsRemaining: steps.first.durationSeconds,
+           currentStepIndex: initialStepIndex ?? 0,
+           secondsRemaining:
+               initialSecondsRemaining ??
+               steps[initialStepIndex ?? 0].durationSeconds,
          ),
        );
 
   /// Starts the 1-second countdown tick. Idempotent: a second call is a no-op.
   void start() {
     if (_timer != null) return;
-    _startedAt ??= _now();
+    _startedAt ??= _initialElapsedSeconds != null
+        ? _now().subtract(Duration(seconds: _initialElapsedSeconds))
+        : _now();
     _timer = Timer.periodic(const Duration(seconds: 1), _tick);
     if (_liveHrService != null) {
       unawaited(_fetchAndEmitHr());
@@ -76,6 +88,19 @@ class InSessionCubit extends Cubit<InSessionState> {
     _timer = null;
     _hrTimer?.cancel();
     _hrTimer = null;
+  }
+
+  /// Wall-clock seconds elapsed since [start] was called (0 if not yet
+  /// started). Shared by [abandon] and the Story 22.5 backgrounding snapshot.
+  int get elapsedSeconds =>
+      _startedAt == null ? 0 : _now().difference(_startedAt!).inSeconds;
+
+  /// Re-anchors [elapsedSeconds] to [seconds], discarding any wall-clock time
+  /// accrued while the app was backgrounded. Keeps the warm pause→resume path
+  /// consistent with the cold-start deep-link path, which seeds
+  /// `_startedAt = now - initialElapsedSeconds` (review F2).
+  void reseedElapsed(int seconds) {
+    _startedAt = _now().subtract(Duration(seconds: seconds));
   }
 
   /// Resumes the countdown after [pauseTimers]. Idempotent.
@@ -197,9 +222,7 @@ class InSessionCubit extends Cubit<InSessionState> {
     _hrTimer?.cancel();
     _hrTimer = null;
 
-    final elapsedSeconds = _startedAt == null
-        ? 0
-        : _now().difference(_startedAt!).inSeconds;
+    final elapsed = elapsedSeconds;
     final currentStepIndex = state.currentStepIndex;
 
     // Emit BEFORE awaiting persistence (review fix: UI race). On persistence
@@ -207,7 +230,7 @@ class InSessionCubit extends Cubit<InSessionState> {
     // listener will already have navigated, but `_persistAbandon` falling back
     // logs the error.
     if (!isClosed) emit(state.copyWith(isAbandoned: true));
-    await _persistAbandon(elapsedSeconds, currentStepIndex);
+    await _persistAbandon(elapsed, currentStepIndex);
   }
 
   Future<void> _persistAbandon(int elapsedSeconds, int currentStepIndex) async {

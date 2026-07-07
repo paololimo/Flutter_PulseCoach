@@ -594,3 +594,7 @@ Items identified during the Story 12.1 WearOS feasibility spike code review. All
 ## Deferred from: code review of story-22.3 (2026-07-07)
 
 - Live update in `TodaySessionCubit._onLogsChanged` is narrower than "any completion": the `setEquals` early-return precedes the `activeDaysCount` recompute, so a completion that doesn't change the current plan's completed-index set — or a shared-session completion (`dailyPlanId == null`, never observed by `watchLogsForPlan(planId)`) — won't live-refresh the active-days count until the next `planLoaded`. AC5 is satisfied for the specified hero-session-completion scenario. Broadening would require a full-table query on every no-op log event or a new subscription the story explicitly forbids.
+
+## Deferred from: code review of story-22.5 (2026-07-07)
+
+- **Snapshot only written on `AppLifecycleState.paused`** [pulse_coach/lib/features/session/presentation/pages/in_session_page.dart:160] — `didChangeAppLifecycleState` handles only `paused`/`resumed`; an OS fast-kill from `hidden`/`detached`/`inactive` that never passes through `paused` persists no `BackgroundedSessionSnapshot` and posts no notification, so the backgrounded session cannot be reconciled or auto-abandoned on next launch. Pre-existing lifecycle-coverage gap inherited from Story 22.4's notification wiring; low reachability on current Android/iOS paths.

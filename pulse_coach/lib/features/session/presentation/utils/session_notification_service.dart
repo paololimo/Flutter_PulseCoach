@@ -1,5 +1,11 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:pulse_coach/core/database/daos/session_logs_dao.dart';
+import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/logging/app_logger.dart';
+import 'package:pulse_coach/features/session/presentation/utils/session_reconciliation_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum NotificationPermissionStatus { granted, denied, undetermined }
 
@@ -14,6 +20,10 @@ abstract interface class SessionNotificationService {
     required int secondsRemaining,
   });
   Future<void> cancel();
+
+  /// True when the app's current process was cold-started by the user
+  /// tapping this notification (Story 22.5, AC3/AC4/AC6).
+  Future<bool> didLaunchFromNotification();
 }
 
 /// Wraps `flutter_local_notifications` to post a best-effort ongoing
@@ -41,8 +51,6 @@ class LocalSessionNotificationService implements SessionNotificationService {
             requestSoundPermission: false,
           ),
         ),
-        // Story 22.5 replaces this with real tap-routing; this story only
-        // needs the callback registered (the plugin requires it at init).
         onDidReceiveNotificationResponse: _onTap,
       );
       _initialized = true;
@@ -57,9 +65,22 @@ class LocalSessionNotificationService implements SessionNotificationService {
   }
 
   void _onTap(NotificationResponse response) {
-    AppLogger.debug(
-      'notification tapped (no-op stub, see Story 22.5)',
-      name: 'LocalSessionNotificationService',
+    // Constructed inline (rather than threaded through the constructor) so
+    // this service does not need to depend on SessionReconciliationService/
+    // AppRouter in its own signature (Story 22.5 judgment call #7).
+    if (!getIt.isRegistered<SessionLogsDao>() ||
+        !getIt.isRegistered<SharedPreferences>()) {
+      return;
+    }
+    final reconciliationService = SessionReconciliationService(
+      getIt<SharedPreferences>(),
+      getIt<SessionLogsDao>(),
+    );
+    unawaited(
+      handleNotificationTap(
+        reconciliationService: reconciliationService,
+        notificationService: this,
+      ),
     );
   }
 
@@ -188,6 +209,22 @@ class LocalSessionNotificationService implements SessionNotificationService {
         error: e,
         stackTrace: st,
       );
+    }
+  }
+
+  @override
+  Future<bool> didLaunchFromNotification() async {
+    try {
+      final details = await _plugin.getNotificationAppLaunchDetails();
+      return details?.didNotificationLaunchApp ?? false;
+    } catch (e, st) {
+      AppLogger.warning(
+        'didLaunchFromNotification failed',
+        name: 'LocalSessionNotificationService',
+        error: e,
+        stackTrace: st,
+      );
+      return false;
     }
   }
 

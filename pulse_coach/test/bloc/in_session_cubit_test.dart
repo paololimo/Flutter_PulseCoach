@@ -363,6 +363,88 @@ void main() {
     );
 
     testWidgets(
+      '22.5-CUBIT-004: elapsedSeconds getter reflects wall-clock time since '
+      'start() (before any abandon/completion)',
+      (tester) async {
+        final clock = _ManualClock(DateTime.utc(2026, 7, 7, 9));
+        final cubit = InSessionCubit(steps: _steps, now: clock.call)..start();
+
+        expect(cubit.elapsedSeconds, 0);
+        clock.advance(const Duration(seconds: 4));
+        expect(cubit.elapsedSeconds, 4);
+
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '22.5-CUBIT-005: elapsedSeconds is 0 before start() is called',
+      (tester) async {
+        final cubit = _cubit();
+
+        expect(cubit.elapsedSeconds, 0);
+
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '22.5-CUBIT-001: constructed with initialStepIndex/'
+      'initialSecondsRemaining → initial state reflects those values, not '
+      'step 0 / full duration',
+      (tester) async {
+        final cubit = InSessionCubit(
+          steps: _steps,
+          initialStepIndex: 1,
+          initialSecondsRemaining: 1,
+        );
+
+        expect(cubit.state.currentStepIndex, 1);
+        expect(cubit.state.secondsRemaining, 1);
+
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '22.5-CUBIT-002: constructed with initialElapsedSeconds, then abandon() '
+      'called → persisted elapsedSeconds continues from the seeded value '
+      '(not reset to ~0)',
+      (tester) async {
+        final dao = _FakeSessionLogsDao();
+        final clock = _ManualClock(DateTime.utc(2026, 7, 7, 9));
+        final cubit = InSessionCubit(
+          steps: _steps,
+          sessionLogsDao: dao,
+          planId: 42,
+          now: clock.call,
+          initialElapsedSeconds: 100,
+        )..start();
+
+        clock.advance(const Duration(seconds: 5));
+        await cubit.abandon();
+
+        expect(dao.insertedLogs, hasLength(1));
+        expect(dao.insertedLogs.single.elapsedSeconds, const Value(105));
+
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
+      '22.5-CUBIT-003: existing (un-seeded) construction still behaves '
+      'exactly as before (regression guard — no seeded params passed)',
+      (tester) async {
+        final cubit = _cubit();
+
+        expect(cubit.state.currentStepIndex, 0);
+        expect(cubit.state.secondsRemaining, _steps[0].durationSeconds);
+
+        await cubit.close();
+      },
+    );
+
+    testWidgets(
       '8.5-CUBIT-008: pauseTimers + resumeTimers preserves countdown state',
       (tester) async {
         final cubit = _cubit()..start();

@@ -15,6 +15,7 @@ import 'package:pulse_coach/features/session/presentation/bloc/in_session_state.
 import 'package:pulse_coach/features/session/presentation/utils/haptic_service.dart';
 import 'package:pulse_coach/features/session/presentation/utils/live_hr_service.dart';
 import 'package:pulse_coach/features/session/presentation/utils/session_notification_service.dart';
+import 'package:pulse_coach/features/session/presentation/utils/session_reconciliation_service.dart';
 import 'package:pulse_coach/features/session/presentation/utils/session_step_generator.dart';
 import 'package:pulse_coach/features/session/presentation/utils/wear_bridge_service.dart';
 import 'package:pulse_coach/features/session/presentation/widgets/countdown_overlay.dart';
@@ -29,12 +30,22 @@ class InSessionPage extends StatefulWidget {
   final int? planId;
   final int sessionIndex;
   final SessionNotificationService? notificationService;
+  final SessionReconciliationService? reconciliationService;
+  // Story 22.5: non-null when deep-linking back into an already-running,
+  // backgrounded session — see `build()`'s CountdownOverlay-skip branch.
+  final int? resumeStepIndex;
+  final int? resumeSecondsRemaining;
+  final int? resumeElapsedSeconds;
 
   const InSessionPage({
     this.session,
     this.planId,
     this.sessionIndex = 0,
     this.notificationService,
+    this.reconciliationService,
+    this.resumeStepIndex,
+    this.resumeSecondsRemaining,
+    this.resumeElapsedSeconds,
     super.key,
   });
 
@@ -53,6 +64,7 @@ class _InSessionPageState extends State<InSessionPage>
   final VibrationHapticService _hapticService = VibrationHapticService();
   HealthLiveHrService? _liveHrService;
   late final SessionNotificationService _notificationService;
+  late final SessionReconciliationService? _reconciliationService;
   bool _countdownDone = false;
   InSessionCubit? _cubit;
   WearBridgeService? _wearBridge;
@@ -61,13 +73,34 @@ class _InSessionPageState extends State<InSessionPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Claim ownership of the warm notification-tap path: while this page is
+    // mounted, `_handleResumed` (lifecycle) is the sole handler and the plugin
+    // tap callback must no-op to avoid racing the single snapshot (review F1).
+    inSessionPageActive = true;
     _notificationService =
         widget.notificationService ?? LocalSessionNotificationService();
     unawaited(_notificationService.init());
+    _reconciliationService =
+        widget.reconciliationService ??
+        (getIt.isRegistered<SessionLogsDao>() &&
+                getIt.isRegistered<SharedPreferences>()
+            ? SessionReconciliationService(
+                getIt<SharedPreferences>(),
+                getIt<SessionLogsDao>(),
+              )
+            : null);
     _hapticService.init();
     if (getIt.isRegistered<Health>()) {
       _liveHrService = HealthLiveHrService(getIt<Health>());
       unawaited(_liveHrService!.init());
+    }
+    // A resumed (deep-linked) session must never show the 3-2-1 countdown
+    // ceremony — it is returning to an already-running session, not starting
+    // a fresh one.
+    if (widget.resumeStepIndex != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _onCountdownComplete(),
+      );
     }
   }
 
@@ -82,6 +115,9 @@ class _InSessionPageState extends State<InSessionPage>
       sessionIndex: widget.sessionIndex,
       hapticService: _hapticService,
       liveHrService: _liveHrService,
+      initialStepIndex: widget.resumeStepIndex,
+      initialSecondsRemaining: widget.resumeSecondsRemaining,
+      initialElapsedSeconds: widget.resumeElapsedSeconds,
     )..start();
     _wearBridge = WearBridgeService()
       ..start(
@@ -95,7 +131,11 @@ class _InSessionPageState extends State<InSessionPage>
       _countdownDone = true;
     });
 
-    unawaited(_maybeShowNotificationRationale());
+    // Permission was already resolved before this session was ever
+    // backgrounded — re-prompting on resume would be jarring.
+    if (widget.resumeStepIndex == null) {
+      unawaited(_maybeShowNotificationRationale());
+    }
   }
 
   Future<void> _maybeShowNotificationRationale() async {
@@ -122,7 +162,14 @@ class _InSessionPageState extends State<InSessionPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.paused) return;
+    if (state == AppLifecycleState.paused) {
+      _handlePaused();
+    } else if (state == AppLifecycleState.resumed) {
+      unawaited(_handleResumed());
+    }
+  }
+
+  void _handlePaused() {
     if (!mounted) return;
     final cubit = _cubit;
     final session = widget.session;
@@ -137,10 +184,57 @@ class _InSessionPageState extends State<InSessionPage>
         secondsRemaining: cubit.state.secondsRemaining,
       ),
     );
+
+    final reconciliationService = _reconciliationService;
+    if (reconciliationService != null) {
+      unawaited(
+        reconciliationService.writeSnapshot(
+          BackgroundedSessionSnapshot(
+            planId: widget.planId,
+            sessionIndex: widget.sessionIndex,
+            session: session,
+            currentStepIndex: cubit.state.currentStepIndex,
+            secondsRemaining: cubit.state.secondsRemaining,
+            elapsedSeconds: cubit.elapsedSeconds,
+            backgroundedAt: DateTime.now(),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleResumed() async {
+    if (!mounted) return;
+    final cubit = _cubit;
+    final session = widget.session;
+    final reconciliationService = _reconciliationService;
+    if (cubit == null || session == null || reconciliationService == null) {
+      return;
+    }
+
+    final result = await reconciliationService.reconcile();
+    if (!mounted) return;
+    switch (result) {
+      case SessionReconciliationResult.stillWithinWindow:
+        // Re-anchor elapsed to the value frozen at backgrounding so the dead
+        // background interval is not counted as session time — matches the
+        // cold-start deep-link path's `_startedAt` seeding (review F2).
+        final snapshot = reconciliationService.readSnapshot();
+        if (snapshot != null) cubit.reseedElapsed(snapshot.elapsedSeconds);
+        cubit.resumeTimers();
+        await reconciliationService.clearSnapshot();
+        unawaited(_notificationService.cancel());
+      case SessionReconciliationResult.abandonedByTimeout:
+        unawaited(cubit.abandon());
+        unawaited(_notificationService.cancel());
+      case SessionReconciliationResult.none:
+        break;
+    }
   }
 
   @override
   void dispose() {
+    inSessionPageActive = false;
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_wearBridge?.stop());
     _cubit?.close();
@@ -150,6 +244,12 @@ class _InSessionPageState extends State<InSessionPage>
   @override
   Widget build(BuildContext context) {
     if (!_countdownDone || _cubit == null) {
+      // A resumed (deep-linked) session must never show the 3-2-1 countdown
+      // ceremony (Story 22.5) — `_onCountdownComplete` is already scheduled
+      // via `initState`'s post-frame callback, so render nothing until it
+      // flips `_countdownDone`.
+      if (widget.resumeStepIndex != null) return const SizedBox.shrink();
+
       final l10n = AppLocalizations.of(context)!;
       final sessionTitle = widget.session != null
           ? sessionDisplayName(widget.session!.sessionType, l10n)
