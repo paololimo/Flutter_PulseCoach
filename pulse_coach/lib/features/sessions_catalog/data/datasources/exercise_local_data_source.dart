@@ -8,6 +8,7 @@ import 'package:pulse_coach/core/error/exceptions.dart';
 import 'package:pulse_coach/core/logging/app_logger.dart';
 import 'package:pulse_coach/features/sessions_catalog/data/models/exercise_model.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @injectable
 class ExerciseLocalDataSource {
@@ -134,12 +135,11 @@ class ExerciseLocalDataSource {
       return List.unmodifiable(const <Exercise>[]);
     }
 
+    final assetPath = await _fallbackAssetForLocale();
     final String jsonString;
     final dynamic decoded;
     try {
-      jsonString = await rootBundle.loadString(
-        'assets/data/fallback_exercises.json',
-      );
+      jsonString = await rootBundle.loadString(assetPath);
       decoded = jsonDecode(jsonString);
     } catch (e) {
       throw CacheException('Failed to load fallback exercises: $e');
@@ -196,6 +196,26 @@ class ExerciseLocalDataSource {
       );
     }
     return List.unmodifiable(exercises);
+  }
+
+  /// Picks the bundled fallback catalog matching the user's selected app
+  /// locale. The English catalog mirrors the Italian one 1:1 (same ids and
+  /// metadata) so the degraded/offline path is localized too. Defaults to
+  /// Italian when the preference is unset or unreadable.
+  Future<String> _fallbackAssetForLocale() async {
+    const itAsset = 'assets/data/fallback_exercises.json';
+    const enAsset = 'assets/data/fallback_exercises_en.json';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Same key LocaleCubit persists ('app_locale'); 'en' -> English catalog.
+      return prefs.getString('app_locale') == 'en' ? enAsset : itAsset;
+    } catch (e) {
+      AppLogger.debug(
+        'Could not read app_locale, defaulting to Italian fallback: $e',
+        name: 'ExerciseLocalDataSource',
+      );
+      return itAsset;
+    }
   }
 }
 

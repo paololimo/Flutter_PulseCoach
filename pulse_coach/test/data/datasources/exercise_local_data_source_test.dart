@@ -8,6 +8,7 @@ import 'package:pulse_coach/core/database/daos/exercise_cache_dao.dart';
 import 'package:pulse_coach/core/error/exceptions.dart';
 import 'package:pulse_coach/features/sessions_catalog/data/datasources/exercise_local_data_source.dart';
 import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _ThrowingExerciseCacheDao extends Fake implements ExerciseCacheDao {
   _ThrowingExerciseCacheDao({this.throwOnDelete = false});
@@ -154,6 +155,34 @@ void main() {
       expect(exercises, isNotEmpty);
       expect(exercises.first.sessionType, 'breathing');
       expect(exercises.first.steps, isNotEmpty);
+    },
+  );
+
+  test(
+    '22-I18N-001: fallback catalog follows app_locale (en -> English names, '
+    'it/unset -> Italian names, same ids)',
+    () async {
+      // English locale -> English bundled catalog.
+      SharedPreferences.setMockInitialValues({'app_locale': 'en'});
+      final en = await sut.loadFallbackExercisesByType('mobility');
+      final enNeck = en.firstWhere(
+        (e) => e.id == 'fallback_mobility_neck_rolls',
+      );
+      expect(enNeck.name, 'Neck rolls');
+
+      // Italian locale -> Italian bundled catalog, same id.
+      SharedPreferences.setMockInitialValues({'app_locale': 'it'});
+      final it = await sut.loadFallbackExercisesByType('mobility');
+      final itNeck = it.firstWhere(
+        (e) => e.id == 'fallback_mobility_neck_rolls',
+      );
+      expect(itNeck.name, 'Rotazioni del collo');
+
+      // Both catalogs expose the same ids (1:1 parity).
+      expect(
+        en.map((e) => e.id).toSet(),
+        it.map((e) => e.id).toSet(),
+      );
     },
   );
 
