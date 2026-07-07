@@ -16,6 +16,21 @@
   "transitionAtRiskRecovering": "Stai tornando in ritmo. Continuiamo con calma.",
   "transitionFatiguedRecovering": "Stai tornando in ritmo. Continuiamo con calma.",
   "transitionRecoveringActive": "Sei di nuovo in forma! Riprendiamoci il piano completo.",
+  "explRecovering": "Il tuo corpo ha bisogno di una giornata più leggera. Abbiamo regolato di conseguenza.",
+  "explAtRiskMissed": "Hai saltato alcune sessioni. Riprendiamo con calma.",
+  "explAtRiskHighLoad": "Carico alto rilevato. Oggi manteniamoci leggeri.",
+  "explFatigued": "Hai dato il massimo ultimamente. Riduciamo l'intensità.",
+  "explElevatedRestingHr": "Frequenza cardiaca a riposo elevata. Iniziamo con una sessione più dolce.",
+  "explLowSteps": "Pochi passi oggi. Movimento leggero per ripartire.",
+  "explOptimalRestingHr": "Frequenza cardiaca a riposo ottima. Tempo per una sessione concentrata.",
+  "explConsistentWeek": "Sei stato costante questa settimana. Alziamo leggermente l'asticella.",
+  "explIntenseEffort": "Lo sforzo è stato intenso. Oggi manteniamoci moderati.",
+  "explComfortZone": "In base alle tue ultime sessioni. Restiamo nella tua zona di comfort.",
+  "explGreatStreak": "Ottima serie! Continuiamo con questo ritmo.",
+  "explWelcomeBack": "Bentornato. Ripartiamo dolcemente.",
+  "explBreathingFallback": "Un momento per rilassarti. Breve sessione di respirazione in coda.",
+  "explMobilityFallback": "Lavoro di mobilità per mantenere il movimento fluido.",
+  "explGenericFallback": "Quando sei pronto, partiamo.",
   "comingUpHeader": "PROSSIME",
   "errorLoadingPlan": "Impossibile caricare il piano.",
   "allDoneTitle": "Ottimo lavoro!",
@@ -481,5 +496,43 @@
   "disclaimerContinue": "Continua",
 
   "sessionDetailClose": "Chiudi",
-  "sessionDetailSteps": "Passaggi"
+  "sessionDetailSteps": "Passaggi",
+
+  "progressTabHistory": "Cronologia",
+  "progressTabCharts": "Grafici",
+  "progressLockedPro": "Lo storico completo è una funzione Pro.",
+  "progressHistoryEmpty": "Nessuna sessione ancora. Inizia la tua prima oggi!",
+  "progressHistoryError": "Impossibile caricare la cronologia",
+  "progressInsufficientData": "Completa più sessioni per vedere i tuoi progressi",
+  "progressChartsError": "Impossibile caricare i grafici",
+  "progressRpeEmpty": "Nessun dato RPE ancora disponibile",
+  "progressChartMinutesPerWeek": "Minuti per settimana",
+  "progressChartCompletionRate": "Tasso di completamento",
+  "progressChartRpeTrend": "Andamento RPE",
+  "progressChartSessionTypes": "Tipologie di sessione",
+  "weeklyGoalProgress": "{completed} di {target} sessioni questa settimana",
+  "@weeklyGoalProgress": {
+    "placeholders": {
+      "completed": { "type": "int" },
+      "target": { "type": "int" }
+    }
+  },
+  "weeklyGoalFirstSession": "Inizia la tua prima sessione questa settimana!",
+  "weeklyGoalReached": "Obiettivo raggiunto!",
+  "sessionHistoryAbandoned": "abbandonata",
+
+  "paywallNoActiveSub": "Nessun abbonamento Pro attivo da sbloccare.",
+  "paywallLoadError": "Impossibile caricare gli abbonamenti.",
+  "paywallRetry": "Riprova",
+  "paywallRestore": "Ripristina acquisti",
+  "paywallHeadline": "Sblocca l'esperienza completa",
+  "paywallSubhead": "Storico completo, tutti i grafici e le funzioni social.",
+  "paywallPurchase": "Acquista",
+  "subActionError": "Operazione non riuscita. Riprova.",
+  "proUpsellBody": "Accedi a tutto lo storico e ai grafici con PulseCoach Pro.",
+  "proUpsellNotNow": "non ora",
+  "proUpsellDiscover": "Scopri Pro",
+
+  "aiLogStateVectorUnavailable": "StateVector non disponibile",
+  "aiLogDataUnavailable": "Dati non disponibili"
 }

@@ -37,7 +37,9 @@ class HeroSessionCard extends StatelessWidget {
     final displayName = sessionDisplayName(session.sessionType, l10n);
     final durationLabel = '${session.durationMinutes} min';
     final intensityText = intensityLabel(session.intensity, l10n);
-    final explanation = session.explanation.trim();
+    final explanation = session.explanation.isEmpty
+        ? ''
+        : explanationText(session.explanation, l10n).trim();
     final hasExplanation = explanation.isNotEmpty;
     final canStart = onStart != null;
 
@@ -137,7 +139,7 @@ class HeroSessionCard extends StatelessWidget {
               if (hasExplanation) ...[
                 const SizedBox(height: 8),
                 Text(
-                  session.explanation,
+                  explanation,
                   style: AppTextStyles.bodySmall.copyWith(
                     color: pulseTheme.onSurfaceVariant,
                   ),

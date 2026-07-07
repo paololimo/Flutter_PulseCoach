@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pulse_coach/ai/explainability/explanation_key.dart';
 import 'package:pulse_coach/core/theme/pulse_coach_theme.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
@@ -46,4 +47,47 @@ String intensityLabel(int intensity, AppLocalizations l10n) {
   if (intensity >= 4 && intensity <= 7) return l10n.intensityMedium;
   if (intensity >= 8 && intensity <= 10) return l10n.intensityHigh;
   return l10n.intensityMedium;
+}
+
+/// Resolves a stored `PlannedSession.explanation` value to localized text.
+///
+/// The AI isolate now stores a locale-independent [ExplanationKey] name
+/// (E7.5-T1). If [stored] is a known key, it is resolved via [l10n];
+/// otherwise the raw string is returned unchanged so legacy plans (which
+/// stored a baked Italian string) still render.
+String explanationText(String stored, AppLocalizations l10n) {
+  switch (ExplanationKey.tryParse(stored)) {
+    case ExplanationKey.recovering:
+      return l10n.explRecovering;
+    case ExplanationKey.atRiskMissed:
+      return l10n.explAtRiskMissed;
+    case ExplanationKey.atRiskHighLoad:
+      return l10n.explAtRiskHighLoad;
+    case ExplanationKey.fatigued:
+      return l10n.explFatigued;
+    case ExplanationKey.elevatedRestingHr:
+      return l10n.explElevatedRestingHr;
+    case ExplanationKey.lowSteps:
+      return l10n.explLowSteps;
+    case ExplanationKey.optimalRestingHr:
+      return l10n.explOptimalRestingHr;
+    case ExplanationKey.consistentWeek:
+      return l10n.explConsistentWeek;
+    case ExplanationKey.intenseEffort:
+      return l10n.explIntenseEffort;
+    case ExplanationKey.comfortZone:
+      return l10n.explComfortZone;
+    case ExplanationKey.greatStreak:
+      return l10n.explGreatStreak;
+    case ExplanationKey.welcomeBack:
+      return l10n.explWelcomeBack;
+    case ExplanationKey.breathingFallback:
+      return l10n.explBreathingFallback;
+    case ExplanationKey.mobilityFallback:
+      return l10n.explMobilityFallback;
+    case ExplanationKey.genericFallback:
+      return l10n.explGenericFallback;
+    case null:
+      return stored;
+  }
 }

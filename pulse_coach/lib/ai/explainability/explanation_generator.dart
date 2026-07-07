@@ -1,75 +1,83 @@
 import 'package:pulse_coach/ai/bandit/state_vector.dart';
+import 'package:pulse_coach/ai/explainability/explanation_key.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 
 /// Rule-based explanation engine. Pure Dart — no Flutter imports (ARCH7).
 ///
-/// Generates one non-empty explanation string per session by inspecting the
+/// Emits one locale-independent [ExplanationKey] per session by inspecting the
 /// available signals in [StateVector] in priority order:
 ///   1. BehavioralState (Recovering / AtRisk / Fatigued) — highest priority
 ///   2. Biometric signals (restingHR, stepCount) — when available
 ///   3. RPE history — AC2 fallback for sensor-less mode
 ///   4. Streak / missed-sessions — motivational context
-///   5. Session type — final fallback (always non-empty, AC4)
+///   5. Session type — final fallback (always resolves to text, AC4)
+///
+/// The key is stored in `PlannedSession.explanation` (via [generate]) and
+/// resolved to a localized string in the presentation layer, so the reasoning
+/// text follows the user's selected locale (E7.5-T1).
 class ExplanationGenerator {
   const ExplanationGenerator();
 
-  /// Returns a `List<String>` of the same length as [sessions].
-  /// Every element is guaranteed non-empty (AC4).
+  /// Returns a `List<String>` of stored explanation-key values, one per
+  /// session (same length as [sessions]). Each is a stable, non-empty key
+  /// resolved to localized text at display time (AC4).
   List<String> generate({
     required StateVector stateVector,
     required List<PlannedSession> sessions,
   }) {
-    return sessions.map((s) => _explain(stateVector, s)).toList();
+    return sessions.map((s) => _explain(stateVector, s).storageValue).toList();
   }
 
-  String _explain(StateVector sv, PlannedSession session) {
+  ExplanationKey _explain(StateVector sv, PlannedSession session) {
     // AC3: Recovering → always communicate reduced intensity
     if (sv.currentState == BehavioralState.recovering) {
-      return 'Il tuo corpo ha bisogno di una giornata più leggera. Abbiamo regolato di conseguenza.';
+      return ExplanationKey.recovering;
     }
 
     // AtRisk → safety-first messaging
     if (sv.currentState == BehavioralState.atRisk) {
       if (sv.missedSessions >= 2) {
-        return 'Hai saltato alcune sessioni. Riprendiamo con calma.';
+        return ExplanationKey.atRiskMissed;
       }
-      return 'Carico alto rilevato. Oggi manteniamoci leggeri.';
+      return ExplanationKey.atRiskHighLoad;
     }
 
     // Fatigued → effort acknowledgment
     if (sv.currentState == BehavioralState.fatigued) {
-      return 'Hai dato il massimo ultimamente. Riduciamo l\'intensità.';
+      return ExplanationKey.fatigued;
     }
 
     // Active state — check biometric signals first (AC1)
     if (sv.restingHR != null && sv.restingHR! > 75) {
-      return 'Frequenza cardiaca a riposo elevata. Iniziamo con una sessione più dolce.';
+      return ExplanationKey.elevatedRestingHr;
     }
 
     if (sv.stepCount != null && sv.stepCount! < 3000) {
-      return 'Pochi passi oggi. Movimento leggero per ripartire.';
+      return ExplanationKey.lowSteps;
     }
 
     if (sv.restingHR != null && sv.restingHR! <= 60 && sv.streak >= 1) {
-      return 'Frequenza cardiaca a riposo ottima. Tempo per una sessione concentrata.';
+      return ExplanationKey.optimalRestingHr;
     }
 
     // AC2: RPE-only mode (no biometrics, but RPE history available)
-    if (sv.restingHR == null && sv.stepCount == null && sv.rpeHistory.isNotEmpty) {
+    if (sv.restingHR == null &&
+        sv.stepCount == null &&
+        sv.rpeHistory.isNotEmpty) {
       final avg = sv.rpeHistory.reduce((a, b) => a + b) / sv.rpeHistory.length;
       if (avg <= 6.5 && sv.streak >= 2) {
-        return 'Sei stato costante questa settimana. Alziamo leggermente l\'asticella.';
+        return ExplanationKey.consistentWeek;
       }
       if (avg > 7.5) {
-        return 'Lo sforzo è stato intenso. Oggi manteniamoci moderati.';
+        return ExplanationKey.intenseEffort;
       }
-      return 'In base alle tue ultime sessioni. Restiamo nella tua zona di comfort.';
+      return ExplanationKey.comfortZone;
     }
 
     // Streak-based motivational context
     if (sv.streak >= 3) {
-      return 'Ottima serie! Continuiamo con questo ritmo.';
+      return ExplanationKey.greatStreak;
     }
 
     // Safety net: under normal pipeline flow, missedSessions>=3 should already
@@ -77,14 +85,14 @@ class ExplanationGenerator {
     // kept for defense if state-machine invariant ever drifts, and to keep AC4
     // non-empty guarantee tight without depending on that invariant.
     if (sv.streak == 0 && sv.missedSessions >= 3) {
-      return 'Bentornato. Ripartiamo dolcemente.';
+      return ExplanationKey.welcomeBack;
     }
 
-    // Session-type fallback — guaranteed non-empty (AC4)
+    // Session-type fallback — guaranteed to resolve to text (AC4)
     return switch (session.sessionType) {
-      'breathing' => 'Un momento per rilassarti. Breve sessione di respirazione in coda.',
-      'mobility' => 'Lavoro di mobilità per mantenere il movimento fluido.',
-      _ => 'Quando sei pronto, partiamo.',
+      'breathing' => ExplanationKey.breathingFallback,
+      'mobility' => ExplanationKey.mobilityFallback,
+      _ => ExplanationKey.genericFallback,
     };
   }
 }

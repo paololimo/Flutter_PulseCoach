@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/ai/bandit/state_vector.dart';
 import 'package:pulse_coach/ai/explainability/explanation_generator.dart';
+import 'package:pulse_coach/ai/explainability/explanation_key.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
@@ -15,54 +16,61 @@ StateVector _sv({
   List<int> rpeHistory = const [],
   int streak = 0,
   int missedSessions = 0,
-}) =>
-    StateVector(
-      restingHR: restingHR,
-      stepCount: stepCount,
-      activityLevel: ActivityLevel.moderate,
-      rpeHistory: rpeHistory,
-      missedSessions: missedSessions,
-      streak: streak,
-      aqiLevel: AqiLevel.low,
-      temperature: 20.0,
-      precipitation: false,
-      userProfile: const UserProfile(
-        fitnessLevel: 'medium',
-        goal: 'cardio',
-        availableTime: 'short',
-        physicalConstraints: 'none',
-      ),
-      currentState: state,
-    );
+}) => StateVector(
+  restingHR: restingHR,
+  stepCount: stepCount,
+  activityLevel: ActivityLevel.moderate,
+  rpeHistory: rpeHistory,
+  missedSessions: missedSessions,
+  streak: streak,
+  aqiLevel: AqiLevel.low,
+  temperature: 20.0,
+  precipitation: false,
+  userProfile: const UserProfile(
+    fitnessLevel: 'medium',
+    goal: 'cardio',
+    availableTime: 'short',
+    physicalConstraints: 'none',
+  ),
+  currentState: state,
+);
 
 PlannedSession _session({String type = 'cardio'}) => PlannedSession(
-      sessionType: type,
-      intensity: 5,
-      durationMinutes: 5,
-      isIndoor: false,
-    );
+  sessionType: type,
+  intensity: 5,
+  durationMinutes: 5,
+  isIndoor: false,
+);
 
 const _gen = ExplanationGenerator();
 
+// The generator emits locale-independent ExplanationKey names (E7.5-T1); the
+// presentation layer resolves them to localized strings. Tests assert the key,
+// not any language's text.
 void main() {
   group('ExplanationGenerator — AC4: non-empty guarantee', () {
-    test('5.6-UNIT-002: active state with biometrics → non-empty', () {
+    test('5.6-UNIT-002: active state with biometrics → non-empty key', () {
       final result = _gen.generate(stateVector: _sv(), sessions: [_session()]);
       expect(result.single, isNotEmpty);
+      expect(ExplanationKey.tryParse(result.single), isNotNull);
     });
 
-    test('5.6-UNIT-003: no sensor data, no RPE → non-empty (type fallback)', () {
+    test('5.6-UNIT-003: no sensor data, no RPE → type fallback key', () {
       final sv = _sv(restingHR: null, stepCount: null);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single, isNotEmpty);
+      expect(result.single, ExplanationKey.genericFallback.name);
     });
 
-    test('5.6-UNIT-004: returns same count as sessions list', () {
-      final sessions = [_session(), _session(type: 'mobility'), _session(type: 'breathing')];
+    test('5.6-UNIT-004: returns same count as sessions list, all known keys', () {
+      final sessions = [
+        _session(),
+        _session(type: 'mobility'),
+        _session(type: 'breathing'),
+      ];
       final result = _gen.generate(stateVector: _sv(), sessions: sessions);
       expect(result.length, equals(3));
       for (final e in result) {
-        expect(e, isNotEmpty);
+        expect(ExplanationKey.tryParse(e), isNotNull);
       }
     });
 
@@ -73,10 +81,10 @@ void main() {
   });
 
   group('ExplanationGenerator — AC3: Recovering state', () {
-    test('5.6-UNIT-006: Recovering → reduced-intensity message', () {
+    test('5.6-UNIT-006: Recovering → recovering key', () {
       final sv = _sv(state: BehavioralState.recovering);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('leggera'));
+      expect(result.single, ExplanationKey.recovering.name);
     });
 
     test('5.6-UNIT-007: Recovering overrides biometric signals', () {
@@ -87,36 +95,42 @@ void main() {
         streak: 5,
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      // Must still use Recovering message, not the biometric/streak message
-      expect(result.single.toLowerCase(), contains('leggera'));
+      // Must still use Recovering key, not the biometric/streak one
+      expect(result.single, ExplanationKey.recovering.name);
     });
   });
 
   group('ExplanationGenerator — AC1: signal-based explanations', () {
-    test('5.6-UNIT-008: elevated HR → mentions elevated HR or gentle start', () {
+    test('5.6-UNIT-008: elevated HR → elevatedRestingHr key', () {
       final sv = _sv(restingHR: 80.0, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      final text = result.single.toLowerCase();
-      expect(text.contains('frequenza') || text.contains('dolce') || text.contains('elevata'), isTrue);
+      expect(result.single, ExplanationKey.elevatedRestingHr.name);
     });
 
-    test('5.6-UNIT-009: low step count → mentions step count or light movement', () {
-      final sv = _sv(stepCount: 1500, restingHR: null, state: BehavioralState.active);
+    test('5.6-UNIT-009: low step count → lowSteps key', () {
+      final sv = _sv(
+        stepCount: 1500,
+        restingHR: null,
+        state: BehavioralState.active,
+      );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      final text = result.single.toLowerCase();
-      expect(text.contains('passi') || text.contains('leggero') || text.contains('movimento'), isTrue);
+      expect(result.single, ExplanationKey.lowSteps.name);
     });
 
-    test('5.6-UNIT-010: good streak → positive/momentum message', () {
-      final sv = _sv(streak: 4, restingHR: null, stepCount: null, state: BehavioralState.active);
+    test('5.6-UNIT-010: good streak → greatStreak key', () {
+      final sv = _sv(
+        streak: 4,
+        restingHR: null,
+        stepCount: null,
+        state: BehavioralState.active,
+      );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      final text = result.single.toLowerCase();
-      expect(text.contains('serie') || text.contains('ritmo') || text.contains('costante'), isTrue);
+      expect(result.single, ExplanationKey.greatStreak.name);
     });
   });
 
   group('ExplanationGenerator — AC2: RPE-only fallback', () {
-    test('5.6-UNIT-011: no sensor data + consistent low RPE + streak → step-up message', () {
+    test('5.6-UNIT-011: consistent low RPE + streak → consistentWeek key', () {
       final sv = _sv(
         restingHR: null,
         stepCount: null,
@@ -125,14 +139,10 @@ void main() {
         state: BehavioralState.active,
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      final text = result.single.toLowerCase();
-      expect(
-        text.contains('costante') || text.contains('asticella') || text.contains('settimana'),
-        isTrue,
-      );
+      expect(result.single, ExplanationKey.consistentWeek.name);
     });
 
-    test('5.6-UNIT-012: no sensor data + high RPE history → moderate/keep-it-moderate message', () {
+    test('5.6-UNIT-012: high RPE history → intenseEffort key', () {
       final sv = _sv(
         restingHR: null,
         stepCount: null,
@@ -140,32 +150,24 @@ void main() {
         state: BehavioralState.active,
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      final text = result.single.toLowerCase();
-      expect(
-        text.contains('intenso') || text.contains('moderati') || text.contains('sforzo'),
-        isTrue,
-      );
+      expect(result.single, ExplanationKey.intenseEffort.name);
     });
   });
 
   group('ExplanationGenerator — behavioral state messages', () {
-    test('5.6-UNIT-013: AtRisk + missed sessions ≥ 2 → rebuild momentum message', () {
+    test('5.6-UNIT-013: AtRisk + missed ≥ 2 → atRiskMissed key', () {
       final sv = _sv(state: BehavioralState.atRisk, missedSessions: 3);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single, isNotEmpty);
+      expect(result.single, ExplanationKey.atRiskMissed.name);
     });
 
-    test('5.6-UNIT-014: Fatigued → dialing back or effort message', () {
+    test('5.6-UNIT-014: Fatigued → fatigued key', () {
       final sv = _sv(state: BehavioralState.fatigued);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      final text = result.single.toLowerCase();
-      expect(
-        text.contains('massimo') || text.contains('sforzo') || text.contains('riduciamo') || text.contains('intensità'),
-        isTrue,
-      );
+      expect(result.single, ExplanationKey.fatigued.name);
     });
 
-    test('5.6-UNIT-015: welcome-back scenario (streak=0, missed≥3) → welcome-back message', () {
+    test('5.6-UNIT-015: welcome-back scenario (streak=0, missed≥3)', () {
       final sv = _sv(
         streak: 0,
         missedSessions: 4,
@@ -174,31 +176,34 @@ void main() {
         state: BehavioralState.active,
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      final text = result.single.toLowerCase();
-      expect(text.contains('bentornato') || text.contains('dolcemente') || text.contains('ripartiamo'), isTrue);
+      expect(result.single, ExplanationKey.welcomeBack.name);
     });
   });
 
   group('ExplanationGenerator — boundary values', () {
-    test('5.6-UNIT-018: HR exactly 75.0 → not classified as elevated (boundary)', () {
+    test('5.6-UNIT-018: HR exactly 75.0 → not elevated (boundary)', () {
       final sv = _sv(restingHR: 75.0, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), isNot(contains('elevata')));
+      expect(result.single, isNot(ExplanationKey.elevatedRestingHr.name));
     });
 
-    test('5.6-UNIT-019: HR exactly 60.0 with streak=1 → "solid" message (boundary)', () {
+    test('5.6-UNIT-019: HR exactly 60.0 with streak=1 → optimalRestingHr', () {
       final sv = _sv(restingHR: 60.0, streak: 1, state: BehavioralState.active);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('ottima'));
+      expect(result.single, ExplanationKey.optimalRestingHr.name);
     });
 
-    test('5.6-UNIT-020: stepCount exactly 3000 → not classified as low (boundary)', () {
-      final sv = _sv(stepCount: 3000, restingHR: null, state: BehavioralState.active);
+    test('5.6-UNIT-020: stepCount exactly 3000 → not low (boundary)', () {
+      final sv = _sv(
+        stepCount: 3000,
+        restingHR: null,
+        state: BehavioralState.active,
+      );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), isNot(contains('pochi passi')));
+      expect(result.single, isNot(ExplanationKey.lowSteps.name));
     });
 
-    test('5.6-UNIT-021: RPE avg exactly 6.5 with streak=2 → step-up message (boundary)', () {
+    test('5.6-UNIT-021: RPE avg exactly 6.5 with streak=2 → consistentWeek', () {
       final sv = _sv(
         restingHR: null,
         stepCount: null,
@@ -207,10 +212,10 @@ void main() {
         state: BehavioralState.active,
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('asticella'));
+      expect(result.single, ExplanationKey.consistentWeek.name);
     });
 
-    test('5.6-UNIT-022: RPE avg exactly 7.5 → falls to generic (boundary; > is exclusive)', () {
+    test('5.6-UNIT-022: RPE avg exactly 7.5 → comfortZone (> is exclusive)', () {
       final sv = _sv(
         restingHR: null,
         stepCount: null,
@@ -218,39 +223,50 @@ void main() {
         state: BehavioralState.active,
       );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('comfort'));
+      expect(result.single, ExplanationKey.comfortZone.name);
     });
 
-    test('5.6-UNIT-023: streak exactly 3 → momentum message (boundary)', () {
-      final sv = _sv(streak: 3, restingHR: null, stepCount: null, state: BehavioralState.active);
+    test('5.6-UNIT-023: streak exactly 3 → greatStreak (boundary)', () {
+      final sv = _sv(
+        streak: 3,
+        restingHR: null,
+        stepCount: null,
+        state: BehavioralState.active,
+      );
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('ritmo'));
+      expect(result.single, ExplanationKey.greatStreak.name);
     });
 
-    test('5.6-UNIT-024: AtRisk + missedSessions exactly 2 → rebuild message (boundary)', () {
+    test('5.6-UNIT-024: AtRisk + missed exactly 2 → atRiskMissed (boundary)', () {
       final sv = _sv(state: BehavioralState.atRisk, missedSessions: 2);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('calma'));
+      expect(result.single, ExplanationKey.atRiskMissed.name);
     });
 
-    test('5.6-UNIT-025: AtRisk + missedSessions exactly 1 → high-load message (boundary)', () {
+    test('5.6-UNIT-025: AtRisk + missed exactly 1 → atRiskHighLoad (boundary)', () {
       final sv = _sv(state: BehavioralState.atRisk, missedSessions: 1);
       final result = _gen.generate(stateVector: sv, sessions: [_session()]);
-      expect(result.single.toLowerCase(), contains('carico alto'));
+      expect(result.single, ExplanationKey.atRiskHighLoad.name);
     });
   });
 
   group('ExplanationGenerator — session-type fallback', () {
-    test('5.6-UNIT-016: breathing session type → breathing-specific fallback', () {
+    test('5.6-UNIT-016: breathing session type → breathingFallback key', () {
       final sv = _sv(restingHR: null, stepCount: null);
-      final result = _gen.generate(stateVector: sv, sessions: [_session(type: 'breathing')]);
-      expect(result.single, isNotEmpty);
+      final result = _gen.generate(
+        stateVector: sv,
+        sessions: [_session(type: 'breathing')],
+      );
+      expect(result.single, ExplanationKey.breathingFallback.name);
     });
 
-    test('5.6-UNIT-017: mobility session type → mobility-specific fallback', () {
+    test('5.6-UNIT-017: mobility session type → mobilityFallback key', () {
       final sv = _sv(restingHR: null, stepCount: null);
-      final result = _gen.generate(stateVector: sv, sessions: [_session(type: 'mobility')]);
-      expect(result.single, isNotEmpty);
+      final result = _gen.generate(
+        stateVector: sv,
+        sessions: [_session(type: 'mobility')],
+      );
+      expect(result.single, ExplanationKey.mobilityFallback.name);
     });
   });
 }

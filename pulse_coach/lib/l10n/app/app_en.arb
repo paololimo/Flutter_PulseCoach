@@ -16,6 +16,21 @@
   "transitionAtRiskRecovering": "You are getting back into rhythm. Let's keep it calm.",
   "transitionFatiguedRecovering": "You are getting back into rhythm. Let's keep it calm.",
   "transitionRecoveringActive": "You are back in shape! Let's resume the full plan.",
+  "explRecovering": "Your body needs a lighter day. We've adjusted accordingly.",
+  "explAtRiskMissed": "You've missed a few sessions. Let's ease back in.",
+  "explAtRiskHighLoad": "High load detected. Let's keep it light today.",
+  "explFatigued": "You've given it your all lately. Let's dial down the intensity.",
+  "explElevatedRestingHr": "Elevated resting heart rate. Let's start with a gentler session.",
+  "explLowSteps": "Few steps today. Light movement to get going.",
+  "explOptimalRestingHr": "Great resting heart rate. Time for a focused session.",
+  "explConsistentWeek": "You've been consistent this week. Let's raise the bar slightly.",
+  "explIntenseEffort": "The effort has been intense. Let's stay moderate today.",
+  "explComfortZone": "Based on your recent sessions. Let's stay in your comfort zone.",
+  "explGreatStreak": "Great streak! Let's keep up this rhythm.",
+  "explWelcomeBack": "Welcome back. Let's start again gently.",
+  "explBreathingFallback": "A moment to relax. A short breathing session to wrap up.",
+  "explMobilityFallback": "Mobility work to keep your movement fluid.",
+  "explGenericFallback": "Whenever you're ready, let's begin.",
   "comingUpHeader": "COMING UP",
   "errorLoadingPlan": "Unable to load the plan.",
   "allDoneTitle": "Great work!",
@@ -481,5 +496,43 @@
   "disclaimerContinue": "Continue",
 
   "sessionDetailClose": "Close",
-  "sessionDetailSteps": "Steps"
+  "sessionDetailSteps": "Steps",
+
+  "progressTabHistory": "History",
+  "progressTabCharts": "Charts",
+  "progressLockedPro": "Full history is a Pro feature.",
+  "progressHistoryEmpty": "No sessions yet. Start your first one today!",
+  "progressHistoryError": "Unable to load history",
+  "progressInsufficientData": "Complete more sessions to see your progress",
+  "progressChartsError": "Unable to load charts",
+  "progressRpeEmpty": "No RPE data yet",
+  "progressChartMinutesPerWeek": "Minutes per week",
+  "progressChartCompletionRate": "Completion rate",
+  "progressChartRpeTrend": "RPE trend",
+  "progressChartSessionTypes": "Session types",
+  "weeklyGoalProgress": "{completed} of {target} sessions this week",
+  "@weeklyGoalProgress": {
+    "placeholders": {
+      "completed": { "type": "int" },
+      "target": { "type": "int" }
+    }
+  },
+  "weeklyGoalFirstSession": "Start your first session this week!",
+  "weeklyGoalReached": "Goal reached!",
+  "sessionHistoryAbandoned": "abandoned",
+
+  "paywallNoActiveSub": "No active Pro subscription to unlock.",
+  "paywallLoadError": "Unable to load subscriptions.",
+  "paywallRetry": "Retry",
+  "paywallRestore": "Restore purchases",
+  "paywallHeadline": "Unlock the full experience",
+  "paywallSubhead": "Full history, all charts, and social features.",
+  "paywallPurchase": "Purchase",
+  "subActionError": "Something went wrong. Please try again.",
+  "proUpsellBody": "Access all your history and charts with PulseCoach Pro.",
+  "proUpsellNotNow": "not now",
+  "proUpsellDiscover": "Discover Pro",
+
+  "aiLogStateVectorUnavailable": "StateVector unavailable",
+  "aiLogDataUnavailable": "Data unavailable"
 }
