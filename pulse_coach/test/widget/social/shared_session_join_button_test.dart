@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/auth/domain/entities/auth_user.dart';
+import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_bloc.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_event.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_state.dart';
@@ -29,9 +31,21 @@ Widget _buildSocialPage(_FakeSubscriptionBloc sub) => MaterialApp(
       theme: AppTheme.darkTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: BlocProvider<SubscriptionBloc>.value(
-        value: sub,
-        child: const SocialPage(),
+      // SocialPage now gates its Pro content behind an authenticated AuthBloc.
+      home: BlocProvider<AuthBloc>.value(
+        value: _FakeAuthBloc(
+          const AuthState.authenticated(
+            user: AuthUser(
+              id: 'test-uid',
+              email: 'test@example.com',
+              isEmailConfirmed: true,
+            ),
+          ),
+        ),
+        child: BlocProvider<SubscriptionBloc>.value(
+          value: sub,
+          child: const SocialPage(),
+        ),
       ),
     );
 
@@ -106,6 +120,22 @@ void main() {
 }
 
 // ── Fake blocs ────────────────────────────────────────────────────────────────
+
+class _FakeAuthBloc extends Fake implements AuthBloc {
+  final AuthState _state;
+  _FakeAuthBloc(this._state);
+
+  @override
+  AuthState get state => _state;
+  @override
+  Stream<AuthState> get stream => const Stream.empty();
+  @override
+  bool get isClosed => false;
+  @override
+  void add(AuthEvent event) {}
+  @override
+  Future<void> close() async {}
+}
 
 class _FakeSubscriptionBloc extends Fake implements SubscriptionBloc {
   final SubscriptionState _state;

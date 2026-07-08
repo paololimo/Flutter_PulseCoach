@@ -1,5 +1,6 @@
 // [P1] HealthDataSource unit tests
 // Tests: fetchHealthData returns HealthData, throws SensorException on denied/error
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health/health.dart';
 import 'package:mockito/annotations.dart';
@@ -11,6 +12,8 @@ import 'health_data_source_test.mocks.dart';
 
 @GenerateMocks([Health])
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late MockHealth mockHealth;
   late HealthDataSource sut;
 
@@ -182,5 +185,55 @@ void main() {
       expect(result.restingHr, isNull);
       expect(result.stepCount, equals(5500)); // 2000 + 3500
     });
+  });
+
+  group('HealthDataSource.openHealthConnectSettings', () {
+    const channel = MethodChannel(
+      'com.pulsecoach.pulse_coach/health_settings',
+    );
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+    tearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    test(
+      'invokes openHealthConnectSettings on the native channel',
+      () async {
+        final calls = <MethodCall>[];
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          calls.add(call);
+          return null;
+        });
+
+        await sut.openHealthConnectSettings();
+
+        expect(calls, hasLength(1));
+        expect(calls.single.method, equals('openHealthConnectSettings'));
+      },
+    );
+
+    test(
+      'swallows platform errors so the deep link stays best-effort',
+      () async {
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          throw PlatformException(code: 'SECURITY', message: 'restricted');
+        });
+
+        // A thrown SecurityException on this device\'s Health Connect build
+        // must not surface to the caller.
+        await expectLater(sut.openHealthConnectSettings(), completes);
+      },
+    );
+
+    test(
+      'swallows MissingPluginException when no handler is registered (iOS)',
+      () async {
+        // No handler set: invokeMethod raises MissingPluginException, which
+        // the best-effort catch must absorb.
+        await expectLater(sut.openHealthConnectSettings(), completes);
+      },
+    );
   });
 }

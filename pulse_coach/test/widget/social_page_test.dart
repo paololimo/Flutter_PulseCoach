@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/error/failures.dart';
 import 'package:pulse_coach/core/theme/app_theme.dart';
+import 'package:pulse_coach/features/auth/domain/entities/auth_user.dart';
+import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_bloc.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_event.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_state.dart';
@@ -31,13 +33,28 @@ import 'package:pulse_coach/features/subscription/domain/entities/subscription_t
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
-Widget _wrapWithSub(_FakeSubscriptionBloc sub, {Widget child = const SocialPage()}) =>
+const _tAuthUser = AuthUser(
+  id: 'test-uid',
+  email: 'test@example.com',
+  isEmailConfirmed: true,
+);
+
+Widget _wrapWithSub(
+  _FakeSubscriptionBloc sub, {
+  Widget child = const SocialPage(),
+  // SocialPage gates its Pro content behind an AuthBloc ancestor; default to
+  // authenticated so the existing Pro-path tests reach the tabs.
+  AuthState auth = const AuthState.authenticated(user: _tAuthUser),
+}) =>
     MaterialApp(
       locale: const Locale('it'),
       theme: AppTheme.darkTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: BlocProvider<SubscriptionBloc>.value(value: sub, child: child),
+      home: BlocProvider<AuthBloc>.value(
+        value: _FakeAuthBloc(auth),
+        child: BlocProvider<SubscriptionBloc>.value(value: sub, child: child),
+      ),
     );
 
 void main() {
@@ -61,6 +78,32 @@ void main() {
       );
       expect(find.text('Scopri Pro'), findsOneWidget);
       expect(find.text('Cerca per @handle'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Pro + not authenticated → sign-in-required banner, no tab bar',
+    (tester) async {
+      final sub = _FakeSubscriptionBloc(
+        const SubscriptionState.loaded(tier: SubscriptionTier.pro),
+      );
+
+      await tester.pumpWidget(
+        _wrapWithSub(sub, auth: const AuthState.unauthenticated()),
+      );
+      await tester.pump();
+
+      // The signed-out Pro user gets an explicit call to action instead of
+      // the silent loading shimmer that used to be reused for this state.
+      expect(
+        find.text(
+          'Accedi al tuo account per usare Amici, Feed, Confronto e '
+          'Classifica.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(FilledButton, 'Accedi'), findsOneWidget);
+      expect(find.byType(TabBar), findsNothing);
     },
   );
 
@@ -256,6 +299,26 @@ void main() {
       );
     },
   );
+}
+
+class _FakeAuthBloc extends Fake implements AuthBloc {
+  final AuthState _state;
+  _FakeAuthBloc(this._state);
+
+  @override
+  AuthState get state => _state;
+
+  @override
+  Stream<AuthState> get stream => const Stream.empty();
+
+  @override
+  bool get isClosed => false;
+
+  @override
+  void add(AuthEvent event) {}
+
+  @override
+  Future<void> close() async {}
 }
 
 class _FakeSubscriptionBloc extends Fake implements SubscriptionBloc {
