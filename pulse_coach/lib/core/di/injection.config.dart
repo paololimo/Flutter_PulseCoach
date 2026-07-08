@@ -299,6 +299,8 @@ import 'package:pulse_coach/features/subscription/presentation/bloc/paywall_cubi
     as _i649;
 import 'package:pulse_coach/features/subscription/presentation/bloc/subscription_bloc.dart'
     as _i844;
+import 'package:pulse_coach/features/today/presentation/cubit/today_session_cubit.dart'
+    as _i491;
 import 'package:pulse_coach/features/weather/data/datasources/weather_local_data_source.dart'
     as _i206;
 import 'package:pulse_coach/features/weather/data/datasources/weather_remote_data_source.dart'
@@ -824,7 +826,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i79.AppDatabase>(),
       ),
     );
-    gh.factory<_i412.AuthBloc>(
+    gh.factory<_i491.TodaySessionCubit>(
+      () => _i491.TodaySessionCubit(
+        gh<_i30.SessionLogsDao>(),
+        gh<_i664.GetWeatherContext>(),
+      ),
+    );
+    gh.lazySingleton<_i412.AuthBloc>(
       () => _i412.AuthBloc(
         gh<_i330.GetSignedInUserUseCase>(),
         gh<_i200.SignInWithAppleUseCase>(),

@@ -144,18 +144,37 @@ class _HealthRow extends StatelessWidget {
         ? l10n.deviceSettingsHealthDenied
         : l10n.deviceSettingsHealthUnknown;
 
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: color),
-      title: Text(label),
-      trailing: granted == true
-          ? null
-          : OutlinedButton(
-              onPressed: context
-                  .read<DeviceSettingsCubit>()
-                  .requestHealthPermission,
-              child: Text(l10n.deviceSettingsHealthReRequest),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(icon, color: color),
+          title: Text(label),
+        ),
+        if (granted != true)
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  onPressed: context
+                      .read<DeviceSettingsCubit>()
+                      .requestHealthPermission,
+                  child: Text(l10n.deviceSettingsHealthReRequest),
+                ),
+                OutlinedButton(
+                  onPressed: context
+                      .read<DeviceSettingsCubit>()
+                      .openHealthConnectSettings,
+                  child: Text(l10n.deviceSettingsHealthOpenSettings),
+                ),
+              ],
             ),
+          ),
+      ],
     );
   }
 }

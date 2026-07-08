@@ -59,6 +59,10 @@ class DeviceSettingsCubit extends Cubit<DeviceSettingsState> {
     await load();
   }
 
+  Future<void> openHealthConnectSettings() async {
+    await _healthDataSource.openHealthConnectSettings();
+  }
+
   Future<void> syncNow() async {
     await _syncManager.processQueue();
     await load();

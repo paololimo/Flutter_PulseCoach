@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:health/health.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pulse_coach/core/error/exceptions.dart';
@@ -7,6 +8,22 @@ import 'package:pulse_coach/features/session/domain/entities/health_data.dart';
 class HealthDataSource {
   final Health _health;
   HealthDataSource(this._health);
+
+  static const _healthSettingsChannel = MethodChannel(
+    'com.pulsecoach.pulse_coach/health_settings',
+  );
+
+  /// Deep-links to this app's permission row inside the Health Connect app
+  /// (Android only). Useful when Health Connect has already cached a denied
+  /// decision and the in-app request dialog no longer resurfaces.
+  Future<void> openHealthConnectSettings() async {
+    try {
+      await _healthSettingsChannel.invokeMethod('openHealthConnectSettings');
+    } catch (_) {
+      // Best-effort deep link (e.g. iOS has no such channel handler); nothing
+      // actionable if it fails.
+    }
+  }
 
   static const _readTypes = [
     HealthDataType.RESTING_HEART_RATE,
