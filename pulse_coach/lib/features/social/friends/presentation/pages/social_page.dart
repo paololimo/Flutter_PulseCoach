@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pulse_coach/core/di/injection.dart';
 import 'package:pulse_coach/core/routing/app_router.dart';
 import 'package:pulse_coach/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:pulse_coach/features/auth/presentation/widgets/sign_in_sheet.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/bloc/progress_comparison_bloc.dart';
 import 'package:pulse_coach/features/social/comparison/presentation/pages/progress_comparison_page.dart';
 import 'package:pulse_coach/features/social/feed/presentation/bloc/feed_bloc.dart';
@@ -114,22 +115,38 @@ class _SocialViewState extends State<_SocialView>
           );
         }
 
-        final l10n = AppLocalizations.of(context)!;
+        return BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, authState) {
+            if (authState is! AuthAuthenticated) {
+              return _SignInRequiredBanner(
+                onTap: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  showDragHandle: true,
+                  builder: (_) => BlocProvider.value(
+                    value: context.read<AuthBloc>(),
+                    child: const SignInSheet(),
+                  ),
+                ),
+              );
+            }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(l10n.socialScreenTitle),
-            bottom: TabBar(
-              controller: _tabController,
-              tabs: [
-                Tab(text: l10n.friendsScreenTitle),
-                Tab(text: l10n.feedScreenTitle),
-                Tab(text: l10n.comparisonScreenTitle),
-                Tab(text: l10n.leaderboardScreenTitle),
-              ],
-            ),
-          ),
-          body: MultiBlocListener(
+            final l10n = AppLocalizations.of(context)!;
+
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(l10n.socialScreenTitle),
+                bottom: TabBar(
+                  controller: _tabController,
+                  tabs: [
+                    Tab(text: l10n.friendsScreenTitle),
+                    Tab(text: l10n.feedScreenTitle),
+                    Tab(text: l10n.comparisonScreenTitle),
+                    Tab(text: l10n.leaderboardScreenTitle),
+                  ],
+                ),
+              ),
+              body: MultiBlocListener(
             listeners: [
               BlocListener<SharedSessionCreationCubit,
                   SharedSessionCreationState>(
@@ -222,6 +239,8 @@ class _SocialViewState extends State<_SocialView>
               ],
             ),
           ),
+            );
+          },
         );
       },
     );
@@ -571,6 +590,36 @@ class _LockedBanner extends StatelessWidget {
             FilledButton(
               onPressed: onTap,
               child: Text(l10n.friendsDiscoverProButton),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SignInRequiredBanner extends StatelessWidget {
+  final VoidCallback onTap;
+  const _SignInRequiredBanner({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.login, size: 64),
+            const SizedBox(height: 16),
+            Text(
+              l10n.socialSignInRequiredBody,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: onTap,
+              child: Text(l10n.signInAction),
             ),
           ],
         ),

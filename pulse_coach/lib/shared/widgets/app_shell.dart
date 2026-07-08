@@ -208,7 +208,10 @@ class _AppDrawer extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.bug_report),
               title: Text(l10n.drawerDebug),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                context.push(AppRouter.debugSeed);
+              },
             ),
             ListTile(
               leading: const Icon(Icons.psychology),

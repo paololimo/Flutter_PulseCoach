@@ -67,7 +67,7 @@ class TodaySessionCubit extends Cubit<TodaySessionState> {
   TodaySessionCubit(
     this._sessionLogsDao,
     this._getWeatherContext, {
-    DateTime Function()? now,
+    @ignoreParam DateTime Function()? now,
   }) : _now = now ?? DateTime.now,
        super(const TodaySessionState());
 

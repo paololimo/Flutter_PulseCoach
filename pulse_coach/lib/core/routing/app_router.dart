@@ -12,6 +12,7 @@ import 'package:pulse_coach/features/subscription/presentation/bloc/subscription
 import 'package:pulse_coach/features/subscription/presentation/pages/paywall_page.dart';
 import 'package:pulse_coach/features/daily_plan/domain/entities/planned_session.dart';
 import 'package:pulse_coach/features/daily_plan/presentation/bloc/daily_plan_bloc.dart';
+import 'package:pulse_coach/features/debug/presentation/pages/debug_seed_page.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:pulse_coach/features/onboarding/presentation/pages/profile_page.dart';
 import 'package:pulse_coach/features/progress/presentation/pages/progress_page.dart';
@@ -52,6 +53,7 @@ class AppRouter {
   static const String privacy = '/privacy';
   static const String deviceSettings = '/device-settings';
   static const String aiDecisionLog = '/ai-decision-log';
+  static const String debugSeed = '/debug/seed';
   static const String account = '/account';
   static const String backup = '/account/backup';
   static const String paywall = '/paywall';
@@ -173,6 +175,13 @@ class AppRouter {
             create: (_) => getIt<AiDecisionLogCubit>()..load(),
             child: const AiDecisionLogPage(),
           );
+        },
+      ),
+      GoRoute(
+        path: debugSeed,
+        builder: (context, state) {
+          if (!kDebugMode) return const SettingsPage();
+          return DebugSeedPage(getIt<AppDatabase>());
         },
       ),
       GoRoute(path: profile, builder: (context, state) => const ProfilePage()),
