@@ -3,37 +3,40 @@
 // PURPOSE
 // -------
 // The automated test campaign establishes the engine's *conformance* to spec,
-// not the *efficacy* of the learned policy (design.tex, Section 4.6 "Modelling
-// scope and validity"). This standalone simulation supplies that missing
-// evidence: it drives the REAL, unmodified engine classes (`BanditEngine`,
-// `RewardCalculator`, `BanditState`) against a synthetic population of users and
-// measures whether the ε-greedy learner produces sessions closer to the target
-// RPE (6.5) than non-learning baselines — i.e. whether the learner earns its
-// complexity.
+// not the *efficacy* of the learned policy (design.tex, Section "Modelling scope
+// and validity"). This standalone, deterministic harness supplies that evidence:
+// it drives the REAL, unmodified engine classes (`BanditEngine`,
+// `RewardCalculator`, `BanditState`) against a synthetic population and measures
+// whether the epsilon-greedy learner produces sessions closer to the target RPE
+// (6.5) than non-learning and fixed baselines — and whether two proposed
+// extensions (annealed epsilon; per-behavioural-state value estimates) widen the
+// advantage. It imports no Flutter and is NOT counted among the automated cases:
 //
-// It is deterministic (single seeded Random threaded throughout) and imports no
-// Flutter, so it runs outside the widget harness and is NOT counted among the
-// automated test cases:
-//
-//     dart run tool/policy_evaluation_sim.dart          # default seed
+//     dart run tool/policy_evaluation_sim.dart          # default seed 42
 //     dart run tool/policy_evaluation_sim.dart 123       # custom seed
 //
-// SYNTHETIC GROUND TRUTH (clearly labelled — this is NOT product code)
-// -------------------------------------------------------------------
-// Each simulated user has a latent `fitnessShift`. The perceived exertion of an
-// arm (sessionType × intensity) is modelled as
-//
-//     meanRPE = intensityBase[intensity] + typeOffset[type] − fitnessShift
-//     observedRPE = round(clamp(Normal(meanRPE, σ), 1, 10))
-//
-// Because `fitnessShift` varies per user, the arm whose mean RPE sits closest to
-// the 6.5 target differs from user to user — so no single fixed policy can be
-// optimal for everyone, and only an adaptive policy can track it. This is the
-// exact condition under which learning should pay off.
-
-// This is a standalone CLI reporting tool, not production/UI code: printing to
-// stdout is its entire purpose, so the repo-wide avoid_print lint is waived here.
+// This is a CLI reporting tool, not production/UI code: printing to stdout is its
+// entire purpose, so the repo-wide avoid_print lint is waived for this file.
 // ignore_for_file: avoid_print
+//
+// SYNTHETIC GROUND TRUTH (clearly labelled — NOT product code)
+// ------------------------------------------------------------
+// Each user has a latent `fitnessShift`. Each session the user is in one of two
+// load states — `normal` or `strained` — and a strained session makes every arm
+// feel harder (perceived RPE shifts up). So the arm nearest the 6.5 target
+// depends on BOTH the user (fitness) AND the session state:
+//
+//     meanRPE = intensityBase[intensity] + typeOffset[type]
+//               - fitnessShift + (strained ? stateOffset : 0)
+//     observedRPE = round(clamp(Normal(meanRPE, sigma), 1, 10))
+//
+// This arm x state interaction is exactly the reward-attribution confound noted
+// in the design document: a single scalar weight per arm can only learn a
+// state-AVERAGED value, whereas conditioning the estimate on the (observable)
+// behavioural state can track the per-state optimum. The comparison below
+// quantifies that gap. Common random numbers are used: for each (user, day) the
+// load state and the observation noise are drawn ONCE and shared across all
+// policies, so differences reflect the policies, not the luck of the draw.
 
 import 'dart:math';
 
@@ -41,33 +44,40 @@ import 'package:pulse_coach/ai/bandit/bandit_state.dart';
 import 'package:pulse_coach/ai/bandit/contextual_bandit.dart';
 import 'package:pulse_coach/ai/bandit/reward_calculator.dart';
 import 'package:pulse_coach/ai/bandit/state_vector.dart';
-import 'package:pulse_coach/ai/safety/safety_constraints.dart';
 import 'package:pulse_coach/ai/state_machine/behavioral_state.dart';
 import 'package:pulse_coach/features/onboarding/domain/entities/user_profile.dart';
 import 'package:pulse_coach/features/session/domain/entities/activity_level.dart';
+import 'package:pulse_coach/ai/safety/safety_constraints.dart';
 
 // ─── Simulation parameters ──────────────────────────────────────────────────
-const int _numUsers = 500;
-const int _horizonDays = 60; // sessions per user
-const int _lateWindow = 15; // last-N days used for the "converged" metric
-const double _sigma = 1.1; // RPE observation noise (std-dev)
-const double _goodBand = 1.5; // |RPE − 6.5| ≤ band counts as a "good" session
-const double _targetRpe = 6.5;
+const int numUsers = 500;
+const int horizonDays = 60; // sessions per user
+const int lateWindow = 15; // last-N days = the "converged" measurement window
+const double sigma = 1.1; // RPE observation noise (std-dev)
+const double goodBand = 1.5; // |RPE - 6.5| <= band counts as a "good" session
+const double targetRpe = 6.5;
+const double strainedProb = 0.35; // fraction of sessions in the strained state
+const double stateOffset = 1.6; // extra perceived RPE when strained
+const double tailThreshold = 1.5; // |fitnessShift| >= this = "atypical" user
+
+// Annealed-epsilon schedule: eps_t = max(epsMin, eps0 / (1 + decay * day)).
+const double eps0 = 0.2;
+const double epsMin = 0.03;
+const double epsDecay = 0.05; // 0.20 -> 0.10 (day 20) -> 0.05 (day 60)
 
 // Synthetic ground-truth coefficients.
-const Map<String, double> _intensityBase = {'low': 4.0, 'medium': 6.5, 'high': 9.0};
-const Map<String, double> _typeOffset = {
+const Map<String, double> intensityBase = {'low': 4.0, 'medium': 6.5, 'high': 9.0};
+const Map<String, double> typeOffset = {
   'cardio': 0.7,
   'mobility': 0.0,
   'breathing': -0.7,
 };
 
-// The engine's reward function — reused, not re-implemented.
-const RewardCalculator _reward = RewardCalculator();
+const RewardCalculator reward = RewardCalculator();
 
 // StateVector is required by selectSessions but unused for arm selection
 // (see BanditEngine docs). One permissive fixture is reused everywhere.
-const StateVector _sv = StateVector(
+const StateVector sv = StateVector(
   restingHR: 65.0,
   stepCount: 4000,
   activityLevel: ActivityLevel.moderate,
@@ -86,36 +96,32 @@ const StateVector _sv = StateVector(
   currentState: BehavioralState.active,
 );
 
-// Permissive safety envelope: exactly one session per day, all 9 arms eligible.
-// Safety is held constant on purpose — it clamps every policy identically, so
-// holding it fixed isolates the learner's contribution (the variable under test).
-const SafetyConstraints _oneSession = SafetyConstraints(
+// Permissive safety envelope: one session/day, all nine arms eligible. Safety is
+// held constant on purpose — it clamps every policy identically, so holding it
+// fixed isolates the learner (the variable under test).
+const SafetyConstraints oneSession = SafetyConstraints(
   maxIntensity: null,
   maxSessionCount: 1,
   outdoorAllowed: true,
 );
 
-/// Synthetic mean perceived exertion for an arm, given a user's fitness shift.
-double _meanRpe(String armKey, double fitnessShift) {
+double epsilonAt(int day) => max(epsMin, eps0 / (1 + epsDecay * day));
+
+double meanRpe(String armKey, double fitnessShift, bool strained) {
   final parts = armKey.split('_');
-  final type = parts.first;
-  final intensity = parts.last;
-  return _intensityBase[intensity]! + _typeOffset[type]! - fitnessShift;
+  return intensityBase[parts.last]! +
+      typeOffset[parts.first]! -
+      fitnessShift +
+      (strained ? stateOffset : 0.0);
 }
 
-/// Draws one observed integer RPE (1–10) for an arm from the synthetic model.
-int _sampleRpe(String armKey, double fitnessShift, Random rng) {
-  final mean = _meanRpe(armKey, fitnessShift);
-  // Box–Muller: standard normal from the seeded RNG (deterministic).
-  final u1 = 1.0 - rng.nextDouble();
-  final u2 = 1.0 - rng.nextDouble();
-  final z = sqrt(-2.0 * log(u1)) * cos(2 * pi * u2);
-  final raw = mean + _sigma * z;
+/// Observed integer RPE (1–10) given a pre-drawn standard-normal shock [z].
+int observe(String armKey, double fitnessShift, bool strained, double z) {
+  final raw = meanRpe(armKey, fitnessShift, strained) + sigma * z;
   return raw.round().clamp(1, 10);
 }
 
-/// Reconstructs the arm key from a PlannedSession (intensity int → name).
-String _armKeyOf(String sessionType, int intensityValue) {
+String armKeyOf(String sessionType, int intensityValue) {
   final name = switch (intensityValue) {
     3 => 'low',
     6 => 'medium',
@@ -125,137 +131,159 @@ String _armKeyOf(String sessionType, int intensityValue) {
   return '${sessionType}_$name';
 }
 
-/// The best achievable per-user reward: pick the arm whose mean RPE is nearest
-/// the target, every day. Upper bound (oracle) — uses ground truth directly.
-String _oracleArm(double fitnessShift) {
+/// Best achievable arm for a given user and session state (uses ground truth).
+String oracleArm(double fitnessShift, bool strained) {
   return banditArmKeys.reduce((a, b) {
-    final da = (_meanRpe(a, fitnessShift) - _targetRpe).abs();
-    final db = (_meanRpe(b, fitnessShift) - _targetRpe).abs();
+    final da = (meanRpe(a, fitnessShift, strained) - targetRpe).abs();
+    final db = (meanRpe(b, fitnessShift, strained) - targetRpe).abs();
     return da <= db ? a : b;
   });
 }
 
-class _Acc {
-  double rewardSum = 0;
-  double lateRewardSum = 0;
-  int lateCount = 0;
+/// Standard-normal draw (Box–Muller) from a seeded RNG.
+double gauss(Random rng) {
+  final u1 = 1.0 - rng.nextDouble();
+  final u2 = 1.0 - rng.nextDouble();
+  return sqrt(-2.0 * log(u1)) * cos(2 * pi * u2);
+}
+
+class Acc {
+  double sum = 0;
   int good = 0;
   int n = 0;
-  void add(double reward, int rpe, {required bool late}) {
-    rewardSum += reward;
+  void add(double r, int rpe) {
+    sum += r;
     n += 1;
-    if ((rpe - _targetRpe).abs() <= _goodBand) good += 1;
-    if (late) {
-      lateRewardSum += reward;
-      lateCount += 1;
-    }
+    if ((rpe - targetRpe).abs() <= goodBand) good += 1;
   }
 
-  double get mean => n == 0 ? 0 : rewardSum / n;
-  double get lateMean => lateCount == 0 ? 0 : lateRewardSum / lateCount;
+  double get mean => n == 0 ? 0 : sum / n;
   double get goodPct => n == 0 ? 0 : 100 * good / n;
 }
 
 void main(List<String> args) {
   final seed = args.isNotEmpty ? int.parse(args.first) : 42;
-  final rng = Random(seed);
 
-  // Whole-population accumulators.
-  final learner = _Acc();
-  final noLearn = _Acc(); // ε-greedy machinery, weights never updated
-  final fixedSensible = _Acc(); // always mobility_medium (a hand-tuned static policy)
-  final oracle = _Acc();
+  // Full-population accumulators (measured on the converged window).
+  final fixed = Acc();
+  final learner = Acc(); // shipped: eps=0.2 fixed, single state
+  final annealed = Acc(); // eps annealed, single state
+  final contextual = Acc(); // eps annealed + per-state value estimates
+  final oracle = Acc();
 
-  // "Atypical tail" accumulators — users whose optimum is far from the
-  // population centre (|fitnessShift| ≥ threshold), i.e. exactly the users a
-  // single fixed policy serves badly and personalization is meant to help.
-  const double tailThreshold = 1.5;
-  final learnerTail = _Acc();
-  final fixedTail = _Acc();
-  final oracleTail = _Acc();
+  // Atypical-tail accumulators (|fitnessShift| >= threshold).
+  final learnerTail = Acc();
+  final contextualTail = Acc();
+  final fixedTail = Acc();
   var tailUsers = 0;
 
-  for (var u = 0; u < _numUsers; u++) {
-    // Heterogeneous population: fitnessShift ∈ [−2.5, 2.5], wide enough that the
-    // arm nearest the 6.5 target spans low / medium / high across users — so no
-    // single fixed intensity is optimal for everyone (the premise of adaptivity).
-    final fitnessShift = -2.5 + 5.0 * rng.nextDouble();
+  for (var u = 0; u < numUsers; u++) {
+    // Per-user environment stream — shared by every policy (common random
+    // numbers): same fitness, same load-state sequence, same noise shocks.
+    final env = Random(seed * 7919 + u);
+    final fitnessShift = -2.5 + 5.0 * env.nextDouble();
     final isTail = fitnessShift.abs() >= tailThreshold;
     if (isTail) tailUsers++;
-    final oracleArm = _oracleArm(fitnessShift);
+    final strainedSeq = List<bool>.generate(horizonDays, (_) => env.nextDouble() < strainedProb);
+    final zSeq = List<double>.generate(horizonDays, (_) => gauss(env));
 
-    // Independent engines/state per user; all share the one seeded RNG so the
-    // whole run is reproducible from `seed` alone.
-    final learnEngine = BanditEngine(epsilon: 0.2, random: rng);
-    final baseEngine = BanditEngine(epsilon: 0.2, random: rng);
-    var learnState = initialBanditState();
-    final baseState = initialBanditState(); // never updated
+    // Independent, reproducible exploration streams per policy.
+    final rngLearner = Random(seed * 104729 + u * 97 + 1);
+    final rngAnnealed = Random(seed * 104729 + u * 97 + 2);
+    final rngContext = Random(seed * 104729 + u * 97 + 3);
 
-    for (var day = 0; day < _horizonDays; day++) {
-      final late = day >= _horizonDays - _lateWindow;
+    var learnerState = initialBanditState();
+    var annealedState = initialBanditState();
+    // Per-behavioural-state value estimates: one BanditState per load bucket.
+    final contextStates = <bool, BanditState>{
+      false: initialBanditState(),
+      true: initialBanditState(),
+    };
 
-      // 1) LEARNING bandit — select, observe, update weights.
-      final lSel = learnEngine.selectSessions(_sv, _oneSession, learnState);
-      final lArm = _armKeyOf(lSel.first.sessionType, lSel.first.intensity);
-      final lRpe = _sampleRpe(lArm, fitnessShift, rng);
-      learner.add(_reward.compute(lRpe), lRpe, late: late);
-      if (isTail && late) learnerTail.add(_reward.compute(lRpe), lRpe, late: late);
-      learnState = learnEngine.updateReward(learnState, lArm, lRpe);
+    for (var day = 0; day < horizonDays; day++) {
+      final strained = strainedSeq[day];
+      final z = zSeq[day];
+      final late = day >= horizonDays - lateWindow;
+      final epsT = epsilonAt(day);
 
-      // 2) NO-LEARNING bandit — identical selection code, weights frozen.
-      final bSel = baseEngine.selectSessions(_sv, _oneSession, baseState);
-      final bArm = _armKeyOf(bSel.first.sessionType, bSel.first.intensity);
-      final bRpe = _sampleRpe(bArm, fitnessShift, rng);
-      noLearn.add(_reward.compute(bRpe), bRpe, late: late);
+      // 1) FIXED — always mobility_medium (a hand-tuned static policy).
+      final fRpe = observe('mobility_medium', fitnessShift, strained, z);
+      if (late) {
+        fixed.add(reward.compute(fRpe), fRpe);
+        if (isTail) fixedTail.add(reward.compute(fRpe), fRpe);
+      }
 
-      // 3) FIXED-SENSIBLE — a static policy a designer might ship instead.
-      final fRpe = _sampleRpe('mobility_medium', fitnessShift, rng);
-      fixedSensible.add(_reward.compute(fRpe), fRpe, late: late);
-      if (isTail && late) fixedTail.add(_reward.compute(fRpe), fRpe, late: late);
+      // 2) SHIPPED LEARNER — eps=0.2 fixed, single state-averaged model.
+      //    One engine per day reusing the persistent rngLearner stream.
+      final lEngine = BanditEngine(epsilon: 0.2, random: rngLearner);
+      final lSel = lEngine.selectSessions(sv, oneSession, learnerState).first;
+      final lArmKey = armKeyOf(lSel.sessionType, lSel.intensity);
+      final lRpe = observe(lArmKey, fitnessShift, strained, z);
+      if (late) {
+        learner.add(reward.compute(lRpe), lRpe);
+        if (isTail) learnerTail.add(reward.compute(lRpe), lRpe);
+      }
+      learnerState = lEngine.updateReward(learnerState, lArmKey, lRpe);
 
-      // 4) ORACLE — best achievable, upper bound.
-      final oRpe = _sampleRpe(oracleArm, fitnessShift, rng);
-      oracle.add(_reward.compute(oRpe), oRpe, late: late);
-      if (isTail && late) oracleTail.add(_reward.compute(oRpe), oRpe, late: late);
+      // 3) ANNEALED — eps decays over time, still a single state-averaged model.
+      final aEngine = BanditEngine(epsilon: epsT, random: rngAnnealed);
+      final aSel = aEngine.selectSessions(sv, oneSession, annealedState).first;
+      final aArmKey = armKeyOf(aSel.sessionType, aSel.intensity);
+      final aRpe = observe(aArmKey, fitnessShift, strained, z);
+      if (late) annealed.add(reward.compute(aRpe), aRpe);
+      annealedState = aEngine.updateReward(annealedState, aArmKey, aRpe);
+
+      // 4) CONTEXTUAL — annealed eps + a separate value model per load state
+      //    (the behavioural-state analogue the app already computes).
+      final cEngine = BanditEngine(epsilon: epsT, random: rngContext);
+      final cState = contextStates[strained]!;
+      final cSel = cEngine.selectSessions(sv, oneSession, cState).first;
+      final cArmKey = armKeyOf(cSel.sessionType, cSel.intensity);
+      final cRpe = observe(cArmKey, fitnessShift, strained, z);
+      if (late) {
+        contextual.add(reward.compute(cRpe), cRpe);
+        if (isTail) contextualTail.add(reward.compute(cRpe), cRpe);
+      }
+      contextStates[strained] = cEngine.updateReward(cState, cArmKey, cRpe);
+
+      // 5) ORACLE — best achievable arm for this (user, state). Upper bound.
+      final oRpe = observe(oracleArm(fitnessShift, strained), fitnessShift, strained, z);
+      if (late) oracle.add(reward.compute(oRpe), oRpe);
     }
   }
 
-  // ─── Report ───────────────────────────────────────────────────────────────
-  final gapTotal = oracle.mean - noLearn.mean;
-  final gapClosedAll = gapTotal <= 0 ? 0 : 100 * (learner.mean - noLearn.mean) / gapTotal;
-  final gapClosedLate =
-      gapTotal <= 0 ? 0 : 100 * (learner.lateMean - noLearn.mean) / gapTotal;
+  // ─── Report ─────────────────────────────────────────────────────────────
+  double gapClosed(Acc p) {
+    final span = oracle.mean - fixed.mean;
+    return span <= 0 ? 0 : 100 * (p.mean - fixed.mean) / span;
+  }
 
-  String row(String name, _Acc a) =>
-      '${name.padRight(22)}  ${a.mean.toStringAsFixed(4)}      '
-      '${a.lateMean.toStringAsFixed(4)}       ${a.goodPct.toStringAsFixed(1)}%';
+  String row(String name, Acc a) =>
+      '${name.padRight(26)} ${a.mean.toStringAsFixed(4)}     ${a.goodPct.toStringAsFixed(1)}%';
 
-  const total = _numUsers * _horizonDays;
   print('PulseCoach — offline policy-evaluation simulation');
-  print('seed=$seed  users=$_numUsers  horizon=$_horizonDays days  '
-      'decisions=$total  σ=$_sigma');
-  print('reward = max(0, 1 − |RPE − 6.5| / 5.5)  (engine RewardCalculator)');
+  print('seed=$seed  users=$numUsers  horizon=$horizonDays  '
+      'converged-window=$lateWindow  sigma=$sigma  P(strained)=$strainedProb');
+  print('reward = max(0, 1 - |RPE - 6.5| / 5.5)   (engine RewardCalculator)');
+  print('measured on the converged window; common random numbers across policies');
   print('');
-  print('policy                  mean_reward  late_reward   good_band');
-  print('-' * 62);
-  print(row('learning bandit', learner));
-  print(row('no-learning (frozen)', noLearn));
-  print(row('fixed mobility_medium', fixedSensible));
+  print('policy                     mean_reward  good_band');
+  print('-' * 50);
+  print(row('fixed mobility_medium', fixed));
+  print(row('shipped learner (eps=.2)', learner));
+  print(row('  + annealed eps', annealed));
+  print(row('  + annealed + per-state', contextual));
   print(row('oracle (upper bound)', oracle));
-  print('-' * 62);
-  print('learner uplift vs no-learning : '
-      '${(100 * (learner.mean / noLearn.mean - 1)).toStringAsFixed(1)}% overall, '
-      '${(100 * (learner.lateMean / noLearn.mean - 1)).toStringAsFixed(1)}% once converged');
-  print('oracle gap closed by learner  : '
-      '${gapClosedAll.toStringAsFixed(1)}% overall, '
-      '${gapClosedLate.toStringAsFixed(1)}% once converged');
+  print('-' * 50);
+  print('vs fixed (avg):  shipped ${(100 * (learner.mean / fixed.mean - 1)).toStringAsFixed(1)}%'
+      '   annealed ${(100 * (annealed.mean / fixed.mean - 1)).toStringAsFixed(1)}%'
+      '   per-state ${(100 * (contextual.mean / fixed.mean - 1)).toStringAsFixed(1)}%');
+  print('oracle gap closed:  shipped ${gapClosed(learner).toStringAsFixed(0)}%'
+      '   annealed ${gapClosed(annealed).toStringAsFixed(0)}%'
+      '   per-state ${gapClosed(contextual).toStringAsFixed(0)}%');
   print('');
-  final tailPct = 100 * tailUsers / _numUsers;
-  print('── atypical tail (|fitnessShift| ≥ 1.5, converged window) '
-      '— ${tailPct.toStringAsFixed(0)}% of users ──');
-  print('  learning bandit      ${learnerTail.mean.toStringAsFixed(4)}   good ${learnerTail.goodPct.toStringAsFixed(1)}%');
-  print('  fixed mobility_medium ${fixedTail.mean.toStringAsFixed(4)}   good ${fixedTail.goodPct.toStringAsFixed(1)}%');
-  print('  oracle               ${oracleTail.mean.toStringAsFixed(4)}   good ${oracleTail.goodPct.toStringAsFixed(1)}%');
-  print('  learner vs best fixed on the tail : '
-      '${(100 * (learnerTail.mean / fixedTail.mean - 1)).toStringAsFixed(1)}%');
+  final tailPct = 100 * tailUsers / numUsers;
+  print('atypical tail (|fitnessShift| >= $tailThreshold) — ${tailPct.toStringAsFixed(0)}% of users:');
+  print('  fixed ${fixedTail.mean.toStringAsFixed(4)}   shipped ${learnerTail.mean.toStringAsFixed(4)}'
+      '   per-state ${contextualTail.mean.toStringAsFixed(4)}');
 }
