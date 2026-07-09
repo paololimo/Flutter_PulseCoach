@@ -206,29 +206,32 @@ code stay perfectly in lockstep.
 
 ### ▸ Slide 14: Screens
 
-Put those components together and you get three core screens.
+Put those components together and you get four core screens, three you'll live in
+every day and a fourth we scoped very carefully.
 
 **Today** gives you the state header, the ring, and the hero card Paolo just
 showed you. **Sessions** is a filterable catalog of everything you can do. And
-**Progress** shows your weekly goal and your effort trend over time.
+**Progress** shows your weekly goal and your effort trend over time. The fourth
+tab, **Social**, is the one I'll come back to in a moment.
 
-*(pause: let them scan the three)*
+*(pause: let them scan the tabs)*
 
 Notice the parallel structure. Every one of these is built from the exact same
 components and tokens. That consistency is what makes the whole thing feel like
-one calm, coherent product instead of three separate screens.
+one calm, coherent product instead of four separate screens.
 
 ### ▸ Slide 15: Move more, together
 
 Everything I've shown you so far is a solo experience, and that's deliberate. But
-there's one Pro feature worth calling out, because of how carefully we scoped it:
-**social**.
+there's a whole fourth tab worth calling out, because of how carefully we scoped
+it: **social**.
 
-You can bring a few friends in, see each other move, and start a session in sync.
-That's it. The important part is what we *didn't* build. There's no leaderboard,
-no streak-shaming, no turning a calm coach into a competition. It's light social
-presence, the sense that someone else is moving too, without any of the pressure
-that makes people quit in the first place.
+You add a few friends with a QR code, see each other move in a shared activity
+feed, compare progress, and even start a session in sync. There's a leaderboard
+too. But here's the important part, the part we designed on purpose: none of it is
+built to shame you. There's no streaks to break, and the leaderboard **freezes
+your rank the moment the coach puts you in a recovery state**, so a rough week
+never drops you down the board. Competition never overrides the coach.
 
 It's the one place we let other people into the loop, and we let them in gently.
 

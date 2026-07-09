@@ -10,10 +10,14 @@ dispositivi.
 
 ## Ruoli e dispositivi
 
+Setup a **4 device**: il **fisico** serve solo per l'intro (disclaimer +
+onboarding + sensori reali); la parte **interattiva** (sessione, watch, sessione
+condivisa) gira su **3 emulatori** — vedi "Comandi operativi" per gli AVD esatti.
+
 | Ruolo | Dispositivi | Responsabilità |
 |---|---|---|
-| **Presentatore 1** | 📱 Telefono fisico (device principale) | Guida il flusso principale su hardware reale: onboarding, piano AI con sensori reali (meteo/posizione/battito), avvio sessione. È il **peer B** nella sessione condivisa. |
-| **Presentatore 2** | ⌚ Emulatore Wear · 📲 Emulatore tablet | Gestisce i due emulatori: mostra la schermata watch che rispecchia la sessione, il layout adattivo sul tablet, e fa da **peer A** (login email+password, tier `signedInFree` — no Pro) nella sessione condivisa e nel social. |
+| **Presentatore 1** | 📱 Telefono fisico (intro) · 📲 `Android_Phone` (emu) | Intro su hardware reale: onboarding + piano AI con **sensori reali** (meteo/posizione). Poi sull'emulatore telefono avvia la sessione ed è **peer B** nella sessione condivisa. |
+| **Presentatore 2** | ⌚ `WearOS_Companion` · 🖥️ `Android_Tablet` | Gestisce watch (mirror della sessione) e tablet (layout adattivo); fa da **peer A** (login email+password, tier `signedInFree` — no Pro) nella sessione condivisa e nel social. |
 
 ---
 
@@ -115,6 +119,115 @@ Il telefono è il device **caldo**: profilo già onboardato, così vai dritto al
 
 ---
 
+## Comandi operativi · device & emulatori (dry-run validato)
+
+Assegnazione a **4 dispositivi** — decisa dopo la prova di banco, perché isola i
+sensori veri sull'hardware e sposta la coppia sessione↔watch su **emulatore↔
+emulatore** (dove il pairing è meno fragile del fisico↔emulatore):
+
+| Ruolo | AVD / device | Immagine | Serve per |
+|---|---|---|---|
+| 📱 Fisico **pulito** — *solo intro* | SM A520F | Android 8 | Seg 2–3: disclaimer, onboarding, **meteo/AQI/posizione reali**. **Non** usato nella demo live |
+| 📲 **`Android_Phone`** | Pixel · Play + GMS · API 34 | `google_apis_playstore` | Seg 4: sessione (peer del watch) · Seg 5: peer sessione condivisa |
+| ⌚ **`WearOS_Companion`** | Wear OS 4 · **API 33** (accoppiabile) | `android-33;android-wear` | Seg 4: mirror step/timer/HR |
+| 🖥️ **`Android_Tablet`** | Pixel Tablet · API 34 | `android-34;google_apis` | Seg 2 layout adattivo (NavigationRail ≥600 px) · Seg 5: secondo peer |
+
+> I 3 AVD della demo sono **già creati**. L'iPad simulator è scartato: iOS non ha
+> tap da riga di comando → non pilotabile in modo affidabile. Il tablet è un
+> **emulatore Android** (NavigationRail comunque a ≥600 px, guidabile via `adb`).
+> ⚠️ Gli **ID `emulator-55xx` si riassegnano** a ogni avvio/riavvio adb: ricava
+> sempre l'ID reale con `flutter devices` / `adb devices -l`, e distingui i modelli
+> con `adb -s <id> shell getprop ro.product.model`
+> (`sdk_gphone64_arm64` telefono/tablet · `sdk_gwear_arm64` watch).
+
+> ⚠️ Gli **ID cambiano**: dopo un riavvio dell'adb server o un secondo emulatore,
+> le porte si riassegnano (nella prova il phone-emu ha preso `5554` e il Wear
+> `5556`). Ricontrolla sempre con `flutter devices` / `adb devices -l` e distingui
+> i modelli: `adb -s <id> shell getprop ro.product.model` → `sdk_gphone64_arm64`
+> (telefono) vs `sdk_gwear_arm64` (watch). Far girare **4 VM insieme è pesante**:
+> nella prova iPad + Wear si sono spenti sotto carico — avviali con margine e
+> verifica che restino su prima di iniziare.
+
+### 1 · Avvio emulatori
+
+```bash
+# i 3 AVD della demo (già creati)
+flutter emulators --launch Android_Phone
+flutter emulators --launch WearOS_Companion
+flutter emulators --launch Android_Tablet
+
+# attendi il boot completo di ciascuno (può volerci >1 min a freddo):
+adb -s <ID> wait-for-device
+until [ "$(adb -s <ID> shell getprop sys.boot_completed | tr -d '\r')" = 1 ]; do sleep 2; done
+
+flutter devices   # conferma quali ID emulator-55xx hanno preso (cambiano!)
+```
+
+### 2 · Installazione / avvio app
+
+L'app **non è preinstallata** su un emulatore appena creato. Usa il **debug apk**
+(non `flutter install` liscio, che cerca il *release* e fallisce con
+`app-release.apk does not exist`):
+
+```bash
+# telefono-emu (da pulse_coach/): APK già in build/, oppure ricostruiscilo
+adb -s emulator-5554 install -r -t build/app/outputs/flutter-apk/app-debug.apk
+# watch-emu (da pulse_coach/wear/): la prima build richiede ~30 s
+( cd wear && flutter build apk --debug \
+  && adb -s emulator-5556 install -r -t build/app/outputs/flutter-apk/app-debug.apk )
+
+# launch (usa am start col component esplicito: monkey a volte non aggancia)
+adb -s emulator-5554 shell am start -n com.pulsecoach.pulse_coach/.MainActivity
+adb -s emulator-5556 shell am start -n com.pulsecoach.pulse_coach/com.pulsecoach.pulse_coach_wear.MainActivity
+# 🖥️ iPad
+xcrun simctl launch <UDID> com.paololimonta.pulsecoach
+```
+
+### 3 · Reset device per l'onboarding (segmento 2)
+
+Il router salta l'onboarding se trova dati residui (SharedPreferences + DB Drift):
+al primo avvio atterra su **Oggi**, non sul disclaimer. **Confermato in prova su
+entrambe le piattaforme.** Svuota i dati:
+
+```bash
+# Android (fisico per l'intro, o emulatore tablet) — pm clear azzera anche i permessi
+adb -s <ANDROID_ID> shell pm clear com.pulsecoach.pulse_coach
+adb -s <ANDROID_ID> shell am start -n com.pulsecoach.pulse_coach/.MainActivity
+# verifica: deve comparire "I tuoi dati restano tuoi." + "Avviso medico"
+```
+
+### 4 · Pairing dei due emulatori (segmento 4) — **punto fragile #1**
+
+Il watch rispecchia la sessione **solo** con un pairing reale del **Wearable Data
+Layer** (GMS): `watch_connectivity` non ha altro trasporto. Verificato in prova che
+`adb forward tcp:5601` **da solo non basta** — il nodo Data-Layer (porta guest
+`5601`) resta **chiuso** finché GMS non entra in modalità pairing, e ciò lo fa
+**solo** l'assistente **«Pair Wearable» di Android Studio**. (Idem col telefono
+fisico, che oltretutto è Android 8 → troppo vecchio: scartato.)
+
+**Perché «Pair Wearable» non funzionava:** l'immagine Wear di default è **Wear OS
+6.0 / API 36** (Android 16), troppo recente per l'assistente. Serve un'immagine
+**accoppiabile — Wear OS 4 / API 33**. È **già installata** e l'AVD
+**`WearOS_Companion`** è **già creato** con quella (per rifarli da zero):
+
+```bash
+SDK=~/Library/Android/sdk
+"$SDK/cmdline-tools/latest/bin/sdkmanager" "system-images;android-33;android-wear;arm64-v8a"
+echo no | "$SDK/cmdline-tools/latest/bin/avdmanager" create avd \
+  -n WearOS_Companion -k "system-images;android-33;android-wear;arm64-v8a" -d wearos_large_round
+```
+
+Poi il pairing vero (GUI, una tantum) in **Android Studio → Device Manager**:
+menu ⋮ dell'AVD **`Android_Phone`** (ha già Google Play + GMS) → **«Pair Wearable»**
+→ scegli **`WearOS_Companion`** → completa l'assistente (stesso account Google su
+entrambi). Da qui in poi il nodo Data-Layer è aperto e l'app rispecchia la sessione.
+
+Verifica **prima** della demo con una sessione di prova completa (step → rest →
+summary). Se in aula non aggancia entro ~15 s, **non insistere**: passa al **video
+di backup** (vedi tabella fallback) — è per questo che è obbligatorio.
+
+---
+
 ## Pre-flight · 15 minuti prima
 
 ### Ambiente & rete
@@ -124,19 +237,16 @@ Il telefono è il device **caldo**: profilo già onboardato, così vai dritto al
 - [ ] **Video di backup** pronto in una tab: catena telefono→watch (30–40 s).
 - [ ] Luminosità schermi al massimo, blocco automatico e notifiche silenziati.
 
-### P1 · Telefono fisico
-- [ ] Permessi **posizione + health/battito + notifiche** già concessi. Verifica che lo **stream battito** dia un valore reale (non vuoto) prima della demo: se la sorgente HR manca, tieni pronta la battuta «il battito arriva da Health quando disponibile; qui mostriamo lo stream» per non restare muto su un campo vuoto nel segmento 4.
-- [ ] Profilo **già onboardato** e device caldo (Today con piano visibile).
-- [ ] Loggato come **peer B** (seed user 2).
-- [ ] Telefono **accoppiato** all'emulatore Wear di P2 (check congiunto, vedi sotto).
+### P1 · Fisico (intro) + `Android_Phone` (emu)
+- [ ] **Fisico pulito** (`pm clear`): al primo avvio atterra sul **disclaimer**. Permessi posizione già concessi così il **meteo reale** entra nel piano (in prova: "Temperatura: 33°").
+- [ ] **`Android_Phone`** avviato, app installata (debug apk) e **onboardato** (Oggi con piano). È il device della **sessione** live e il **peer B** (login seed user 2) nella sessione condivisa.
 
-### P2 · Emulatori (Wear + tablet)
-- [ ] Tablet a **installazione pulita / dati app cancellati**, così il router forza l'onboarding (disclaimer + profilo) al primo avvio. Verificato con un giro di prova, poi ripulito di nuovo. ⚠️ Conferma che dopo il wipe il primo avvio **atterri davvero sull'onboarding** e non su Today (SharedPreferences residue lo salterebbero); se atterra su Today, ripeti il wipe completo prima di iniziare.
-- [ ] Emulatore tablet avviato in **orizzontale** per esaltare la NavigationRail.
-- [ ] Credenziali **peer A** (seed user 1, email+password) pronte per il login post-onboarding; tier `signedInFree` (**no Pro** — è voluto). Account peer A ha già **amici + feed** lato server (non vuoto). ⚠️ **Peer A dev'essere già loggato e con la lobby di prova aperta prima dell'apertura della demo**: il login "in background" durante il segmento 3–4 è silenzioso e, se fallisce (token scaduto / Supabase lento), lo scopri solo al segmento 5 sul palco.
-- [ ] Verificato che toccando una funzione Pro compare il **paywall / upsell sheet** (non deve restare bianco). Se RevenueCat non ha offerte, prepara comunque il beat a voce.
-- [ ] Emulatore Wear avviato e **accoppiato** al telefono di P1; bridge watch_connectivity verificato con una sessione di prova completa (step → rest → summary).
-- [ ] Sessione condivisa di prova creata e distrutta una volta (verifica join code + presenza).
+### P2 · `WearOS_Companion` + `Android_Tablet`
+- [ ] **`WearOS_Companion`** (Wear OS 4 / API 33) **accoppiato** ad `Android_Phone` via Android Studio → "Pair Wearable" (vedi §4). Bridge verificato con una sessione di prova completa (step → rest → summary). ⚠️ Se non si accoppia → **video di backup**.
+- [ ] **`Android_Tablet`** a **installazione pulita** (`pm clear`), così il router forza l'onboarding al primo avvio. In orizzontale per la NavigationRail. ⚠️ Se atterra su Today, ripeti il wipe.
+- [ ] Credenziali **peer A** (seed user 1, email+password) pronte; tier `signedInFree` (**no Pro** — voluto). Account peer A ha già **amici + feed** lato server. ⚠️ **Peer A già loggato con lobby di prova aperta prima della demo**: se il login fallisce lo scopri solo al segmento 5 sul palco.
+- [ ] Verificato che una funzione Pro apre il **paywall / upsell sheet** (non bianco). Se RevenueCat non ha offerte, prepara il beat a voce.
+- [ ] Sessione condivisa di prova creata e distrutta una volta (join code + presenza).
 
 ---
 
@@ -159,8 +269,12 @@ Il telefono è il device **caldo**: profilo già onboardato, così vai dritto al
 
 ## Note di verità (dal codice, da tenere a mente)
 
-1. **Il pairing `watch_connectivity` è il punto fragile #1.** Emulatore Wear ↔
-   telefono fisico va provato a fondo — è l'unica parte con video di backup obbligatorio.
+1. **Il pairing `watch_connectivity` è il punto fragile #1 — confermato in prova.**
+   Richiede un pairing reale del Wearable Data Layer (GMS): il solo
+   `adb forward tcp:5601` **non basta**, il mirror resta muto sia fisico↔emulatore
+   sia emulatore↔emulatore. Va accoppiato a mano (Android Studio → "Pair Wearable")
+   e provato a fondo — è l'unica parte con **video di backup obbligatorio**. Dettagli
+   e comandi: sezione «Comandi operativi · §4».
 2. **Il layout tablet è automatico**: `pulse_coach/lib/shared/widgets/app_shell.dart`
    commuta a `NavigationRail` a ≥600 px. Nessuna schermata dedicata.
 3. **La sessione condivisa è realmente peer-to-peer** via Supabase Realtime
