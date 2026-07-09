@@ -1,21 +1,28 @@
 # PulseCoach: Full Presentation Speech
 
-> Continuous script, to be read start to finish (about 13 to 14 minutes at a calm pace).
-> The **▸ Slide N** headings tell you when to advance. Everything else is spoken.
+> Continuous script for two presenters, to be read start to finish
+> (about 13 to 14 minutes at a calm pace, roughly 7 minutes each).
+> **Paolo** presents Part 1 (slides 1 to 8): the problem, the product, and how it
+> adapts. **Daniel** presents Part 2 (slides 9 to 16): trust, the design system,
+> and privacy. The **▸ Slide N** headings tell you when to advance.
 
 ---
 
+## Part 1 — Paolo
+
 ### ▸ Slide 1: Title
 
-Good morning. I want to talk to you about a small problem that quietly wrecks
-most people's fitness goals, and about the app we built to remove it.
+Good morning. I'm Paolo, and this is Daniel. We want to talk to you about a small
+problem that quietly wrecks most people's fitness goals, and about the app we
+built to remove it.
 
 It's called **PulseCoach**, and the whole idea fits in one line: *Move more.
 Decide less.*
 
 It's an AI-adaptive micro-workout coach. It plans your day so you don't have to.
-Three short sessions, tuned to how your body actually feels that morning. Today
-I'll walk you through the product vision and the design system behind it.
+Three short sessions, tuned to how your body actually feels that morning. I'll
+take you through the problem and the product, and then Daniel will walk you
+through the design system and how we keep your data private.
 
 ### ▸ Slide 2: Agenda
 
@@ -72,7 +79,7 @@ we leave you is the one that matters: to start.
 
 ### ▸ Slide 6: Our vision
 
-If I had to put the vision in one phrase, it's **zero-planning fitness**.
+If we had to put the vision in one phrase, it's **zero-planning fitness**.
 
 Movement that fits into any life, because the deciding is done for you. We remove
 the planning tax entirely, so consistency stops depending on willpower and starts
@@ -80,7 +87,8 @@ depending on something much simpler: just opening the app.
 
 ### ▸ Slide 7: How it works
 
-This is my favourite part, so let me walk the loop from left to right.
+This is the part we find most interesting, so let me walk you through the loop
+from left to right.
 
 **It senses.** The engine reads on-device signals like resting heart rate, steps,
 and your recent effort, plus context like today's weather and air quality, and
@@ -114,11 +122,19 @@ single next session, ready to start with one tap.
 
 *(pause: let them read the screen)*
 
-One screen, one decision. That's the entire interaction on a normal day.
+One screen, one decision. That's the entire interaction on a normal day. And on
+that note, I'll hand over to Daniel to talk about trust, design, and privacy.
+
+*(handoff: Paolo to Daniel)*
+
+---
+
+## Part 2 — Daniel
 
 ### ▸ Slide 9: The coach voice
 
-Here's what I think really sets it apart. The coach always explains itself.
+Thanks, Paolo. Here's what we think really sets PulseCoach apart. The coach always
+explains itself.
 
 Every recommendation comes with an honest, specific reason. Not a vague
 "we adjusted your workout", but something like: *"Intensity reduced today: high
@@ -192,9 +208,9 @@ code stay perfectly in lockstep.
 
 Put those components together and you get three core screens.
 
-**Today** gives you the state header, the ring, and the hero card we just looked
-at. **Sessions** is a filterable catalog of everything you can do. And **Progress**
-shows your weekly goal and your effort trend over time.
+**Today** gives you the state header, the ring, and the hero card Paolo just
+showed you. **Sessions** is a filterable catalog of everything you can do. And
+**Progress** shows your weekly goal and your effort trend over time.
 
 *(pause: let them scan the three)*
 
@@ -204,7 +220,7 @@ one calm, coherent product instead of three separate screens.
 
 ### ▸ Slide 15: Privacy by design
 
-And this brings me to something we treat as a genuine feature, not a footnote:
+And this brings us to something we treat as a genuine feature, not a footnote:
 privacy.
 
 **All of your health data lives on your device.** The adaptive AI runs locally,
@@ -221,16 +237,16 @@ it's built into the architecture rather than promised in a policy page.
 
 ### ▸ Slide 16: Closing
 
-So let me close where I started.
+So let me bring us back to where we started.
 
 Most fitness apps lose people at the decision, not at the effort. PulseCoach
 removes that planning tax entirely, so staying consistent stops depending on
 willpower and starts depending on simply opening the app.
 
-And I want to be clear that this isn't a concept. It's a feature-complete, working
-application, with an on-device adaptive engine, a full design system, and around
-fourteen hundred automated tests behind it, all passing.
+And we want to be clear that this isn't a concept. It's a feature-complete,
+working application, with an on-device adaptive engine, a full design system, and
+around fourteen hundred automated tests behind it, all passing.
 
 *Move more. Decide less.* That's PulseCoach.
 
-Thank you. I'd be happy to take your questions.
+Thank you. We'd be happy to take your questions.
