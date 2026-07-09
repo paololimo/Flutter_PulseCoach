@@ -1,10 +1,10 @@
 # PulseCoach: Full Presentation Speech
 
 > Continuous script for two presenters, to be read start to finish
-> (about 13 to 14 minutes at a calm pace, roughly 7 minutes each).
+> (about 14 to 15 minutes at a calm pace, roughly 7 minutes each).
 > **Paolo** presents Part 1 (slides 1 to 8): the problem, the product, and how it
-> adapts. **Daniel** presents Part 2 (slides 9 to 16): trust, the design system,
-> and privacy. The **▸ Slide N** headings tell you when to advance.
+> adapts. **Daniel** presents Part 2 (slides 9 to 17): trust, the design system,
+> social, and privacy. The **▸ Slide N** headings tell you when to advance.
 
 ---
 
@@ -218,7 +218,21 @@ Notice the parallel structure. Every one of these is built from the exact same
 components and tokens. That consistency is what makes the whole thing feel like
 one calm, coherent product instead of three separate screens.
 
-### ▸ Slide 15: Privacy by design
+### ▸ Slide 15: Move more, together
+
+Everything I've shown you so far is a solo experience, and that's deliberate. But
+there's one Pro feature worth calling out, because of how carefully we scoped it:
+**social**.
+
+You can bring a few friends in, see each other move, and start a session in sync.
+That's it. The important part is what we *didn't* build. There's no leaderboard,
+no streak-shaming, no turning a calm coach into a competition. It's light social
+presence, the sense that someone else is moving too, without any of the pressure
+that makes people quit in the first place.
+
+It's the one place we let other people into the loop, and we let them in gently.
+
+### ▸ Slide 16: Privacy by design
 
 And this brings us to something we treat as a genuine feature, not a footnote:
 privacy.
@@ -235,7 +249,7 @@ In a category built entirely on sensitive health signals, being on-device by
 default isn't just the ethical choice. It's a real competitive edge, and for us
 it's built into the architecture rather than promised in a policy page.
 
-### ▸ Slide 16: Closing
+### ▸ Slide 17: Closing
 
 So let me bring us back to where we started.
 
