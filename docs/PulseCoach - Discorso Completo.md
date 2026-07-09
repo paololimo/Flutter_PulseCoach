@@ -241,9 +241,21 @@ privacy.
 and nothing is sent to an external server, ever. The app doesn't even need a
 network connection to learn.
 
-Three points. Processing is **on-device**, so the signals are read and reasoned
-about right there on the phone. There's **no server round-trip**, so your health
-data never leaves. And we state that **plainly**, in the product's own voice.
+And this matters more every year. Health signals are a **special category under
+GDPR**, and the regulatory direction is only tightening. The usual model, ship
+your biometrics to a server and get an opaque plan back, is turning into a
+liability, not a feature. We built the opposite, and we can be concrete about it:
+your health data never leaves the device in readable form; location is reduced to
+**city level** before any weather call; the optional backup uploads only
+**end-to-end-encrypted** ciphertext; there's **no account** required to use the
+core. And the right to be forgotten and to export your data aren't a paragraph in
+a policy page, they're **functions that actually run**.
+
+Here's the part we find elegant: privacy and explainability are the **same
+architectural choice**. Because everything runs locally, the reason we show you is
+projected from the exact signals the engine used, not reconstructed from a remote
+model you can't see. On-device is what makes both the trust and the transparency
+possible.
 
 In a category built entirely on sensitive health signals, being on-device by
 default isn't just the ethical choice. It's a real competitive edge, and for us
@@ -264,3 +276,29 @@ around fourteen hundred automated tests behind it, all passing.
 *Move more. Decide less.* That's PulseCoach.
 
 Thank you. We'd be happy to take your questions.
+
+---
+
+## Appendix — Anticipated Q&A
+
+**"Isn't on-device an ideological choice that costs you quality? A cloud model
+would learn better."**
+No, it's a constraint we turned into a feature. The bandit learns on-device from
+your perceived effort without ever needing the network, and the fact that
+everything is local is exactly what makes the explainability possible: the reason
+we surface is projected from the same signals the engine consumes, not from a
+remote model you can't inspect. Privacy and explainability are the same
+architectural decision, not two separate trade-offs.
+
+**"Is this real learning, or just if-else rules?"**
+It's a genuine online learner, an ε-greedy multi-armed bandit that updates its
+policy from the RPE you report after each session. We deliberately wrap it in a
+deterministic safety gate: the learner only ever chooses within the set of
+actions the safety rules have already declared admissible. So it adapts, but it
+can never adapt its way into an unsafe recommendation.
+
+**"How is this different from existing adaptive fitness apps?"**
+The concept of an adaptive coach isn't new; the architecture is. Existing apps
+delegate the intelligence to the cloud. PulseCoach runs the entire decision engine
+on-device, safety-gated and explainable, with no account and no network required
+to learn. That's the differentiator, not the workout generation itself.

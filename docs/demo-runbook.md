@@ -107,7 +107,10 @@ Il telefono è il device **caldo**: profilo già onboardato, così vai dritto al
   - Apri **Progress** per mostrare la persistenza dei dati accumulati durante la demo.
   - *Facoltativo:* metti il telefono in **modalità aereo** e riapri l'app →
     catalogo e piano reggono da cache (risposta pronta al «e senza rete?»).
-- **P1 + P2 dice:** *«Clean Architecture, offline-first con Drift, AI in isolate,
+- **P1 + P2 dice:** *«E notate cosa avete appena visto: l'app ha continuato a
+  funzionare in modalità aereo. L'intelligenza è tutta on-device — i dati sanitari
+  non lasciano mai il telefono. La privacy qui non è una policy, è una proprietà
+  dell'architettura. Clean Architecture, offline-first con Drift, AI in isolate,
   sync realtime: un'unica base per telefono, watch e tablet. Grazie.»*
 
 ---
@@ -115,22 +118,22 @@ Il telefono è il device **caldo**: profilo già onboardato, così vai dritto al
 ## Pre-flight · 15 minuti prima
 
 ### Ambiente & rete
-- [ ] **Hotspot** del telefono acceso; tablet ed emulatore Wear connessi ad esso, non al Wi-Fi dell'aula.
+- [ ] **Hotspot** del telefono acceso; tablet ed emulatore Wear connessi ad esso, non al Wi-Fi dell'aula. ⚠️ **Single point of failure**: da questo hotspot dipendono realtime, meteo e RevenueCat insieme — se cade, cadono i segmenti 3, 5 e il paywall in un colpo. Il fallback universale è il beat offline del segmento 6 (vedi tabella).
 - [ ] **Scalda la cache**: apri l'app una volta connesso così meteo/AQI e catalogo sono già in Drift.
 - [ ] Backend Supabase raggiungibile: prova un login con un seed user prima di iniziare.
 - [ ] **Video di backup** pronto in una tab: catena telefono→watch (30–40 s).
 - [ ] Luminosità schermi al massimo, blocco automatico e notifiche silenziati.
 
 ### P1 · Telefono fisico
-- [ ] Permessi **posizione + health/battito + notifiche** già concessi.
+- [ ] Permessi **posizione + health/battito + notifiche** già concessi. Verifica che lo **stream battito** dia un valore reale (non vuoto) prima della demo: se la sorgente HR manca, tieni pronta la battuta «il battito arriva da Health quando disponibile; qui mostriamo lo stream» per non restare muto su un campo vuoto nel segmento 4.
 - [ ] Profilo **già onboardato** e device caldo (Today con piano visibile).
 - [ ] Loggato come **peer B** (seed user 2).
 - [ ] Telefono **accoppiato** all'emulatore Wear di P2 (check congiunto, vedi sotto).
 
 ### P2 · Emulatori (Wear + tablet)
-- [ ] Tablet a **installazione pulita / dati app cancellati**, così il router forza l'onboarding (disclaimer + profilo) al primo avvio. Verificato con un giro di prova, poi ripulito di nuovo.
+- [ ] Tablet a **installazione pulita / dati app cancellati**, così il router forza l'onboarding (disclaimer + profilo) al primo avvio. Verificato con un giro di prova, poi ripulito di nuovo. ⚠️ Conferma che dopo il wipe il primo avvio **atterri davvero sull'onboarding** e non su Today (SharedPreferences residue lo salterebbero); se atterra su Today, ripeti il wipe completo prima di iniziare.
 - [ ] Emulatore tablet avviato in **orizzontale** per esaltare la NavigationRail.
-- [ ] Credenziali **peer A** (seed user 1, email+password) pronte per il login post-onboarding; tier `signedInFree` (**no Pro** — è voluto). Account peer A ha già **amici + feed** lato server (non vuoto).
+- [ ] Credenziali **peer A** (seed user 1, email+password) pronte per il login post-onboarding; tier `signedInFree` (**no Pro** — è voluto). Account peer A ha già **amici + feed** lato server (non vuoto). ⚠️ **Peer A dev'essere già loggato e con la lobby di prova aperta prima dell'apertura della demo**: il login "in background" durante il segmento 3–4 è silenzioso e, se fallisce (token scaduto / Supabase lento), lo scopri solo al segmento 5 sul palco.
 - [ ] Verificato che toccando una funzione Pro compare il **paywall / upsell sheet** (non deve restare bianco). Se RevenueCat non ha offerte, prepara comunque il beat a voce.
 - [ ] Emulatore Wear avviato e **accoppiato** al telefono di P1; bridge watch_connectivity verificato con una sessione di prova completa (step → rest → summary).
 - [ ] Sessione condivisa di prova creata e distrutta una volta (verifica join code + presenza).
@@ -142,10 +145,15 @@ Il telefono è il device **caldo**: profilo già onboardato, così vai dritto al
 | Severità | Sintomo | Contromossa |
 |---|---|---|
 | **Alta** | Pairing watch non aggancia | Non insistere dal vivo oltre 15 s. Passa al **video di backup** telefono→watch e continua a narrare. La sessione sul telefono prosegue comunque. |
+| **Alta** | Peer A non risulta loggato al segmento 5 | Non improvvisare il login in silenzio. P2 rifà il login live sul tablet mentre P1 copre con la battuta social (amici/feed); poi crea il join code. Se anche il login live tentenna, mostra feed/leaderboard con i dati seed e descrivi la sessione condivisa a voce. |
+| **Media** | Tablet atterra su Today invece dell'onboarding | Il wipe non è andato a fondo. Non forzare: descrivi l'onboarding a voce («disclaimer + profilo, tutto locale, nessun account») e passa dritto al layout adattivo — la NavigationRail è comunque visibile su Today. |
+| **Media** | Battito vuoto sul telefono/Wear al segmento 4 | Usa la battuta preparata («il battito arriva da Health quando disponibile; qui mostriamo lo stream»). Step e timer sul Wear reggono senza HR: non insistere sul campo battito. |
 | **Media** | Realtime social non aggiorna la presenza | Fai **pull-to-refresh** nella lobby. Se resta muto, mostra leaderboard/feed con i dati seed e descrivi il flusso realtime a voce. |
 | **Media** | Meteo/posizione lenti o a vuoto | La cache scaldata copre il buco: il piano si genera lo stesso. Evita di ri-triggerare la posizione dal vivo se ha già risposto una volta. |
 | **Bassa** | Piano AI lento a rigenerare | Riempi con la spiegazione del piano **già presente**; l'inferenza gira in isolate e non blocca la UI, quindi puoi parlare mentre elabora. |
 | **Domanda attesa** | «E senza rete?» | Preparata: **modalità aereo** nel segmento 6 → catalogo e piano da cache Drift. Trasforma il rischio in feature. |
+| **Domanda attesa** | «Ma il cloud non imparerebbe meglio? On-device è una scelta ideologica che costa in qualità?» | «No, è un vincolo trasformato in feature. Il bandit impara on-device dall'RPE senza rete, ed è proprio il fatto che tutto sia locale a rendere possibile l'explainability: la spiegazione è proiettata dagli stessi segnali che l'engine usa, non da un modello remoto opaco. Privacy ed explainability sono la stessa scelta architetturale.» |
+| **Domanda attesa** | «È vera AI o if-else?» | «Vero online learner — bandit ε-greedy che aggiorna la policy dall'RPE percepito — ma incapsulato in un gate deterministico: sceglie solo dentro l'insieme di azioni che le regole di sicurezza hanno già dichiarato ammissibili.» |
 
 ---
 
