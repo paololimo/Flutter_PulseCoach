@@ -121,6 +121,51 @@ Il telefono è il device **caldo**: profilo già onboardato, così vai dritto al
 
 ## Comandi operativi · device & emulatori (dry-run validato)
 
+### 🚀 Sequenza rapida — cosa lanciare, in ordine (dry-run 2026-07-09)
+
+> Ordine pensato per **non** far fallire il login: rete pulita prima, watch dopo.
+> Sostituisci `<PHONE_ID>` / `<TABLET_ID>` / `<WATCH_ID>` con gli ID freschi
+> (`adb devices -l`; phone=1080x2400, tablet=2560x1600, watch=model `gwear`).
+
+```bash
+cd pulse_coach
+
+# 1. SOLO phone + tablet (rete pulita)
+flutter emulators --launch Phone_Play
+flutter emulators --launch Android_Tablet
+adb devices -l                    # ricava PHONE_ID / TABLET_ID (per dimensione)
+
+# 2. app già installata? se no: build+install (una tantum, persiste ai riavvii)
+#    flutter build apk --debug --dart-define-from-file=dart-defines.json
+#    adb -s <PHONE_ID> install -r -t build/app/outputs/flutter-apk/app-debug.apk
+#    adb -s <TABLET_ID> install -r -t build/app/outputs/flutter-apk/app-debug.apk
+adb -s <PHONE_ID>  shell am start -n com.pulsecoach.pulse_coach/.MainActivity
+adb -s <TABLET_ID> shell am start -n com.pulsecoach.pulse_coach/.MainActivity
+
+# 3. login (app: Impostazioni → Accedi) — peer B su phone, peer A su tablet.
+#    Login/Pro PERSISTONO: se già fatti in un run precedente, salta.
+#    → se «Accesso non riuscito» con credenziali giuste: è la rete, non le creds.
+
+# 4. Pro su entrambi (salta se già attivo — persiste; si perde solo con pm clear) → §5
+#    poi force-stop + riavvia l'app per rileggere l'entitlement.
+
+# 5. sessione condivisa (§6): tablet «Sessione condivisa» → join code →
+#    phone «Unisciti a una sessione» → codice → host «Avvia».
+
+# 6. ADESSO il watch (§4b — NON riparte già connesso)
+flutter emulators --launch WearOS_Companion
+adb devices -l                    # ricava WATCH_ID
+adb -s <PHONE_ID> forward tcp:5601 tcp:5601
+adb -s <WATCH_ID> reverse tcp:5601 tcp:5601
+adb -s <PHONE_ID> shell monkey -p com.google.android.apps.wear.companion -c android.intent.category.LAUNCHER 1
+sleep 12
+adb -s <PHONE_ID> logcat -d | grep -i onConnectedNodes    # deve dire isNearby=true
+adb -s <WATCH_ID> shell am start -n com.pulsecoach.pulse_coach/com.pulsecoach.pulse_coach_wear.MainActivity
+#    nodo non su? → GUI «Pair Wearable» (§4, companion già installata = niente Gmail)
+```
+
+---
+
 Assegnazione a **4 dispositivi** — decisa dopo la prova di banco, perché isola i
 sensori veri sull'hardware e sposta la coppia sessione↔watch su **emulatore↔
 emulatore** (dove il pairing è meno fragile del fisico↔emulatore):
@@ -128,9 +173,12 @@ emulatore** (dove il pairing è meno fragile del fisico↔emulatore):
 | Ruolo | AVD / device | Immagine | Serve per |
 |---|---|---|---|
 | 📱 Fisico **pulito** — *solo intro* | SM A520F | Android 8 | Seg 2–3: disclaimer, onboarding, **meteo/AQI/posizione reali**. **Non** usato nella demo live |
-| 📲 **`Android_Phone`** | Pixel · Play + GMS · API 34 | `google_apis_playstore` | Seg 4: sessione (peer del watch) · Seg 5: peer sessione condivisa |
+| 📲 **`Phone_Play`** | Pixel · Play + GMS · API 34 | `google_apis_playstore` | Seg 4: sessione (peer del watch) · Seg 5: **peer B** sessione condivisa (login `marco.rossi`) |
 | ⌚ **`WearOS_Companion`** | Wear OS 4 · **API 33** (accoppiabile) | `android-33;android-wear` | Seg 4: mirror step/timer/HR |
-| 🖥️ **`Android_Tablet`** | Pixel Tablet · API 34 | `android-34;google_apis` | Seg 2 layout adattivo (NavigationRail ≥600 px) · Seg 5: secondo peer |
+| 🖥️ **`Android_Tablet`** | Pixel Tablet · API 34 | `android-34;google_apis` | Seg 2 layout adattivo (NavigationRail ≥600 px) · Seg 5: **peer A/host** (login `paolo.coach`) |
+
+> ⚠️ **Nome AVD reale del telefono = `Phone_Play`** (non `Android_Phone`, che era il
+> nome nella prima stesura). Verificalo con `flutter emulators`.
 
 > I 3 AVD della demo sono **già creati**. L'iPad simulator è scartato: iOS non ha
 > tap da riga di comando → non pilotabile in modo affidabile. Il tablet è un
@@ -148,33 +196,50 @@ emulatore** (dove il pairing è meno fragile del fisico↔emulatore):
 > nella prova iPad + Wear si sono spenti sotto carico — avviali con margine e
 > verifica che restino su prima di iniziare.
 
+> 🔴 **Lezione dal dry-run 2026-07-09 — saturazione di rete = login/realtime rotti.**
+> Con **3–4 VM Android insieme** lo stack di rete dell'emulatore degrada (misurato
+> **66% packet loss** verso Supabase, DHCP che rinnova l'IP a metà richiesta): il
+> **login Supabase fallisce** ("Accesso non riuscito") anche con **credenziali
+> valide** — non è colpa dei defines né della password. **Contromossa:** fai il
+> **login + join sessione condivisa con SOLO phone + tablet accesi** (rete pulita →
+> login passa al primo colpo), e **accendi il watch dopo**. Login, Pro e pairing
+> **persistono** al riavvio delle VM (stanno sul disco dell'AVD); il **bridge adb**
+> (`forward`/`reverse`) e a volte il nodo GMS **no** → vanno rifatti (vedi §4).
+
 ### 1 · Avvio emulatori
 
 ```bash
-# i 3 AVD della demo (già creati)
-flutter emulators --launch Android_Phone
-flutter emulators --launch WearOS_Companion
+# PRIMA phone + tablet (rete pulita per login/sessione condivisa). Watch DOPO.
+flutter emulators --launch Phone_Play
 flutter emulators --launch Android_Tablet
+# ...fai login + Pro + join sessione condivisa, POI:
+flutter emulators --launch WearOS_Companion
 
 # attendi il boot completo di ciascuno (può volerci >1 min a freddo):
 adb -s <ID> wait-for-device
 until [ "$(adb -s <ID> shell getprop sys.boot_completed | tr -d '\r')" = 1 ]; do sleep 2; done
 
 flutter devices   # conferma quali ID emulator-55xx hanno preso (cambiano!)
+# distingui phone vs tablet per DIMENSIONE (stesso model string):
+#   adb -s <id> shell wm size  → 1080x2400 = telefono · 2560x1600 = tablet
 ```
 
 ### 2 · Installazione / avvio app
 
-L'app **non è preinstallata** su un emulatore appena creato. Usa il **debug apk**
-(non `flutter install` liscio, che cerca il *release* e fallisce con
-`app-release.apk does not exist`):
+L'app **non è preinstallata** su un emulatore appena creato. ⚠️ **Builda il debug
+apk CON i dart-defines**, altrimenti Supabase/RevenueCat non sono configurati e il
+**login fallisce** ("Accesso non riuscito" — confermato in prova: le credenziali
+seed sono valide lato server, ma l'apk senza defines non ha URL/chiave). Non usare
+`flutter install` liscio (cerca il *release* → `app-release.apk does not exist`).
 
 ```bash
-# telefono-emu (da pulse_coach/): APK già in build/, oppure ricostruiscilo
-adb -s emulator-5554 install -r -t build/app/outputs/flutter-apk/app-debug.apk
+# telefono/tablet-emu (da pulse_coach/): build CON defines, poi installa su entrambi
+flutter build apk --debug --dart-define-from-file=dart-defines.json
+adb -s <PHONE_ID>  install -r -t build/app/outputs/flutter-apk/app-debug.apk
+adb -s <TABLET_ID> install -r -t build/app/outputs/flutter-apk/app-debug.apk
 # watch-emu (da pulse_coach/wear/): la prima build richiede ~30 s
 ( cd wear && flutter build apk --debug \
-  && adb -s emulator-5556 install -r -t build/app/outputs/flutter-apk/app-debug.apk )
+  && adb -s <WEAR_ID> install -r -t build/app/outputs/flutter-apk/app-debug.apk )
 
 # launch (usa am start col component esplicito: monkey a volte non aggancia)
 adb -s emulator-5554 shell am start -n com.pulsecoach.pulse_coach/.MainActivity
@@ -196,35 +261,115 @@ adb -s <ANDROID_ID> shell am start -n com.pulsecoach.pulse_coach/.MainActivity
 # verifica: deve comparire "I tuoi dati restano tuoi." + "Avviso medico"
 ```
 
-### 4 · Pairing dei due emulatori (segmento 4) — **punto fragile #1**
+### 4 · Pairing watch (segmento 4) — **RISOLTO senza Gmail (dry-run 2026-07-09)**
 
 Il watch rispecchia la sessione **solo** con un pairing reale del **Wearable Data
-Layer** (GMS): `watch_connectivity` non ha altro trasporto. Verificato in prova che
-`adb forward tcp:5601` **da solo non basta** — il nodo Data-Layer (porta guest
-`5601`) resta **chiuso** finché GMS non entra in modalità pairing, e ciò lo fa
-**solo** l'assistente **«Pair Wearable» di Android Studio**. (Idem col telefono
-fisico, che oltretutto è Android 8 → troppo vecchio: scartato.)
+Layer** (GMS): `watch_connectivity` non ha altro trasporto. `adb forward tcp:5601`
+**da solo non basta**; serve il broker gRPC dell'assistente **«Pair Wearable» di
+Android Studio**.
 
-**Perché «Pair Wearable» non funzionava:** l'immagine Wear di default è **Wear OS
-6.0 / API 36** (Android 16), troppo recente per l'assistente. Serve un'immagine
-**accoppiabile — Wear OS 4 / API 33**. È **già installata** e l'AVD
-**`WearOS_Companion`** è **già creato** con quella (per rifarli da zero):
+**Il blocco Gmail e come si aggira.** L'assistente «Pair Wearable» pretende la
+companion **«Google Pixel Watch»** (`com.google.android.apps.wear.companion`)
+installata sul telefono, e da Play Store quella richiede un **login Google reale**.
+Non serve: **sideloada l'APK della companion** e l'assistente prosegue **senza
+alcun account** (l'APK è già in `~/Downloads/`, da APKMirror):
 
 ```bash
-SDK=~/Library/Android/sdk
-"$SDK/cmdline-tools/latest/bin/sdkmanager" "system-images;android-33;android-wear;arm64-v8a"
-echo no | "$SDK/cmdline-tools/latest/bin/avdmanager" create avd \
-  -n WearOS_Companion -k "system-images;android-33;android-wear;arm64-v8a" -d wearos_large_round
+# 1) sideload companion Pixel Watch sul telefono (una tantum, sopravvive ai riavvii)
+adb -s <PHONE_ID> install -r -t ~/Downloads/com.google.android.apps.wear.companion_*.apk
+
+# 2) bridge Data-Layer (direzione corretta: watch fa da CLIENT, phone da SERVER)
+adb -s <PHONE_ID> forward tcp:5601 tcp:5601
+adb -s <WATCH_ID> reverse tcp:5601 tcp:5601
 ```
 
-Poi il pairing vero (GUI, una tantum) in **Android Studio → Device Manager**:
-menu ⋮ dell'AVD **`Android_Phone`** (ha già Google Play + GMS) → **«Pair Wearable»**
-→ scegli **`WearOS_Companion`** → completa l'assistente (stesso account Google su
-entrambi). Da qui in poi il nodo Data-Layer è aperto e l'app rispecchia la sessione.
+Poi in **Android Studio → Device Manager**: menu ⋮ di **`Phone_Play`** →
+**«Pair Wearable»** → **`WearOS_Companion`** → completa l'assistente. Ora che la
+companion è installata, **salta il passo Play Store/Sign-in** e chiude il pairing.
+(L'immagine Wear dev'essere **Wear OS 4 / API 33** — troppo recenti l'assistente le
+rifiuta; l'AVD `WearOS_Companion` è già su API 33.)
 
-Verifica **prima** della demo con una sessione di prova completa (step → rest →
+**Verifica che il nodo sia DAVVERO connesso** (non fidarti del "You're all set"):
+
+```bash
+adb -s <WATCH_ID> logcat -d | grep -iE "onConnectedNodes|onPeerConnected|isNearby=true"
+# atteso: Node{Phone_Play/WearOS_Companion, id=..., isNearby=true}
+```
+
+#### 4b · Riaggancio al riavvio (il watch NON riparte già connesso)
+
+Al riavvio delle VM il pairing **resta configurato** in GMS, ma il **bridge adb si
+azzera** e il nodo va **rieccitato**. Sequenza (dopo aver avviato il watch):
+
+```bash
+# ricava gli ID freschi (cambiano!): phone = 1080x2400, watch = model gwear
+adb devices -l
+adb -s <PHONE_ID> forward tcp:5601 tcp:5601
+adb -s <WATCH_ID> reverse tcp:5601 tcp:5601
+# fa ripartire la companion → riapre il nodo Data-Layer
+adb -s <PHONE_ID> shell monkey -p com.google.android.apps.wear.companion -c android.intent.category.LAUNCHER 1
+sleep 12
+adb -s <PHONE_ID> logcat -d | grep -i onConnectedNodes   # deve mostrare Node{WearOS_Companion,...,isNearby=true}
+# lancia l'app wear
+adb -s <WATCH_ID> shell am start -n com.pulsecoach.pulse_coach/com.pulsecoach.pulse_coach_wear.MainActivity
+```
+
+> ⚠️ La companion può far comparire sul telefono un pop-up **«Choose a device to be
+> managed by Wear OS»** — **BACK** per chiuderlo, il nodo GMS resta su lo stesso.
+> Se il nodo **non** riaggancia via CLI, rifai la GUI «Pair Wearable» (§4) — la
+> companion è già installata, quindi niente Gmail.
+
+> 🔵 **Limite noto — il watch NON rispecchia la sessione CONDIVISA.** Il mirror
+> (`WearBridgeService`) è cablato **solo alla sessione solo** (`in_session_page.dart`).
+> La sessione condivisa (`shared_session_lobby_page.dart`) ha un timer proprio e non
+> alimenta il bridge → durante il seg. 5 il watch resta **connesso** ma mostra l'ultimo
+> stato della sessione solo. Per il mirror live usa una **sessione solo** (seg. 4).
+
+Verifica **prima** della demo con una sessione **solo** completa (step → rest →
 summary). Se in aula non aggancia entro ~15 s, **non insistere**: passa al **video
-di backup** (vedi tabella fallback) — è per questo che è obbligatorio.
+di backup** (vedi tabella fallback).
+
+### 5 · Sbloccare il Pro (obbligatorio per Social + sessione condivisa)
+
+⚠️ **Aggiornamento dry-run 2026-07-09:** in questa build il Social e la sessione
+condivisa sono **Pro-gated** (`social_page.dart:107` → `tier == pro`), non basta il
+login come diceva la vecchia nota. Il Pro viene da RevenueCat (nessun toggle debug).
+Concedilo via **RevenueCat REST v2** con la secret in `pulse_coach/.rc-secret`
+(gitignored). L'app usa un `app_user_id` **anonimo per-install**, quindi il grant va
+fatto **su ogni dispositivo** e **si perde con `pm clear`** (nuovo ID → rifare):
+
+```bash
+cd pulse_coach
+SECRET=$(cat .rc-secret | tr -d '\n\r ')
+PROJ=proj8397e138          # progetto "Pulse Coach"
+ENT=entlc01d59f113         # entitlement lookup_key "pro"
+EXP=$(( ($(date +%s) + 31536000) * 1000 ))   # +1 anno
+
+# ricava l'app_user_id anonimo di un device (app debuggable):
+get_auid () { adb -s "$1" shell run-as com.pulsecoach.pulse_coach \
+  cat /data/data/com.pulsecoach.pulse_coach/shared_prefs/com_revenuecat_purchases_preferences.xml \
+  | grep -oE '\$RCAnonymousID:[a-f0-9]+' | head -1; }
+
+for DEV in <PHONE_ID> <TABLET_ID>; do
+  AUID=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1],safe=''))" "$(get_auid $DEV)")
+  curl -s -X POST \
+    "https://api.revenuecat.com/v2/projects/$PROJ/customers/$AUID/actions/grant_entitlement" \
+    -H "Authorization: Bearer $SECRET" -H "Content-Type: application/json" \
+    -d "{\"entitlement_id\":\"$ENT\",\"expires_at\":$EXP}" | grep -o active_entitlements
+done
+# poi RIAVVIA l'app su entrambi (force-stop + am start) → il gate rilegge RevenueCat
+```
+
+### 6 · Sessione condivisa (segmento 5) — flusso in-app
+
+1. **Tablet (peer A / host)** già loggato `paolo.coach` + Pro → tab **Social → Amici**
+   → **«Sessione condivisa»** → compare **join code** (es. `3BGVWE`) nella «Sala d'attesa».
+2. **Phone (peer B)** loggato `marco.rossi` + Pro → **Social → «Unisciti a una
+   sessione»** → digita il join code → **Join**.
+3. La **presenza realtime** (Supabase) sincronizza: il tablet elenca entrambi
+   (`@paolo_c` + `@marco_r`) e il bottone **«Avvia»** si abilita.
+4. **Host tocca «Avvia»** → parte la sessione condivisa (**«2 participants»**) su
+   entrambi. (Credenziali seed: password condivisa `pulse_claude`.)
 
 ---
 
@@ -237,16 +382,17 @@ di backup** (vedi tabella fallback) — è per questo che è obbligatorio.
 - [ ] **Video di backup** pronto in una tab: catena telefono→watch (30–40 s).
 - [ ] Luminosità schermi al massimo, blocco automatico e notifiche silenziati.
 
-### P1 · Fisico (intro) + `Android_Phone` (emu)
+### P1 · Fisico (intro) + `Phone_Play` (emu)
 - [ ] **Fisico pulito** (`pm clear`): al primo avvio atterra sul **disclaimer**. Permessi posizione già concessi così il **meteo reale** entra nel piano (in prova: "Temperatura: 33°").
-- [ ] **`Android_Phone`** avviato, app installata (debug apk) e **onboardato** (Oggi con piano). È il device della **sessione** live e il **peer B** (login seed user 2) nella sessione condivisa.
+- [ ] **`Phone_Play`** avviato, app installata (debug apk) e **onboardato** (Oggi con piano). È il device della **sessione** live e il **peer B** (login `marco.rossi` / `pulse_claude`) nella sessione condivisa.
+- [ ] **Companion Pixel Watch sideloadata** su `Phone_Play` (§4) — prerequisito per il pairing senza Gmail.
 
 ### P2 · `WearOS_Companion` + `Android_Tablet`
-- [ ] **`WearOS_Companion`** (Wear OS 4 / API 33) **accoppiato** ad `Android_Phone` via Android Studio → "Pair Wearable" (vedi §4). Bridge verificato con una sessione di prova completa (step → rest → summary). ⚠️ Se non si accoppia → **video di backup**.
-- [ ] **`Android_Tablet`** a **installazione pulita** (`pm clear`), così il router forza l'onboarding al primo avvio. In orizzontale per la NavigationRail. ⚠️ Se atterra su Today, ripeti il wipe.
-- [ ] Credenziali **peer A** (seed user 1, email+password) pronte; tier `signedInFree` (**no Pro** — voluto). Account peer A ha già **amici + feed** lato server. ⚠️ **Peer A già loggato con lobby di prova aperta prima della demo**: se il login fallisce lo scopri solo al segmento 5 sul palco.
-- [ ] Verificato che una funzione Pro apre il **paywall / upsell sheet** (non bianco). Se RevenueCat non ha offerte, prepara il beat a voce.
-- [ ] Sessione condivisa di prova creata e distrutta una volta (join code + presenza).
+- [ ] **`WearOS_Companion`** (Wear OS 4 / API 33) **accoppiato** a `Phone_Play` via Android Studio → "Pair Wearable" (vedi §4). Nodo verificato con `logcat | grep onConnectedNodes` **e** una sessione **solo** completa (step → rest → summary). ⚠️ Se non si accoppia → **video di backup**.
+- [ ] **`Android_Tablet`** loggato come **peer A/host** (`paolo.coach` / `pulse_claude`), **Pro attivo** (§5), in orizzontale per la NavigationRail. (Per rimostrare l'onboarding da zero: `pm clear` + riavvio.)
+- [ ] **Pro concesso a ENTRAMBI** i device via RevenueCat REST (§5) e verificato che **Social apre la schermata vera** (tab Amici/Feed/Confronto/Classifica), non il paywall. ⚠️ Il grant **si perde con `pm clear`** → rifallo dopo ogni wipe.
+- [ ] **Login testato con SOLO phone+tablet accesi** (rete pulita) prima di accendere il watch — evita il fallimento da saturazione.
+- [ ] Sessione condivisa di prova creata e distrutta una volta (join code + presenza + «Avvia» abilitato).
 
 ---
 
@@ -256,6 +402,9 @@ di backup** (vedi tabella fallback) — è per questo che è obbligatorio.
 |---|---|---|
 | **Alta** | Pairing watch non aggancia | Non insistere dal vivo oltre 15 s. Passa al **video di backup** telefono→watch e continua a narrare. La sessione sul telefono prosegue comunque. |
 | **Alta** | Peer A non risulta loggato al segmento 5 | Non improvvisare il login in silenzio. P2 rifà il login live sul tablet mentre P1 copre con la battuta social (amici/feed); poi crea il join code. Se anche il login live tentenna, mostra feed/leaderboard con i dati seed e descrivi la sessione condivisa a voce. |
+| **Alta** | Login «Accesso non riuscito» con credenziali giuste | **Rete satura dell'emulatore** (troppe VM). Le credenziali sono valide — non ritoccarle. **Spegni il watch**, lascia solo phone+tablet, ritenta: il login passa. Login/Pro **persistono**, riaccendi il watch dopo. (§ warning "saturazione di rete".) |
+| **Alta** | Social mostra il paywall Pro invece della schermata vera | Il **grant Pro non è attivo** su quel device (o perso con un `pm clear`). Rifai il grant RevenueCat (§5) e **riavvia l'app**. Se in aula non risolvi, mostra il flusso a voce. |
+| **Media** | Watch connesso ma fermo su stato vecchio in seg. 5 | **Atteso**: il mirror è cablato solo alla sessione **solo**, non alla condivisa (§4b). Non è un bug live — mostra il mirror nel seg. 4 (sessione solo), non nel 5. |
 | **Media** | Tablet atterra su Today invece dell'onboarding | Il wipe non è andato a fondo. Non forzare: descrivi l'onboarding a voce («disclaimer + profilo, tutto locale, nessun account») e passa dritto al layout adattivo — la NavigationRail è comunque visibile su Today. |
 | **Media** | Battito vuoto sul telefono/Wear al segmento 4 | Usa la battuta preparata («il battito arriva da Health quando disponibile; qui mostriamo lo stream»). Step e timer sul Wear reggono senza HR: non insistere sul campo battito. |
 | **Media** | Realtime social non aggiorna la presenza | Fai **pull-to-refresh** nella lobby. Se resta muto, mostra leaderboard/feed con i dati seed e descrivi il flusso realtime a voce. |
@@ -269,18 +418,22 @@ di backup** (vedi tabella fallback) — è per questo che è obbligatorio.
 
 ## Note di verità (dal codice, da tenere a mente)
 
-1. **Il pairing `watch_connectivity` è il punto fragile #1 — confermato in prova.**
-   Richiede un pairing reale del Wearable Data Layer (GMS): il solo
-   `adb forward tcp:5601` **non basta**, il mirror resta muto sia fisico↔emulatore
-   sia emulatore↔emulatore. Va accoppiato a mano (Android Studio → "Pair Wearable")
-   e provato a fondo — è l'unica parte con **video di backup obbligatorio**. Dettagli
-   e comandi: sezione «Comandi operativi · §4».
+1. **Il pairing `watch_connectivity` — RISOLTO senza Gmail (dry-run 2026-07-09).**
+   Richiede il Wearable Data Layer (GMS): il solo `adb forward tcp:5601` non basta,
+   serve il broker «Pair Wearable» di Android Studio, che a sua volta pretende la
+   companion **Pixel Watch** — **sideloadala** (APK) per saltare il login Google.
+   Il nodo va **rieccitato a ogni riavvio** (bridge `forward`/`reverse` + rilancio
+   companion). Il mirror funziona **solo per la sessione solo**, non per la condivisa.
+   Resta l'unica parte con **video di backup obbligatorio**. Dettagli e comandi: §4 + §4b.
 2. **Il layout tablet è automatico**: `pulse_coach/lib/shared/widgets/app_shell.dart`
    commuta a `NavigationRail` a ≥600 px. Nessuna schermata dedicata.
 3. **La sessione condivisa è realmente peer-to-peer** via Supabase Realtime
    (`features/social/shared_session`): join code → lobby → presence/broadcast.
-4. **Due gate distinti** (`core/cloud/entitlement_gate.dart`): il **login**
-   (`accountFree` → `signedInFree`) sblocca social + sessione condivisa; il **Pro**
-   (`signedInFree` → `pro`, via RevenueCat, nessun toggle debug) sblocca solo punti
-   classifica e progressi completi. La sessione condivisa non ha entitlement guard
-   (`submit_shared_session_result_use_case.dart`) → basta l'account.
+4. **⚠️ CORRETTO (dry-run 2026-07-09): il Social — e con esso l'ingresso alla
+   sessione condivisa — è Pro-gated.** `social_page.dart:107` mostra il
+   `_LockedBanner`/paywall se `tier != SubscriptionTier.pro`. Quindi non basta il
+   login: serve **Pro** (via RevenueCat, nessun toggle debug → concesso via REST, §5).
+   Il tier viene da `entitlement_gate.dart` → `isProFetcher` = solo RevenueCat
+   (`entitlements.active['pro']`), su `app_user_id` **anonimo per-install**. La
+   *submit* del risultato condiviso non ha guard, ma **l'UI per arrivarci sì**.
+   (La vecchia nota "basta l'account" era sbagliata.)

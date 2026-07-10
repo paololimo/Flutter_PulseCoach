@@ -40,10 +40,22 @@ class SharedSessionRemoteDataSource {
       .single();
 
   Future<void> _defaultUpsertParticipant(String sessionId, String userId) =>
-      _supabase.client.from('session_participants').upsert({
-        'session_id': sessionId,
-        'user_id': userId,
-      });
+      _supabase.client.from('session_participants').upsert(
+        {
+          'session_id': sessionId,
+          'user_id': userId,
+        },
+        // Resolve against the (session_id, user_id) unique constraint, not the
+        // default primary key. The on_shared_session_created trigger already
+        // inserts the host row, so without this the upsert collides and 409s.
+        onConflict: 'session_id,user_id',
+        // DO NOTHING on conflict, not DO UPDATE: session_participants has no
+        // UPDATE RLS policy, so re-touching an existing row (the host row the
+        // trigger already inserted, or a re-join) would otherwise fail with
+        // "new row violates row-level security policy (USING expression)".
+        // There is nothing to update anyway — the row is fully keyed.
+        ignoreDuplicates: true,
+      );
 
   String _generateJoinCode() {
     final rng = Random.secure();
