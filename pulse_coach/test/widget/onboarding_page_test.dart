@@ -247,6 +247,23 @@ void main() {
     );
 
     testWidgets(
+      '[P1] 2.3-WIDGET-006: form content is width-capped at tablet width',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1200, 1400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(buildProfileSetupForm());
+        await tester.pumpAndSettle();
+
+        // On a 1200px-wide surface the content is centred and capped well
+        // below full width, instead of stretching the submit button edge to
+        // edge as it does on a phone.
+        final buttonWidth = tester.getSize(find.byType(FilledButton)).width;
+        expect(buttonWidth, lessThanOrEqualTo(640));
+      },
+    );
+
+    testWidgets(
       '[P1] 2.3-WIDGET-002: "Start My Plan" button is disabled when no selections made',
       (tester) async {
         await tester.pumpWidget(buildProfileSetupForm());
