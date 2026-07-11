@@ -131,19 +131,20 @@ of truth, which is why design and code stay in lockstep.
 
 Those components make four core screens. **Today** you've seen. **Sessions** is a
 filterable catalog of everything you can do. **Progress** shows your weekly goal and
-your effort trend. The fourth tab, **Social**, I'll come back to in a second. Every
-one is built from the same components, which is what makes the whole thing feel like
-one calm product instead of four separate screens.
+your effort trend. The fourth tab, **Social**, is entirely optional, and I'll come
+back to it in a second. Every one is built from the same components, which is what
+makes the whole thing feel like one calm product instead of four separate screens.
 
 ### ▸ Slide 15: Move more, together
 
-Most of the app is a solo experience by design. But there's the **social** tab, and
-it's worth calling out because of how carefully we scoped it. You add friends with a
-QR code, see each other move in a shared feed, compare progress, even start a
-session in sync. There's a leaderboard too. But none of it is built to shame you.
-There are no streaks to break, and the leaderboard **freezes your rank the moment
-the coach puts you in recovery**, so a rough week never drops you down the board.
-Competition never overrides the coach.
+PulseCoach is a solo coach first and foremost, by design. The social tab is a
+completely **optional, opt-in** layer that sits on top of that coach, never at the
+centre of the product, and it stays off until you deliberately turn it on. If you
+want it, you add a training partner with a QR code, see each other's progress,
+compare notes, even start a session in sync, with a light leaderboard. But it's
+built around the coach, not around competition. There are no streaks to break, and
+the leaderboard **freezes your rank the moment the coach puts you in recovery**, so
+a rough week never drops you down the board. The coach always outranks the crowd.
 
 ### ▸ Slide 16: Architecture
 
