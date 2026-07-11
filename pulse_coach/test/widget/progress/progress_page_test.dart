@@ -281,6 +281,52 @@ void main() {
     });
 
     testWidgets(
+      '10.2-WIDGET-010: charts render in a two-column grid at tablet width',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1200, 1400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        when(
+          mockGetSessionHistory(),
+        ).thenAnswer((_) async => const Right(<SessionHistoryEntry>[]));
+        when(mockGetProgressStats()).thenAnswer(
+          (_) async => Right(
+            ProgressStats(
+              completedCount: 3,
+              abandonedCount: 1,
+              minutesPerWeek: const [
+                WeeklyMinutes(weekLabel: '25/05', totalMinutes: 45),
+              ],
+              rpeTrend: [
+                RpeDataPoint(completedAt: DateTime(2026, 5, 25), rpeValue: 6),
+              ],
+              sessionTypeCounts: const {'cardio': 2, 'mobility': 1},
+              completedThisWeek: 2,
+              weeklyTarget: 3,
+            ),
+          ),
+        );
+
+        await pumpProgressPage(tester);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Grafici'));
+        await tester.pumpAndSettle();
+
+        // The second chart sits to the RIGHT of the first (grid), not below it
+        // (single column) — a layout-agnostic proof of the two-column split.
+        final firstX = tester.getTopLeft(find.byType(MinutesPerWeekChart)).dx;
+        final secondX = tester.getTopLeft(find.byType(CompletionRateChart)).dx;
+        expect(secondX, greaterThan(firstX));
+
+        // All four charts are laid out at once (no scrolling needed).
+        expect(find.byType(MinutesPerWeekChart), findsOneWidget);
+        expect(find.byType(CompletionRateChart), findsOneWidget);
+        expect(find.byType(RpeTrendChart), findsOneWidget);
+        expect(find.byType(SessionTypeBreakdownChart), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       '10.2-WIDGET-009: RPE chart shows empty-state when rpeTrend is empty',
       (tester) async {
         when(
