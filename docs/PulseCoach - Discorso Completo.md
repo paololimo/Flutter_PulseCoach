@@ -212,7 +212,7 @@ every day and a fourth we scoped very carefully.
 **Today** gives you the state header, the ring, and the hero card Paolo just
 showed you. **Sessions** is a filterable catalog of everything you can do. And
 **Progress** shows your weekly goal and your effort trend over time. The fourth
-tab, **Social**, is the one I'll come back to in a moment.
+tab, **Social**, is an optional one I'll come back to in a moment.
 
 *(pause: let them scan the tabs)*
 
@@ -222,18 +222,20 @@ one calm, coherent product instead of four separate screens.
 
 ### ▸ Slide 15: Move more, together
 
-Everything I've shown you so far is a solo experience, and that's deliberate. But
-there's a whole fourth tab worth calling out, because of how carefully we scoped
-it: **social**.
+Everything I've shown you so far is a solo experience, and that's deliberate. The
+fourth tab, **social**, is a completely optional, opt-in layer on top of the coach,
+not the centre of the product, and it stays off until you choose to turn it on.
 
-You add a few friends with a QR code, see each other move in a shared activity
-feed, compare progress, and even start a session in sync. There's a leaderboard
-too. But here's the important part, the part we designed on purpose: none of it is
-built to shame you. There's no streaks to break, and the leaderboard **freezes
-your rank the moment the coach puts you in a recovery state**, so a rough week
-never drops you down the board. Competition never overrides the coach.
+If you want it, you add a few training partners with a QR code, see each other's
+progress, compare notes, and even start a session in sync. There's a light
+leaderboard too. But here's the important part, the part we designed on purpose:
+it's built around the coach, not around competition. There's no streaks to break,
+and the leaderboard **freezes your rank the moment the coach puts you in a recovery
+state**, so a rough week never drops you down the board. The coach always outranks
+the crowd.
 
-It's the one place we let other people into the loop, and we let them in gently.
+It's the one place we let other people into the loop, and we let them in gently,
+and only if you ask for it.
 
 ### ▸ Slide 16: Privacy by design
 
