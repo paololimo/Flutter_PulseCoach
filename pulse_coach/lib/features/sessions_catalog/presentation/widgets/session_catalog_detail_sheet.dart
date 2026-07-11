@@ -4,10 +4,36 @@ import 'package:pulse_coach/features/sessions_catalog/domain/entities/exercise.d
 import 'package:pulse_coach/features/sessions_catalog/presentation/bloc/sessions_catalog_state.dart';
 import 'package:pulse_coach/l10n/app_localizations.dart';
 
+/// Modal wrapper used on phone layouts: shows the detail body inside a bottom
+/// sheet and closes by popping the navigator.
 class SessionCatalogDetailSheet extends StatelessWidget {
   const SessionCatalogDetailSheet({super.key, required this.exercise});
 
   final Exercise exercise;
+
+  @override
+  Widget build(BuildContext context) {
+    return SessionCatalogDetailBody(
+      exercise: exercise,
+      onClose: () => Navigator.of(context).pop(),
+    );
+  }
+}
+
+/// Exercise detail content. Rendered inside a modal bottom sheet on phones and
+/// as the persistent right-hand pane of the tablet master-detail layout.
+///
+/// When [onClose] is null the close button is hidden — the pane has nothing to
+/// dismiss, it just reflects the current selection.
+class SessionCatalogDetailBody extends StatelessWidget {
+  const SessionCatalogDetailBody({
+    super.key,
+    required this.exercise,
+    this.onClose,
+  });
+
+  final Exercise exercise;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +63,12 @@ class SessionCatalogDetailSheet extends StatelessWidget {
                       ),
                     ),
                   ),
-                  IconButton(
-                    tooltip: l10n.sessionDetailClose,
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
+                  if (onClose != null)
+                    IconButton(
+                      tooltip: l10n.sessionDetailClose,
+                      onPressed: onClose,
+                      icon: const Icon(Icons.close),
+                    ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -116,6 +143,41 @@ class _MetadataPill extends StatelessWidget {
             color: pulseTheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Empty-state shown in the tablet detail pane before any session is picked.
+class SessionCatalogDetailPlaceholder extends StatelessWidget {
+  const SessionCatalogDetailPlaceholder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final pulseTheme = theme.extension<PulseCoachTheme>()!;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.fitness_center,
+              size: 48,
+              color: pulseTheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(context)!.sessionDetailEmptyPane,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: pulseTheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ),
     );
