@@ -342,6 +342,12 @@ class _RpeEmptyState extends StatelessWidget {
   }
 }
 
+/// Width (logical px) at which the charts dashboard switches from a single
+/// scrolling column (phone / tablet portrait) to a two-column grid. Matches
+/// Material's "expanded" breakpoint and sits above the default test surface
+/// (800) so narrow layouts keep their single-column behaviour.
+const double _chartsGridBreakpoint = 840;
+
 class _ChartsDashboard extends StatelessWidget {
   const _ChartsDashboard({required this.stats});
 
@@ -349,46 +355,82 @@ class _ChartsDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    final cards = <Widget>[
+      _ChartCard(
+        title: l10n.progressChartMinutesPerWeek,
+        child: MinutesPerWeekChart(minutesPerWeek: stats.minutesPerWeek),
+      ),
+      _ChartCard(
+        title: l10n.progressChartCompletionRate,
+        child: CompletionRateChart(
+          completedCount: stats.completedCount,
+          abandonedCount: stats.abandonedCount,
+        ),
+      ),
+      _ChartCard(
+        title: l10n.progressChartRpeTrend,
+        child: stats.rpeTrend.isEmpty
+            ? const _RpeEmptyState()
+            : RpeTrendChart(rpeTrend: stats.rpeTrend),
+      ),
+      _ChartCard(
+        title: l10n.progressChartSessionTypes,
+        child: SessionTypeBreakdownChart(
+          sessionTypeCounts: stats.sessionTypeCounts,
+        ),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < _chartsGridBreakpoint) {
+          // Phone / tablet-portrait: single scrolling column.
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: cards.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 24),
+            itemBuilder: (context, index) => cards[index],
+          );
+        }
+
+        // Wide tablet: two-column grid so charts use the horizontal space
+        // instead of stretching edge to edge.
+        final cardWidth = (constraints.maxWidth - 32 - 16) / 2;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 24,
+            children: [
+              for (final card in cards)
+                SizedBox(width: cardWidth, child: card),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A titled, fixed-height chart tile shared by the single-column and grid
+/// layouts of the charts dashboard.
+class _ChartCard extends StatelessWidget {
+  const _ChartCard({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(l10n.progressChartMinutesPerWeek, style: textTheme.titleSmall),
+        Text(title, style: textTheme.titleSmall),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 200,
-          child: MinutesPerWeekChart(minutesPerWeek: stats.minutesPerWeek),
-        ),
-        const SizedBox(height: 24),
-        Text(l10n.progressChartCompletionRate, style: textTheme.titleSmall),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 200,
-          child: CompletionRateChart(
-            completedCount: stats.completedCount,
-            abandonedCount: stats.abandonedCount,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Text(l10n.progressChartRpeTrend, style: textTheme.titleSmall),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 200,
-          child: stats.rpeTrend.isEmpty
-              ? const _RpeEmptyState()
-              : RpeTrendChart(rpeTrend: stats.rpeTrend),
-        ),
-        const SizedBox(height: 24),
-        Text(l10n.progressChartSessionTypes, style: textTheme.titleSmall),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 200,
-          child: SessionTypeBreakdownChart(
-            sessionTypeCounts: stats.sessionTypeCounts,
-          ),
-        ),
-        const SizedBox(height: 16),
+        SizedBox(height: 200, child: child),
       ],
     );
   }
