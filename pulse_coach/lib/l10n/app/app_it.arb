@@ -502,6 +502,7 @@
 
   "sessionDetailClose": "Chiudi",
   "sessionDetailSteps": "Passaggi",
+  "sessionDetailEmptyPane": "Seleziona una sessione per vederne i dettagli",
 
   "progressTabHistory": "Cronologia",
   "progressTabCharts": "Grafici",

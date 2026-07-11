@@ -9,10 +9,14 @@ class SessionCatalogCard extends StatelessWidget {
     super.key,
     required this.exercise,
     required this.onTap,
+    this.selected = false,
   });
 
   final Exercise exercise;
   final VoidCallback onTap;
+
+  /// Highlights the card as the active row in the tablet master-detail pane.
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +26,19 @@ class SessionCatalogCard extends StatelessWidget {
 
     return Semantics(
       button: true,
+      selected: selected,
       label: '${exercise.name}, ${exercise.durationMinutes} minutes',
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
-        color: pulseTheme.surfaceContainer,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        color: selected
+            ? pulseTheme.surfaceContainerHigh
+            : pulseTheme.surfaceContainer,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: selected
+              ? BorderSide(color: pulseTheme.primaryColor, width: 2)
+              : BorderSide.none,
+        ),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(8),

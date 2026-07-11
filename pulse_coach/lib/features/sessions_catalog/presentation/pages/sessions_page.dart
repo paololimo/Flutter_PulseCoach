@@ -58,10 +58,112 @@ class _SessionsCatalogView extends StatelessWidget {
   }
 }
 
-class _LoadedCatalog extends StatelessWidget {
+/// Width (in logical pixels) at which the catalog switches from a single
+/// scrolling column (phone / tablet portrait) to a master-detail split
+/// (tablet landscape). Sits above the AppShell navigation-rail breakpoint
+/// (600) so the split only engages when the content area has real room —
+/// which makes it double as a rotation-adaptive layout on tablets.
+const double _masterDetailBreakpoint = 720;
+
+class _LoadedCatalog extends StatefulWidget {
   const _LoadedCatalog({required this.state});
 
   final SessionsCatalogLoaded state;
+
+  @override
+  State<_LoadedCatalog> createState() => _LoadedCatalogState();
+}
+
+class _LoadedCatalogState extends State<_LoadedCatalog> {
+  Exercise? _selected;
+
+  void _openModalDetail(BuildContext context, Exercise exercise) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SessionCatalogDetailSheet(exercise: exercise),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < _masterDetailBreakpoint) {
+          return _CatalogList(
+            state: widget.state,
+            onExerciseTap: (exercise) => _openModalDetail(context, exercise),
+          );
+        }
+
+        return _MasterDetailCatalog(
+          state: widget.state,
+          selected: _selected,
+          onExerciseTap: (exercise) => setState(() => _selected = exercise),
+        );
+      },
+    );
+  }
+}
+
+/// Tablet master-detail layout: the browsable list on the left, the detail of
+/// the currently selected session (or an empty-state) persistently on the right.
+class _MasterDetailCatalog extends StatelessWidget {
+  const _MasterDetailCatalog({
+    required this.state,
+    required this.selected,
+    required this.onExerciseTap,
+  });
+
+  final SessionsCatalogLoaded state;
+  final Exercise? selected;
+  final ValueChanged<Exercise> onExerciseTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedExercise = selected;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 360,
+          child: _CatalogList(
+            state: state,
+            onExerciseTap: onExerciseTap,
+            selectedId: selectedExercise?.id,
+          ),
+        ),
+        const VerticalDivider(width: 1, thickness: 1),
+        Expanded(
+          child: selectedExercise == null
+              ? const SessionCatalogDetailPlaceholder()
+              : SessionCatalogDetailBody(
+                  key: ValueKey(selectedExercise.id),
+                  exercise: selectedExercise,
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The scrollable catalog itself (header + filters + category sections). Shared
+/// by the phone single-column layout and the tablet master pane.
+class _CatalogList extends StatelessWidget {
+  const _CatalogList({
+    required this.state,
+    required this.onExerciseTap,
+    this.selectedId,
+  });
+
+  final SessionsCatalogLoaded state;
+  final ValueChanged<Exercise> onExerciseTap;
+  final String? selectedId;
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +204,8 @@ class _LoadedCatalog extends StatelessWidget {
             category: category,
             exercises: state.groupedExercises[category] ?? const [],
             degraded: state.degradedCategories.containsKey(category),
+            onExerciseTap: onExerciseTap,
+            selectedId: selectedId,
           ),
       ],
     );
@@ -180,11 +284,15 @@ class _CategorySection extends StatelessWidget {
     required this.category,
     required this.exercises,
     required this.degraded,
+    required this.onExerciseTap,
+    this.selectedId,
   });
 
   final SessionsCatalogCategory category;
   final List<Exercise> exercises;
   final bool degraded;
+  final ValueChanged<Exercise> onExerciseTap;
+  final String? selectedId;
 
   @override
   Widget build(BuildContext context) {
@@ -222,22 +330,11 @@ class _CategorySection extends StatelessWidget {
               SessionCatalogCard(
                 key: ValueKey(exercise.id),
                 exercise: exercise,
-                onTap: () => _showDetail(context, exercise),
+                selected: exercise.id == selectedId,
+                onTap: () => onExerciseTap(exercise),
               ),
         ]),
       ),
-    );
-  }
-
-  void _showDetail(BuildContext context, Exercise exercise) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => SessionCatalogDetailSheet(exercise: exercise),
     );
   }
 }
