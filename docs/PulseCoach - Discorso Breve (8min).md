@@ -3,8 +3,8 @@
 > Condensed script for two presenters, to be read start to finish
 > (about 8 minutes at a calm pace, roughly 4 minutes each).
 > **Paolo** presents Part 1 (slides 1 to 8): the problem, the product, and how it
-> adapts. **Daniel** presents Part 2 (slides 9 to 17): trust, the design system,
-> social, and privacy. The **▸ Slide N** headings tell you when to advance.
+> adapts. **Daniel** presents Part 2 (slides 9 to 18): trust, the design system,
+> social, architecture, and privacy. The **▸ Slide N** headings tell you when to advance.
 
 ---
 
@@ -145,7 +145,19 @@ There are no streaks to break, and the leaderboard **freezes your rank the momen
 the coach puts you in recovery**, so a rough week never drops you down the board.
 Competition never overrides the coach.
 
-### ▸ Slide 16: Privacy by design
+### ▸ Slide 16: Architecture
+
+Before we get to privacy, one slide on how the system is actually built, because the
+boundary here is the whole point. The adaptive core, the learning agent, the safety
+layer, your health signals, the local database, all of it runs on the phone. Nothing
+about your body ever crosses that line. Outside it sit a few external services, and
+they only ever feed value inward: Open-Meteo gives us weather and air quality with no
+personal data attached, and ExerciseDB supplies the exercise catalog, cached so it
+works offline. The one cloud layer, realtime social, backup, subscriptions, is a Pro
+feature and strictly opt-in, and it never carries raw health data. Keep that line in
+mind, because it's exactly what the next slide is about.
+
+### ▸ Slide 17: Privacy by design
 
 Which brings us to privacy, and we treat it as a genuine feature, not a footnote.
 **All of your health data lives on your device.** The adaptive AI runs locally, and
@@ -165,7 +177,7 @@ the exact signals the engine used, not reconstructed from a remote model you can
 see. On-device is what makes both the trust and the transparency possible, and in a
 category built entirely on sensitive health signals, that's a real competitive edge.
 
-### ▸ Slide 17: Closing
+### ▸ Slide 18: Closing
 
 So let me bring us back to where we started. Most fitness apps lose people at the
 decision, not the effort. PulseCoach removes that planning tax, so staying
